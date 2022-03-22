@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en-English" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>QTensor Module &mdash; VQNET v0.13 documentation</title>
+      <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/doctools.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Classical Neural Network Module" href="nn.html" />
+    <link rel="prev" title="Quantum Machine Learning Demos" href="qml_demo.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../index.html" class="icon icon-home"> VQNET
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Installation Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="install.html">Steps of VQNet Installation</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Hand by hand tutorial</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="qml_demo.html">Quantum Machine Learning Demos</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">The API</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">QTensor Module</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#qtensor-s-functions-and-attributes">QTensor’s Functions and Attributes</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#init">__init__</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#ndim">ndim</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#shape">shape</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#size">size</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#zero-grad">zero_grad</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#backward">backward</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#to-numpy">to_numpy</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#item">item</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#argmax">argmax</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#argmin">argmin</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#fill">fill_</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#all">all</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#any">any</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#fill-rand-binary">fill_rand_binary_</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#fill-rand-signed-uniform">fill_rand_signed_uniform_</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#fill-rand-uniform">fill_rand_uniform_</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#fill-rand-normal">fill_rand_normal_</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#qtensor-transpose">QTensor.transpose</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#transpose">transpose_</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#qtensor-reshape">QTensor.reshape</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#reshape">reshape_</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#getdata">getdata</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#create-functions">Create Functions</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#ones">ones</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#ones-like">ones_like</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#full">full</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#full-like">full_like</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#zeros">zeros</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#zeros-like">zeros_like</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#arange">arange</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#linspace">linspace</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#logspace">logspace</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#eye">eye</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#diag">diag</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#randu">randu</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#randn">randn</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#math-functions">Math Functions</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#floor">floor</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#ceil">ceil</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#round">round</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#sort">sort</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#argsort">argsort</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#add">add</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#sub">sub</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#mul">mul</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#divide">divide</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#sums">sums</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#mean">mean</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#median">median</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#std">std</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#var">var</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#matmul">matmul</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#reciprocal">reciprocal</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#sign">sign</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#neg">neg</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#trace">trace</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#exp">exp</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#acos">acos</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#asin">asin</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#atan">atan</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#sin">sin</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#cos">cos</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#tan">tan</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#tanh">tanh</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#sinh">sinh</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#cosh">cosh</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#power">power</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#abs">abs</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#log">log</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#sqrt">sqrt</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#square">square</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#logic-functions">Logic Functions</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#maximum">maximum</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#minimum">minimum</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#min">min</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#max">max</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#clip">clip</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#where">where</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#nonzero">nonzero</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#isfinite">isfinite</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#isinf">isinf</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#isnan">isnan</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#isneginf">isneginf</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#isposinf">isposinf</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#logical-and">logical_and</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#logical-or">logical_or</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#logical-not">logical_not</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#logical-xor">logical_xor</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#greater">greater</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#greater-equal">greater_equal</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#less">less</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#less-equal">less_equal</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#equal">equal</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#not-equal">not_equal</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#matrix-operations">Matrix Operations</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#select">select</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#concatenate">concatenate</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#stack">stack</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#permute">permute</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id1">transpose</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#tile">tile</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#squeeze">squeeze</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#unsqueeze">unsqueeze</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#swapaxis">swapaxis</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#flatten">flatten</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#utility-functions">Utility Functions</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#to-tensor">to_tensor</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="nn.html">Classical Neural Network Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="qnn.html">Quantum Machine Learning Module</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">VQNET</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
+      <li>QTensor Module</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/rst/QTensor.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="qtensor-module">
+<h1>QTensor Module<a class="headerlink" href="#qtensor-module" title="Permalink to this headline">¶</a></h1>
+<p>VQNet quantum machine learning uses the data structure QTensor which is Python interface. QTensor supports common multidimensional matrix operations including creating functions, mathematical functions, logical functions, matrix transformations, etc.</p>
+<section id="qtensor-s-functions-and-attributes">
+<h2>QTensor’s Functions and Attributes<a class="headerlink" href="#qtensor-s-functions-and-attributes" title="Permalink to this headline">¶</a></h2>
+<section id="init">
+<h3>__init__<a class="headerlink" href="#init" title="Permalink to this headline">¶</a></h3>
+</section>
+<section id="ndim">
+<h3>ndim<a class="headerlink" href="#ndim" title="Permalink to this headline">¶</a></h3>
+</section>
+<section id="shape">
+<h3>shape<a class="headerlink" href="#shape" title="Permalink to this headline">¶</a></h3>
+</section>
+<section id="size">
+<h3>size<a class="headerlink" href="#size" title="Permalink to this headline">¶</a></h3>
+</section>
+<section id="zero-grad">
+<h3>zero_grad<a class="headerlink" href="#zero-grad" title="Permalink to this headline">¶</a></h3>
+</section>
+<section id="backward">
+<h3>backward<a class="headerlink" href="#backward" title="Permalink to this headline">¶</a></h3>
+</section>
+<section id="to-numpy">
+<h3>to_numpy<a class="headerlink" href="#to-numpy" title="Permalink to this headline">¶</a></h3>
+</section>
+<section id="item">
+<h3>item<a class="headerlink" href="#item" title="Permalink to this headline">¶</a></h3>
+</section>
+<section id="argmax">
+<h3>argmax<a class="headerlink" href="#argmax" title="Permalink to this headline">¶</a></h3>
+</section>
+<section id="argmin">
+<h3>argmin<a class="headerlink" href="#argmin" title="Permalink to this headline">¶</a></h3>
+</section>
+<section id="fill">
+<h3>fill_<a class="headerlink" href="#fill" title="Permalink to this headline">¶</a></h3>
+</section>
+<section id="all">
+<h3>all<a class="headerlink" href="#all" title="Permalink to this headline">¶</a></h3>
+</section>
+<section id="any">
+<h3>any<a class="headerlink" href="#any" title="Permalink to this headline">¶</a></h3>
+</section>
+<section id="fill-rand-binary">
+<h3>fill_rand_binary_<a class="headerlink" href="#fill-rand-binary" title="Permalink to this headline">¶</a></h3>
+</section>
+<section id="fill-rand-signed-uniform">
+<h3>fill_rand_signed_uniform_<a class="headerlink" href="#fill-rand-signed-uniform" title="Permalink to this headline">¶</a></h3>
+</section>
+<section id="fill-rand-uniform">
+<h3>fill_rand_uniform_<a class="headerlink" href="#fill-rand-uniform" title="Permalink to this headline">¶</a></h3>
+</section>
+<section id="fill-rand-normal">
+<h3>fill_rand_normal_<a class="headerlink" href="#fill-rand-normal" title="Permalink to this headline">¶</a></h3>
+</section>
+<section id="qtensor-transpose">
+<h3>QTensor.transpose<a class="headerlink" href="#qtensor-transpose" title="Permalink to this headline">¶</a></h3>
+</section>
+<section id="transpose">
+<h3>transpose_<a class="headerlink" href="#transpose" title="Permalink to this headline">¶</a></h3>
+</section>
+<section id="qtensor-reshape">
+<h3>QTensor.reshape<a class="headerlink" href="#qtensor-reshape" title="Permalink to this headline">¶</a></h3>
+</section>
+<section id="reshape">
+<h3>reshape_<a class="headerlink" href="#reshape" title="Permalink to this headline">¶</a></h3>
+</section>
+<section id="getdata">
+<h3>getdata<a class="headerlink" href="#getdata" title="Permalink to this headline">¶</a></h3>
+</section>
+</section>
+<section id="create-functions">
+<h2>Create Functions<a class="headerlink" href="#create-functions" title="Permalink to this headline">¶</a></h2>
+<section id="ones">
+<h3>ones<a class="headerlink" href="#ones" title="Permalink to this headline">¶</a></h3>
+</section>
+<section id="ones-like">
+<h3>ones_like<a class="headerlink" href="#ones-like" title="Permalink to this headline">¶</a></h3>
+</section>
+<section id="full">
+<h3>full<a class="headerlink" href="#full" title="Permalink to this headline">¶</a></h3>
+</section>
+<section id="full-like">
+<h3>full_like<a class="headerlink" href="#full-like" title="Permalink to this headline">¶</a></h3>
+</section>
+<section id="zeros">
+<h3>zeros<a class="headerlink" href="#zeros" title="Permalink to this headline">¶</a></h3>
+</section>
+<section id="zeros-like">
+<h3>zeros_like<a class="headerlink" href="#zeros-like" title="Permalink to this headline">¶</a></h3>
+</section>
+<section id="arange">
+<h3>arange<a class="headerlink" href="#arange" title="Permalink to this headline">¶</a></h3>
+</section>
+<section id="linspace">
+<h3>linspace<a class="headerlink" href="#linspace" title="Permalink to this headline">¶</a></h3>
+</section>
+<section id="logspace">
+<h3>logspace<a class="headerlink" href="#logspace" title="Permalink to this headline">¶</a></h3>
+</section>
+<section id="eye">
+<h3>eye<a class="headerlink" href="#eye" title="Permalink to this headline">¶</a></h3>
+</section>
+<section id="diag">
+<h3>diag<a class="headerlink" href="#diag" title="Permalink to this headline">¶</a></h3>
+</section>
+<section id="randu">
+<h3>randu<a class="headerlink" href="#randu" title="Permalink to this headline">¶</a></h3>
+</section>
+<section id="randn">
+<h3>randn<a class="headerlink" href="#randn" title="Permalink to this headline">¶</a></h3>
+</section>
+</section>
+<section id="math-functions">
+<h2>Math Functions<a class="headerlink" href="#math-functions" title="Permalink to this headline">¶</a></h2>
+<section id="floor">
+<h3>floor<a class="headerlink" href="#floor" title="Permalink to this headline">¶</a></h3>
+</section>
+<section id="ceil">
+<h3>ceil<a class="headerlink" href="#ceil" title="Permalink to this headline">¶</a></h3>
+</section>
+<section id="round">
+<h3>round<a class="headerlink" href="#round" title="Permalink to this headline">¶</a></h3>
+</section>
+<section id="sort">
+<h3>sort<a class="headerlink" href="#sort" title="Permalink to this headline">¶</a></h3>
+</section>
+<section id="argsort">
+<h3>argsort<a class="headerlink" href="#argsort" title="Permalink to this headline">¶</a></h3>
+</section>
+<section id="add">
+<h3>add<a class="headerlink" href="#add" title="Permalink to this headline">¶</a></h3>
+</section>
+<section id="sub">
+<h3>sub<a class="headerlink" href="#sub" title="Permalink to this headline">¶</a></h3>
+</section>
+<section id="mul">
+<h3>mul<a class="headerlink" href="#mul" title="Permalink to this headline">¶</a></h3>
+</section>
+<section id="divide">
+<h3>divide<a class="headerlink" href="#divide" title="Permalink to this headline">¶</a></h3>
+</section>
+<section id="sums">
+<h3>sums<a class="headerlink" href="#sums" title="Permalink to this headline">¶</a></h3>
+</section>
+<section id="mean">
+<h3>mean<a class="headerlink" href="#mean" title="Permalink to this headline">¶</a></h3>
+</section>
+<section id="median">
+<h3>median<a class="headerlink" href="#median" title="Permalink to this headline">¶</a></h3>
+</section>
+<section id="std">
+<h3>std<a class="headerlink" href="#std" title="Permalink to this headline">¶</a></h3>
+</section>
+<section id="var">
+<h3>var<a class="headerlink" href="#var" title="Permalink to this headline">¶</a></h3>
+</section>
+<section id="matmul">
+<h3>matmul<a class="headerlink" href="#matmul" title="Permalink to this headline">¶</a></h3>
+</section>
+<section id="reciprocal">
+<h3>reciprocal<a class="headerlink" href="#reciprocal" title="Permalink to this headline">¶</a></h3>
+</section>
+<section id="sign">
+<h3>sign<a class="headerlink" href="#sign" title="Permalink to this headline">¶</a></h3>
+</section>
+<section id="neg">
+<h3>neg<a class="headerlink" href="#neg" title="Permalink to this headline">¶</a></h3>
+</section>
+<section id="trace">
+<h3>trace<a class="headerlink" href="#trace" title="Permalink to this headline">¶</a></h3>
+</section>
+<section id="exp">
+<h3>exp<a class="headerlink" href="#exp" title="Permalink to this headline">¶</a></h3>
+</section>
+<section id="acos">
+<h3>acos<a class="headerlink" href="#acos" title="Permalink to this headline">¶</a></h3>
+</section>
+<section id="asin">
+<h3>asin<a class="headerlink" href="#asin" title="Permalink to this headline">¶</a></h3>
+</section>
+<section id="atan">
+<h3>atan<a class="headerlink" href="#atan" title="Permalink to this headline">¶</a></h3>
+</section>
+<section id="sin">
+<h3>sin<a class="headerlink" href="#sin" title="Permalink to this headline">¶</a></h3>
+</section>
+<section id="cos">
+<h3>cos<a class="headerlink" href="#cos" title="Permalink to this headline">¶</a></h3>
+</section>
+<section id="tan">
+<h3>tan<a class="headerlink" href="#tan" title="Permalink to this headline">¶</a></h3>
+</section>
+<section id="tanh">
+<h3>tanh<a class="headerlink" href="#tanh" title="Permalink to this headline">¶</a></h3>
+</section>
+<section id="sinh">
+<h3>sinh<a class="headerlink" href="#sinh" title="Permalink to this headline">¶</a></h3>
+</section>
+<section id="cosh">
+<h3>cosh<a class="headerlink" href="#cosh" title="Permalink to this headline">¶</a></h3>
+</section>
+<section id="power">
+<h3>power<a class="headerlink" href="#power" title="Permalink to this headline">¶</a></h3>
+</section>
+<section id="abs">
+<h3>abs<a class="headerlink" href="#abs" title="Permalink to this headline">¶</a></h3>
+</section>
+<section id="log">
+<h3>log<a class="headerlink" href="#log" title="Permalink to this headline">¶</a></h3>
+</section>
+<section id="sqrt">
+<h3>sqrt<a class="headerlink" href="#sqrt" title="Permalink to this headline">¶</a></h3>
+</section>
+<section id="square">
+<h3>square<a class="headerlink" href="#square" title="Permalink to this headline">¶</a></h3>
+</section>
+</section>
+<section id="logic-functions">
+<h2>Logic Functions<a class="headerlink" href="#logic-functions" title="Permalink to this headline">¶</a></h2>
+<section id="maximum">
+<h3>maximum<a class="headerlink" href="#maximum" title="Permalink to this headline">¶</a></h3>
+</section>
+<section id="minimum">
+<h3>minimum<a class="headerlink" href="#minimum" title="Permalink to this headline">¶</a></h3>
+</section>
+<section id="min">
+<h3>min<a class="headerlink" href="#min" title="Permalink to this headline">¶</a></h3>
+</section>
+<section id="max">
+<h3>max<a class="headerlink" href="#max" title="Permalink to this headline">¶</a></h3>
+</section>
+<section id="clip">
+<h3>clip<a class="headerlink" href="#clip" title="Permalink to this headline">¶</a></h3>
+</section>
+<section id="where">
+<h3>where<a class="headerlink" href="#where" title="Permalink to this headline">¶</a></h3>
+</section>
+<section id="nonzero">
+<h3>nonzero<a class="headerlink" href="#nonzero" title="Permalink to this headline">¶</a></h3>
+</section>
+<section id="isfinite">
+<h3>isfinite<a class="headerlink" href="#isfinite" title="Permalink to this headline">¶</a></h3>
+</section>
+<section id="isinf">
+<h3>isinf<a class="headerlink" href="#isinf" title="Permalink to this headline">¶</a></h3>
+</section>
+<section id="isnan">
+<h3>isnan<a class="headerlink" href="#isnan" title="Permalink to this headline">¶</a></h3>
+</section>
+<section id="isneginf">
+<h3>isneginf<a class="headerlink" href="#isneginf" title="Permalink to this headline">¶</a></h3>
+</section>
+<section id="isposinf">
+<h3>isposinf<a class="headerlink" href="#isposinf" title="Permalink to this headline">¶</a></h3>
+</section>
+<section id="logical-and">
+<h3>logical_and<a class="headerlink" href="#logical-and" title="Permalink to this headline">¶</a></h3>
+</section>
+<section id="logical-or">
+<h3>logical_or<a class="headerlink" href="#logical-or" title="Permalink to this headline">¶</a></h3>
+</section>
+<section id="logical-not">
+<h3>logical_not<a class="headerlink" href="#logical-not" title="Permalink to this headline">¶</a></h3>
+</section>
+<section id="logical-xor">
+<h3>logical_xor<a class="headerlink" href="#logical-xor" title="Permalink to this headline">¶</a></h3>
+</section>
+<section id="greater">
+<h3>greater<a class="headerlink" href="#greater" title="Permalink to this headline">¶</a></h3>
+</section>
+<section id="greater-equal">
+<h3>greater_equal<a class="headerlink" href="#greater-equal" title="Permalink to this headline">¶</a></h3>
+</section>
+<section id="less">
+<h3>less<a class="headerlink" href="#less" title="Permalink to this headline">¶</a></h3>
+</section>
+<section id="less-equal">
+<h3>less_equal<a class="headerlink" href="#less-equal" title="Permalink to this headline">¶</a></h3>
+</section>
+<section id="equal">
+<h3>equal<a class="headerlink" href="#equal" title="Permalink to this headline">¶</a></h3>
+</section>
+<section id="not-equal">
+<h3>not_equal<a class="headerlink" href="#not-equal" title="Permalink to this headline">¶</a></h3>
+</section>
+</section>
+<section id="matrix-operations">
+<h2>Matrix Operations<a class="headerlink" href="#matrix-operations" title="Permalink to this headline">¶</a></h2>
+<section id="select">
+<h3>select<a class="headerlink" href="#select" title="Permalink to this headline">¶</a></h3>
+</section>
+<section id="concatenate">
+<h3>concatenate<a class="headerlink" href="#concatenate" title="Permalink to this headline">¶</a></h3>
+</section>
+<section id="stack">
+<h3>stack<a class="headerlink" href="#stack" title="Permalink to this headline">¶</a></h3>
+</section>
+<section id="permute">
+<h3>permute<a class="headerlink" href="#permute" title="Permalink to this headline">¶</a></h3>
+</section>
+<section id="id1">
+<h3>transpose<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h3>
+</section>
+<section id="tile">
+<h3>tile<a class="headerlink" href="#tile" title="Permalink to this headline">¶</a></h3>
+</section>
+<section id="squeeze">
+<h3>squeeze<a class="headerlink" href="#squeeze" title="Permalink to this headline">¶</a></h3>
+</section>
+<section id="unsqueeze">
+<h3>unsqueeze<a class="headerlink" href="#unsqueeze" title="Permalink to this headline">¶</a></h3>
+</section>
+<section id="swapaxis">
+<h3>swapaxis<a class="headerlink" href="#swapaxis" title="Permalink to this headline">¶</a></h3>
+</section>
+<section id="flatten">
+<h3>flatten<a class="headerlink" href="#flatten" title="Permalink to this headline">¶</a></h3>
+</section>
+</section>
+<section id="utility-functions">
+<h2>Utility Functions<a class="headerlink" href="#utility-functions" title="Permalink to this headline">¶</a></h2>
+<section id="to-tensor">
+<h3>to_tensor<a class="headerlink" href="#to-tensor" title="Permalink to this headline">¶</a></h3>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="qml_demo.html" class="btn btn-neutral float-left" title="Quantum Machine Learning Demos" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="nn.html" class="btn btn-neutral float-right" title="Classical Neural Network Module" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2021, Original Quantum.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

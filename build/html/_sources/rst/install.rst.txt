@@ -1,0 +1,259 @@
+Steps of VQNet Installation
+==================================
+
+VQNet python package Installation
+----------------------------------
+
+We provide different pre-compiled packages based on python with Linux, Windows, MacOS, which Python version >= 3.6, numpy>=1.18.5 and pyqpanda>=3.7.8 will required. 
+
+
+.. code-block::
+
+    pip install pyvqnet
+
+VQNet's installation successfully.
+----------------------------------
+
+.. code-block::
+
+    import pyvqnet 
+    from pyvqnet.tensor import *
+    a = arange(1,25).reshape([2, 3, 4])
+    print(a)
+
+A simple case of VQNet
+---------------------
+Here we introduced a case which consisted with classical neural network modules and quantum modules of VQNet to describing the workflow of quantum machine learning. It refers to `Data re-uploading for a universal quantum classifier <https://arxiv.org/abs/1907.02085>`.
+Generally, there are following parts of quantum computing module in quantum machine learning:
+
+(1)Encoder:encoding classical data into quantum state;
+(2)Ansats: traning the parameters in Parameterized Quantum Gates;
+(3)Measurement: measuring the value of a qubit(projection of qubit's quantum state in a specified axis).
+
+For the computation of quantum computing module is differentiable, so quantum computing module and classical computing module(convolution layer, pooling layer, fully connected layer, activation layer, and multiple optimized algorithm model) be supported by VQNet.
+.. figure:: ./images/classic-quantum.PNG
+
+Using the interface of quantum logic gate, quantum simulator, Measurement of 'pyqpanda<https://pyqpanda-toturial.readthedocs.io/zh/latest/>' provided by Origin Quantum.
+Building a quantum computing module by the pyqpanda, it can be trained as a part of VQNet.
+Based on a qubit, using multiple Parameterized rotated gate like 'RX', 'RY', 'RZ' to encoding 'x' into a quantum state as a input, meanwhile using 'prob_run_dict()' to detecting the probilities of Measurement as a output.
+
+.. code-block::
+
+    def qdrl_circuit(input,weights,qlist,clist,machine):
+
+            x1 = input.squeeze()
+            param1 = weights.squeeze()
+            circult = pq.QCircuit()
+            circult.insert(pq.RZ(qlist[0], x1[0]))
+            circult.insert(pq.RY(qlist[0], x1[1]))
+            circult.insert(pq.RZ(qlist[0], x1[2]))
+            circult.insert(pq.RZ(qlist[0], param1[0]))
+            circult.insert(pq.RY(qlist[0], param1[1]))
+            circult.insert(pq.RZ(qlist[0], param1[2]))
+            circult.insert(pq.RZ(qlist[0], x1[0]))
+            circult.insert(pq.RY(qlist[0], x1[1]))
+            circult.insert(pq.RZ(qlist[0], x1[2]))
+            circult.insert(pq.RZ(qlist[0], param1[3]))
+            circult.insert(pq.RY(qlist[0], param1[4]))
+            circult.insert(pq.RZ(qlist[0], param1[5]))
+            circult.insert(pq.RZ(qlist[0], x1[0]))
+            circult.insert(pq.RY(qlist[0], x1[1]))
+            circult.insert(pq.RZ(qlist[0], x1[2]))
+            circult.insert(pq.RZ(qlist[0], param1[6]))
+            circult.insert(pq.RY(qlist[0], param1[7]))
+            circult.insert(pq.RZ(qlist[0], param1[8]))
+
+            prog = pq.QProg()
+            
+            prog.insert(circult)
+
+            prob = machine.prob_run_dict(prog, qlist, -1)
+            prob = list(prob.values())
+            return prob
+
+Our task is classify these data which is generated randomly based on binary classification algorithm. In the model, 0 is a circle's center, points within radius by 1 (2 dimension)colored in red are one category, and blue is anothe
+
+.. figure:: ./images/origin_circle.png
+
+Traning the workflow of testing code
+
+.. code-block::
+
+    # import required libraries and functions
+    from pyvqnet.qnn.qdrl.vqnet_model import qdrl_circuit
+    from pyvqnet.qnn.quantumlayer import QuantumLayer
+    from pyvqnet.optim import adam
+    from pyvqnet.nn.loss import CategoricalCrossEntropy
+    from pyvqnet.tensor.tensor import QTensor
+    import numpy as np
+    from pyvqnet.nn.module import Module
+
+
+Defining a model, where '__init__' function defines the internal neural network modules and quantum modules, and 'forward' function defines the forward function,'QuantumLayer' is an abstract class that encapsulates quantum computing.
+There will calculating the parameters' gradient automatically with'qdrl_circuit', 'param_num', 'cpu', 'qbit_num'.
+
+
+.. code-block::
+
+    # uumber of parameters to be trained 
+    param_num = n_eval
+    # qubit number
+    qbit_num  = 1
+    class Model(Module):
+        def __init__(self):
+            super(Model, self).__init__()
+            self.pqc = QuantumLayer(qdrl_circuit,param_num,"cpu",qbit_num)
+            
+        def forward(self, x):
+            x = self.pqc(x)
+            return x
+
+Definite some functions of training model 
+
+.. code-block::
+
+    # a function to generating the raw data randomly
+    def circle(samples:int,  rads =  np.sqrt(2/np.pi)) :
+        data_x, data_y = [], []
+        for i in range(samples):
+            x = 2*np.random.rand(2) - 1
+            y = [0,1]
+            if np.linalg.norm(x) < rads:
+                y = [1,0]
+            data_x.append(x)
+            data_y.append(y)
+        return np.array(data_x), np.array(data_y)
+
+    # a funntion to loading data
+    def get_minibatch_data(x_data, label, batch_size):
+        for i in range(0,x_data.shape[0]-batch_size+1,batch_size):
+            idxs = slice(i, i + batch_size)
+            yield x_data[idxs], label[idxs]
+
+    # a function to computing the accuracy
+    def get_score(pred, label):
+        pred, label = np.array(pred.data), np.array(label.data)
+        pred = np.argmax(pred,axis=1)
+        score = np.argmax(label,1)
+        score = np.sum(pred == score)
+        return score
+
+VQNet following the general workflow of machine learning: loading the data iteratively, front propagation, calculate loss function, back propagation, update the parameter, etc.
+
+.. code-block::
+
+    # instantiating a model
+    model = Model()
+    # using Adam to define a optimizer
+    optimizer = adam.Adam(model.parameters(),lr =0.6)
+    # using cross-entropy to define a loss function
+    Closs = CategoricalCrossEntropy()
+
+A function to training the model
+
+
+.. code-block::
+
+    def train():
+            
+        #  generate data to be trained randomly   
+        x_train, y_train = circle(500)
+        x_train = np.hstack((x_train, np.zeros((x_train.shape[0], 1))))  
+        # define the number of data about each batch
+        batch_size = 32
+        # Maximum of training iteration times
+        epoch = 10
+        print("start training...........")
+        for i in range(epoch):
+            model.train()
+            accuracy = 0
+            count = 0
+            loss = 0
+            for data, label in get_minibatch_data(x_train, y_train,batch_size):
+                # clear the cache of optimizer
+                optimizer.zero_grad()
+                # forward computing
+                output = model(data)
+                # calculating loss function
+                losss = Closs(label, output)
+                # anti-propagation
+                losss.backward()
+                # update the parameter of optimizer
+                optimizer._step()
+                # calculate the accuracy
+                accuracy += get_score(output,label)
+
+                loss += losss.item()
+                count += batch_size
+                
+            print(f"epoch:{i}, train_accuracy:{accuracy/count}")
+            print(f"epoch:{i}, train_loss:{loss/count}\n")
+            
+A function to validating the model
+
+.. code-block::
+
+    def test():
+        
+        batch_size = 1
+        model.eval()
+        print("start eval...................")
+        xtest, y_test = circle(500)
+        test_accuracy = 0
+        count = 0
+        x_test = np.hstack((xtest, np.zeros((xtest.shape[0], 1))))
+        predicted_test = []
+        for test_data, test_label in get_minibatch_data(x_test,y_test, batch_size):
+
+            test_data, test_label = QTensor(test_data),QTensor(test_label)
+            output = model(test_data)
+            test_accuracy += get_score(output, test_label)
+            count += batch_size
+
+        print(f"test_accuracy:{test_accuracy/count}")
+
+Training the test result
+
+.. code-block::
+
+    start training...........
+    epoch:0, train_accuracy:0.6145833333333334
+    epoch:0, train_loss:0.020432369535168013
+
+    epoch:1, train_accuracy:0.6854166666666667
+    epoch:1, train_loss:0.01872217481335004
+
+    epoch:2, train_accuracy:0.8104166666666667
+    epoch:2, train_loss:0.016634768371780715
+
+    epoch:3, train_accuracy:0.7479166666666667
+    epoch:3, train_loss:0.016975031544764835
+
+    epoch:4, train_accuracy:0.7875
+    epoch:4, train_loss:0.016502128106852372
+
+    epoch:5, train_accuracy:0.8083333333333333
+    epoch:5, train_loss:0.0163204787299037
+
+    epoch:6, train_accuracy:0.8083333333333333
+    epoch:6, train_loss:0.01634311651190122
+
+    epoch:7, train_loss:0.016330583145221074
+
+    epoch:8, train_accuracy:0.8125
+    epoch:8, train_loss:0.01629052646458149
+
+    epoch:9, train_accuracy:0.8083333333333333
+    epoch:9, train_loss:0.016270687493185203
+
+    start eval...................
+    test_accuracy:0.826
+
+.. figure:: ./images/qdrl_for_simple.png
+
+
+
+
+
+
+

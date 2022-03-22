@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en-English" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Quantum Machine Learning Module &mdash; VQNET v0.13 documentation</title>
+      <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/doctools.js"></script>
+        <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="prev" title="Classical Neural Network Module" href="nn.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../index.html" class="icon icon-home"> VQNET
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Installation Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="install.html">Steps of VQNet Installation</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Hand by hand tutorial</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="qml_demo.html">Quantum Machine Learning Demos</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">The API</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="QTensor.html">QTensor Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="nn.html">Classical Neural Network Module</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Quantum Machine Learning Module</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#quantum-computing-layer">Quantum Computing Layer</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#quantumlayer">QuantumLayer</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#quantumlayerv2">QuantumLayerV2</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#noisequantumlayer">NoiseQuantumLayer</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#vqclayer">VQCLayer</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#qconv">Qconv</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#qlinear">QLinear</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#compatiblelayer">Compatiblelayer</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#quantum-gate">Quantum gate</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#basic-quantum-gates">Basic quantum gates</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#basicembeddingcircuit">BasicEmbeddingCircuit</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#angleembeddingcircuit">AngleEmbeddingCircuit</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#amplitudeembeddingcircuit">AmplitudeEmbeddingCircuit</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#iqpembeddingcircuits">IQPEmbeddingCircuits</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#rotcircuit">RotCircuit</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#crotcircuit">CRotCircuit</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#cswapcircuit">CSWAPcircuit</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#measure-the-quantum-circuit">Measure the quantum circuit</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#expval">expval</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#quantummeasure">QuantumMeasure</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#probsmeasure">ProbsMeasure</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">VQNET</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
+      <li>Quantum Machine Learning Module</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/rst/qnn.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="quantum-machine-learning-module">
+<h1>Quantum Machine Learning Module<a class="headerlink" href="#quantum-machine-learning-module" title="Permalink to this headline">¶</a></h1>
+<section id="quantum-computing-layer">
+<h2>Quantum Computing Layer<a class="headerlink" href="#quantum-computing-layer" title="Permalink to this headline">¶</a></h2>
+<section id="quantumlayer">
+<span id="id1"></span><h3>QuantumLayer<a class="headerlink" href="#quantumlayer" title="Permalink to this headline">¶</a></h3>
+<p>QuantumLayer is a package class of automatic derivative module that supports quantum parametric circuits as parameters. You can define a function as an argument, such as <code class="docutils literal notranslate"><span class="pre">qprog_with_meansure</span></code>, This function needs to contain the quantum circuit defined by pyQPanda: It generally contains coding-circuit, evolution-circuit and measurement-operation.
+This QuantumLayer class can be embedded into the hybrid quantum classical machine learning model and minimize the objective function or loss function of the hybrid quantum classical model through the classical gradient descent method.
+You can specify the gradient calculation method of quantum circuit parameters in <code class="docutils literal notranslate"><span class="pre">QuantumLayer</span></code> by change the parameter <code class="docutils literal notranslate"><span class="pre">diff_method</span></code>. <code class="docutils literal notranslate"><span class="pre">QuantumLayer</span></code> currently supports two  methods, one is <code class="docutils literal notranslate"><span class="pre">finite_diff</span></code> and the other is <code class="docutils literal notranslate"><span class="pre">parameter-shift</span></code> methods.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">finite_diff</span></code> method is one of the most traditional and common numerical methods for estimating function gradient.The main idea is to replace partial derivatives with differences:</p>
+<div class="math notranslate nohighlight">
+\[f^{\prime}(x)=\lim _{h \rightarrow 0} \frac{f(x+h)-f(x)}{h}\]</div>
+<p>For the <code class="docutils literal notranslate"><span class="pre">parameter-shift</span></code> method we use the objective function, such as:</p>
+<div class="math notranslate nohighlight">
+\[O(\theta)=\left\langle 0\left|U^{\dagger}(\theta) H U(\theta)\right| 0\right\rangle\]</div>
+<p>It is theoretically possible to calculate the gradient of parameters about Hamiltonian in a quantum circuit by the more precise method: <code class="docutils literal notranslate"><span class="pre">parameter-shift</span></code>.</p>
+<div class="math notranslate nohighlight">
+\[\nabla O(\theta)=
+\frac{1}{2}\left[O\left(\theta+\frac{\pi}{2}\right)-O\left(\theta-\frac{\pi}{2}\right)\right]\]</div>
+</section>
+<section id="quantumlayerv2">
+<h3>QuantumLayerV2<a class="headerlink" href="#quantumlayerv2" title="Permalink to this headline">¶</a></h3>
+<p>If you are more familiar with pyQPanda syntax, please using QuantumLayerV2 class, you can define the quantum circuits function by using <code class="docutils literal notranslate"><span class="pre">qubits</span></code>, <code class="docutils literal notranslate"><span class="pre">cubits</span></code> and <code class="docutils literal notranslate"><span class="pre">machine</span></code>, then take it as a argument <code class="docutils literal notranslate"><span class="pre">qprog_with_meansure</span></code> of <code class="docutils literal notranslate"><span class="pre">QuantumLayerV2</span></code>.</p>
+</section>
+<section id="noisequantumlayer">
+<h3>NoiseQuantumLayer<a class="headerlink" href="#noisequantumlayer" title="Permalink to this headline">¶</a></h3>
+<p>In the real quantum computer, due to the physical characteristics of the quantum bit, there is always inevitable calculation error. In order to better simulate this error in quantum virtual machine, VQNet also supports quantum virtual machine with noise. The simulation of quantum virtual machine with noise is closer to the real quantum computer. We can customize the supported logic gate type and the noise model supported by the logic gate.
+The existing supported quantum noise model is defined in QPanda, reference links <a class="reference external" href="https://pyqpanda-toturial.readthedocs.io/zh/latest/NoiseQVM.html">QPANDA2</a> .</p>
+<p>We can use NoiseQuantumLayer to define an automatic microclassification of quantum circuits. You can define a function as an argument <code class="docutils literal notranslate"><span class="pre">qprog_with_meansure</span></code>. This function needs to contain the quantum circuit defined by pyQPanda, as also you need to pass in a argument <code class="docutils literal notranslate"><span class="pre">noise_set_config</span></code>, by using the pyQPanda interface to set up the noise model.</p>
+<p>Here is an example of <code class="docutils literal notranslate"><span class="pre">noise_set_config</span></code>, here we add the noise model BITFLIP_KRAUS_OPERATOR where the noise argument <code class="docutils literal notranslate"><span class="pre">p=0.01</span></code> to the quantum gate <code class="docutils literal notranslate"><span class="pre">RX</span></code> , <code class="docutils literal notranslate"><span class="pre">RY</span></code> , <code class="docutils literal notranslate"><span class="pre">RZ</span></code> , <code class="docutils literal notranslate"><span class="pre">X</span></code> , <code class="docutils literal notranslate"><span class="pre">Y</span></code> , <code class="docutils literal notranslate"><span class="pre">Z</span></code> , <code class="docutils literal notranslate"><span class="pre">H</span></code>, etc.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">noise_set_config</span><span class="p">(</span><span class="n">qvm</span><span class="p">,</span><span class="n">q</span><span class="p">):</span>
+
+        <span class="n">p</span> <span class="o">=</span> <span class="mf">0.01</span>
+        <span class="n">qvm</span><span class="o">.</span><span class="n">set_noise_model</span><span class="p">(</span><span class="n">NoiseModel</span><span class="o">.</span><span class="n">BITFLIP_KRAUS_OPERATOR</span><span class="p">,</span> <span class="n">GateType</span><span class="o">.</span><span class="n">PAULI_X_GATE</span><span class="p">,</span> <span class="n">p</span><span class="p">)</span>
+        <span class="n">qvm</span><span class="o">.</span><span class="n">set_noise_model</span><span class="p">(</span><span class="n">NoiseModel</span><span class="o">.</span><span class="n">BITFLIP_KRAUS_OPERATOR</span><span class="p">,</span> <span class="n">GateType</span><span class="o">.</span><span class="n">PAULI_Y_GATE</span><span class="p">,</span> <span class="n">p</span><span class="p">)</span>
+        <span class="n">qvm</span><span class="o">.</span><span class="n">set_noise_model</span><span class="p">(</span><span class="n">NoiseModel</span><span class="o">.</span><span class="n">BITFLIP_KRAUS_OPERATOR</span><span class="p">,</span> <span class="n">GateType</span><span class="o">.</span><span class="n">PAULI_Z_GATE</span><span class="p">,</span> <span class="n">p</span><span class="p">)</span>
+        <span class="n">qvm</span><span class="o">.</span><span class="n">set_noise_model</span><span class="p">(</span><span class="n">NoiseModel</span><span class="o">.</span><span class="n">BITFLIP_KRAUS_OPERATOR</span><span class="p">,</span> <span class="n">GateType</span><span class="o">.</span><span class="n">RX_GATE</span><span class="p">,</span> <span class="n">p</span><span class="p">)</span>
+        <span class="n">qvm</span><span class="o">.</span><span class="n">set_noise_model</span><span class="p">(</span><span class="n">NoiseModel</span><span class="o">.</span><span class="n">BITFLIP_KRAUS_OPERATOR</span><span class="p">,</span> <span class="n">GateType</span><span class="o">.</span><span class="n">RY_GATE</span><span class="p">,</span> <span class="n">p</span><span class="p">)</span>
+        <span class="n">qvm</span><span class="o">.</span><span class="n">set_noise_model</span><span class="p">(</span><span class="n">NoiseModel</span><span class="o">.</span><span class="n">BITFLIP_KRAUS_OPERATOR</span><span class="p">,</span> <span class="n">GateType</span><span class="o">.</span><span class="n">RZ_GATE</span><span class="p">,</span> <span class="n">p</span><span class="p">)</span>
+        <span class="n">qvm</span><span class="o">.</span><span class="n">set_noise_model</span><span class="p">(</span><span class="n">NoiseModel</span><span class="o">.</span><span class="n">BITFLIP_KRAUS_OPERATOR</span><span class="p">,</span> <span class="n">GateType</span><span class="o">.</span><span class="n">RY_GATE</span><span class="p">,</span> <span class="n">p</span><span class="p">)</span>
+        <span class="n">qvm</span><span class="o">.</span><span class="n">set_noise_model</span><span class="p">(</span><span class="n">NoiseModel</span><span class="o">.</span><span class="n">BITFLIP_KRAUS_OPERATOR</span><span class="p">,</span> <span class="n">GateType</span><span class="o">.</span><span class="n">HADAMARD_GATE</span><span class="p">,</span> <span class="n">p</span><span class="p">)</span>
+        <span class="n">qves</span> <span class="o">=</span><span class="p">[]</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">q</span><span class="p">)</span><span class="o">-</span><span class="mi">1</span><span class="p">):</span>
+                <span class="n">qves</span><span class="o">.</span><span class="n">append</span><span class="p">([</span><span class="n">q</span><span class="p">[</span><span class="n">i</span><span class="p">],</span><span class="n">q</span><span class="p">[</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">]])</span><span class="c1">#</span>
+        <span class="n">qves</span><span class="o">.</span><span class="n">append</span><span class="p">([</span><span class="n">q</span><span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="n">q</span><span class="p">)</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span><span class="n">q</span><span class="p">[</span><span class="mi">0</span><span class="p">]])</span>
+        <span class="n">qvm</span><span class="o">.</span><span class="n">set_noise_model</span><span class="p">(</span><span class="n">NoiseModel</span><span class="o">.</span><span class="n">DAMPING_KRAUS_OPERATOR</span><span class="p">,</span> <span class="n">GateType</span><span class="o">.</span><span class="n">CNOT_GATE</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">qves</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">qvm</span>
+</pre></div>
+</div>
+</section>
+<section id="vqclayer">
+<h3>VQCLayer<a class="headerlink" href="#vqclayer" title="Permalink to this headline">¶</a></h3>
+<p>Based on the variable quantum circuit(VariationalQuantumCircuit) of pyQPanda, VQNet provides an abstract quantum computing layer called VQCLayer. You just only needs to define a class <code class="docutils literal notranslate"><span class="pre">VQC_wrapper</span></code>,
+We can build machine learning models, bu defining the corresponding quantum gates of circuits and measurement functions based on pyQPanda VariationalQuantumCircuit.</p>
+<p>In <cite>VQC_wrapper</cite>, you can use the common logic gate function ‘build_common_circuits’ to build a sub-circuits of the model with a change in line structure, use the VQG in ‘build_vqc_circuits’ to build sub-circuits with constant structure and variable parameters,
+use the ‘run’ function to define the circuit operations and measurement.</p>
+<p>Send the instantiated object ‘VQC_wrapper’ as a parameter to ‘VQCLayer’</p>
+</section>
+<section id="qconv">
+<h3>Qconv<a class="headerlink" href="#qconv" title="Permalink to this headline">¶</a></h3>
+<p>Qconv is a quantum convolution algorithm interface.
+Quantum convolution operation adopts quantum circuit to carry out convolution operation on classical data, which does not need to calculate multiplication and addition operation, but only needs to encode data into quantum state, and then obtain the final convolution result through derivation operation and measurement of quantum circuit.
+Apply for the same number of quantum bits according to the number of input data in the range of the convolution kernel, and then construct a quantum circuit for calculation.</p>
+<img alt="../_images/qcnn.png" src="../_images/qcnn.png" />
+<p>First we need encoding by inserting <span class="math notranslate nohighlight">\(RY\)</span> and <span class="math notranslate nohighlight">\(RZ\)</span> gates on each qubit, then, we build the entanglement circuit through the <span class="math notranslate nohighlight">\(CNOT\)</span> gate, finally, we constructed the parameter circuit through <span class="math notranslate nohighlight">\(U3 gate\)</span> .
+The sample is as follows:</p>
+<img alt="../_images/qcnn_cir.png" src="../_images/qcnn_cir.png" />
+</section>
+<section id="qlinear">
+<h3>QLinear<a class="headerlink" href="#qlinear" title="Permalink to this headline">¶</a></h3>
+<p>QLinear implements a quantum full connection algorithm. Firstly, the data is encoded into the quantum state, and then the final fully connected result is obtained through the derivation operation and measurement of the quantum circuit.</p>
+<img alt="../_images/qlinear_cir.png" src="../_images/qlinear_cir.png" />
+</section>
+<section id="compatiblelayer">
+<h3>Compatiblelayer<a class="headerlink" href="#compatiblelayer" title="Permalink to this headline">¶</a></h3>
+<p>VQNet can not only support <code class="docutils literal notranslate"><span class="pre">QPANDA</span></code> quantum circuit, but also support other quantum computing frameworks(such as <code class="docutils literal notranslate"><span class="pre">TFQ</span></code>, <code class="docutils literal notranslate"><span class="pre">Qiskit</span></code> etc), These frameworks can be used to build quantum circuits as part of the quantum computation of VQNet hybrid quantum classical optimization.
+VQNet provides an automatic differential quantum circuit operation interface <code class="docutils literal notranslate"><span class="pre">Compatiblelayer</span></code> . The argument to build <cite>Compatiblelayer</cite> requires passing in a class that defines the third-party library quantum circuit and its running and measuring function <cite>run</cite>.
+By using <code class="docutils literal notranslate"><span class="pre">Compatiblelayer</span></code> , the input of quantum circuit and the automatic differentiation of parameters can be realized by VQNet.
+We provide an example using the qiskit circuit: <a class="reference internal" href="qml_demo.html#my-reference-label"><span class="std std-ref">Run model training of qiskit line in VQNet using QiskitLayer</span></a>.</p>
+</section>
+</section>
+<section id="quantum-gate">
+<h2>Quantum gate<a class="headerlink" href="#quantum-gate" title="Permalink to this headline">¶</a></h2>
+<p>The way to deal with qubits is called quantum gates. Using quantum gates, we consciously evolve quantum states. Quantum gates are the basis of quantum algorithms.</p>
+<section id="basic-quantum-gates">
+<h3>Basic quantum gates<a class="headerlink" href="#basic-quantum-gates" title="Permalink to this headline">¶</a></h3>
+<p>In VQNet, we use each logic gate of <a class="reference external" href="https://pyqpanda-toturial.readthedocs.io/zh/latest/">pyQPanda</a> developed by the original quantum to build quantum circuit and conduct quantum simulation.
+The gates currently supported by pyQPanda can be defined in pyQPanda’s <a class="reference external" href="https://pyqpanda-toturial.readthedocs.io/zh/latest/">quantum gate</a> section.
+In addition, VQNet also encapsulates some quantum gate combinations commonly used in quantum machine learning.</p>
+</section>
+<section id="basicembeddingcircuit">
+<h3>BasicEmbeddingCircuit<a class="headerlink" href="#basicembeddingcircuit" title="Permalink to this headline">¶</a></h3>
+</section>
+<section id="angleembeddingcircuit">
+<h3>AngleEmbeddingCircuit<a class="headerlink" href="#angleembeddingcircuit" title="Permalink to this headline">¶</a></h3>
+</section>
+<section id="amplitudeembeddingcircuit">
+<h3>AmplitudeEmbeddingCircuit<a class="headerlink" href="#amplitudeembeddingcircuit" title="Permalink to this headline">¶</a></h3>
+</section>
+<section id="iqpembeddingcircuits">
+<h3>IQPEmbeddingCircuits<a class="headerlink" href="#iqpembeddingcircuits" title="Permalink to this headline">¶</a></h3>
+</section>
+<section id="rotcircuit">
+<h3>RotCircuit<a class="headerlink" href="#rotcircuit" title="Permalink to this headline">¶</a></h3>
+</section>
+<section id="crotcircuit">
+<h3>CRotCircuit<a class="headerlink" href="#crotcircuit" title="Permalink to this headline">¶</a></h3>
+</section>
+<section id="cswapcircuit">
+<h3>CSWAPcircuit<a class="headerlink" href="#cswapcircuit" title="Permalink to this headline">¶</a></h3>
+</section>
+</section>
+<section id="measure-the-quantum-circuit">
+<h2>Measure the quantum circuit<a class="headerlink" href="#measure-the-quantum-circuit" title="Permalink to this headline">¶</a></h2>
+<section id="expval">
+<h3>expval<a class="headerlink" href="#expval" title="Permalink to this headline">¶</a></h3>
+<dl class="py function">
+<dt class="sig sig-object py" id="pyvqnet.qnn.measure.expval">
+<span class="sig-prename descclassname"><span class="pre">pyvqnet.qnn.measure.</span></span><span class="sig-name descname"><span class="pre">expval</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">machine</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prog</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pauli_str_dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">qlists</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyvqnet.qnn.measure.expval" title="Permalink to this definition">¶</a></dt>
+<dd><p>Expectation value of the supplied Hamiltonian observables</p>
+<p>if the observables are <span class="math notranslate nohighlight">\(0.7Z\otimes X\otimes I+0.2I\otimes Z\otimes I\)</span>,
+then <code class="docutils literal notranslate"><span class="pre">Hamiltonian</span></code> <code class="docutils literal notranslate"><span class="pre">dict</span></code> would be <code class="docutils literal notranslate"><span class="pre">{{'Z0,</span> <span class="pre">X1':0.7}</span> <span class="pre">,{'Z1':0.2}}</span></code> .</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>machine</strong> – machine created by qpanda</p></li>
+<li><p><strong>prog</strong> – quantum program created by qpanda</p></li>
+<li><p><strong>pauli_str_dict</strong> – Hamiltonian observables</p></li>
+<li><p><strong>qlists</strong> – qubit allocated by pyQpanda.qAlloc_many()</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>expectation</p>
+</dd>
+</dl>
+<p>Example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="nb">input</span> <span class="o">=</span> <span class="p">[</span><span class="mf">0.56</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">]</span>
+<span class="n">m_machine</span> <span class="o">=</span> <span class="n">pq</span><span class="o">.</span><span class="n">init_quantum_machine</span><span class="p">(</span><span class="n">pq</span><span class="o">.</span><span class="n">QMachineType</span><span class="o">.</span><span class="n">CPU</span><span class="p">)</span>
+<span class="n">m_prog</span> <span class="o">=</span> <span class="n">pq</span><span class="o">.</span><span class="n">QProg</span><span class="p">()</span>
+<span class="n">m_qlist</span> <span class="o">=</span> <span class="n">m_machine</span><span class="o">.</span><span class="n">qAlloc_many</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>
+<span class="n">cir</span> <span class="o">=</span> <span class="n">pq</span><span class="o">.</span><span class="n">QCircuit</span><span class="p">()</span>
+<span class="n">cir</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="n">pq</span><span class="o">.</span><span class="n">RZ</span><span class="p">(</span><span class="n">m_qlist</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span><span class="nb">input</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span>
+<span class="n">cir</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="n">pq</span><span class="o">.</span><span class="n">CNOT</span><span class="p">(</span><span class="n">m_qlist</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span><span class="n">m_qlist</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
+<span class="n">cir</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="n">pq</span><span class="o">.</span><span class="n">RY</span><span class="p">(</span><span class="n">m_qlist</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span><span class="nb">input</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
+<span class="n">cir</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="n">pq</span><span class="o">.</span><span class="n">CNOT</span><span class="p">(</span><span class="n">m_qlist</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span><span class="n">m_qlist</span><span class="p">[</span><span class="mi">2</span><span class="p">]))</span>
+<span class="n">m_prog</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="n">cir</span><span class="p">)</span>
+<span class="n">pauli_dict</span>  <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;Z0 X1&#39;</span><span class="p">:</span><span class="mi">10</span><span class="p">,</span><span class="s1">&#39;Y2&#39;</span><span class="p">:</span><span class="o">-</span><span class="mf">0.543</span><span class="p">}</span>
+<span class="n">exp2</span> <span class="o">=</span> <span class="n">expval</span><span class="p">(</span><span class="n">m_machine</span><span class="p">,</span><span class="n">m_prog</span><span class="p">,</span><span class="n">pauli_dict</span><span class="p">,</span><span class="n">m_qlist</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">exp2</span><span class="p">)</span>
+<span class="n">pq</span><span class="o">.</span><span class="n">destroy_quantum_machine</span><span class="p">(</span><span class="n">m_machine</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+</section>
+<section id="quantummeasure">
+<h3>QuantumMeasure<a class="headerlink" href="#quantummeasure" title="Permalink to this headline">¶</a></h3>
+<dl class="py function">
+<dt class="sig sig-object py" id="pyvqnet.qnn.measure.QuantumMeasure">
+<span class="sig-prename descclassname"><span class="pre">pyvqnet.qnn.measure.</span></span><span class="sig-name descname"><span class="pre">QuantumMeasure</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">measure_qubits</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prog</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">machine</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">qubits</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyvqnet.qnn.measure.QuantumMeasure" title="Permalink to this definition">¶</a></dt>
+<dd><p>calculate circuits quantum measurement
+qpanda reference: <a class="reference external" href="https://pyqpanda-toturial.readthedocs.io/zh/latest/Measure.html?highlight=measure_all">https://pyqpanda-toturial.readthedocs.io/zh/latest/Measure.html?highlight=measure_all</a></p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>measure_qubits</strong> – list contains measure qubits index.</p></li>
+<li><p><strong>prog</strong> – quantum program from qpanda</p></li>
+<li><p><strong>qlists</strong> – Rot qubit allocated by pyQpanda.qAlloc_many()</p></li>
+<li><p><strong>slots</strong> – measure time</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>prob of measure qubits</p>
+</dd>
+</dl>
+<p>Example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="nb">input</span> <span class="o">=</span> <span class="p">[</span><span class="mf">0.56</span><span class="p">,</span><span class="mf">0.1</span><span class="p">]</span>
+<span class="n">measure_qubits</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">2</span><span class="p">]</span>
+<span class="n">m_machine</span> <span class="o">=</span> <span class="n">pq</span><span class="o">.</span><span class="n">init_quantum_machine</span><span class="p">(</span><span class="n">pq</span><span class="o">.</span><span class="n">QMachineType</span><span class="o">.</span><span class="n">CPU</span><span class="p">)</span>
+<span class="n">m_prog</span> <span class="o">=</span> <span class="n">pq</span><span class="o">.</span><span class="n">QProg</span><span class="p">()</span>
+<span class="n">m_qlist</span> <span class="o">=</span> <span class="n">m_machine</span><span class="o">.</span><span class="n">qAlloc_many</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>
+
+<span class="n">cir</span> <span class="o">=</span> <span class="n">pq</span><span class="o">.</span><span class="n">QCircuit</span><span class="p">()</span>
+<span class="n">cir</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="n">pq</span><span class="o">.</span><span class="n">RZ</span><span class="p">(</span><span class="n">m_qlist</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span><span class="nb">input</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span>
+<span class="n">cir</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="n">pq</span><span class="o">.</span><span class="n">CNOT</span><span class="p">(</span><span class="n">m_qlist</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span><span class="n">m_qlist</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
+<span class="n">cir</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="n">pq</span><span class="o">.</span><span class="n">RY</span><span class="p">(</span><span class="n">m_qlist</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span><span class="nb">input</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
+<span class="n">cir</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="n">pq</span><span class="o">.</span><span class="n">CNOT</span><span class="p">(</span><span class="n">m_qlist</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span><span class="n">m_qlist</span><span class="p">[</span><span class="mi">2</span><span class="p">]))</span>
+<span class="n">cir</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="n">pq</span><span class="o">.</span><span class="n">H</span><span class="p">(</span><span class="n">m_qlist</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span>
+<span class="n">cir</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="n">pq</span><span class="o">.</span><span class="n">H</span><span class="p">(</span><span class="n">m_qlist</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
+<span class="n">cir</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="n">pq</span><span class="o">.</span><span class="n">H</span><span class="p">(</span><span class="n">m_qlist</span><span class="p">[</span><span class="mi">2</span><span class="p">]))</span>
+
+<span class="n">m_prog</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="n">cir</span><span class="p">)</span>
+<span class="n">rlt_quant</span> <span class="o">=</span> <span class="n">QuantumMeasure</span><span class="p">(</span><span class="n">measure_qubits</span><span class="p">,</span><span class="n">m_prog</span><span class="p">,</span><span class="n">m_machine</span><span class="p">,</span><span class="n">m_qlist</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">rlt_quant</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+</section>
+<section id="probsmeasure">
+<h3>ProbsMeasure<a class="headerlink" href="#probsmeasure" title="Permalink to this headline">¶</a></h3>
+<dl class="py function">
+<dt class="sig sig-object py" id="pyvqnet.qnn.measure.ProbsMeasure">
+<span class="sig-prename descclassname"><span class="pre">pyvqnet.qnn.measure.</span></span><span class="sig-name descname"><span class="pre">ProbsMeasure</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">measure_qubits</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prog</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">machine</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">qubits</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyvqnet.qnn.measure.ProbsMeasure" title="Permalink to this definition">¶</a></dt>
+<dd><p>calculate circuits probabilities  measurement
+qpanda reference: <a class="reference external" href="https://pyqpanda-toturial.readthedocs.io/zh/latest/PMeasure.html">https://pyqpanda-toturial.readthedocs.io/zh/latest/PMeasure.html</a></p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>measure_qubits</strong> – list contains measure qubits index.</p></li>
+<li><p><strong>prog</strong> – quantum program from qpanda</p></li>
+<li><p><strong>qlists</strong> – Rot qubit allocated by pyQpanda.qAlloc_many()</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>prob of measure qubits in lexicographic order.</p>
+</dd>
+</dl>
+<p>Example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="nb">input</span> <span class="o">=</span> <span class="p">[</span><span class="mf">0.56</span><span class="p">,</span><span class="mf">0.1</span><span class="p">]</span>
+<span class="n">measure_qubits</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">2</span><span class="p">]</span>
+<span class="n">m_machine</span> <span class="o">=</span> <span class="n">pq</span><span class="o">.</span><span class="n">init_quantum_machine</span><span class="p">(</span><span class="n">pq</span><span class="o">.</span><span class="n">QMachineType</span><span class="o">.</span><span class="n">CPU</span><span class="p">)</span>
+<span class="n">m_prog</span> <span class="o">=</span> <span class="n">pq</span><span class="o">.</span><span class="n">QProg</span><span class="p">()</span>
+<span class="n">m_qlist</span> <span class="o">=</span> <span class="n">m_machine</span><span class="o">.</span><span class="n">qAlloc_many</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>
+
+<span class="n">cir</span> <span class="o">=</span> <span class="n">pq</span><span class="o">.</span><span class="n">QCircuit</span><span class="p">()</span>
+<span class="n">cir</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="n">pq</span><span class="o">.</span><span class="n">RZ</span><span class="p">(</span><span class="n">m_qlist</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span><span class="nb">input</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span>
+<span class="n">cir</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="n">pq</span><span class="o">.</span><span class="n">CNOT</span><span class="p">(</span><span class="n">m_qlist</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span><span class="n">m_qlist</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
+<span class="n">cir</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="n">pq</span><span class="o">.</span><span class="n">RY</span><span class="p">(</span><span class="n">m_qlist</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span><span class="nb">input</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
+<span class="n">cir</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="n">pq</span><span class="o">.</span><span class="n">CNOT</span><span class="p">(</span><span class="n">m_qlist</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span><span class="n">m_qlist</span><span class="p">[</span><span class="mi">2</span><span class="p">]))</span>
+<span class="n">cir</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="n">pq</span><span class="o">.</span><span class="n">H</span><span class="p">(</span><span class="n">m_qlist</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span>
+<span class="n">cir</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="n">pq</span><span class="o">.</span><span class="n">H</span><span class="p">(</span><span class="n">m_qlist</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
+<span class="n">cir</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="n">pq</span><span class="o">.</span><span class="n">H</span><span class="p">(</span><span class="n">m_qlist</span><span class="p">[</span><span class="mi">2</span><span class="p">]))</span>
+
+<span class="n">m_prog</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="n">cir</span><span class="p">)</span>
+
+<span class="n">rlt_prob</span> <span class="o">=</span> <span class="n">ProbsMeasure</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span><span class="mi">2</span><span class="p">],</span><span class="n">m_prog</span><span class="p">,</span><span class="n">m_machine</span><span class="p">,</span><span class="n">m_qlist</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">rlt_prob</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="nn.html" class="btn btn-neutral float-left" title="Classical Neural Network Module" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2021, Original Quantum.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
