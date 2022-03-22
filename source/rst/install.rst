@@ -91,7 +91,7 @@ Traning the workflow of testing code
     from pyvqnet.qnn.quantumlayer import QuantumLayer
     from pyvqnet.optim import adam
     from pyvqnet.nn.loss import CategoricalCrossEntropy
-    from pyvqnet.tensor.tensor import QTensor
+    from pyvqnet.tensor import QTensor
     import numpy as np
     from pyvqnet.nn.module import Module
 

@@ -19,11 +19,11 @@ import sphinx_rtd_theme
 # -- Project information -----------------------------------------------------
 
 project = 'VQNET'
-copyright = '2021, Original Quantum'
+copyright = '2022, Original Quantum'
 author = 'Original Quantum'
 
 # The full version, including alpha/beta/rc tags
-release = 'v0.13'
+release = 'v2.0.0'
 
 
 # -- General configuration ---------------------------------------------------
