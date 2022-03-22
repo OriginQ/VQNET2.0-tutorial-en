@@ -45,10 +45,10 @@ It can help in a variety of applications such as the design of quantum algorithm
     :maxdepth: 2
 
     rst/install.rst
-.. toctree::
-    :caption: Hand by hand tutorial
-    :maxdepth: 2
 
+.. toctree::
+    :caption: Hands-on Examples
+    :maxdepth: 2
 
     rst/qml_demo.rst
 
