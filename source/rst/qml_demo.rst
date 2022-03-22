@@ -3629,11 +3629,11 @@ is used to classify 0 and 1 handwritten digits in MNIST database.
 Comparing the classification results of machine learning models of noisy quantum circuits and ideal quantum circuits, 
 the loss change curve and acc change curve are as follows:
 
-.. image:: ./images/noise_1.png
+.. image:: ./images/noise_1.PNG
    :width: 600 px
    :align: center
 
-.. image:: ./images/noise_2.png
+.. image:: ./images/noise_2.PNG
    :width: 600 px
    :align: center
 
