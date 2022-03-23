@@ -3627,15 +3627,54 @@ is used to classify 0 and 1 handwritten digits in MNIST database.
 		F2.close()
 		
 Comparing the classification results of machine learning models of noisy quantum circuits and ideal quantum circuits, 
-the loss change curve and acc change curve are as follows:
+the loss change log and acc change log are as follows:
 
-.. image:: ./images/noise_1.PNG
-   :width: 600 px
-   :align: center
+.. code-block::
 
-.. image:: ./images/noise_2.PNG
-   :width: 600 px
-   :align: center
+    Train Accuracy: 0.715
+    epoch:  1
+    1 loss is : 0.6519572449
+    Eval Accuracy: 0.99
+    ##########################
+    Train Accuracy: 1.0
+    epoch:  2
+    2 loss is : 0.4458528900
+    Eval Accuracy: 1.0
+    ##########################
+    Train Accuracy: 1.0     
+    epoch:  3
+    3 loss is : 0.3142367172
+    Eval Accuracy: 1.0
+    ##########################
+    Train Accuracy: 1.0     
+    epoch:  4
+    4 loss is : 0.2259583092
+    Eval Accuracy: 1.0
+    ##########################
+    Train Accuracy: 1.0     
+    epoch:  5
+    5 loss is : 0.1661866951
+    Eval Accuracy: 1.0
+    ##########################
+    Train Accuracy: 1.0     
+    epoch:  6
+    6 loss is : 0.1306252861
+    Eval Accuracy: 1.0
+    ##########################
+    Train Accuracy: 1.0
+    epoch:  7
+    7 loss is : 0.0996847820
+    Eval Accuracy: 1.0
+    ##########################
+    Train Accuracy: 1.0
+    epoch:  8
+    8 loss is : 0.0801456261
+    Eval Accuracy: 1.0
+    ##########################
+    Train Accuracy: 1.0
+    epoch:  9
+    9 loss is : 0.0649107647
+    Eval Accuracy: 1.0
 
 |
 
