@@ -5,7 +5,7 @@
 
 VQNet
 =================================
-dddddddddddd
+
 
 **A fully functional and efficient quantum software development kit**
 
@@ -37,8 +37,6 @@ It can help in a variety of applications such as the design of quantum algorithm
 •	Unity. Based on VQNet 1.0, we propose the first new-generation machine learning framework, called VQNet2.0, which not only realizes the unification of classical and quantum machine learning but also supports deployment on classical and quantum computers.
 •	Practicality. The proposed VQNet 2.0 accomplishes the necessary features of a new generation machine learning framework, such as friendly interface, automatic differentiation, and dynamic computational graph, under the design concept with practicability.
 •	Efficiency. In the implementation with high performance, VQNet 2.0 designs a unified structure and uses QPanda to improve the efficiency of interaction between classical and quantum machine learning algorithms, between classic and quantum computers.
-•	Compatibility. By structuring class `Compatiblelayer`, VQNet 2.0 supports a variety of quantum circuits implemented by different quantum computing softwares as quantum nodes.
-
 
 .. toctree::
     :caption: Installation Guide
