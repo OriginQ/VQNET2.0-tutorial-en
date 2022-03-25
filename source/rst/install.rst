@@ -38,7 +38,7 @@ classical computing module(convolution layer, pooling layer, fully connected lay
 
 .. figure:: ./images/classic-quantum.PNG
 
-Using the interface of quantum logic gate, quantum simulator, Measurement of `pyqpanda <https://pyqpanda-toturial.readthedocs.io/zh/latest/>`_ provided by Origin Quantum.
+Using the interface of `quantum logic gate <https://pyqpanda-tutorial-en.readthedocs.io/en/latest/chapter2/index.html#quantum-logic-gate>`_, `quantum circuit <https://pyqpanda-tutorial-en.readthedocs.io/en/latest/chapter2/index.html#quantum-circuit>`_ , `Quantum simulator <https://pyqpanda-tutorial-en.readthedocs.io/en/latest/chapter2/index.html#quantum-simulator>`_, `Measurement <https://pyqpanda-tutorial-en.readthedocs.io/en/latest/chapter2/index.html#quantum-measurement>`_ of `pyqpanda <https://pyqpanda-toturial.readthedocs.io/zh/latest/>`_ provided by Origin Quantum.
 Building a quantum computing module by the pyqpanda, it can be trained as a part of VQNet.
 Based on a qubit, using multiple Parameterized rotated gate like `RX`, `RY`, `RZ` to encode `x` into a quantum state as a input, meanwhile using `prob_run_dict()` to detecting the probilities of 
 measurement as a output.
@@ -96,7 +96,7 @@ Traning the workflow of testing code
     from pyvqnet.nn.module import Module
 
 
-Defining a model, where ``__init__`` function defines the internal neural network modules and quantum modules, and ``forward`` function defines the forward function, ``QuantumLayer`` is an abstract class 
+Defining a model, where `__init__` function defines the internal neural network modules and quantum modules, and `forward` function defines the forward function, `QuantumLayer` is an abstract class
 that encapsulates quantum computing.
 There will calculating the parameters' gradient automatically with `qdrl_circuit`, `param_num` , `cpu`, `qbit_num` .
 
