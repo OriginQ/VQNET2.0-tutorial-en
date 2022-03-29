@@ -515,7 +515,7 @@ Applies for the same number of quantum bits according to the number of input dat
 
 .. image:: ./images/qcnn.png
 
-First we need encoding by inserting :math:`RY` and :math:`RZ` gates on each qubit, then, we constructed the parameter circuit through :math:`U3 gate` and :math:`Z gate` .
+First we need encoding by inserting :math:`RY` and :math:`RZ` gates on each qubit, then, we constructed the parameter circuit through :math:`U3` gate and :math:`Z` gate .
 The sample is as follows:
 
 .. image:: ./images/qcnn_cir.png
