@@ -428,6 +428,9 @@ Send the instantiated object ``VQC_wrapper`` as a parameter to ``VQCLayer``
 
     :param vqc_wrapper: VQC_wrapper class
     :param para_num: `int` - Number of parameter
+    :param machine_type: qpanda machine type
+    :param num_of_qubits: num of qubits
+    :param num_of_cbits: num of cbits
     :param diff_method: 'parameter_shift' or 'finite_diff'
     :param delta:  delta for diff
     :return: a module can calculate VQC quantum circuits
@@ -936,7 +939,7 @@ QuantumMeasure
     
     Please checks  https://pyqpanda-toturial.readthedocs.io/zh/latest/Measure.html?highlight=measure_all for alternative api.
     
-    QuantumMeasure api only supports on QPanda CPUQVM or QCloud now.
+    QuantumMeasure api only supports on QPanda ``CPUQVM`` or ``QCloud`` now.
 
     :param measure_qubits: list contains measure qubits index.
     :param prog: quantum program from qpanda
@@ -978,7 +981,7 @@ ProbsMeasure
     
     Please checks https://pyqpanda-toturial.readthedocs.io/zh/latest/PMeasure.html for alternative api.
 
-    ProbsMeasure api only supports on QPanda CPUQVM or QCloud now.
+    ProbsMeasure api only supports on QPanda ``CPUQVM`` or ``QCloud`` now.
 
     :param measure_qubits: list contains measure qubits index.
     :param prog: quantum program from qpanda
