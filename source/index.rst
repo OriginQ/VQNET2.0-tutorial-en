@@ -10,7 +10,7 @@ VQNet
 **A fully functional and efficient quantum software development kit**
 
 VQNet is a quantum machine learning computing framework developed by Origin Quantum, which can be used to build, run and optimize quantum algorithms.
-This usage documentation is the VQNet API and sample documentation.
+This documentation is the VQNet API and samples' documentation.
 
 
 **What is Quantum Machine Learning?**

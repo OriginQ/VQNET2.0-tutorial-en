@@ -29,19 +29,20 @@ Generally, there are following parts of quantum computing module in quantum mach
 
 (1)Encoder:encoding classical data into quantum state;
 
-(2)Ansats: traning the parameters in Parameterized Quantum Gates;
+(2)Ansats: training the parameters in Parameterized Quantum Gates;
 
 (3)Measurement: measuring the value of a qubit(projection of qubit's quantum state in a specified axis).
 
 For the computation of quantum computing module is differentiable, so quantum computing module and 
-classical computing module(convolution layer, pooling layer, fully connected layer, activation layer, and multiple optimized algorithm model) be supported by VQNet.
+classical computing module(convolution layer, pooling layer, fully connected layer, activation layer, and multiple optimized algorithm model) are supported by VQNet.
 
 .. figure:: ./images/classic-quantum.PNG
 
-Using the interface of `quantum logic gate <https://pyqpanda-tutorial-en.readthedocs.io/en/latest/chapter2/index.html#quantum-logic-gate>`_, `quantum circuit <https://pyqpanda-tutorial-en.readthedocs.io/en/latest/chapter2/index.html#quantum-circuit>`_ , `Quantum simulator <https://pyqpanda-tutorial-en.readthedocs.io/en/latest/chapter2/index.html#quantum-simulator>`_, `Measurement <https://pyqpanda-tutorial-en.readthedocs.io/en/latest/chapter2/index.html#quantum-measurement>`_ of `pyqpanda <https://pyqpanda-toturial.readthedocs.io/zh/latest/>`_ provided by Origin Quantum.
-Building a quantum computing module by the pyqpanda, it can be trained as a part of VQNet.
-Based on a qubit, using multiple Parameterized rotated gate like `RX`, `RY`, `RZ` to encode `x` into a quantum state as a input, meanwhile using `prob_run_dict()` to detecting the probilities of 
-measurement as a output.
+Using the interface of `quantum logic gate <https://pyqpanda-tutorial-en.readthedocs.io/en/latest/chapter2/index.html#quantum-logic-gate>`_, `quantum circuit <https://pyqpanda-tutorial-en.readthedocs.io/en/latest/chapter2/index.html#quantum-circuit>`_ , `Quantum simulator <https://pyqpanda-tutorial-en.readthedocs.io/en/latest/chapter2/index.html#quantum-simulator>`_, `Measurement <https://pyqpanda-tutorial-en.readthedocs.io/en/latest/chapter2/index.html#quantum-measurement>`_ of `pyqpanda <https://pyqpanda-toturial.readthedocs.io/zh/latest/>`_ ,
+we can build a quantum computing module by the pyqpanda, that can be trained as a part of VQNet.
+
+Here are an example using multiple Parameterized rotated gates like `RX`, `RY`, `RZ` to encode `x` into a quantum state as a input, meanwhile using `prob_run_dict()` to detecting the probilities of 
+measurement as a output based on a single qubit.
 
 .. code-block::
 
@@ -77,12 +78,12 @@ measurement as a output.
             prob = list(prob.values())
             return prob
 
-Our task is classify these data which is generated randomly based on binary classification algorithm. In the model, 
-0 is a circle's center, points within radius by 1 (2 dimension)colored in red are one category, the samples labeled in blue are another category.
+Our task to is classify these data which is generated randomly based on binary classification algorithm. In this task, 
+0 is a circle's center, points within radius by 1 colored in red are one category, the samples labeled in blue are another category.
 
 .. figure:: ./images/origin_circle.png
 
-Traning the workflow of testing code
+The pipeline of the training process
 
 .. code-block::
 
@@ -96,9 +97,9 @@ Traning the workflow of testing code
     from pyvqnet.nn.module import Module
 
 
-Defining a model, where `__init__` function defines the internal neural network modules and quantum modules, and `forward` function defines the forward function, `QuantumLayer` is an abstract class
+Defining a model, where ``__init__`` function defines the internal neural network modules and quantum modules, and ``forward`` function defines the forward function, ``QuantumLayer`` is an abstract class
 that encapsulates quantum computing.
-There will calculating the parameters' gradient automatically with `qdrl_circuit`, `param_num` , `cpu`, `qbit_num` .
+VQNet will calculate the parameters' gradient automatically with `qdrl_circuit`, `param_num` , `cpu`, `qbit_num` .
 
 
 .. code-block::
@@ -118,7 +119,7 @@ There will calculating the parameters' gradient automatically with `qdrl_circuit
             x = self.pqc(x)
             return x
 
-Definite some functions of training model 
+Definiting some functions of training model 
 
 .. code-block::
 
@@ -148,7 +149,7 @@ Definite some functions of training model
         score = np.sum(pred == score)
         return score
 
-VQNet following the general workflow of machine learning: loading the data iteratively, front propagation, calculate loss function, back propagation, update the parameter, etc.
+VQNet follows the general workflow of machine learning: loading the data iteratively, front propagation, calculating loss function, back propagation, updating the parameter.
 
 .. code-block::
 
@@ -159,8 +160,7 @@ VQNet following the general workflow of machine learning: loading the data itera
     # using cross-entropy to define a loss function
     Closs = CategoricalCrossEntropy()
 
-A function to training the model
-
+A function to train the model
 
 .. code-block::
 
@@ -199,7 +199,7 @@ A function to training the model
             print(f"epoch:{i}, train_accuracy:{accuracy/count}")
             print(f"epoch:{i}, train_loss:{loss/count}\n")
             
-A function to validating the model
+A function to validate the model
 
 .. code-block::
 
@@ -222,7 +222,7 @@ A function to validating the model
 
         print(f"test_accuracy:{test_accuracy/count}")
 
-Training the test result
+Training and testing results
 
 .. code-block::
 
