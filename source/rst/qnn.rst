@@ -9,9 +9,9 @@ Quantum Computing Layer
 QuantumLayer
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-QuantumLayer is a package class of automatic derivative module that supports quantum parametric circuits as parameters. You can define a function as an argument, such as ``qprog_with_measure``, This function needs to contain the quantum circuit defined by pyQPanda: It generally contains coding-circuit, evolution-circuit and measurement-operation.
+QuantumLayer is a package class of autograd module that supports ariational quantum circuits. You can define a function as an argument, such as ``qprog_with_measure``, This function needs to contain the quantum circuit defined by pyQPanda: It generally contains coding-circuit, evolution-circuit and measurement-operation.
 This QuantumLayer class can be embedded into the hybrid quantum classical machine learning model and minimize the objective function or loss function of the hybrid quantum classical model through the classical gradient descent method.
-You can specify the gradient calculation method of quantum circuit parameters in ``QuantumLayer`` by change the parameter ``diff_method``. ``QuantumLayer`` currently supports two  methods, one is ``finite_diff`` and the other is ``parameter-shift`` methods.
+You can specify the gradient calculation method of quantum circuit parameters in ``QuantumLayer`` by change the parameter ``diff_method``. ``QuantumLayer`` currently supports two methods, one is ``finite_diff`` and the other is ``parameter-shift`` methods.
 
 The ``finite_diff`` method is one of the most traditional and common numerical methods for estimating function gradient.The main idea is to replace partial derivatives with differences:
 
@@ -33,7 +33,10 @@ It is theoretically possible to calculate the gradient of parameters about Hamil
 
 .. py:class:: pyvqnet.qnn.quantumlayer.QuantumLayer(qprog_with_measure,para_num,machine_type_or_cloud_token,num_of_qubits:int,num_of_cbits:int = 1,diff_method:str = "parameter_shift",delta:float = 0.01)
 
-    Abstract Calculation module for Variational Quantum Layer. It simulate a parameterized quantum circuit and get the measurement result. It inherits from Module,so that it can calculate gradients of circuits parameters,and trains Variational Quantum Circuits model or embeds Variational Quantum Circuits into hybird Quantum and Classic model.
+    Abstract calculation module for variational quantum circuits. It simulates a parameterized quantum circuit and gets the measurement result.
+    QuantumLayer inherits from Module ,so that it can calculate gradients of circuits parameters,and train variational quantum circuits model or embed variational quantum circuits into hybird quantum and classic model.
+    
+    This class dos not need you to initialize virtual machine in the ``qprog_with_measure`` function.
 
     :param qprog_with_measure: callable quantum circuits functions ,cosntructed by qpanda
     :param para_num: `int` - Number of parameter
@@ -47,7 +50,7 @@ It is theoretically possible to calculate the gradient of parameters about Hamil
     .. note::
         qprog_with_measure is quantum circuits function defined in pyQPanda :https://pyqpanda-toturial.readthedocs.io/zh/latest/QCircuit.html.
 
-        This function should contains following parameters,otherwise it can not run properly in QuantumLayer.
+        This function should contain following parameters,otherwise it can not run properly in QuantumLayer.
 
         qprog_with_measure (input,param,qubits,cbits,m_machine)
 
@@ -121,9 +124,10 @@ If you are more familiar with pyQPanda syntax, please using QuantumLayerV2 class
 
 .. py:class:: pyvqnet.qnn.quantumlayer.QuantumLayerV2(qprog_with_measure, para_num, diff_method: str = 'parameter_shift', delta: float = 0.01)
 
-	Abstract Calculation module for Variational Quantum Layer. It simulate a parameterized quantum circuit and get the measurement result. It inherits from Module,so that it can calculate gradients of circuits parameters,and trains Variational Quantum Circuits model or embeds Variational Quantum Circuits into hybird Quantum and Classic model.
-
-    To use this module,you need to create your quantum virtual machine and allocate qubits and cbits.
+    Abstract calculation module for variational quantum circuits. It simulates a parameterized quantum circuit and gets the measurement result.
+    QuantumLayer inherits from Module ,so that it can calculate gradients of circuits parameters,and train variational quantum circuits model or embed variational quantum circuits into hybird quantum and classic model.
+    
+    To use this module, you need to create your quantum virtual machine and allocate qubits and cbits.
 
     :param qprog_with_measure: callable quantum circuits functions ,cosntructed by qpanda
     :param para_num: `int` - Number of parameter
@@ -215,16 +219,16 @@ NoiseQuantumLayer
 ^^^^^^^^^^^^^^^^^^^
 
 In the real quantum computer, due to the physical characteristics of the quantum bit, there is always inevitable calculation error. In order to better simulate this error in quantum virtual machine, VQNet also supports quantum virtual machine with noise. The simulation of quantum virtual machine with noise is closer to the real quantum computer. We can customize the supported logic gate type and the noise model supported by the logic gate.
-The existing supported quantum noise model is defined in QPanda, reference links `QPANDA2 <https://pyqpanda-toturial.readthedocs.io/zh/latest/NoiseQVM.html>`_ .
+The existing supported quantum noise model is defined in QPanda `NoiseQVM <https://pyqpanda-toturial.readthedocs.io/zh/latest/NoiseQVM.html>`_ .
 
-We can use NoiseQuantumLayer to define an automatic microclassification of quantum circuits.NoiseQuantumLayer supports QPanda quantum virtual machine with noise.You can define a function as an argument ``qprog_with_measure``. This function needs to contain the quantum circuit defined by pyQPanda, as also you need to pass in a argument ``noise_set_config``, by using the pyQPanda interface to set up the noise model.
+We can use ``NoiseQuantumLayer`` to define an automatic microclassification of quantum circuits. ``NoiseQuantumLayer`` supports QPanda quantum virtual machine with noise. You can define a function as an argument ``qprog_with_measure``. This function needs to contain the quantum circuit defined by pyQPanda, as also you need to pass in a argument ``noise_set_config``, by using the pyQPanda interface to set up the noise model.
 
 .. py:class:: pyvqnet.qnn.quantumlayer.NoiseQuantumLayer(qprog_with_measure, para_num, machine_type, num_of_qubits: int, num_of_cbits: int = 1, diff_method: str = 'parameter_shift', delta: float = 0.01, noise_set_config=None)
 
-    Abstract Calculation module for Variational Quantum Layer. It simulate a parameterized quantum circuit and get the
-    measurement result. It inherits from Module,so that it can calculate gradients of circuits parameters,and trains
-    Variational Quantum Circuits model or embeds Variational Quantum Circuits into hybird Quantum and Classic model.
-
+    Abstract calculation module for variational quantum circuits. It simulates a parameterized quantum circuit and gets the measurement result.
+    QuantumLayer inherits from Module ,so that it can calculate gradients of circuits parameters,and train variational quantum circuits model or embed variational quantum circuits into hybird quantum and classic model.
+    
+    This module should be initialized with noise model by ``noise_set_config``.
 
     :param qprog_with_measure: callable quantum circuits functions ,cosntructed by qpanda
     :param para_num: `int` - Number of para_num
@@ -348,10 +352,11 @@ Here is an example of ``noise_set_config``, here we add the noise model BITFLIP_
 VQCLayer
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
-Based on the variable quantum circuit(VariationalQuantumCircuit) of pyQPanda, VQNet provides an abstract quantum computing layer called ``VQCLayer``. You just only needs to define a class ``VQC_wrapper``,
-We can build machine learning models, bu defining the corresponding quantum gates of circuits and measurement functions based on pyQPanda ``VariationalQuantumCircuit``.
+Based on the variable quantum circuit(VariationalQuantumCircuit) of pyQPanda, VQNet provides an abstract quantum computing layer called ``VQCLayer``.
 
-In ``VQC_wrapper``, you can use the common logic gate function ``build_common_circuits`` to build a sub-circuits of the model with a change in line structure, use the VQG in ``build_vqc_circuits`` to build sub-circuits with constant structure and variable parameters,
+You just only needs to define a class that inherits from ``VQC_wrapper``, and construct quantum gates of circuits and measurement functions based on pyQPanda ``VariationalQuantumCircuit`` in it.
+
+In ``VQC_wrapper``, you can use the common logic gate function ``build_common_circuits`` to build a sub-circuits of the model with variable circuit's structure, use the VQG in ``build_vqc_circuits`` to build sub-circuits with constant structure and variable parameters,
 use the ``run`` function to define the circuit operations and measurement.
 
 .. py:class:: pyvqnet.qnn.quantumlayer.VQC_wrapper
@@ -555,7 +560,8 @@ The sample is as follows:
 QLinear
 ^^^^^^^^^^
 
-QLinear implements a quantum full connection algorithm. Firstly, the data is encoded into the quantum state, and then the final fully connected result is obtained through the derivation operation and measurement of the quantum circuit.
+QLinear implements a quantum full connection algorithm. Firstly, the data is encoded into the quantum state, 
+and then the final fully connected result is obtained through the derivation operation and measurement of the quantum circuit.
 
 .. image:: ./images/qlinear_cir.png
 
@@ -576,7 +582,7 @@ QLinear implements a quantum full connection algorithm. Firstly, the data is enc
         [1.37454012, 0.95071431, 0.73199394, 0.59865848, 0.15601864, 0.15599452],
         [1.37454012, 1.95071431, 0.73199394, 0.59865848, 0.15601864, 0.15599452],
         [1.37454012, 1.95071431, 1.73199394, 1.59865848, 0.15601864, 0.15599452]]
-        m = QLinear(32, 2)
+        m = QLinear(6, 2)
         input = QTensor(params, requires_grad=True)
         output = m(input)
         output.backward()

@@ -612,7 +612,7 @@ __getitem__
 
         As a 2-D QTensor, indexing or slicing can be done on two axes.
 
-        As a 3-D QTensor and a multidimensional QTensor,indexing or slicing can be done on a multiple axes.
+        As a 3-D QTensor and a multidimensional QTensor,indexing or slicing can be done on multiple axes.
 
         If you use QTensor as an index for advanced indexing, see numpy for advanced `indexing <https://docs.scipy.org/doc/numpy-1.10.1/reference/arrays.indexing.html>`_ .
 
@@ -704,7 +704,7 @@ __setitem__
 
     As a 2-D QTensor, indexing or slicing can be done on two axes.
 
-    As a 3-D QTensor and a multidimensional QTensor,indexing or slicing can be done on a multiple axes.
+    As a 3-D QTensor and a multidimensional QTensor,indexing or slicing can be done on multiple axes.
 
     If you use QTensor as an index for advanced indexing, see numpy for advanced `indexing <https://docs.scipy.org/doc/numpy-1.10.1/reference/arrays.indexing.html>`_ .
 
@@ -853,11 +853,12 @@ Create Functions
 ones
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. py:function:: pyvqnet.tensor.ones(shape)
+.. py:function:: pyvqnet.tensor.ones(shape,device=0)
 
     Return one-tensor with the input shape.
 
     :param shape: input shape
+    :param device: stored in which device，default 0 , CPU.
 
     :return: output QTensor with the input shape.
 
@@ -948,7 +949,7 @@ full_like
 zeros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. py:function:: pyvqnet.tensor.zeros(shape)
+.. py:function:: pyvqnet.tensor.zeros(shape，device =0)
 
     Return zero-tensor of the input shape.
 
@@ -1655,7 +1656,7 @@ median
     :param axis:  An axis for averaging,defaults to None
     :param keepdims:  whether the output QTensor has dim retained or not, defaults to False
 
-    :return: Return the median of the values in input.
+    :return: Return the median of the values in input or QTensor.
 
     Example::
 
@@ -1689,7 +1690,7 @@ std
     :param axis:  the axis used to calculate the standard deviation,defaults to None
     :param keepdims:  whether the output QTensor has dim retained or not, defaults to False
     :param unbiased:  whether to use Bessel’s correction,default true.
-    :return: Return the standard variance of the values in input.
+    :return: Return the standard variance of the values in input or QTensor..
 
     Example::
 
@@ -1743,7 +1744,7 @@ matmul
 
 .. py:function:: pyvqnet.tensor.matmul(t1: pyvqnet.tensor.QTensor, t2: pyvqnet.tensor.QTensor)
 
-    Matrix multiplications of two 2d or 4d matrix.
+    Matrix multiplications of two 2d , 3d , 4d matrix.
 
     :param t1: first QTensor
     :param t2: second QTensor
@@ -2622,7 +2623,6 @@ less
 
     Return the truth value of ``t1 < t2`` element-wise.
 
-
     :param t1: input QTensor
     :param t2: input QTensor
     :return: output QTensor that is 1 where t1 is less than t2 and False elsewhere
@@ -2702,7 +2702,6 @@ not_equal
 .. py:function:: pyvqnet.tensor.not_equal(t1, t2)
 
     Return the truth value of ``t1 != t2`` element-wise.
-
 
     :param t1: input QTensor
     :param t2: input QTensor
