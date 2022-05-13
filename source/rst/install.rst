@@ -78,8 +78,8 @@ measurement as a output based on a single qubit.
             prob = list(prob.values())
             return prob
 
-Our task to is classify these data which is generated randomly based on binary classification algorithm. In this task, 
-0 is a circle's center, points within radius by 1 colored in red are one category, the samples labeled in blue are another category.
+Our task is to classify these data which is generated randomly based on binary classification algorithm. In this task,
+0 is a circle's center, points within radius by 1 colored in red are one category, the samples are labeled in blue are another category.
 
 .. figure:: ./images/origin_circle.png
 
