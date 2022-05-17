@@ -610,11 +610,9 @@ __getitem__
 
         As a 1-D QTensor,indexing or slicing can only be done on a single axis.
 
-        As a 2-D QTensor, indexing or slicing can be done on two axes.
+        As a 2-D QTensor and a multidimensional QTensor,indexing or slicing can be done on multiple axes.
 
-        As a 3-D QTensor and a multidimensional QTensor,indexing or slicing can be done on multiple axes.
-
-        If you use QTensor as an index for advanced indexing, see numpy for advanced `indexing <https://docs.scipy.org/doc/numpy-1.10.1/reference/arrays.indexing.html>`_ .
+        If you use QTensor as an index for advanced indexing, see numpy for `advanced indexing <https://docs.scipy.org/doc/numpy-1.10.1/reference/arrays.indexing.html>`_ .
 
         If your QTensor as an index is the result of a logical operation, then you do a Boolean index.
 
@@ -702,11 +700,9 @@ __setitem__
 
     As a 1-D QTensor,indexing or slicing can only be done on a single axis.
 
-    As a 2-D QTensor, indexing or slicing can be done on two axes.
+    As a 2-D QTensor and a multidimensional QTensor,indexing or slicing can be done on multiple axes.
 
-    As a 3-D QTensor and a multidimensional QTensor,indexing or slicing can be done on multiple axes.
-
-    If you use QTensor as an index for advanced indexing, see numpy for advanced `indexing <https://docs.scipy.org/doc/numpy-1.10.1/reference/arrays.indexing.html>`_ .
+    If you use QTensor as an index for advanced indexing, see numpy for `advanced indexing <https://docs.scipy.org/doc/numpy-1.10.1/reference/arrays.indexing.html>`_ .
 
     If your QTensor as an index is the result of a logical operation, then you do a Boolean index.
 
@@ -923,13 +919,12 @@ full
 full_like
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. py:function:: pyvqnet.tensor.full_like(t, value, dev: int = 0)
+.. py:function:: pyvqnet.tensor.full_like(t, value,)
 
     Create a QTensor of the specified shape and fill it with value.
 
     :param t:  input Qtensor
     :param value: value to fill the QTensor with.
-    :param dev: device to use,default = 0 ,use cpu device.
     :return: output QTensor
 
     Example::
@@ -1689,8 +1684,8 @@ std
     :param t:  the input QTensor
     :param axis:  the axis used to calculate the standard deviation,defaults to None
     :param keepdims:  whether the output QTensor has dim retained or not, defaults to False
-    :param unbiased:  whether to use Bessel’s correction,default true.
-    :return: Return the standard variance of the values in input or QTensor..
+    :param unbiased:  whether to use Bessel’s correction,default true
+    :return: Return the standard variance of the values in input or QTensor
 
     Example::
 

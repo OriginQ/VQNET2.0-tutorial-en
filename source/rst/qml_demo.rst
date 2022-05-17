@@ -161,7 +161,7 @@ The data as follows.
         label = np.eye(2)[label].reshape(-1,2)
         return data, label
 
-model forwarding, loss function calculation, 
+Model forwarding, loss function calculation,
 reverse calculation, optimizer calculation can perform like the general 
 neural network training mode,until the number of iterations reaches the preset value.
 The training data used is generated above, and the test data is qvc_test_data and train data is qvc_train_data.
