@@ -3943,6 +3943,8 @@ In order to realize the construction of ``QGANAPI`` class of quantum generative 
     from pyvqnet.qnn.qgan.qgan_utils import QGANAPI
     import numpy as np
 
+    num_of_qubits = 3  # paper config
+    rep = 1
     number_of_data = 10000
     # Load data samples from different distributions
     mu = 1
