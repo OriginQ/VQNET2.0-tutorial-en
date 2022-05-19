@@ -28,15 +28,16 @@ For example, a trained circuit can be used to classify the content of images, by
 **The bigger picture: differentiable programming**
 
 But our goal is not just to use quantum computers to solve machine learning problems. Quantum circuits are differentiable, and a quantum computer itself can compute the change in control parameters needed to become better at a given task.
-Differentiable programming is the very basis of deep learning, Differentiable programming is more than deep learning: it is a programming paradigm where the algorithms are not hand-coded, but learned. `VQNet` is also implemented based on `autograd`.
-Similarly, the idea of training quantum computers is larger than quantum machine learning. Trainable quantum circuits can be leveraged in other fields like quantum chemistry or quantum optimization.
-It can help in a variety of applications such as the design of quantum algorithms, the discovery of quantum error correction schemes, and the understanding of physical systems.
+Differentiable programming is the very basis of deep learning, Differentiable programming is more than deep learning: it is a programming paradigm where the algorithms are not hand-coded, but self-learned. `VQNet` is also implemented based on `autograd`.
+Similarly, the significance of training quantum computers is larger than quantum machine learning. Trainable quantum circuits can be leveraged in other fields like quantum chemistry or quantum optimization.
+It can promote in a variety of applications such as the design of quantum algorithms, the discovery of quantum error correction schemes, and the understanding of physical systems.
 
 **VQNet characteristics**
  
-•	Unity. Based on VQNet 1.0, we propose the first new-generation machine learning framework, called VQNet2.0, which not only realizes the unification of classical and quantum machine learning but also supports deployment on classical and quantum computers.
-•	Practicality. The proposed VQNet 2.0 accomplishes the necessary features of a new generation machine learning framework, such as friendly interface, automatic differentiation, and dynamic computational graph, under the design concept with practicability.
-•	Efficiency. In the implementation with high performance, VQNet 2.0 designs a unified structure and uses QPanda to improve the efficiency of interaction between classical and quantum machine learning algorithms, between classic and quantum computers.
+•	Unity. We propose the first new-generation machine learning framework, which not only realizes the unification of classical and quantum machine learning but also supports deployment on classical and quantum computers.
+•	Practicality. The proposed VQNet accomplishes the necessary features of a new generation machine learning framework, such as friendly interface, automatic differentiation, and dynamic computational graph, under the design concept with practicability.
+•	Efficiency. In the implementation with high performance, VQNet designs a unified structure and uses QPanda to improve the efficiency of interaction between classical and quantum machine learning algorithms, between classic and quantum computers.
+•	Numerous application examples. We provide a number of quantum machine learning examples for quick learning and using.
 
 .. toctree::
     :caption: Installation Guide

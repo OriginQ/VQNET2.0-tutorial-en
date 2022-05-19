@@ -33,8 +33,7 @@ Generally, there are following parts of quantum computing module in quantum mach
 
 (3)Measurement: measuring the value of a qubit(projection of qubit's quantum state in a specified axis).
 
-For the computation of quantum computing module is differentiable, so quantum computing module and 
-classical computing module(convolution layer, pooling layer, fully connected layer, activation layer, and multiple optimized algorithm model) are supported by VQNet.
+Quantum computing module is the theoretical basis of the hybrid model of quantum classical neural network, which is also differentiable like the module of classical neural network. VQNet supports quantum computing module and classical computing module to form a hybrid machine learning model, and provides a variety of optimization algorithm optimization parameters. (e.g. Convolution layer, pooling layer, full connection layer, activation function, etc.)
 
 .. figure:: ./images/classic-quantum.PNG
 
