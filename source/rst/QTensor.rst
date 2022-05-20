@@ -250,7 +250,7 @@ argmin
     Return the indices of the minimum  value of all elements in the input QTensor,or
     Return the indices of the minimum  values of a QTensor across a dimension.
 
-    :param dim: dim ([int]]) – the dimension to reduce,only accepts single axis. if dim == None, returns the indices of the maximum value of all elements in the input tensor.The valid dim range is [-R, R), where R is input's ndim. when dim < 0, it works the same way as dim + R.
+    :param dim: dim ([int]]) – the dimension to reduce,only accepts single axis. if dim == None, returns the indices of the minimum value of all elements in the input tensor.The valid dim range is [-R, R), where R is input's ndim. when dim < 0, it works the same way as dim + R.
     :param keepdims:  whether the output QTensor has dim retained or not.
 
     :return: the indices of the minimum  value in the input QTensor.
@@ -599,6 +599,249 @@ getdata
             #  [1. 1. 1. 1.]
             #  [1. 1. 1. 1.]]
 
+__getitem__
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. py:method:: QTensor.__getitem__()
+
+        Slicing indexing of QTensor is supported, or using QTensor as advanced index access input. A new QTensor will be returned.
+
+        The parameters start, stop, and step can be separated by a colon,such as start:stop:step, where start, stop, and step can be default
+
+        As a 1-D QTensor,indexing or slicing can only be done on a single axis.
+
+        As a 2-D QTensor and a multidimensional QTensor,indexing or slicing can be done on multiple axes.
+
+        If you use QTensor as an index for advanced indexing, see numpy for `advanced indexing <https://docs.scipy.org/doc/numpy-1.10.1/reference/arrays.indexing.html>`_ .
+
+        If your QTensor as an index is the result of a logical operation, then you do a Boolean index.
+
+        .. note:: We use an index form like a[3,4,1],but the form a[3][4][1] is not supported.And ``Ellipsis`` is also not supported.
+
+        :param item: A integer or QTensor as an index.
+
+        :return: A new QTensor.
+
+        Example::
+
+            from pyvqnet.tensor import tensor, QTensor
+            aaa = tensor.arange(1, 61)
+            aaa.reshape_([4, 5, 3])
+            print(aaa[0:2, 3, :2])
+            # [
+            # [10.0000000, 11.0000000],
+            #  [25.0000000, 26.0000000]
+            # ]
+            print(aaa[3, 4, 1])
+            #[59.0000000]
+            print(aaa[:, 2, :])
+            # [
+            # [7.0000000, 8.0000000, 9.0000000],
+            #  [22.0000000, 23.0000000, 24.0000000],
+            #  [37.0000000, 38.0000000, 39.0000000],
+            #  [52.0000000, 53.0000000, 54.0000000]
+            # ]
+            print(aaa[2])
+            # [
+            # [31.0000000, 32.0000000, 33.0000000],
+            #  [34.0000000, 35.0000000, 36.0000000],
+            #  [37.0000000, 38.0000000, 39.0000000],
+            #  [40.0000000, 41.0000000, 42.0000000],
+            #  [43.0000000, 44.0000000, 45.0000000]
+            # ]
+            print(aaa[0:2, ::3, 2:])
+            # [
+            # [[3.0000000],
+            #  [12.0000000]],
+            # [[18.0000000],
+            #  [27.0000000]]
+            # ]
+            a = tensor.ones([2, 2])
+            b = QTensor([[1, 1], [0, 1]])
+            b = b > 0
+            c = a[b]
+            print(c)
+            #[1.0000000, 1.0000000, 1.0000000]
+            tt = tensor.arange(1, 56 * 2 * 4 * 4 + 1).reshape([2, 8, 4, 7, 4])
+            tt.requires_grad = True
+            index_sample1 = tensor.arange(0, 3).reshape([3, 1])
+            index_sample2 = QTensor([0, 1, 0, 2, 3, 2, 2, 3, 3]).reshape([3, 3])
+            gg = tt[:, index_sample1, 3:, index_sample2, 2:]
+            print(gg)
+            # [
+            # [[[[87.0000000, 88.0000000]],
+            # [[983.0000000, 984.0000000]]],
+            # [[[91.0000000, 92.0000000]],
+            # [[987.0000000, 988.0000000]]],
+            # [[[87.0000000, 88.0000000]],
+            # [[983.0000000, 984.0000000]]]],
+            # [[[[207.0000000, 208.0000000]],
+            # [[1103.0000000, 1104.0000000]]],
+            # [[[211.0000000, 212.0000000]],
+            # [[1107.0000000, 1108.0000000]]],
+            # [[[207.0000000, 208.0000000]],
+            # [[1103.0000000, 1104.0000000]]]],
+            # [[[[319.0000000, 320.0000000]],
+            # [[1215.0000000, 1216.0000000]]],
+            # [[[323.0000000, 324.0000000]],
+            # [[1219.0000000, 1220.0000000]]],
+            # [[[323.0000000, 324.0000000]],
+            # [[1219.0000000, 1220.0000000]]]]
+            # ]
+
+__setitem__
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. py:method:: QTensor.__setitem__()
+
+    Slicing indexing of QTensor is supported, or using QTensor as advanced index access input. A new QTensor will be returned.
+
+    The parameters start, stop, and step can be separated by a colon,such as start:stop:step, where start, stop, and step can be default
+
+    As a 1-D QTensor,indexing or slicing can only be done on a single axis.
+
+    As a 2-D QTensor and a multidimensional QTensor,indexing or slicing can be done on multiple axes.
+
+    If you use QTensor as an index for advanced indexing, see numpy for `advanced indexing <https://docs.scipy.org/doc/numpy-1.10.1/reference/arrays.indexing.html>`_ .
+
+    If your QTensor as an index is the result of a logical operation, then you do a Boolean index.
+
+    .. note:: We use an index form like a[3,4,1],but the form a[3][4][1] is not supported.And ``Ellipsis`` is also not supported.
+
+    :param item: A integer or QTensor as an index
+
+    :return: None
+
+
+    Example::
+
+        from pyvqnet.tensor import tensor
+        aaa = tensor.arange(1, 61)
+        aaa.reshape_([4, 5, 3])
+        vqnet_a2 = aaa[3, 4, 1]
+        aaa[3, 4, 1] = tensor.arange(10001,
+                                        10001 + vqnet_a2.size).reshape(vqnet_a2.shape)
+        print(aaa)
+        # [
+        # [[1.0000000, 2.0000000, 3.0000000],
+        #  [4.0000000, 5.0000000, 6.0000000],
+        #  [7.0000000, 8.0000000, 9.0000000],
+        #  [10.0000000, 11.0000000, 12.0000000],
+        #  [13.0000000, 14.0000000, 15.0000000]],
+        # [[16.0000000, 17.0000000, 18.0000000],
+        #  [19.0000000, 20.0000000, 21.0000000],
+        #  [22.0000000, 23.0000000, 24.0000000],
+        #  [25.0000000, 26.0000000, 27.0000000],
+        #  [28.0000000, 29.0000000, 30.0000000]],
+        # [[31.0000000, 32.0000000, 33.0000000],
+        #  [34.0000000, 35.0000000, 36.0000000],
+        #  [37.0000000, 38.0000000, 39.0000000],
+        #  [40.0000000, 41.0000000, 42.0000000],
+        #  [43.0000000, 44.0000000, 45.0000000]],
+        # [[46.0000000, 47.0000000, 48.0000000],
+        #  [49.0000000, 50.0000000, 51.0000000],
+        #  [52.0000000, 53.0000000, 54.0000000],
+        #  [55.0000000, 56.0000000, 57.0000000],
+        #  [58.0000000, 10001.0000000, 60.0000000]]
+        # ]
+        aaa = tensor.arange(1, 61)
+        aaa.reshape_([4, 5, 3])
+        vqnet_a3 = aaa[:, 2, :]
+        aaa[:, 2, :] = tensor.arange(10001,
+                                        10001 + vqnet_a3.size).reshape(vqnet_a3.shape)
+        print(aaa)
+        # [
+        # [[1.0000000, 2.0000000, 3.0000000],
+        #  [4.0000000, 5.0000000, 6.0000000],
+        #  [10001.0000000, 10002.0000000, 10003.0000000],
+        #  [10.0000000, 11.0000000, 12.0000000],
+        #  [13.0000000, 14.0000000, 15.0000000]],
+        # [[16.0000000, 17.0000000, 18.0000000],
+        #  [19.0000000, 20.0000000, 21.0000000],
+        #  [10004.0000000, 10005.0000000, 10006.0000000],
+        #  [25.0000000, 26.0000000, 27.0000000],
+        #  [28.0000000, 29.0000000, 30.0000000]],
+        # [[31.0000000, 32.0000000, 33.0000000],
+        #  [34.0000000, 35.0000000, 36.0000000],
+        #  [10007.0000000, 10008.0000000, 10009.0000000],
+        #  [40.0000000, 41.0000000, 42.0000000],
+        #  [43.0000000, 44.0000000, 45.0000000]],
+        # [[46.0000000, 47.0000000, 48.0000000],
+        #  [49.0000000, 50.0000000, 51.0000000],
+        #  [10010.0000000, 10011.0000000, 10012.0000000],
+        #  [55.0000000, 56.0000000, 57.0000000],
+        #  [58.0000000, 59.0000000, 60.0000000]]
+        # ]
+        aaa = tensor.arange(1, 61)
+        aaa.reshape_([4, 5, 3])
+        vqnet_a4 = aaa[2, :]
+        aaa[2, :] = tensor.arange(10001,
+                                    10001 + vqnet_a4.size).reshape(vqnet_a4.shape)
+        print(aaa)
+        # [
+        # [[1.0000000, 2.0000000, 3.0000000],
+        #  [4.0000000, 5.0000000, 6.0000000],
+        #  [7.0000000, 8.0000000, 9.0000000],
+        #  [10.0000000, 11.0000000, 12.0000000],
+        #  [13.0000000, 14.0000000, 15.0000000]],
+        # [[16.0000000, 17.0000000, 18.0000000],
+        #  [19.0000000, 20.0000000, 21.0000000],
+        #  [22.0000000, 23.0000000, 24.0000000],
+        #  [25.0000000, 26.0000000, 27.0000000],
+        #  [28.0000000, 29.0000000, 30.0000000]],
+        # [[10001.0000000, 10002.0000000, 10003.0000000],
+        #  [10004.0000000, 10005.0000000, 10006.0000000],
+        #  [10007.0000000, 10008.0000000, 10009.0000000],
+        #  [10010.0000000, 10011.0000000, 10012.0000000],
+        #  [10013.0000000, 10014.0000000, 10015.0000000]],
+        # [[46.0000000, 47.0000000, 48.0000000],
+        #  [49.0000000, 50.0000000, 51.0000000],
+        #  [52.0000000, 53.0000000, 54.0000000],
+        #  [55.0000000, 56.0000000, 57.0000000],
+        #  [58.0000000, 59.0000000, 60.0000000]]
+        # ]
+        aaa = tensor.arange(1, 61)
+        aaa.reshape_([4, 5, 3])
+        vqnet_a5 = aaa[0:2, ::2, 1:2]
+        aaa[0:2, ::2,
+            1:2] = tensor.arange(10001,
+                                    10001 + vqnet_a5.size).reshape(vqnet_a5.shape)
+        print(aaa)
+        # [
+        # [[1.0000000, 10001.0000000, 3.0000000],
+        #  [4.0000000, 5.0000000, 6.0000000],
+        #  [7.0000000, 10002.0000000, 9.0000000],
+        #  [10.0000000, 11.0000000, 12.0000000],
+        #  [13.0000000, 10003.0000000, 15.0000000]],
+        # [[16.0000000, 10004.0000000, 18.0000000],
+        #  [19.0000000, 20.0000000, 21.0000000],
+        #  [22.0000000, 10005.0000000, 24.0000000],
+        #  [25.0000000, 26.0000000, 27.0000000],
+        #  [28.0000000, 10006.0000000, 30.0000000]],
+        # [[31.0000000, 32.0000000, 33.0000000],
+        #  [34.0000000, 35.0000000, 36.0000000],
+        #  [37.0000000, 38.0000000, 39.0000000],
+        #  [40.0000000, 41.0000000, 42.0000000],
+        #  [43.0000000, 44.0000000, 45.0000000]],
+        # [[46.0000000, 47.0000000, 48.0000000],
+        #  [49.0000000, 50.0000000, 51.0000000],
+        #  [52.0000000, 53.0000000, 54.0000000],
+        #  [55.0000000, 56.0000000, 57.0000000],
+        #  [58.0000000, 59.0000000, 60.0000000]]
+        # ]
+        a = tensor.ones([2, 2])
+        b = tensor.QTensor([[1, 1], [0, 1]])
+        b = b > 0
+        x = tensor.QTensor([1001, 2001, 3001])
+
+        a[b] = x
+        print(a)
+        # [
+        # [1001.0000000, 2001.0000000],
+        #  [1.0000000, 3001.0000000]
+        # ]
+
+
 Create Functions
 -----------------------------
 
@@ -606,11 +849,12 @@ Create Functions
 ones
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. py:function:: pyvqnet.tensor.ones(shape)
+.. py:function:: pyvqnet.tensor.ones(shape,device=0)
 
     Return one-tensor with the input shape.
 
     :param shape: input shape
+    :param device: stored in which device，default 0 , CPU.
 
     :return: output QTensor with the input shape.
 
@@ -675,13 +919,12 @@ full
 full_like
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. py:function:: pyvqnet.tensor.full_like(t, value, dev: int = 0)
+.. py:function:: pyvqnet.tensor.full_like(t, value,)
 
     Create a QTensor of the specified shape and fill it with value.
 
     :param t:  input Qtensor
     :param value: value to fill the QTensor with.
-    :param dev: device to use,default = 0 ,use cpu device.
     :return: output QTensor
 
     Example::
@@ -701,11 +944,12 @@ full_like
 zeros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. py:function:: pyvqnet.tensor.zeros(shape)
+.. py:function:: pyvqnet.tensor.zeros(shape，device =0)
 
     Return zero-tensor of the input shape.
 
     :param shape: shape of tensor
+    :param device: device to use,default = 0 ,use cpu device
     :return:  output QTensor
 
     Example::
@@ -747,14 +991,15 @@ zeros_like
 arange
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. py:function:: pyvqnet.tensor.arange(start, end, step=1, dev: int = 0)
+.. py:function:: pyvqnet.tensor.arange(start, end, step=1, device: int = 0,requires_grad=False)
 
     Create a 1D QTensor with evenly spaced values within a given interval.
 
     :param start: start of interval
     :param end: end of interval
     :param step: spacing between values
-    :param dev: device to use,default = 0 ,use cpu device.
+    :param device: device to use,default = 0 ,use cpu device
+    :param requires_grad: should tensor’s gradient be tracked, defaults to False
     :return: output QTensor
 
     Example::
@@ -769,14 +1014,15 @@ arange
 linspace
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. py:function:: pyvqnet.tensor.linspace(start, end, nums: int, dev: int = 0)
+.. py:function:: pyvqnet.tensor.linspace(start, end, num, device: int = 0, requires_grad= False)
 
     Create a 1D QTensor with evenly spaced values within a given interval.
 
     :param start: starting value
     :param end: end value
     :param nums: number of samples to generate
-    :param dev: device to use,default = 0 ,use cpu device.
+    :param device: device to use,default = 0 ,use cpu device
+    :param requires_grad: should tensor’s gradient be tracked, defaults to False
     :return: output QTensor
 
     Example::
@@ -791,15 +1037,16 @@ linspace
 logspace
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. py:function:: pyvqnet.tensor.logspace(start, end, steps, base, dev: int = 0)
+.. py:function:: pyvqnet.tensor.logspace(start, end, num, base, dev: int = 0, requires_grad)
 
     Create a 1D QTensor with evenly spaced values on a log scale.
 
     :param start: ``base ** start`` is the starting value
     :param end: ``base ** end`` is the final value of the sequence
-    :param steps: number of samples to generate
+    :param nums: number of samples to generate
     :param base: the base of the log space
-    :param dev: device to use,default = 0 ,use cpu device.
+    :param dev: device to use,default = 0 ,use cpu device
+    :param requires_grad: should tensor’s gradient be tracked, defaults to False
     :return: output QTensor
 
     Example::
@@ -822,7 +1069,7 @@ eye
 
     :param size: size of the (square) QTensor to create
     :param offset: Index of the diagonal: 0 (the default) refers to the main diagonal, a positive value refers to an upper diagonal, and a negative value to a lower diagonal.
-    :param dev: device to use,default = 0 ,use cpu device.
+    :param dev: device to use,default = 0 ,use cpu device
     :return: output QTensor
 
     Example::
@@ -925,7 +1172,7 @@ randu
     Create a QTensor with uniformly distributed random values.
 
     :param shape: shape of the QTensor to create
-    :param dev: device to use,default = 0 ,use cpu device.
+    :param dev: device to use,default = 0 ,use cpu device
     :return: output QTensor
 
 
@@ -965,6 +1212,73 @@ randn
         # [-0.9529880, -0.4947567, -0.6399882],
         # [-0.6987777, -0.0089036, -0.5084590]
         # ]
+
+triu
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. py:function:: pyvqnet.tensor.triu(t, diagonal=0)
+
+    Returns the upper triangular matrix of input t, with the rest set to 0.
+
+    :param t: input a QTensor
+    :param diagonal: The Offset default =0. Main diagonal is 0, positive is offset up,and negative is offset down
+
+    :return: output a QTensor
+
+    Examples::
+
+        from pyvqnet.tensor import tensor
+        a = tensor.arange(1.0, 2 * 6 * 5 + 1.0).reshape([2, 6, 5])
+        u = tensor.triu(a, 1)
+        print(u)
+        # [
+        # [[0.0000000, 2.0000000, 3.0000000, 4.0000000, 5.0000000],
+        #  [0.0000000, 0.0000000, 8.0000000, 9.0000000, 10.0000000],
+        #  [0.0000000, 0.0000000, 0.0000000, 14.0000000, 15.0000000],
+        #  [0.0000000, 0.0000000, 0.0000000, 0.0000000, 20.0000000],
+        #  [0.0000000, 0.0000000, 0.0000000, 0.0000000, 0.0000000],
+        #  [0.0000000, 0.0000000, 0.0000000, 0.0000000, 0.0000000]],
+        # [[0.0000000, 32.0000000, 33.0000000, 34.0000000, 35.0000000],
+        #  [0.0000000, 0.0000000, 38.0000000, 39.0000000, 40.0000000],
+        #  [0.0000000, 0.0000000, 0.0000000, 44.0000000, 45.0000000],
+        #  [0.0000000, 0.0000000, 0.0000000, 0.0000000, 50.0000000],
+        #  [0.0000000, 0.0000000, 0.0000000, 0.0000000, 0.0000000],
+        #  [0.0000000, 0.0000000, 0.0000000, 0.0000000, 0.0000000]]
+        # ]
+
+tril
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. py:function:: pyvqnet.tensor.tril(t, diagonal=0)
+
+    Returns the lower triangular matrix of input t, with the rest set to 0.
+
+    :param t: input a QTensor
+    :param diagonal: The Offset default =0. Main diagonal is 0, positive is offset up,and negative is offset down
+
+    :return: output a QTensor
+
+    Examples::
+
+        from pyvqnet.tensor import tensor
+        a = tensor.arange(1.0, 2 * 6 * 5 + 1.0).reshape([12, 5])
+        u = tensor.tril(a, 1)
+        print(u)
+        # [
+        # [1.0000000, 2.0000000, 0.0000000, 0.0000000, 0.0000000],
+        #  [6.0000000, 7.0000000, 8.0000000, 0.0000000, 0.0000000],
+        #  [11.0000000, 12.0000000, 13.0000000, 14.0000000, 0.0000000],
+        #  [16.0000000, 17.0000000, 18.0000000, 19.0000000, 20.0000000],
+        #  [21.0000000, 22.0000000, 23.0000000, 24.0000000, 25.0000000],
+        #  [26.0000000, 27.0000000, 28.0000000, 29.0000000, 30.0000000],
+        #  [31.0000000, 32.0000000, 33.0000000, 34.0000000, 35.0000000],
+        #  [36.0000000, 37.0000000, 38.0000000, 39.0000000, 40.0000000],
+        #  [41.0000000, 42.0000000, 43.0000000, 44.0000000, 45.0000000],
+        #  [46.0000000, 47.0000000, 48.0000000, 49.0000000, 50.0000000],
+        #  [51.0000000, 52.0000000, 53.0000000, 54.0000000, 55.0000000],
+        #  [56.0000000, 57.0000000, 58.0000000, 59.0000000, 60.0000000]
+        # ]
+
 
 Math Functions
 -----------------------------
@@ -1089,6 +1403,80 @@ argsort
         #  [4.0000000, 7.0000000, 5.0000000, 0.0000000, 2.0000000, 1.0000000, 3.0000000, 6.0000000]
         # ]
 
+topK
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. py:function:: pyvqnet.tensor.topK(t, k, axis=-1, if_descent=True)
+
+    Returns the k largest elements of the input tensor along the given axis.
+
+    If if_descent is False，then return k smallest elements.
+
+    :param t: input a QTensor
+    :param k: numbers of largest elements or smallest elements
+    :param axis: sort axis,default = -1，the last axis
+    :param if_descent: sort order,defaults to True
+
+    :return: A new QTensor
+
+    Examples::
+
+        from pyvqnet.tensor import tensor, QTensor
+        x = QTensor([
+            24., 13., 15., 4., 3., 8., 11., 3., 6., 15., 24., 13., 15., 3., 3., 8., 7.,
+            3., 6., 11.
+        ])
+        x.reshape_([2, 5, 1, 2])
+        x.requires_grad = True
+        y = tensor.topK(x, 3, 1)
+        print(y)
+        # [
+        # [[[24.0000000, 15.0000000]],
+        # [[15.0000000, 13.0000000]],
+        # [[11.0000000, 8.0000000]]],
+        # [[[24.0000000, 13.0000000]],
+        # [[15.0000000, 11.0000000]],
+        # [[7.0000000, 8.0000000]]]
+        # ]
+
+argtopK
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. py:function:: pyvqnet.tensor.argtopK(t, k, axis=-1, if_descent=True)
+
+    Return the index of the k largest elements along the given axis of the input tensor.
+
+    If if_descent is False，then return the index of k smallest elements.
+
+    :param t: input a QTensor
+    :param k: numbers of largest elements or smallest elements
+    :param axis: sort axis,default = -1，the last axis
+    :param if_descent: sort order,defaults to True
+
+    :return: A new QTensor
+
+    Examples::
+
+        from pyvqnet.tensor import tensor, QTensor
+        x = QTensor([
+            24., 13., 15., 4., 3., 8., 11., 3., 6., 15., 24., 13., 15., 3., 3., 8., 7.,
+            3., 6., 11.
+        ])
+        x.reshape_([2, 5, 1, 2])
+        x.requires_grad = True
+        y = tensor.argtopK(x, 3, 1)
+        print(y)
+        # [
+        # [[[0.0000000, 4.0000000]],
+        # [[1.0000000, 0.0000000]],
+        # [[3.0000000, 2.0000000]]],
+        # [[[0.0000000, 0.0000000]],
+        # [[1.0000000, 4.0000000]],
+        # [[3.0000000, 2.0000000]]]
+        # ]
+
+
+
 add
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -1204,6 +1592,32 @@ sums
 
         # [21.0000000]
 
+
+
+cumsum
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. py:function:: pyvqnet.tensor.cumsum(t, axis=-1)
+
+    Return the cumulative sum of input elements in the dimension axis.
+
+    :param t:  the input QTensor
+    :param axis:  Calculation of the axis,defaults to -1,use the last axis
+
+    :return:  output QTensor.
+
+    Example::
+
+       from pyvqnet.tensor import tensor, QTensor
+        t = QTensor(([1, 2, 3], [4, 5, 6]))
+        x = tensor.cumsum(t,-1)
+        print(x)
+        # [
+        # [1.0000000, 3.0000000, 6.0000000],
+        # [4.0000000, 9.0000000, 15.0000000]
+        # ]
+
+
 mean
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -1229,15 +1643,15 @@ mean
 median
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. py:function:: pyvqnet.tensor.median(t: pyvqnet.tensor.QTensor, *kargs)
+.. py:function:: pyvqnet.tensor.median(t: pyvqnet.tensor.QTensor, axis=None, keepdims=False)
 
     Obtain the median value in the QTensor.
 
-    :param t: the input QTensor.
-    :param dim:  the dimension to reduce.
-    :param keepdims:  whether the output QTensor has dim retained or not, defaults to False.
+    :param t: the input QTensor
+    :param axis:  An axis for averaging,defaults to None
+    :param keepdims:  whether the output QTensor has dim retained or not, defaults to False
 
-    :return: Return the median of the values in input.
+    :return: Return the median of the values in input or QTensor.
 
     Example::
 
@@ -1262,16 +1676,16 @@ median
 std
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. py:function:: pyvqnet.tensor.std(t: pyvqnet.tensor.QTensor, *kargs)
+.. py:function:: pyvqnet.tensor.std(t: pyvqnet.tensor.QTensor, axis=None, keepdims=False, unbiased=True)
 
     Obtain the standard variance value in the QTensor.
 
 
-    :param t:  the input QTensor.
-    :param dim:  the dimension to reduce.
-    :param keepdims:  whether the output QTensor has dim retained or not, defaults to False.
-    :param unbiased:  whether to use Bessel’s correction,default true.
-    :return: Return the standard variance of the values in input.
+    :param t:  the input QTensor
+    :param axis:  the axis used to calculate the standard deviation,defaults to None
+    :param keepdims:  whether the output QTensor has dim retained or not, defaults to False
+    :param unbiased:  whether to use Bessel’s correction,default true
+    :return: Return the standard variance of the values in input or QTensor
 
     Example::
 
@@ -1288,7 +1702,7 @@ std
                     [0.3180, -0.6993,  1.0436,  0.0438,  0.2270],
                     [-0.2751,  0.7303,  0.2192,  0.3321,  0.2488],
                     [1.0778, -1.9510,  0.7048,  0.4742, -0.7125]])
-        std_b = tensor.std(b, [1], False, False)
+        std_b = tensor.std(b, 1, False, False)
         print(std_b)
 
         # [0.6593542, 0.5583112, 0.3206565, 1.1103367]
@@ -1296,13 +1710,13 @@ std
 var
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. py:function:: pyvqnet.tensor.var(t: pyvqnet.tensor.QTensor, *kargs)
+.. py:function:: pyvqnet.tensor.var(t: pyvqnet.tensor.QTensor, axis=None, keepdims=False, unbiased=True)
 
     Obtain the variance in the QTensor.
 
 
     :param t:  the input QTensor.
-    :param dim:  the dimension to reduce.
+    :param axis:  The axis used to calculate the variance,defaults to None
     :param keepdims:  whether the output QTensor has dim retained or not, defaults to False.
     :param unbiased:  whether to use Bessel’s correction,default true.
 
@@ -1325,7 +1739,7 @@ matmul
 
 .. py:function:: pyvqnet.tensor.matmul(t1: pyvqnet.tensor.QTensor, t2: pyvqnet.tensor.QTensor)
 
-    Matrix multiplications of two 2d or 4d matrix.
+    Matrix multiplications of two 2d , 3d , 4d matrix.
 
     :param t1: first QTensor
     :param t2: second QTensor
@@ -1902,7 +2316,7 @@ clip
 where
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. py:function:: pyvqnet.tensor.where(condition: pyvqnet.tensor.QTensor, t1: Optional[pyvqnet.tensor.QTensor] = None, t2: Optional[pyvqnet.tensor.QTensor] = None)
+.. py:function:: pyvqnet.tensor.where(condition: pyvqnet.tensor.QTensor, t1: pyvqnet.tensor.QTensor, t2: pyvqnet.tensor.QTensor)
 
     Return elements chosen from x or y depending on condition.
 
@@ -1925,11 +2339,11 @@ where
 nonzero
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. py:function:: pyvqnet.tensor.nonzero(A)
+.. py:function:: pyvqnet.tensor.nonzero(t)
 
     Return a QTensor containing the indices of nonzero elements.
 
-    :param A: input QTensor
+    :param t: input QTensor
     :return: output QTensor contains indices of nonzero elements.
 
     Example::
@@ -1952,11 +2366,11 @@ nonzero
 isfinite
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. py:function:: pyvqnet.tensor.isfinite(A)
+.. py:function:: pyvqnet.tensor.isfinite(t)
 
     Test element-wise for finiteness (not infinity or not Not a Number).
 
-    :param A: input QTensor
+    :param t: input QTensor
     :return: output QTensor with each elements presents 1, if the QTensor value is isfinite. else 0.
 
     Example::
@@ -1973,11 +2387,11 @@ isfinite
 isinf
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. py:function:: pyvqnet.tensor.isinf(A)
+.. py:function:: pyvqnet.tensor.isinf(t)
 
     Test element-wise for positive or negative infinity.
 
-    :param A: input QTensor
+    :param t: input QTensor
     :return: output QTensor with each elements presents 1, if the QTensor value is isinf. else 0.
 
     Example::
@@ -1994,11 +2408,11 @@ isinf
 isnan
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. py:function:: pyvqnet.tensor.isnan(A)
+.. py:function:: pyvqnet.tensor.isnan(t)
 
     Test element-wise for Nan.
 
-    :param A: input QTensor
+    :param t: input QTensor
     :return: output QTensor with each elements presents 1, if the QTensor value is isnan. else 0.
 
     Example::
@@ -2015,11 +2429,11 @@ isnan
 isneginf
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. py:function:: pyvqnet.tensor.isneginf(A)
+.. py:function:: pyvqnet.tensor.isneginf(t)
 
     Test element-wise for negative infinity.
 
-    :param A: input QTensor
+    :param t: input QTensor
     :return: output QTensor with each elements presents 1, if the QTensor value is isneginf. else 0.
 
     Example::
@@ -2036,11 +2450,11 @@ isneginf
 isposinf
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. py:function:: pyvqnet.tensor.isposinf(A)
+.. py:function:: pyvqnet.tensor.isposinf(t)
 
     Test element-wise for positive infinity.
 
-    :param A: input QTensor
+    :param t: input QTensor
     :return: output QTensor with each elements presents 1, if the QTensor value is isposinf. else 0.
 
     Example::
@@ -2057,12 +2471,12 @@ isposinf
 logical_and
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. py:function:: pyvqnet.tensor.logical_and(A, B)
+.. py:function:: pyvqnet.tensor.logical_and(t1, t2)
 
-    Compute the truth value of ``A`` and ``B`` element-wise.If logicial calculation result is False, it presents 0,else 1.
+    Compute the truth value of ``t1`` and ``t2`` element-wise.If logicial calculation result is False, it presents 0,else 1.
 
-    :param A: input QTensor
-    :param B: input QTensor
+    :param t1: input QTensor
+    :param t2: input QTensor
     :return: output QTensor
 
     Example::
@@ -2080,12 +2494,12 @@ logical_and
 logical_or
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. py:function:: pyvqnet.tensor.logical_or(A, B)
+.. py:function:: pyvqnet.tensor.logical_or(t1, t2)
 
-    Compute the truth value of ``A or B`` element-wise.If logicial calculation result is False, it presents 0,else 1.
+    Compute the truth value of ``t1 or t2`` element-wise.If logicial calculation result is False, it presents 0,else 1.
 
-    :param A: input QTensor
-    :param B: input QTensor
+    :param t1: input QTensor
+    :param t2: input QTensor
     :return: output QTensor
 
     Example::
@@ -2103,11 +2517,11 @@ logical_or
 logical_not
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. py:function:: pyvqnet.tensor.logical_not(A)
+.. py:function:: pyvqnet.tensor.logical_not(t)
 
-    Compute the truth value of ``not A`` element-wise.If logicial calculation result is False, it presents 0,else 1.
+    Compute the truth value of ``not t`` element-wise.If logicial calculation result is False, it presents 0,else 1.
 
-    :param A: input QTensor
+    :param t: input QTensor
     :return: output QTensor
 
     Example::
@@ -2124,12 +2538,12 @@ logical_not
 logical_xor
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. py:function:: pyvqnet.tensor.logical_xor(A, B)
+.. py:function:: pyvqnet.tensor.logical_xor(t1, t2)
 
-    Compute the truth value of ``A xor B`` element-wise.If logicial calculation result is False, it presents 0,else 1.
+    Compute the truth value of ``t1 xor t2`` element-wise.If logicial calculation result is False, it presents 0,else 1.
 
-    :param A: input QTensor
-    :param B: input QTensor
+    :param t1: input QTensor
+    :param t2: input QTensor
     :return: output QTensor
 
     Example::
@@ -2147,14 +2561,14 @@ logical_xor
 greater
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. py:function:: pyvqnet.tensor.greater(A, B)
+.. py:function:: pyvqnet.tensor.greater(t1, t2)
 
-    Return the truth value of ``A > B`` element-wise.
+    Return the truth value of ``t1 > t2`` element-wise.
 
 
-    :param A: input QTensor
-    :param B: input QTensor
-    :return: output QTensor that is 1 where A is greater than B and False elsewhere
+    :param t1: input QTensor
+    :param t2: input QTensor
+    :return: output QTensor that is 1 where t1 is greater than t2 and False elsewhere
 
     Example::
 
@@ -2174,13 +2588,13 @@ greater
 greater_equal
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. py:function:: pyvqnet.tensor.greater_equal(A, B)
+.. py:function:: pyvqnet.tensor.greater_equal(t1, t2)
 
-    Return the truth value of ``A >= B`` element-wise.
+    Return the truth value of ``t1 >= t2`` element-wise.
 
-    :param A: input QTensor
-    :param B: input QTensor
-    :return: output QTensor that is 1 where A is greater than or equal to B and False elsewhere
+    :param t1: input QTensor
+    :param t2: input QTensor
+    :return: output QTensor that is 1 where t1 is greater than or equal to t2 and False elsewhere
 
     Example::
 
@@ -2200,14 +2614,13 @@ greater_equal
 less
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. py:function:: pyvqnet.tensor.less(A, B)
+.. py:function:: pyvqnet.tensor.less(t1, t2)
 
-    Return the truth value of ``A < B`` element-wise.
+    Return the truth value of ``t1 < t2`` element-wise.
 
-
-    :param A: input QTensor
-    :param B: input QTensor
-    :return: output QTensor that is 1 where A is less than B and False elsewhere
+    :param t1: input QTensor
+    :param t2: input QTensor
+    :return: output QTensor that is 1 where t1 is less than t2 and False elsewhere
 
     Example::
 
@@ -2227,14 +2640,14 @@ less
 less_equal
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. py:function:: pyvqnet.tensor.less_equal(A, B)
+.. py:function:: pyvqnet.tensor.less_equal(t1, t2)
 
-    Return the truth value of ``A <= B`` element-wise.
+    Return the truth value of ``t1 <= t2`` element-wise.
 
 
-    :param A: input QTensor
-    :param B: input QTensor
-    :return: output QTensor that is 1 where A is less than or equal to B and False elsewhere
+    :param t1: input QTensor
+    :param t2: input QTensor
+    :return: output QTensor that is 1 where t1 is less than or equal to t2 and False elsewhere
 
     Example::
 
@@ -2254,14 +2667,14 @@ less_equal
 equal
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. py:function:: pyvqnet.tensor.equal(A, B)
+.. py:function:: pyvqnet.tensor.equal(t1, t2)
 
-    Return the truth value of ``B == A`` element-wise.
+    Return the truth value of ``t1 == t2`` element-wise.
 
 
-    :param A: input QTensor
-    :param B: input QTensor
-    :return: output QTensor that is 1 where A is equal to B and False elsewhere
+    :param t1: input QTensor
+    :param t2: input QTensor
+    :return: output QTensor that is 1 where t1 is equal to t2 and False elsewhere
 
     Example::
 
@@ -2281,14 +2694,13 @@ equal
 not_equal
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. py:function:: pyvqnet.tensor.not_equal(A, B)
+.. py:function:: pyvqnet.tensor.not_equal(t1, t2)
 
-    Return the truth value of ``B != A`` element-wise.
+    Return the truth value of ``t1 != t2`` element-wise.
 
-
-    :param A: input QTensor
-    :param B: input QTensor
-    :return: output QTensor that is 1 where A is not equal to B and False elsewhere
+    :param t1: input QTensor
+    :param t2: input QTensor
+    :return: output QTensor that is 1 where t1 is not equal to t2 and False elsewhere
 
     Example::
 
@@ -2342,7 +2754,7 @@ concatenate
 
 .. py:function:: pyvqnet.tensor.concatenate(args: list, axis=1)
 
-    Concatenate with channel, i.e. concatenate C of QTensor shape (N,C,H,W)
+    Concatenate the input QTensor along the axis and return a new QTensor.
 
     :param args: list consist of input QTensors
     :param axis: dimension to concatenate. Has to be between 0 and the number of dimensions of concatenate tensors.
@@ -2597,6 +3009,39 @@ swapaxis
         #  [15.0000000, 19.0000000, 23.0000000]]
         # ]
 
+masked_fill
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. py:function:: pyvqnet.tensor.masked_fill(t, mask, value)
+
+    If mask == 1, fill with the specified value. The shape of the mask must be broadcastable from the shape of the input QTensor.
+
+    :param t: input QTensor
+    :param mask: A QTensor
+    :param value: specified value
+    :return:  A QTensor
+
+    Examples::
+
+        from pyvqnet.tensor import tensor
+        import numpy as np
+        a = tensor.ones([2, 2, 2, 2])
+        mask = np.random.randint(0, 2, size=4).reshape([2, 2])
+        b = tensor.QTensor(mask)
+        c = tensor.masked_fill(a, b, 13)
+        print(c)
+        # [
+        # [[[1.0000000, 1.0000000],
+        #  [13.0000000, 13.0000000]],
+        # [[1.0000000, 1.0000000],
+        #  [13.0000000, 13.0000000]]],
+        # [[[1.0000000, 1.0000000],
+        #  [13.0000000, 13.0000000]],
+        # [[1.0000000, 1.0000000],
+        #  [13.0000000, 13.0000000]]]
+        # ]
+
+
 flatten
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -2636,8 +3081,7 @@ to_tensor
     Example::
 
         from pyvqnet.tensor import tensor
-
         t = tensor.to_tensor(10.0)
         print(t)
-
         # [10.0000000]
+

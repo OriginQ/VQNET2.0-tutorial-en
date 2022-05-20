@@ -81,14 +81,13 @@ Module
 forward
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. py:method:: pyvqnet.nn.module.Module.forward(x, param_keys=None, circuits=None, func=None)
+.. py:method:: pyvqnet.nn.module.Module.forward(x, *args, **kwargs)
 
     Abstract method which performs forward pass.
 
     :param x: input QTensor
-    :param param_keys: specific param keys for QNLP algorithm,default None.
-    :param circuits: specific circuits from other code for QNLP algorithm,default None.
-    :param func: specific convert function to qpanda circuits for QNLP algorithm,default None.
+    :param \*args: A non-keyword variable parameter
+    :param \*\*kwargs: A keyword variable parameter
     :return: module output
 
     Example::
@@ -297,7 +296,7 @@ Conv2D
 ConvT2D
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. py:class:: pyvqnet.nn.ConvT2D(input_channels,output_channels,kernel_size,stride=[1, 1],padding="valid",kernel_initializer=None,bias_initializer=None)
+.. py:class:: pyvqnet.nn.ConvT2D(input_channels,output_channels,kernel_size,stride=[1, 1],padding="valid",use_bias="True", kernel_initializer=None,bias_initializer=None)
 
     Apply a two-dimensional transposed convolution kernel over an input. Inputs to the convT module are of shape (batch_size, input_channels, height, width)
 
@@ -306,6 +305,7 @@ ConvT2D
     :param kernel_size: `tuple|list` - Size of a single kernel.
     :param stride: `tuple|list` - Stride, defaults to (1, 1)|[1,1]
     :param padding:  Padding, defaults to "valid"
+    :param use_bias: `bool` - Whether to use a offset item. Default to use
     :param kernel_initializer: `callable` - Defaults to None
     :param bias_initializer: `callable` - Defaults to None
     :return: a ConvT2D class
@@ -349,7 +349,6 @@ AvgPool1D
 .. py:class:: pyvqnet.nn.AvgPool1D(kernel, stride, padding='valid', name='')
 
     This operation applies a 1D average pooling over an input signal composed of several input planes.
-    reference https://pytorch.org/docs/stable/generated/torch.nn.AvgPool1d.html#torch.nn.AvgPool1d
 
     :param kernel: size of the average pooling windows
     :param strides: factor by which to downscale
@@ -393,7 +392,6 @@ MaxPool1D
 .. py:class:: pyvqnet.nn.MaxPool1D(kernel, stride, padding='valid', name='')
 
     This operation applies a 1D max pooling over an input signal composed of several input planes.
-    reference https://pytorch.org/docs/stable/generated/torch.nn.MaxPool1d.html#torch.nn.MaxPool1d
 
     :param kernel: size of the max pooling windows
     :param strides: factor by which to downscale
@@ -437,8 +435,6 @@ AvgPool2D
 
     This operation applies 2D average pooling over input features .
 
-    reference: https://pytorch.org/docs/stable/generated/torch.nn.AvgPool2d.html?highlight=avgpooling
-
     :param kernel: size of the average pooling windows
     :param strides: factors by which to downscale
     :param padding: one of  "valid" or "same",defaults to "valid"
@@ -477,7 +473,6 @@ MaxPool2D
 .. py:class:: pyvqnet.nn.MaxPool2D(kernel, stride, padding='valid', name='')
 
     This operation applies 2D max pooling over input features.
-    reference https://pytorch.org/docs/stable/generated/torch.nn.MaxPool2d.html?highlight=pooling
 
     :param kernel: size of the max pooling windows
     :param strides: factor by which to downscale
@@ -997,7 +992,7 @@ Activation Function
 
 Activation
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-.. py:class:: pyvqnet.nn.Activation
+.. py:class:: pyvqnet.nn.activation.Activation
 
     Base class of activation. Specific activation functions inherit  this functions.
 
@@ -1100,9 +1095,9 @@ HardSigmoid
 
     .. math::
         \text{Hardsigmoid}(x) = \begin{cases}
-            0 & \text{ if } x \le -2.5, \\
-            1 & \text{ if } x \ge +2.5, \\
-            x / 5 + 1 / 2 & \text{otherwise}
+            0 & \text{ if } x \le -3, \\
+            1 & \text{ if } x \ge +3, \\
+            x / 6 + 1 / 2 & \text{otherwise}
         \end{cases}
 
     :param name: name of the output layer
@@ -1116,7 +1111,7 @@ HardSigmoid
         y = layer(QTensor([1.0, 2.0, 3.0, 4.0]))
         print(y)
 
-        # [0.7000000, 0.9000000, 1.0000000, 1.0000000]
+        # [0.6666667, 0.8333334, 1.0000000, 1.0000000]
 
 ReLu
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
