@@ -250,7 +250,7 @@ argmin
     Return the indices of the minimum  value of all elements in the input QTensor,or
     Return the indices of the minimum  values of a QTensor across a dimension.
 
-    :param dim: dim ([int]]) – the dimension to reduce,only accepts single axis. if dim == None, returns the indices of the maximum value of all elements in the input tensor.The valid dim range is [-R, R), where R is input's ndim. when dim < 0, it works the same way as dim + R.
+    :param dim: dim ([int]]) – the dimension to reduce,only accepts single axis. if dim == None, returns the indices of the minimum value of all elements in the input tensor.The valid dim range is [-R, R), where R is input's ndim. when dim < 0, it works the same way as dim + R.
     :param keepdims:  whether the output QTensor has dim retained or not.
 
     :return: the indices of the minimum  value in the input QTensor.
@@ -2754,7 +2754,7 @@ concatenate
 
 .. py:function:: pyvqnet.tensor.concatenate(args: list, axis=1)
 
-    Concatenate with channel, i.e. concatenate C of QTensor shape (N,C,H,W)
+    Concatenate the input QTensor along the axis and return a new QTensor.
 
     :param args: list consist of input QTensors
     :param axis: dimension to concatenate. Has to be between 0 and the number of dimensions of concatenate tensors.
