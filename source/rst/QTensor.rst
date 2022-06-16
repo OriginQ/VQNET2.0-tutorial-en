@@ -3070,6 +3070,36 @@ flatten
 
         # [1.0000000, 2.0000000, 3.0000000]
 
+
+tensor.reshape
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. py:function:: pyvqnet.tensor.reshape(t: pyvqnet.tensor.QTensor,new_shape)
+
+    Change QTensor's shape, return a new shape QTensor
+
+    :param t: input QTensor.
+    :param new_shape: new shape
+
+    :return: a new shape QTensor 。
+
+    Example::
+
+        from pyvqnet.tensor import tensor
+        from pyvqnet.tensor import QTensor
+        import numpy as np
+        R, C = 3, 4
+        a = np.arange(R * C).reshape(R, C).astype(np.float32)
+        t = QTensor(a)
+        reshape_t = tensor.reshape(t, [C, R])
+        print(reshape_t)
+        # [
+        # [0.0000000, 1.0000000, 2.0000000],
+        # [3.0000000, 4.0000000, 5.0000000],
+        # [6.0000000, 7.0000000, 8.0000000],
+        # [9.0000000, 10.0000000, 11.0000000]
+        # ]
+
 Utility Functions
 -----------------------------
 
