@@ -250,7 +250,7 @@ argmin
     Return the indices of the minimum  value of all elements in the input QTensor,or
     Return the indices of the minimum  values of a QTensor across a dimension.
 
-    :param dim: dim ([int]]) – the dimension to reduce,only accepts single axis. if dim == None, returns the indices of the maximum value of all elements in the input tensor.The valid dim range is [-R, R), where R is input's ndim. when dim < 0, it works the same way as dim + R.
+    :param dim: dim ([int]]) – the dimension to reduce,only accepts single axis. if dim == None, returns the indices of the minimum value of all elements in the input tensor.The valid dim range is [-R, R), where R is input's ndim. when dim < 0, it works the same way as dim + R.
     :param keepdims:  whether the output QTensor has dim retained or not.
 
     :return: the indices of the minimum  value in the input QTensor.
@@ -610,11 +610,9 @@ __getitem__
 
         As a 1-D QTensor,indexing or slicing can only be done on a single axis.
 
-        As a 2-D QTensor, indexing or slicing can be done on two axes.
+        As a 2-D QTensor and a multidimensional QTensor,indexing or slicing can be done on multiple axes.
 
-        As a 3-D QTensor and a multidimensional QTensor,indexing or slicing can be done on a multiple axes.
-
-        If you use QTensor as an index for advanced indexing, see numpy for advanced `indexing <https://docs.scipy.org/doc/numpy-1.10.1/reference/arrays.indexing.html>`_ .
+        If you use QTensor as an index for advanced indexing, see numpy for `advanced indexing <https://docs.scipy.org/doc/numpy-1.10.1/reference/arrays.indexing.html>`_ .
 
         If your QTensor as an index is the result of a logical operation, then you do a Boolean index.
 
@@ -702,11 +700,9 @@ __setitem__
 
     As a 1-D QTensor,indexing or slicing can only be done on a single axis.
 
-    As a 2-D QTensor, indexing or slicing can be done on two axes.
+    As a 2-D QTensor and a multidimensional QTensor,indexing or slicing can be done on multiple axes.
 
-    As a 3-D QTensor and a multidimensional QTensor,indexing or slicing can be done on a multiple axes.
-
-    If you use QTensor as an index for advanced indexing, see numpy for advanced `indexing <https://docs.scipy.org/doc/numpy-1.10.1/reference/arrays.indexing.html>`_ .
+    If you use QTensor as an index for advanced indexing, see numpy for `advanced indexing <https://docs.scipy.org/doc/numpy-1.10.1/reference/arrays.indexing.html>`_ .
 
     If your QTensor as an index is the result of a logical operation, then you do a Boolean index.
 
@@ -853,11 +849,12 @@ Create Functions
 ones
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. py:function:: pyvqnet.tensor.ones(shape)
+.. py:function:: pyvqnet.tensor.ones(shape,device=0)
 
     Return one-tensor with the input shape.
 
     :param shape: input shape
+    :param device: stored in which device，default 0 , CPU.
 
     :return: output QTensor with the input shape.
 
@@ -922,13 +919,12 @@ full
 full_like
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. py:function:: pyvqnet.tensor.full_like(t, value, dev: int = 0)
+.. py:function:: pyvqnet.tensor.full_like(t, value,)
 
     Create a QTensor of the specified shape and fill it with value.
 
     :param t:  input Qtensor
     :param value: value to fill the QTensor with.
-    :param dev: device to use,default = 0 ,use cpu device.
     :return: output QTensor
 
     Example::
@@ -948,7 +944,7 @@ full_like
 zeros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. py:function:: pyvqnet.tensor.zeros(shape)
+.. py:function:: pyvqnet.tensor.zeros(shape，device =0)
 
     Return zero-tensor of the input shape.
 
@@ -1655,7 +1651,7 @@ median
     :param axis:  An axis for averaging,defaults to None
     :param keepdims:  whether the output QTensor has dim retained or not, defaults to False
 
-    :return: Return the median of the values in input.
+    :return: Return the median of the values in input or QTensor.
 
     Example::
 
@@ -1688,8 +1684,8 @@ std
     :param t:  the input QTensor
     :param axis:  the axis used to calculate the standard deviation,defaults to None
     :param keepdims:  whether the output QTensor has dim retained or not, defaults to False
-    :param unbiased:  whether to use Bessel’s correction,default true.
-    :return: Return the standard variance of the values in input.
+    :param unbiased:  whether to use Bessel’s correction,default true
+    :return: Return the standard variance of the values in input or QTensor
 
     Example::
 
@@ -1743,7 +1739,7 @@ matmul
 
 .. py:function:: pyvqnet.tensor.matmul(t1: pyvqnet.tensor.QTensor, t2: pyvqnet.tensor.QTensor)
 
-    Matrix multiplications of two 2d or 4d matrix.
+    Matrix multiplications of two 2d , 3d , 4d matrix.
 
     :param t1: first QTensor
     :param t2: second QTensor
@@ -2622,7 +2618,6 @@ less
 
     Return the truth value of ``t1 < t2`` element-wise.
 
-
     :param t1: input QTensor
     :param t2: input QTensor
     :return: output QTensor that is 1 where t1 is less than t2 and False elsewhere
@@ -2703,7 +2698,6 @@ not_equal
 
     Return the truth value of ``t1 != t2`` element-wise.
 
-
     :param t1: input QTensor
     :param t2: input QTensor
     :return: output QTensor that is 1 where t1 is not equal to t2 and False elsewhere
@@ -2760,7 +2754,7 @@ concatenate
 
 .. py:function:: pyvqnet.tensor.concatenate(args: list, axis=1)
 
-    Concatenate with channel, i.e. concatenate C of QTensor shape (N,C,H,W)
+    Concatenate the input QTensor along the axis and return a new QTensor.
 
     :param args: list consist of input QTensors
     :param axis: dimension to concatenate. Has to be between 0 and the number of dimensions of concatenate tensors.
@@ -3071,7 +3065,7 @@ flatten
         # [1.0000000, 2.0000000, 3.0000000]
 
 
-tensor.reshape
+reshape
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. py:function:: pyvqnet.tensor.reshape(t: pyvqnet.tensor.QTensor,new_shape)
