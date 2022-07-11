@@ -4027,3 +4027,90 @@ In general, QGAN learning and loading random distribution requires multiple trai
 
 |
 
+Other quantum machine learning algorithms
+-------------------------------------------
+
+quantum kernal SVM
+^^^^^^^^^^^^^^^^^^^
+
+In machine learning tasks, data often cannot be separated by a hyperplane in the original space. A common technique for finding such hyperplanes is to apply a nonlinear transformation function to the data.
+This function is called a feature map, through which we can calculate how close the data points are in this new feature space for the classification task of machine learning.
+
+This example refers to the `Supervised learning with quantum enhanced feature spaces <https://arxiv.org/pdf/1804.11326.pdf>`_ paper
+The first method constructs variational circuits for data classification tasks.
+
+``gen_vqc_qsvm_data`` is the data needed to generate this example. ``vqc_qsvm`` is a variable sub-circuit class used to classify the input data.
+The ``vqc_qsvm.plot()`` function visualizes the distribution of the data.
+
+.. image:: ./images/VQC-SVM.PNG
+   :width: 600 px
+   :align: center
+
+|
+
+    .. code-block::
+
+        """
+        VQC QSVM
+        """
+        from pyvqnet.qnn.svm import vqc_qsvm, gen_vqc_qsvm_data
+        import matplotlib.pyplot as plt
+        import numpy as np
+
+        batch_size = 40
+        maxiter = 40
+        training_size = 20
+        test_size = 10
+        gap = 0.3
+        #sub-circuits repeat times
+        rep = 3
+
+        #defines QSVM class
+        VQC_QSVM = vqc_qsvm(batch_size, maxiter, rep)
+        #randomly generates data from thesis.
+        train_features, test_features, train_labels, test_labels, samples = \
+            gen_vqc_qsvm_data(training_size=training_size, test_size=test_size, gap=gap)
+        VQC_QSVM.plot(train_features, test_features, train_labels, test_labels, samples)
+        #train
+        VQC_QSVM.train(train_features, train_labels)
+        #test
+        rlt, acc_1 = VQC_QSVM.predict(test_features, test_labels)
+        print(f"testing_accuracy {acc_1}")
+
+
+In addition to the above-mentioned direct use of variational quantum circuits to map classical data features to quantum feature spaces, in the paper `Supervised learning with quantum enhanced feature spaces <https://arxiv.org/pdf/1804.11326.pdf>`_
+The method of directly estimating kernel functions using quantum circuits and classifying them using classical support vector machines is also introduced in .
+Analogy to various kernel functions in classical SVM: math:`K(i,j)` , use quantum kernel function to define the inner product of classical data in quantum feature space: math:`\phi(\mathbf{x}_i)` :
+
+.. math:: 
+    |\langle \phi(\mathbf{x}_j) | \phi(\mathbf{x}_i) \rangle |^2 =  |\langle 0 | U^\dagger(\mathbf{x}_j) U(\mathbf{x}_i) | 0 \rangle |^2
+
+Using VQNet and pyQPanda, we define a ``QuantumKernel_VQNet`` to generate a quantum kernel function and use ``sklearn``'s ``SVC`` for classification:
+
+.. image:: ./images/qsvm-kernel.png
+   :width: 600 px
+   :align: center
+
+|
+
+.. code-block::
+
+    import numpy as np
+    import pyqpanda as pq
+    from sklearn.svm import SVC
+    from pyqpanda import *
+    from pyqpanda.Visualization.circuit_draw import *
+    from pyvqnet.qnn.svm import QuantumKernel_VQNet, gen_vqc_qsvm_data
+    import matplotlib
+    try:
+        matplotlib.use('TkAgg')
+    except:
+        pass
+    import matplotlib.pyplot as plt
+
+    train_features, test_features,train_labels, test_labels, samples = gen_vqc_qsvm_data(20,5,0.3)
+    quantum_kernel = QuantumKernel_VQNet(n_qbits=2)
+    quantum_svc = SVC(kernel=quantum_kernel.evaluate)
+    quantum_svc.fit(train_features, train_labels)
+    score = quantum_svc.score(test_features, test_labels)
+    print(f"quantum kernel classification test score: {score}")
