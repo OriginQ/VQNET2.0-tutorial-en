@@ -1859,7 +1859,7 @@ MSE
 
 .. py:class:: pyvqnet.utils.metrics.MSE(y_true_Qtensor, y_pred_Qtensor)
 
-    MSE: Mean squared error regression loss.
+    MSE: Mean Squared Error.
 
     :param y_true_Qtensor: Input of shape like (n_samples,) or (n_samples, n_outputs), true target value.
     :param y_pred_Qtensor: Inputs of shape like (n_samples,) or (n_samples, n_outputs), estimated target values.
@@ -1891,11 +1891,11 @@ RMSE
 
 .. py:class:: pyvqnet.utils.metrics.RMSE(y_true_Qtensor, y_pred_Qtensor)
 
-    RMSE: Root Mean Absolute Error.
+    RMSE: Root Mean Squared Error.
 
     :param y_true_Qtensor: Input of shape like (n_samples,) or (n_samples, n_outputs), true target value.
     :param y_pred_Qtensor: Inputs of shape like (n_samples,) or (n_samples, n_outputs), estimated target values.
-    :return:  return with float result.
+    :return: return with float result.
 
     Example::
 
@@ -1924,7 +1924,7 @@ MAE
 
 .. py:class:: pyvqnet.utils.metrics.MAE(y_true_Qtensor, y_pred_Qtensor)
 
-    MAE: Mean absolute error regression loss.
+    MAE: Mean Absolute Error.
 
     :param y_true_Qtensor: Input of shape like (n_samples,) or (n_samples, n_outputs), true target value.
     :param y_pred_Qtensor: Inputs of shape like (n_samples,) or (n_samples, n_outputs), estimated target values.
@@ -1993,8 +1993,8 @@ precision_recall_f1_2_score
 
 .. py:class:: pyvqnet.utils.metrics.precision_recall_f1_2_score(y_true_Qtensor, y_pred_Qtensor)
 
-    Compute the precision, recall and f1 score of the binary classification task.
-
+    Calculate the precision, recall and F1 score of the predicted values under the 2-classification task. The predicted and true values need to be QTensors of similar shape (n_samples, ), with a value of 0 or 1, representing the labels of the two classes.
+    
     :param y_true_Qtensor: 1D array-like input, true target value.
     :param y_pred_Qtensor: 1D array-like input, estimated target value.
 
@@ -2025,7 +2025,7 @@ precision_recall_f1_N_score
 
 .. py:class:: pyvqnet.utils.metrics.precision_recall_f1_N_score(y_true_Qtensor, y_pred_Qtensor, N, average=None)
 
-    Compute the precision, recall and f1 score of the classification task.
+    Precision, recall, and F1 score calculations for multi-classification tasks. where the predicted value and the true value are QTensors of similar shape (n_samples, ), and the values are integers from 0 to N-1, representing the labels of N classes.
 
     :param y_true_Qtensor: 1D array-like input, true target value.
     :param y_pred_Qtensor: 1D array-like input, estimated target value.
@@ -2098,7 +2098,7 @@ precision_recall_f1_Multi_score
 
 .. py:class:: pyvqnet.utils.metrics.precision_recall_f1_Multi_score(y_true_Qtensor, y_pred_Qtensor, N, average=None)
 
-    Compute the precision, recall and f1 score of the multi classification task.
+    Precision, recall, and F1 score calculations for multi-classification tasks. where the predicted and true values are QTensors of similar shape (n_samples, N), where the values are N-dimensional one-hot encoded label values.
 
     :param y_true_Qtensor: 1D array-like input, true target value.
     :param y_pred_Qtensor: 1D array-like input, estimated target value.
@@ -2170,9 +2170,7 @@ precision_recall_f1_Multi_score
 auc_calculate
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. py:class:: pyvqnet.utils.metrics.auc_calculate(y_true_Qtensor, y_pred_Qtensor, pos_label=None, sample_weight=None,
-              drop_intermediate=True)
-
+.. py:class:: pyvqnet.utils.metrics.auc_calculate(y_true_Qtensor, y_pred_Qtensor, pos_label=None, sample_weight=None, drop_intermediate=True)
 
     Compute the precision, recall and f1 score of the classification task.
 
