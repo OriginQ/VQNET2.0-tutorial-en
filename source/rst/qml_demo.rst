@@ -4036,7 +4036,7 @@ quantum kernal SVM
 In machine learning tasks, data often cannot be separated by a hyperplane in the original space. A common technique for finding such hyperplanes is to apply a nonlinear transformation function to the data.
 This function is called a feature map, through which we can calculate how close the data points are in this new feature space for the classification task of machine learning.
 
-This example refers to the `Supervised learning with quantum enhanced feature spaces <https://arxiv.org/pdf/1804.11326.pdf>`_ paper
+This example refers to the thesis: `Supervised learning with quantum enhanced feature spaces <https://arxiv.org/pdf/1804.11326.pdf>`_ .
 The first method constructs variational circuits for data classification tasks.
 
 ``gen_vqc_qsvm_data`` is the data needed to generate this example. ``vqc_qsvm`` is a variable sub-circuit class used to classify the input data.
@@ -4085,7 +4085,7 @@ Analogy to various kernel functions in classical SVM :math:`K(i,j)` , use quantu
 .. math:: 
     |\langle \phi(\mathbf{x}_j) | \phi(\mathbf{x}_i) \rangle |^2 =  |\langle 0 | U^\dagger(\mathbf{x}_j) U(\mathbf{x}_i) | 0 \rangle |^2
 
-Using VQNet and pyQPanda, we define a ``QuantumKernel_VQNet`` to generate a quantum kernel function and use ``sklearn's`` ``SVC`` for classification:
+Using VQNet and pyQPanda, we define a ``QuantumKernel_VQNet`` to generate a quantum kernel function and use ``sklearn`` for classification:
 
 .. image:: ./images/qsvm-kernel.png
    :width: 600 px
