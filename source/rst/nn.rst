@@ -1850,7 +1850,7 @@ Rotosolve algorithm, which allows a direct jump to the optimal value of a single
 
 .. figure:: ./images/rotosolve.png
 
-metrics
+Metrics
 ----------------------------------
 
 
@@ -1964,7 +1964,7 @@ R_Square
     
     :param y_true_Qtensor: A QTensor of shape like (n_samples,) or (n_samples, n_outputs), true target value.
     :param y_pred_Qtensor: A QTensor of shape like (n_samples,) or (n_samples, n_outputs), estimated target values.
-    :param sample_weight: Array of shape like (n_samples,), optional sample weight.
+    :param sample_weight: Array of shape like (n_samples,), optional sample weight, default:None.
     :return: return with float result.
 
     Example::
@@ -1977,13 +1977,13 @@ R_Square
 
             y_true_Qtensor = tensor.arange(1, 12)
             y_pred_Qtensor = tensor.arange(4, 15)
-            result = vqnet_metrics.R_Square_new(y_true_Qtensor, y_pred_Qtensor)
+            result = vqnet_metrics.R_Square(y_true_Qtensor, y_pred_Qtensor)
             print(result)
             # 0.09999999999999998
 
             y_true_Qtensor = tensor.arange(1, 13).reshape([3, 4])
             y_pred_Qtensor = tensor.arange(4, 16).reshape([3, 4])
-            result = vqnet_metrics.R_Square_new(y_true_Qtensor, y_pred_Qtensor)
+            result = vqnet_metrics.R_Square(y_true_Qtensor, y_pred_Qtensor)
             print(result)
             # 0.15625
 
@@ -2023,7 +2023,7 @@ precision_recall_f1_2_score
 precision_recall_f1_N_score
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. py:class:: pyvqnet.utils.metrics.precision_recall_f1_N_score(y_true_Qtensor, y_pred_Qtensor, N, average=None)
+.. py:class:: pyvqnet.utils.metrics.precision_recall_f1_N_score(y_true_Qtensor, y_pred_Qtensor, N, average)
 
     Precision, recall, and F1 score calculations for multi-classification tasks. where the predicted value and the true value are QTensors of similar shape (n_samples, ), and the values are integers from 0 to N-1, representing the labels of N classes.
 
@@ -2096,7 +2096,7 @@ precision_recall_f1_N_score
 precision_recall_f1_Multi_score
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. py:class:: pyvqnet.utils.metrics.precision_recall_f1_Multi_score(y_true_Qtensor, y_pred_Qtensor, N, average=None)
+.. py:class:: pyvqnet.utils.metrics.precision_recall_f1_Multi_score(y_true_Qtensor, y_pred_Qtensor, N, average)
 
     Precision, recall, and F1 score calculations for multi-classification tasks. where the predicted and true values are QTensors of similar shape (n_samples, N), where the values are N-dimensional one-hot encoded label values.
 
@@ -2178,8 +2178,8 @@ auc_calculate
                              A true binary label. If the label is not {1,1} or {0,1}, pos_label should be given explicitly.
     :param y_pred_Qtensor: A QTensor like of shape [n_samples].
                              Target score, which can be a positive probability estimate class, confidence value, or a non-threshold measure of the decision (returned by "decision_function" on some classifiers)
-    :param pos_label: int or str, default=None.
-                     The label of the positive class. When ``pos_label=None``, if y_true_Qtensor is at {-1,1} or {0,1}, ``pos_label`` is set to 1, otherwise an error will be raised.
+    :param pos_label: int or str. The label of the positive class. default=None.
+                      When ``pos_label`` is None, if ``y_true_Qtensor`` is at {-1,1} or {0,1}, ``pos_label`` is set to 1, otherwise an error will be raised.
     :param sample_weight: array of shape (n_samples,), default=None.
     :param drop_intermediate: boolean, optional (default=True).
                      Whether to lower some suboptimal thresholds that don't appear on the drawn ROC curve.
