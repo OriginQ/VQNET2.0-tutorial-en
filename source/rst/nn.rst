@@ -1861,8 +1861,8 @@ MSE
 
     MSE: Mean Squared Error.
 
-    :param y_true_Qtensor: Input of shape like (n_samples,) or (n_samples, n_outputs), true target value.
-    :param y_pred_Qtensor: Inputs of shape like (n_samples,) or (n_samples, n_outputs), estimated target values.
+    :param y_true_Qtensor: A QTensor of shape like (n_samples,) or (n_samples, n_outputs), true target value.
+    :param y_pred_Qtensor: A QTensor of shape like (n_samples,) or (n_samples, n_outputs), estimated target values.
     :return:  return with float result.
 
     Example::
@@ -1893,8 +1893,8 @@ RMSE
 
     RMSE: Root Mean Squared Error.
 
-    :param y_true_Qtensor: Input of shape like (n_samples,) or (n_samples, n_outputs), true target value.
-    :param y_pred_Qtensor: Inputs of shape like (n_samples,) or (n_samples, n_outputs), estimated target values.
+    :param y_true_Qtensor: A QTensor of shape like (n_samples,) or (n_samples, n_outputs), true target value.
+    :param y_pred_Qtensor: A QTensor of shape like (n_samples,) or (n_samples, n_outputs), estimated target values.
     :return: return with float result.
 
     Example::
@@ -1926,8 +1926,8 @@ MAE
 
     MAE: Mean Absolute Error.
 
-    :param y_true_Qtensor: Input of shape like (n_samples,) or (n_samples, n_outputs), true target value.
-    :param y_pred_Qtensor: Inputs of shape like (n_samples,) or (n_samples, n_outputs), estimated target values.
+    :param y_true_Qtensor: A QTensor of shape like (n_samples,) or (n_samples, n_outputs), true target value.
+    :param y_pred_Qtensor: A QTensor of shape like (n_samples,) or (n_samples, n_outputs), estimated target values.
     :return:  return with float result.
 
     Example::
@@ -1962,8 +1962,8 @@ R_Square
     One that always predicts the expected value of y,
     ignoring the input features, will get an R^2 score of 0.0.
     
-    :param y_true_Qtensor: Input of shape like (n_samples,) or (n_samples, n_outputs), true target value.
-    :param y_pred_Qtensor: Inputs of shape like (n_samples,) or (n_samples, n_outputs), estimated target values.
+    :param y_true_Qtensor: A QTensor of shape like (n_samples,) or (n_samples, n_outputs), true target value.
+    :param y_pred_Qtensor: A QTensor of shape like (n_samples,) or (n_samples, n_outputs), estimated target values.
     :param sample_weight: Array of shape like (n_samples,), optional sample weight.
     :return: return with float result.
 
@@ -1995,8 +1995,8 @@ precision_recall_f1_2_score
 
     Calculate the precision, recall and F1 score of the predicted values under the 2-classification task. The predicted and true values need to be QTensors of similar shape (n_samples, ), with a value of 0 or 1, representing the labels of the two classes.
     
-    :param y_true_Qtensor: 1D array-like input, true target value.
-    :param y_pred_Qtensor: 1D array-like input, estimated target value.
+    :param y_true_Qtensor: A 1D QTensor, true target value.
+    :param y_pred_Qtensor: A 1D QTensor, estimated target value.
 
     :returns: 
         - precision - precision result
@@ -2027,8 +2027,8 @@ precision_recall_f1_N_score
 
     Precision, recall, and F1 score calculations for multi-classification tasks. where the predicted value and the true value are QTensors of similar shape (n_samples, ), and the values are integers from 0 to N-1, representing the labels of N classes.
 
-    :param y_true_Qtensor: 1D array-like input, true target value.
-    :param y_pred_Qtensor: 1D array-like input, estimated target value.
+    :param y_true_Qtensor: A 1D QTensor, true target value.
+    :param y_pred_Qtensor: A 1D QTensor, estimated target value.
     :param N: N classes (number of classes).
     :param average: string, ['micro', 'macro', 'weighted'].
              This parameter is required for multi-class/multi-label targets.
@@ -2100,8 +2100,8 @@ precision_recall_f1_Multi_score
 
     Precision, recall, and F1 score calculations for multi-classification tasks. where the predicted and true values are QTensors of similar shape (n_samples, N), where the values are N-dimensional one-hot encoded label values.
 
-    :param y_true_Qtensor: 1D array-like input, true target value.
-    :param y_pred_Qtensor: 1D array-like input, estimated target value.
+    :param y_true_Qtensor: A 1D QTensor, true target value.
+    :param y_pred_Qtensor: A 1D QTensor, estimated target value.
     :param N: N classes (number of classes).
     :param average: string, ['micro', 'macro', 'weighted'].
              This parameter is required for multi-class/multi-label targets.
@@ -2174,15 +2174,15 @@ auc_calculate
 
     Compute the precision, recall and f1 score of the classification task.
 
-    :param y_true_Qtensor: 1D array-like input, shape = [n_samples].
+    :param y_true_Qtensor: A QTensor like of shape [n_samples].
                              A true binary label. If the label is not {1,1} or {0,1}, pos_label should be given explicitly.
-    :param y_pred_Qtensor: 1D array-like input, shape = [n_samples].
-                             target score, which can be a positive probability estimate class, confidence value, or a non-threshold measure of the decision (returned by "decision_function" on some classifiers)
+    :param y_pred_Qtensor: A QTensor like of shape [n_samples].
+                             Target score, which can be a positive probability estimate class, confidence value, or a non-threshold measure of the decision (returned by "decision_function" on some classifiers)
     :param pos_label: int or str, default=None.
                      The label of the positive class. When ``pos_label=None``, if y_true_Qtensor is at {-1,1} or {0,1}, ``pos_label`` is set to 1, otherwise an error will be raised.
     :param sample_weight: array of shape (n_samples,), default=None.
     :param drop_intermediate: boolean, optional (default=True).
-                     Whether to lower some suboptimal thresholds that don't appear on the drawn ROC curve. This is useful for creating lighter ROC curves.
+                     Whether to lower some suboptimal thresholds that don't appear on the drawn ROC curve.
     :return: output float result.
 
     Example::

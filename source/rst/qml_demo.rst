@@ -4078,14 +4078,14 @@ The ``vqc_qsvm.plot()`` function visualizes the distribution of the data.
         print(f"testing_accuracy {acc_1}")
 
 
-In addition to the above-mentioned direct use of variational quantum circuits to map classical data features to quantum feature spaces, in the paper `Supervised learning with quantum enhanced feature spaces <https://arxiv.org/pdf/1804.11326.pdf>`_
-The method of directly estimating kernel functions using quantum circuits and classifying them using classical support vector machines is also introduced in .
-Analogy to various kernel functions in classical SVM: math:`K(i,j)` , use quantum kernel function to define the inner product of classical data in quantum feature space: math:`\phi(\mathbf{x}_i)` :
+In addition to the above-mentioned direct use of variational quantum circuits to map classical data features to quantum feature spaces, in the paper `Supervised learning with quantum enhanced feature spaces <https://arxiv.org/pdf/1804.11326.pdf>`_,
+the method of directly estimating kernel functions using quantum circuits and classifying them using classical support vector machines is also introduced.
+Analogy to various kernel functions in classical SVM :math:`K(i,j)` , use quantum kernel function to define the inner product of classical data in quantum feature space :math:`\phi(\mathbf{x}_i)` :
 
 .. math:: 
     |\langle \phi(\mathbf{x}_j) | \phi(\mathbf{x}_i) \rangle |^2 =  |\langle 0 | U^\dagger(\mathbf{x}_j) U(\mathbf{x}_i) | 0 \rangle |^2
 
-Using VQNet and pyQPanda, we define a ``QuantumKernel_VQNet`` to generate a quantum kernel function and use ``sklearn``'s ``SVC`` for classification:
+Using VQNet and pyQPanda, we define a ``QuantumKernel_VQNet`` to generate a quantum kernel function and use ``sklearn's`` ``SVC`` for classification:
 
 .. image:: ./images/qsvm-kernel.png
    :width: 600 px
