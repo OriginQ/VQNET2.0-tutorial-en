@@ -2072,25 +2072,6 @@ precision_recall_f1_N_score
                 print(precision_weighted, recall_weighted, f1_weighted)
                 # 0.625 0.6 0.6047619047619047
 
-                reference_list = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-                prediciton_list = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-                y_true_Qtensor = tensor.QTensor(reference_list)
-                y_pred_Qtensor = tensor.QTensor(prediciton_list)
-
-                precision_micro, recall_micro, f1_micro = vqnet_metrics.precision_recall_f1_N_score(
-                    y_true_Qtensor, y_pred_Qtensor, 3, average='micro')
-                print(precision_micro, recall_micro, f1_micro)
-                # 1.0 1.0 1.0
-
-                precision_macro, recall_macro, f1_macro = vqnet_metrics.precision_recall_f1_N_score(
-                    y_true_Qtensor, y_pred_Qtensor, 3, average='macro')
-                print(precision_macro, recall_macro, f1_macro)
-                # 1.0 1.0 1.0
-
-                precision_weighted, recall_weighted, f1_weighted = vqnet_metrics.precision_recall_f1_N_score(
-                    y_true_Qtensor, y_pred_Qtensor, 3, average='weighted')
-                print(precision_weighted, recall_weighted, f1_weighted)
-                # 1.0 1.0 1.0
 
 
 precision_recall_f1_Multi_score
