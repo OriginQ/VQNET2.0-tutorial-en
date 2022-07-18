@@ -2211,7 +2211,7 @@ auc_calculate
 
                 y = [1, 2, 1, 1, 1, 0, 0, 1, 1, 1]
                 pred = [1, 0, 2, 1, 1, 1, 0, 1, 1, 0]
-                act_Qtensor = tensor.QTensor(act)
+                act_Qtensor = tensor.QTensor(y)
                 pre_Qtensor = tensor.QTensor(pre)
                 result = vqnet_metrics.auc_calculate(act_Qtensor, pre_Qtensor, pos_label=2)
                 print("auc:", result)
