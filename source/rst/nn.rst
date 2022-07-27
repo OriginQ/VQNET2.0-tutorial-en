@@ -676,7 +676,7 @@ LayerNorm2d
 
     For input like (B,C,H,W), :attr:`norm_size` should equals to C * H * W.
 
-    :param norm_size: `float` - normalize size，equals to C * H * W
+    :param norm_size: `float` - normalize size,equals to C * H * W
     :param epsilon: `float` - numerical stability constant, defaults to 1e-5
     :param name: name of the output layer
     :return: a LayerNorm2d class
@@ -725,7 +725,7 @@ LayerNorm1d
     The mean and standard-deviation are calculated over the last dimensions size, where `norm_size`
     is the value  of :attr:`norm_size`.
 
-    :param norm_size: `float` - normalize size，equals to last dim
+    :param norm_size: `float` - normalize size,equals to last dim
     :param epsilon: `float` - numerical stability constant, defaults to 1e-5
     :param name: name of the output layer
     :return: a LayerNorm1d class
@@ -822,6 +822,233 @@ Dropout
         # [[8.0000000, 10.0000000],
         #  [0.0000000, 14.0000000]]]
         # ]
+
+GRU 
+^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. py:class:: pyvqnet.nn.gru.GRU(input_size, hidden_size, num_layers=1, nonlinearity='tanh', batch_first=True, use_bias=True, bidirectional=False)
+
+
+    Gated Recurrent Unit (GRU) module. Support multi-layer stacking, bidirectional configuration.
+    The calculation formula of the single-layer one-way GRU is as follows:
+
+    .. math::
+        \begin{array}{ll}
+            r_t = \sigma(W_{ir} x_t + b_{ir} + W_{hr} h_{(t-1)} + b_{hr}) \\
+            z_t = \sigma(W_{iz} x_t + b_{iz} + W_{hz} h_{(t-1)} + b_{hz}) \\
+            n_t = \tanh(W_{in} x_t + b_{in} + r_t * (W_{hn} h_{(t-1)}+ b_{hn})) \\
+            h_t = (1 - z_t) * n_t + z_t * h_{(t-1)}
+        \end{array}
+
+    :param input_size: Input feature dimensions.
+    :param hidden_size: Hidden feature dimensions.
+    :param num_layers: Stack layer numbers. default: 1.
+    :param batch_first: If batch_first is True, input shape should be [batch_size,seq_len,feature_dim],
+     if batch_first is False, the input shape should be [seq_len,batch_size,feature_dim],default: True.
+    :param use_bias: If use_bias is False, this module will not contain bias. default: True.
+    :param bidirectional: If bidirectional is True, the module will be bidirectional GRU. default: False.
+    :return: A GRU module instance.
+
+    Example::
+
+        from pyvqnet.nn import GRU
+        from pyvqnet.tensor import tensor
+
+        rnn2 = GRU(4, 6, 2, batch_first=False, bidirectional=True)
+
+        input = tensor.ones([5, 3, 4])
+        h0 = tensor.ones([4, 3, 6])
+
+        output, hn = rnn2(input, h0)
+        print(output)
+        print(hn)
+        # [
+        # [[0.2815045, 0.2056844, 0.0750246, 0.5802019, 0.3536537, 0.8136684, -0.0034523, 0.1634004, 0.6099871, 0.8451654, -0.2833570, 0.7294812],
+        #  [0.2815045, 0.2056844, 0.0750246, 0.5802019, 0.3536537, 0.8136684, -0.0034523, 0.1634004, 0.6099871, 0.8451654, -0.2833570, 0.7294812],
+        #  [0.2815045, 0.2056844, 0.0750246, 0.5802019, 0.3536537, 0.8136684, -0.0034523, 0.1634004, 0.6099871, 0.8451654, -0.2833570, 0.7294812]],
+        # [[0.0490867, 0.0115325, -0.2797680, 0.4711050, -0.0687061, 0.7216146, 0.0258964, 0.0619203, 0.6341010, 0.8445141, -0.4164453, 0.7409840],
+        #  [0.0490867, 0.0115325, -0.2797680, 0.4711050, -0.0687061, 0.7216146, 0.0258964, 0.0619203, 0.6341010, 0.8445141, -0.4164453, 0.7409840],
+        #  [0.0490867, 0.0115325, -0.2797680, 0.4711050, -0.0687061, 0.7216146, 0.0258964, 0.0619203, 0.6341010, 0.8445141, -0.4164453, 0.7409840]],
+        # [[0.0182974, -0.0536071, -0.4478674, 0.4315647, -0.2191887, 0.6492687, 0.1572548, 0.0839213, 0.6707115, 0.8444533, -0.3811499, 0.7448123],
+        #  [0.0182974, -0.0536071, -0.4478674, 0.4315647, -0.2191887, 0.6492687, 0.1572548, 0.0839213, 0.6707115, 0.8444533, -0.3811499, 0.7448123],
+        #  [0.0182974, -0.0536071, -0.4478674, 0.4315647, -0.2191887, 0.6492687, 0.1572548, 0.0839213, 0.6707115, 0.8444533, -0.3811499, 0.7448123]],
+        # [[0.0722285, -0.0636698, -0.5457084, 0.3817562, -0.1890205, 0.5696942, 0.3855782, 0.2057217, 0.7370453, 0.8646453, -0.1967214, 0.7630759],
+        #  [0.0722285, -0.0636698, -0.5457084, 0.3817562, -0.1890205, 0.5696942, 0.3855782, 0.2057217, 0.7370453, 0.8646453, -0.1967214, 0.7630759],
+        #  [0.0722285, -0.0636698, -0.5457084, 0.3817562, -0.1890205, 0.5696942, 0.3855782, 0.2057217, 0.7370453, 0.8646453, -0.1967214, 0.7630759]],
+        # [[0.1834545, -0.0489200, -0.6343678, 0.3061281, -0.0449328, 0.4901535, 0.6941375, 0.4570828, 0.8433002, 0.9152645, 0.2342478, 0.8299093],
+        #  [0.1834545, -0.0489200, -0.6343678, 0.3061281, -0.0449328, 0.4901535, 0.6941375, 0.4570828, 0.8433002, 0.9152645, 0.2342478, 0.8299093],
+        #  [0.1834545, -0.0489200, -0.6343678, 0.3061281, -0.0449328, 0.4901535, 0.6941375, 0.4570828, 0.8433002, 0.9152645, 0.2342478, 0.8299093]]
+        # ]
+        # [
+        # [[-0.8070476, -0.5560303, 0.7575479, -0.2368367, 0.4228620, -0.2573725],
+        #  [-0.8070476, -0.5560303, 0.7575479, -0.2368367, 0.4228620, -0.2573725],
+        #  [-0.8070476, -0.5560303, 0.7575479, -0.2368367, 0.4228620, -0.2573725]],
+        # [[-0.3857390, -0.3195596, 0.0281313, 0.8734715, -0.4499536, 0.2270730],
+        #  [-0.3857390, -0.3195596, 0.0281313, 0.8734715, -0.4499536, 0.2270730],
+        #  [-0.3857390, -0.3195596, 0.0281313, 0.8734715, -0.4499536, 0.2270730]],
+        # [[0.1834545, -0.0489200, -0.6343678, 0.3061281, -0.0449328, 0.4901535],
+        #  [0.1834545, -0.0489200, -0.6343678, 0.3061281, -0.0449328, 0.4901535],
+        #  [0.1834545, -0.0489200, -0.6343678, 0.3061281, -0.0449328, 0.4901535]],
+        # [[-0.0034523, 0.1634004, 0.6099871, 0.8451654, -0.2833570, 0.7294812],
+        #  [-0.0034523, 0.1634004, 0.6099871, 0.8451654, -0.2833570, 0.7294812],
+        #  [-0.0034523, 0.1634004, 0.6099871, 0.8451654, -0.2833570, 0.7294812]]
+        # ]
+
+RNN 
+^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. py:class:: pyvqnet.nn.rnn.RNN(input_size, hidden_size, num_layers=1, nonlinearity='tanh', batch_first=True, use_bias=True, bidirectional=False)
+
+
+    Recurrent Neural Network (RNN) Module, use :math:`\tanh` or :math:`\text{ReLU}` as activation function.
+    bidirectional RNN and multi-layer RNN is supported.
+    The calculation formula of single-layer unidirectional RNN is as follows:
+
+    .. math::
+        h_t = \tanh(W_{ih} x_t + b_{ih} + W_{hh} h_{(t-1)} + b_{hh})
+
+    If :attr:`nonlinearity` is ``'relu'``, then :math:`\text{ReLU}` will replace :math:`\tanh`.
+
+    :param input_size: Input feature dimensions.
+    :param hidden_size: Hidden feature dimensions.
+    :param num_layers: Stack layer numbers. default: 1.
+    :param batch_first: If batch_first is True, input shape should be [batch_size,seq_len,feature_dim],
+     if batch_first is False, the input shape should be [seq_len,batch_size,feature_dim],default: True.
+    :param use_bias: If use_bias is False, this module will not contain bias. default: True.
+    :param bidirectional: If bidirectional is True, the module will be bidirectional RNN. default: False.
+    :return: A RNN module instance.
+
+    Example::
+
+        from pyvqnet.nn import RNN
+        from pyvqnet.tensor import tensor
+
+        rnn2 = RNN(4, 6, 2, batch_first=False, bidirectional = True)
+
+        input = tensor.ones([5, 3, 4])
+        h0 = tensor.ones([4, 3, 6])
+        output, hn = rnn2(input, h0)
+        print(output)
+        print(hn)
+        # [
+        # [[-0.4481719, 0.4345263, 0.0284741, 0.6886298, 0.8672314, -0.3574123, 0.8238092, -0.2751125, -0.4704098, 0.7624499, -0.4156595, -0.1646518],
+        #  [-0.4481719, 0.4345263, 0.0284741, 0.6886298, 0.8672314, -0.3574123, 0.8238092, -0.2751125, -0.4704098, 0.7624499, -0.4156595, -0.1646518],
+        #  [-0.4481719, 0.4345263, 0.0284741, 0.6886298, 0.8672314, -0.3574123, 0.8238092, -0.2751125, -0.4704098, 0.7624499, -0.4156595, -0.1646518]],
+        # [[-0.5737326, 0.1401956, -0.6656274, 0.3557707, 0.4083472, 0.3605195, 0.6767184, -0.2054843, -0.2875977, 0.6573941, -0.3289444, -0.1988498],
+        #  [-0.5737326, 0.1401956, -0.6656274, 0.3557707, 0.4083472, 0.3605195, 0.6767184, -0.2054843, -0.2875977, 0.6573941, -0.3289444, -0.1988498],
+        #  [-0.5737326, 0.1401956, -0.6656274, 0.3557707, 0.4083472, 0.3605195, 0.6767184, -0.2054843, -0.2875977, 0.6573941, -0.3289444, -0.1988498]],
+        # [[-0.4233001, 0.1252111, -0.7437832, 0.2092323, 0.5826398, 0.5207447, 0.7403980, -0.0006015, -0.4055642, 0.6553873, -0.0861093, -0.2096289],
+        #  [-0.4233001, 0.1252111, -0.7437832, 0.2092323, 0.5826398, 0.5207447, 0.7403980, -0.0006015, -0.4055642, 0.6553873, -0.0861093, -0.2096289],
+        #  [-0.4233001, 0.1252111, -0.7437832, 0.2092323, 0.5826398, 0.5207447, 0.7403980, -0.0006015, -0.4055642, 0.6553873, -0.0861093, -0.2096289]],
+        # [[-0.3636788, 0.3627384, -0.6542842, 0.0563165, 0.5711210, 0.5174620, 0.4968840, -0.3591014, -0.5738643, 0.7505787, -0.1767489, 0.2954176], [-0.3636788, 0.3627384, -0.6542842, 0.0563165, 0.5711210, 0.5174620, 0.4968840, -0.3591014, -0.5738643, 0.7505787, -0.1767489, 0.2954176], [-0.3636788, 0.3627384, -0.6542842, 0.0563165, 0.5711210, 0.5174620, 0.4968840, -0.3591014, -0.5738643, 0.7505787, -0.1767489, 0.2954176]],
+        # [[-0.1619987, 0.3079547, -0.5022690, -0.2989357, 0.2861646, 0.4965633, 0.4618312, -0.4173903, 0.1423969, -0.2332578, -0.4014739, 0.0601179],
+        #  [-0.1619987, 0.3079547, -0.5022690, -0.2989357, 0.2861646, 0.4965633, 0.4618312, -0.4173903, 0.1423969, -0.2332578, -0.4014739, 0.0601179],
+        #  [-0.1619987, 0.3079547, -0.5022690, -0.2989357, 0.2861646, 0.4965633, 0.4618312, -0.4173903, 0.1423969, -0.2332578, -0.4014739, 0.0601179]]
+        # ]
+        # [
+        # [[-0.1878589, -0.5177042, -0.3672480, 0.1613673, 0.4321197, 0.6168041],
+        #  [-0.1878589, -0.5177042, -0.3672480, 0.1613673, 0.4321197, 0.6168041],
+        #  [-0.1878589, -0.5177042, -0.3672480, 0.1613673, 0.4321197, 0.6168041]],
+        # [[-0.7923757, 0.0184400, -0.2851982, -0.6367047, 0.5933805, -0.6244841],
+        #  [-0.7923757, 0.0184400, -0.2851982, -0.6367047, 0.5933805, -0.6244841],
+        #  [-0.7923757, 0.0184400, -0.2851982, -0.6367047, 0.5933805, -0.6244841]],
+        # [[-0.1619987, 0.3079547, -0.5022690, -0.2989357, 0.2861646, 0.4965633],
+        #  [-0.1619987, 0.3079547, -0.5022690, -0.2989357, 0.2861646, 0.4965633],
+        #  [-0.1619987, 0.3079547, -0.5022690, -0.2989357, 0.2861646, 0.4965633]],
+        # [[0.8238092, -0.2751125, -0.4704098, 0.7624499, -0.4156595, -0.1646518],
+        #  [0.8238092, -0.2751125, -0.4704098, 0.7624499, -0.4156595, -0.1646518],
+        #  [0.8238092, -0.2751125, -0.4704098, 0.7624499, -0.4156595, -0.1646518]]
+        # ]
+
+
+
+LSTM
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. py:class:: pyvqnet.nn.lstm.LSTM(input_size, hidden_size, num_layers=1, batch_first=True, use_bias=True, bidirectional=False)
+
+    Long Short-Term Memory (LSTM) module. Support bidirectional LSTM, stacked multi-layer LSTM and other configurations.
+    The calculation formula of single-layer unidirectional LSTM is as follows:
+
+    .. math::
+        \begin{array}{ll} \\
+            i_t = \sigma(W_{ii} x_t + b_{ii} + W_{hi} h_{t-1} + b_{hi}) \\
+            f_t = \sigma(W_{if} x_t + b_{if} + W_{hf} h_{t-1} + b_{hf}) \\
+            g_t = \tanh(W_{ig} x_t + b_{ig} + W_{hg} h_{t-1} + b_{hg}) \\
+            o_t = \sigma(W_{io} x_t + b_{io} + W_{ho} h_{t-1} + b_{ho}) \\
+            c_t = f_t \odot c_{t-1} + i_t \odot g_t \\
+            h_t = o_t \odot \tanh(c_t) \\
+        \end{array}
+
+    :param input_size: Input feature dimensions.
+    :param hidden_size: Hidden feature dimensions.
+    :param num_layers: Stack layer numbers. default: 1.
+    :param batch_first: If batch_first is True, input shape should be [batch_size,seq_len,feature_dim],
+     if batch_first is False, the input shape should be [seq_len,batch_size,feature_dim],default: True.
+    :param use_bias: If use_bias is False, this module will not contain bias. default: True.
+    :param bidirectional: If bidirectional is True, the module will be bidirectional LSTM. default: False.
+    :return: A LSTM module instance.
+
+    Example::
+
+        from pyvqnet.nn import LSTM
+        from pyvqnet.tensor import tensor
+
+        rnn2 = LSTM(4, 6, 2, batch_first=False, bidirectional = True)
+
+        input = tensor.ones([5, 3, 4])
+        h0 = tensor.ones([4, 3, 6])
+        c0 = tensor.ones([4, 3, 6])
+        output, (hn, cn) = rnn2(input, (h0, c0))
+
+        print(output)
+        print(hn)
+        print(cn)
+
+        # [
+        # [[0.1585344, 0.1758823, 0.4273642, 0.1640685, 0.1030634, 0.1657819, -0.0197110, 0.2073366, 0.0050953, -0.1467141, -0.1413236, -0.1404487], 
+        #  [0.1585344, 0.1758823, 0.4273642, 0.1640685, 0.1030634, 0.1657819, -0.0197110, 0.2073366, 0.0050953, -0.1467141, -0.1413236, -0.1404487], 
+        #  [0.1585344, 0.1758823, 0.4273642, 0.1640685, 0.1030634, 0.1657819, -0.0197110, 0.2073366, 0.0050953, -0.1467141, -0.1413236, -0.1404487]],[[0.0366294, 0.1421610, 0.2401645, 0.0672358, 0.2205958, 0.1306419, 0.0129892, 0.1626964, 0.0116193, -0.1181969, -0.1101109, -0.0844855],  
+        #  [0.0366294, 0.1421610, 0.2401645, 0.0672358, 0.2205958, 0.1306419, 0.0129892, 0.1626964, 0.0116193, -0.1181969, -0.1101109, -0.0844855],  
+        #  [0.0366294, 0.1421610, 0.2401645, 0.0672358, 0.2205958, 0.1306419, 0.0129892, 0.1626964, 0.0116193, -0.1181969, -0.1101109, -0.0844855]], 
+        # [[0.0169496, 0.1236289, 0.1416115, -0.0382225, 0.2277734, 0.0378894, 0.0252284, 0.1317508, 0.0191879, -0.0379719, -0.0707748, -0.0134158], 
+        #  [0.0169496, 0.1236289, 0.1416115, -0.0382225, 0.2277734, 0.0378894, 0.0252284, 0.1317508, 0.0191879, -0.0379719, -0.0707748, -0.0134158], 
+        #  [0.0169496, 0.1236289, 0.1416115, -0.0382225, 0.2277734, 0.0378894, 0.0252284, 0.1317508, 0.0191879, -0.0379719, -0.0707748, -0.0134158]],[[0.0223647, 0.1227054, 0.0959055, -0.1043864, 0.2314414, -0.0289589, 0.0346038, 0.1147739, 0.0461321, 0.0998507, 0.0097069, 0.0886721],   
+        #  [0.0223647, 0.1227054, 0.0959055, -0.1043864, 0.2314414, -0.0289589, 0.0346038, 0.1147739, 0.0461321, 0.0998507, 0.0097069, 0.0886721],   
+        #  [0.0223647, 0.1227054, 0.0959055, -0.1043864, 0.2314414, -0.0289589, 0.0346038, 0.1147739, 0.0461321, 0.0998507, 0.0097069, 0.0886721]],  
+        # [[0.0345177, 0.1308527, 0.0884205, -0.1468191, 0.2236451, -0.0705002, 0.0672482, 0.1278620, 0.1676001, 0.2955882, 0.2448514, 0.1802391],   
+        #  [0.0345177, 0.1308527, 0.0884205, -0.1468191, 0.2236451, -0.0705002, 0.0672482, 0.1278620, 0.1676001, 0.2955882, 0.2448514, 0.1802391],   
+        #  [0.0345177, 0.1308527, 0.0884205, -0.1468191, 0.2236451, -0.0705002, 0.0672482, 0.1278620, 0.1676001, 0.2955882, 0.2448514, 0.1802391]]   
+        # ]
+        # [
+        # [[0.1687095, -0.2087553, 0.0254020, 0.3340017, 0.2515125, 0.2364762],
+        #  [0.1687095, -0.2087553, 0.0254020, 0.3340017, 0.2515125, 0.2364762],
+        #  [0.1687095, -0.2087553, 0.0254020, 0.3340017, 0.2515125, 0.2364762]],
+        # [[0.2621196, 0.2436198, -0.1790378, 0.0883382, -0.0479185, -0.0838870],
+        #  [0.2621196, 0.2436198, -0.1790378, 0.0883382, -0.0479185, -0.0838870],
+        #  [0.2621196, 0.2436198, -0.1790378, 0.0883382, -0.0479185, -0.0838870]],
+        # [[0.0345177, 0.1308527, 0.0884205, -0.1468191, 0.2236451, -0.0705002],
+        #  [0.0345177, 0.1308527, 0.0884205, -0.1468191, 0.2236451, -0.0705002],
+        #  [0.0345177, 0.1308527, 0.0884205, -0.1468191, 0.2236451, -0.0705002]],
+        # [[-0.0197110, 0.2073366, 0.0050953, -0.1467141, -0.1413236, -0.1404487],
+        #  [-0.0197110, 0.2073366, 0.0050953, -0.1467141, -0.1413236, -0.1404487],
+        #  [-0.0197110, 0.2073366, 0.0050953, -0.1467141, -0.1413236, -0.1404487]]
+        # ]
+        # [
+        # [[0.3588709, -0.3877619, 0.0519047, 0.5984558, 0.7709259, 1.0954115],
+        #  [0.3588709, -0.3877619, 0.0519047, 0.5984558, 0.7709259, 1.0954115],
+        #  [0.3588709, -0.3877619, 0.0519047, 0.5984558, 0.7709259, 1.0954115]],
+        # [[0.4557160, 0.6420789, -0.4407433, 0.1704233, -0.1592798, -0.1966903],
+        #  [0.4557160, 0.6420789, -0.4407433, 0.1704233, -0.1592798, -0.1966903],
+        #  [0.4557160, 0.6420789, -0.4407433, 0.1704233, -0.1592798, -0.1966903]],
+        # [[0.0681112, 0.4060420, 0.1333674, -0.3497016, 0.7122995, -0.1229735],
+        #  [0.0681112, 0.4060420, 0.1333674, -0.3497016, 0.7122995, -0.1229735],
+        #  [0.0681112, 0.4060420, 0.1333674, -0.3497016, 0.7122995, -0.1229735]],
+        # [[-0.0378819, 0.4589431, 0.0142352, -0.3194987, -0.3059436, -0.3285254],
+        #  [-0.0378819, 0.4589431, 0.0142352, -0.3194987, -0.3059436, -0.3285254],
+        #  [-0.0378819, 0.4589431, 0.0142352, -0.3194987, -0.3059436, -0.3285254]]
+        # ]
+
 
 Loss Function Layer
 ----------------------------------
@@ -1623,4 +1850,350 @@ Rotosolve algorithm, which allows a direct jump to the optimal value of a single
 
 .. figure:: ./images/rotosolve.png
 
+Metrics
+----------------------------------
 
+
+MSE
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. py:class:: pyvqnet.utils.metrics.MSE(y_true_Qtensor, y_pred_Qtensor)
+
+    MSE: Mean Squared Error.
+
+    :param y_true_Qtensor: A QTensor of shape like (n_samples,) or (n_samples, n_outputs), true target value.
+    :param y_pred_Qtensor: A QTensor of shape like (n_samples,) or (n_samples, n_outputs), estimated target values.
+    :return:  return with float result.
+
+    Example::
+
+            import numpy as np
+            from pyvqnet.tensor import tensor
+            from pyvqnet.utils import metrics as vqnet_metrics
+            from pyvqnet import _core
+            _vqnet = _core.vqnet
+
+            y_true_Qtensor = tensor.arange(1, 12)
+            y_pred_Qtensor = tensor.arange(4, 15)
+            result = vqnet_metrics.MSE(y_true_Qtensor, y_pred_Qtensor)
+            print(result)
+            # 9.0
+
+            y_true_Qtensor = tensor.arange(1, 13).reshape([3, 4])
+            y_pred_Qtensor = tensor.arange(4, 16).reshape([3, 4])
+            result = vqnet_metrics.MSE(y_true_Qtensor, y_pred_Qtensor)
+            print(result)
+            # 9.0
+
+
+RMSE
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. py:class:: pyvqnet.utils.metrics.RMSE(y_true_Qtensor, y_pred_Qtensor)
+
+    RMSE: Root Mean Squared Error.
+
+    :param y_true_Qtensor: A QTensor of shape like (n_samples,) or (n_samples, n_outputs), true target value.
+    :param y_pred_Qtensor: A QTensor of shape like (n_samples,) or (n_samples, n_outputs), estimated target values.
+    :return: return with float result.
+
+    Example::
+
+            import numpy as np
+            from pyvqnet.tensor import tensor
+            from pyvqnet.utils import metrics as vqnet_metrics
+            from pyvqnet import _core
+            _vqnet = _core.vqnet
+
+            y_true_Qtensor = tensor.arange(1, 12)
+            y_pred_Qtensor = tensor.arange(4, 15)
+            result = vqnet_metrics.RMSE(y_true_Qtensor, y_pred_Qtensor)
+            print(result)
+            # 3.0
+
+            y_true_Qtensor = tensor.arange(1, 13).reshape([3, 4])
+            y_pred_Qtensor = tensor.arange(4, 16).reshape([3, 4])
+            result = vqnet_metrics.RMSE(y_true_Qtensor, y_pred_Qtensor)
+            print(result)
+            # 3.0
+
+
+
+MAE
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. py:class:: pyvqnet.utils.metrics.MAE(y_true_Qtensor, y_pred_Qtensor)
+
+    MAE: Mean Absolute Error.
+
+    :param y_true_Qtensor: A QTensor of shape like (n_samples,) or (n_samples, n_outputs), true target value.
+    :param y_pred_Qtensor: A QTensor of shape like (n_samples,) or (n_samples, n_outputs), estimated target values.
+    :return:  return with float result.
+
+    Example::
+
+            import numpy as np
+            from pyvqnet.tensor import tensor
+            from pyvqnet.utils import metrics as vqnet_metrics
+            from pyvqnet import _core
+            _vqnet = _core.vqnet
+
+            y_true_Qtensor = tensor.arange(1, 12)
+            y_pred_Qtensor = tensor.arange(4, 15)
+            result = vqnet_metrics.MAE(y_true_Qtensor, y_pred_Qtensor)
+            print(result)
+            # 3.0
+
+            y_true_Qtensor = tensor.arange(1, 13).reshape([3, 4])
+            y_pred_Qtensor = tensor.arange(4, 16).reshape([3, 4])
+            result = vqnet_metrics.MAE(y_true_Qtensor, y_pred_Qtensor)
+            print(result)
+            # 3.0
+
+
+R_Square
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. py:class:: pyvqnet.utils.metrics.R_Square(y_true_Qtensor, y_pred_Qtensor, sample_weight=None)
+
+    R_Square: R^2 (coefficient of determination) regression score function.
+    The best possible score is 1.0, which can be negative
+    (since the model can deteriorate arbitrarily).
+    One that always predicts the expected value of y,
+    ignoring the input features, will get an R^2 score of 0.0.
+    
+    :param y_true_Qtensor: A QTensor of shape like (n_samples,) or (n_samples, n_outputs), true target value.
+    :param y_pred_Qtensor: A QTensor of shape like (n_samples,) or (n_samples, n_outputs), estimated target values.
+    :param sample_weight: Array of shape like (n_samples,), optional sample weight, default:None.
+    :return: return with float result.
+
+    Example::
+
+            import numpy as np
+            from pyvqnet.tensor import tensor
+            from pyvqnet.utils import metrics as vqnet_metrics
+            from pyvqnet import _core
+            _vqnet = _core.vqnet
+
+            y_true_Qtensor = tensor.arange(1, 12)
+            y_pred_Qtensor = tensor.arange(4, 15)
+            result = vqnet_metrics.R_Square(y_true_Qtensor, y_pred_Qtensor)
+            print(result)
+            # 0.09999999999999998
+
+            y_true_Qtensor = tensor.arange(1, 13).reshape([3, 4])
+            y_pred_Qtensor = tensor.arange(4, 16).reshape([3, 4])
+            result = vqnet_metrics.R_Square(y_true_Qtensor, y_pred_Qtensor)
+            print(result)
+            # 0.15625
+
+
+precision_recall_f1_2_score
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. py:class:: pyvqnet.utils.metrics.precision_recall_f1_2_score(y_true_Qtensor, y_pred_Qtensor)
+
+    Calculate the precision, recall and F1 score of the predicted values under the 2-classification task. The predicted and true values need to be QTensors of similar shape (n_samples, ), with a value of 0 or 1, representing the labels of the two classes.
+    
+    :param y_true_Qtensor: A 1D QTensor, true target value.
+    :param y_pred_Qtensor: A 1D QTensor, estimated target value.
+
+    :returns: 
+        - precision - precision result
+        - recall - recall result
+        - f1 - f1 score
+
+    Example::
+
+            import numpy as np
+            from pyvqnet.tensor import tensor
+            from pyvqnet.utils import metrics as vqnet_metrics
+            from pyvqnet import _core
+            _vqnet = _core.vqnet
+
+            y_true_Qtensor = tensor.QTensor([0, 0, 0, 0, 0, 1, 1, 1, 1, 1])
+            y_pred_Qtensor = tensor.QTensor([0, 0, 1, 1, 1, 0, 0, 1, 1, 1])
+
+            precision, recall, f1 = vqnet_metrics.precision_recall_f1_2_score(
+                y_true_Qtensor, y_pred_Qtensor)
+            print(precision, recall, f1)
+            # 0.5 0.6 0.5454545454545454
+
+
+precision_recall_f1_N_score
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. py:class:: pyvqnet.utils.metrics.precision_recall_f1_N_score(y_true_Qtensor, y_pred_Qtensor, N, average)
+
+    Precision, recall, and F1 score calculations for multi-classification tasks. where the predicted value and the true value are QTensors of similar shape (n_samples, ), and the values are integers from 0 to N-1, representing the labels of N classes.
+
+    :param y_true_Qtensor: A 1D QTensor, true target value.
+    :param y_pred_Qtensor: A 1D QTensor, estimated target value.
+    :param N: N classes (number of classes).
+    :param average: string, ['micro', 'macro', 'weighted'].
+             This parameter is required for multi-class/multi-label targets.
+             
+             ``'micro'``: Compute metrics globally by counting total true counts, false negatives and false positives.
+             
+             ``'macro'``: Calculate the metric for each label and find its unweighted value. Meaning that the balance of labels is not considered.
+             
+             ``'weighted'``: Calculate the metrics for each label and find their average (the number of true instances of each label). This changes ``'macro'`` to account for label imbalance; this may result in F-scores not being between precision and recall.
+    
+    :returns: 
+        - precision - precision result
+        - recall - recall result
+        - f1 - f1 score
+
+    Example::
+
+                import numpy as np
+                from pyvqnet.tensor import tensor
+                from pyvqnet.utils import metrics as vqnet_metrics
+                from pyvqnet import _core
+                _vqnet = _core.vqnet
+
+                reference_list = [1, 1, 2, 2, 2, 3, 3, 3, 3, 3]
+                prediciton_list = [1, 2, 2, 2, 3, 1, 2, 3, 3, 3]
+                y_true_Qtensor = tensor.QTensor(reference_list)
+                y_pred_Qtensor = tensor.QTensor(prediciton_list)
+
+                precision_micro, recall_micro, f1_micro = vqnet_metrics.precision_recall_f1_N_score(
+                    y_true_Qtensor, y_pred_Qtensor, 3, average='micro')
+                print(precision_micro, recall_micro, f1_micro)
+                # 0.6 0.6 0.6
+
+                precision_macro, recall_macro, f1_macro = vqnet_metrics.precision_recall_f1_N_score(
+                    y_true_Qtensor, y_pred_Qtensor, 3, average='macro')
+                print(precision_macro, recall_macro, f1_macro)
+                # 0.5833333333333334 0.5888888888888889 0.5793650793650794
+
+                precision_weighted, recall_weighted, f1_weighted = vqnet_metrics.precision_recall_f1_N_score(
+                    y_true_Qtensor, y_pred_Qtensor, 3, average='weighted')
+                print(precision_weighted, recall_weighted, f1_weighted)
+                # 0.625 0.6 0.6047619047619047
+
+
+
+precision_recall_f1_Multi_score
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. py:class:: pyvqnet.utils.metrics.precision_recall_f1_Multi_score(y_true_Qtensor, y_pred_Qtensor, N, average)
+
+    Precision, recall, and F1 score calculations for multi-classification tasks. where the predicted and true values are QTensors of similar shape (n_samples, N), where the values are N-dimensional one-hot encoded label values.
+
+    :param y_true_Qtensor: A 1D QTensor, true target value.
+    :param y_pred_Qtensor: A 1D QTensor, estimated target value.
+    :param N: N classes (number of classes).
+    :param average: string, ['micro', 'macro', 'weighted'].
+             This parameter is required for multi-class/multi-label targets.
+             
+             ``'micro'``: Compute metrics globally by counting total true counts, false negatives and false positives.
+             
+             ``'macro'``: Calculate the metric for each label and find its unweighted value. Meaning that the balance of labels is not considered.
+             
+             ``'weighted'``: Calculate the metrics for each label and find their average (the number of true instances of each label). This changes ``'macro'`` to account for label imbalance; this may result in F-scores not being between precision and recall.
+    
+    :returns: 
+        - precision - precision result
+        - recall - recall result
+        - f1 - f1 score
+
+    Example::
+
+
+                    import numpy as np
+                    from pyvqnet.tensor import tensor
+                    from pyvqnet.utils import metrics as vqnet_metrics
+                    from pyvqnet import _core
+                    _vqnet = _core.vqnet
+
+                    reference_list = [[1, 0], [0, 1], [0, 0], [1, 1], [1, 0]]
+                    prediciton_list = [[1, 0], [0, 0], [1, 0], [0, 0], [0, 0]]
+                    y_true_Qtensor = tensor.QTensor(reference_list)
+                    y_pred_Qtensor = tensor.QTensor(prediciton_list)
+
+                    micro_precision, micro_recall, micro_f1 = vqnet_metrics.precision_recall_f1_Multi_score(y_true_Qtensor,
+                                y_pred_Qtensor, 2, average='micro')
+                    print(micro_precision, micro_recall, micro_f1)
+                    # 0.5 0.2 0.28571428571428575
+
+                    macro_precision, macro_recall, macro_f1 = vqnet_metrics.precision_recall_f1_Multi_score(y_true_Qtensor,
+                                y_pred_Qtensor, 2, average='macro')
+                    print(macro_precision, macro_recall, macro_f1)
+                    # 0.25 0.16666666666666666 0.2
+
+                    weighted_precision, weighted_recall, weighted_f1 = vqnet_metrics.precision_recall_f1_Multi_score(y_true_Qtensor,
+                                y_pred_Qtensor, 2, average='weighted')
+                    print(weighted_precision, weighted_recall, weighted_f1)
+                    # 0.3 0.19999999999999998 0.24
+
+                    reference_list = [[1, 0, 0], [0, 1, 0], [0, 0, 1], [1, 1, 0], [1, 0, 1]]
+                    prediciton_list = [[1, 0, 0], [1, 0, 0], [1, 1, 1], [1, 0, 0], [0, 1, 1]]
+                    y_true_Qtensor = tensor.QTensor(reference_list)
+                    y_pred_Qtensor = tensor.QTensor(prediciton_list)
+
+                    micro_precision, micro_recall, micro_f1 = vqnet_metrics.precision_recall_f1_Multi_score(y_true_Qtensor,
+                                y_pred_Qtensor, 3, average='micro')
+                    print(micro_precision, micro_recall, micro_f1) # 0.5 0.5714285714285714 0.5333333333333333
+
+                    macro_precision, macro_recall, macro_f1 = vqnet_metrics.precision_recall_f1_Multi_score(y_true_Qtensor,
+                                y_pred_Qtensor, 3, average='macro')
+                    print(macro_precision, macro_recall, macro_f1)
+                    # 0.5 0.5555555555555555 0.5238095238095238
+
+                    weighted_precision, weighted_recall, weighted_f1 = vqnet_metrics.precision_recall_f1_Multi_score(y_true_Qtensor,
+                                y_pred_Qtensor, 3, average='weighted')
+                    print(weighted_precision, weighted_recall, weighted_f1)
+                    # 0.5 0.5714285714285714 0.5306122448979592
+
+
+
+auc_calculate
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. py:class:: pyvqnet.utils.metrics.auc_calculate(y_true_Qtensor, y_pred_Qtensor, pos_label=None, sample_weight=None, drop_intermediate=True)
+
+    Compute the precision, recall and f1 score of the classification task.
+
+    :param y_true_Qtensor: A QTensor like of shape [n_samples].
+                             A true binary label. If the label is not {1,1} or {0,1}, pos_label should be given explicitly.
+    :param y_pred_Qtensor: A QTensor like of shape [n_samples].
+                             Target score, which can be a positive probability estimate class, confidence value, or a non-threshold measure of the decision (returned by "decision_function" on some classifiers)
+    :param pos_label: int or str. The label of the positive class. default=None.
+                      When ``pos_label`` is None, if ``y_true_Qtensor`` is at {-1,1} or {0,1}, ``pos_label`` is set to 1, otherwise an error will be raised.
+    :param sample_weight: array of shape (n_samples,), default=None.
+    :param drop_intermediate: boolean, optional (default=True).
+                     Whether to lower some suboptimal thresholds that don't appear on the drawn ROC curve.
+    :return: output float result.
+
+    Example::
+
+                import numpy as np
+                from pyvqnet.tensor import tensor
+                from pyvqnet.utils import metrics as vqnet_metrics
+                from pyvqnet import _core
+                _vqnet = _core.vqnet
+
+                y = np.array([1, 1, 1, 1, 0, 1, 0, 0, 0, 0])
+                pred = np.array([0.9, 0.8, 0.7, 0.6, 0.6, 0.4, 0.4, 0.3, 0.2, 0.1])
+                y_Qtensor = tensor.QTensor(y)
+                pred_Qtensor = tensor.QTensor(pred)
+                result = vqnet_metrics.auc_calculate(y_Qtensor, pred_Qtensor)
+                print("auc:", result)
+                # 0.92
+
+                y = np.array([1, 1, 1, 1, 1, 0, 0, 1, 1, 1])
+                pred = np.array([1, 0, 1, 1, 1, 1, 0, 1, 1, 0])
+                y_Qtensor = tensor.QTensor(y)
+                pred_Qtensor = tensor.QTensor(pred)
+                result = vqnet_metrics.auc_calculate(y_Qtensor, pred_Qtensor)
+                print("auc:", result)
+                # 0.625
+
+                y = [1, 2, 1, 1, 1, 0, 0, 1, 1, 1]
+                pred = [1, 0, 2, 1, 1, 1, 0, 1, 1, 0]
+                y_Qtensor = tensor.QTensor(y)
+                pred_Qtensor = tensor.QTensor(pred)
+                result = vqnet_metrics.auc_calculate(y_Qtensor, pred_Qtensor, pos_label=2)
+                print("auc:", result)
+                # 0.1111111111111111
