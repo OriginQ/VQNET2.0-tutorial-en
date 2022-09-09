@@ -912,6 +912,7 @@ RNN
     :param input_size: Input feature dimensions.
     :param hidden_size: Hidden feature dimensions.
     :param num_layers: Stack layer numbers. default: 1.
+    :param nonlinearity: non-linear activation function, default: ``'tanh'`` .
     :param batch_first: If batch_first is True, input shape should be [batch_size,seq_len,feature_dim],
      if batch_first is False, the input shape should be [seq_len,batch_size,feature_dim],default: True.
     :param use_bias: If use_bias is False, this module will not contain bias. default: True.
