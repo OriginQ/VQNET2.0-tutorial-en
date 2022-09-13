@@ -212,7 +212,7 @@ Conv1D
     :param output_channels: `int` - Number of kernels
     :param kernel_size: `int` - Size of a single kernel. kernel shape = [output_channels,input_channels/group,kernel_size,1]
     :param stride: `int` - Stride, defaults to 1
-    :param padding: `str|tuple` - padding option, which can be a string {'valid', 'same'} or a tuple of integers giving the amount of implicit padding to apply on both sides. Default "valid".
+    :param padding: `str|int` - padding option, which can be a string {'valid', 'same'} or an integer giving the amount of implicit padding to apply . Default "valid".
     :param use_bias: `bool` - if use bias, defaults to True
     :param kernel_initializer: `callable` - Defaults to None
     :param bias_initializer: `callable` - Defaults to None
@@ -677,19 +677,19 @@ LayerNormNd
 
 .. py:class:: pyvqnet.nn.layer_norm.LayerNormNd(normalized_shape: list, epsilon: float = 1e-5, affine: bool = True, name="")
 
-    Layer normalization is performed on the posterior D dimension of any input. The specific method is as described in the paper:
+    Layer normalization is performed on the last several dimensions of any input. The specific method is as described in the paper:
     `Layer Normalization <https://arxiv.org/abs/1607.06450>`__。
 
     .. math::
         y = \frac{x - \mathrm{E}[x]}{ \sqrt{\mathrm{Var}[x] + \epsilon}} * \gamma + \beta
 
-    For inputs like (B,C,H,W,D), :attr:`norm_shape` can be [C,H,W,D],[H,W,D],[W,D] or [D] .
+    For inputs like (B,C,H,W,D),  :attr:`norm_shape` can be [C,H,W,D],[H,W,D],[W,D] or [D] .
 
-    :param norm_shape: `float` - standardize the shape
-    :param epsilon: `float` - numerical stability constant, defaults to 1e-5
-    :param affine: `bool` - whether to use the applied affine transformation, the default is True
-    :param name: name of the output layer
-    :return: a LayerNormNd class
+    :param norm_shape: `float` - standardize the shape.
+    :param epsilon: `float` - numerical stability constant, defaults to 1e-5.
+    :param affine: `bool` - whether to use the applied affine transformation, the default is True.
+    :param name: name of the output layer.
+    :return: a LayerNormNd class.
 
     Example::
 
