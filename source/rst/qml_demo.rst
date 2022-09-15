@@ -3921,3 +3921,627 @@ Loss and accuracy results of the run:
     [0.3132616580]
     test:--------------->loss:QTensor(None, requires_grad=True) #####accuray:1.0
 
+
+
+
+Quantum models as Fourier series
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Quantum computers can be used for supervised learning by treating parametrised quantum circuits as models that map data
+inputs to predictions. While a lot of work has been done to investigate practical implications of this approach, many important
+theoretical properties of these models remain unknown. Here we investigate how the strategy with which data is encoded into
+the model influences the expressive power of parametrised quantum circuits as function approximators.
+
+
+The paper  `The effect of data encoding on the expressive power of variational quantum machine learning models <https://arxiv.org/pdf/2008.08605.pdf>`_ links common quantum machine learning models designed for near-term quantum computers to Fourier series
+
+
+1.1Fitting Fourier series with serial Pauli-rotation encoding
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+
+First we show how quantum models that use Pauli rotations as data-encoding gates can only fit Fourier series up to a certain degree.  For simplicity we will only look at single-qubit circuits:
+
+.. image:: ./images/single_qubit_model.PNG
+   :width: 600 px
+   :align: center
+
+|
+
+Make input data, define parallel quantum models, and do not perform model training results.
+
+.. code-block::
+
+    """
+    Quantum Fourier Series
+    """
+    import numpy as np
+    import pyqpanda as pq
+    from pyvqnet.qnn.measure import expval
+    import matplotlib.pyplot as plt
+    import matplotlib
+    try:
+        matplotlib.use("TkAgg")
+    except:  # pylint:disable=bare-except
+        print("Can not use matplot TkAgg")
+        pass
+
+    np.random.seed(42)
+
+
+    degree = 1  # degree of the target function
+    scaling = 1  # scaling of the data
+    coeffs = [0.15 + 0.15j]*degree  # coefficients of non-zero frequencies
+    coeff0 = 0.1  # coefficient of zero frequency
+
+    def target_function(x):
+        """Generate a truncated Fourier series, where the data gets re-scaled."""
+        res = coeff0
+        for idx, coeff in enumerate(coeffs):
+            exponent = np.complex128(scaling * (idx+1) * x * 1j)
+            conj_coeff = np.conjugate(coeff)
+            res += coeff * np.exp(exponent) + conj_coeff * np.exp(-exponent)
+        return np.real(res)
+
+    x = np.linspace(-6, 6, 70)
+    target_y = np.array([target_function(x_) for x_ in x])
+
+    plt.plot(x, target_y, c='black')
+    plt.scatter(x, target_y, facecolor='white', edgecolor='black')
+    plt.ylim(-1, 1)
+    plt.show()
+
+
+    def S(scaling, x, qubits):
+        cir = pq.QCircuit()
+        cir.insert(pq.RX(qubits[0], scaling * x))
+        return cir
+
+    def W(theta, qubits):
+        cir = pq.QCircuit()
+        cir.insert(pq.RZ(qubits[0], theta[0]))
+        cir.insert(pq.RY(qubits[0], theta[1]))
+        cir.insert(pq.RZ(qubits[0], theta[2]))
+        return cir
+
+    def serial_quantum_model(weights, x, num_qubits, scaling):
+        cir = pq.QCircuit()
+        machine = pq.CPUQVM()  # outside
+        machine.init_qvm()  # outside
+        qubits = machine.qAlloc_many(num_qubits)
+
+        for theta in weights[:-1]:
+            cir.insert(W(theta, qubits))
+            cir.insert(S(scaling, x, qubits))
+
+        # (L+1)'th unitary
+        cir.insert(W(weights[-1], qubits))
+        prog = pq.QProg()
+        prog.insert(cir)
+
+        exp_vals = []
+        for position in range(num_qubits):
+            pauli_str = {"Z" + str(position): 1.0}
+            exp2 = expval(machine, prog, pauli_str, qubits)
+            exp_vals.append(exp2)
+
+        return exp_vals
+
+    r = 1
+    weights = 2 * np.pi * np.random.random(size=(r+1, 3))  # some random initial weights
+
+    x = np.linspace(-6, 6, 70)
+    random_quantum_model_y = [serial_quantum_model(weights, x_, 1, 1) for x_ in x]
+
+    plt.plot(x, target_y, c='black', label="true")
+    plt.scatter(x, target_y, facecolor='white', edgecolor='black')
+    plt.plot(x, random_quantum_model_y, c='blue', label="predict")
+    plt.ylim(-1, 1)
+    plt.legend(loc="upper right")
+    plt.show()
+
+
+The result of running the quantum circuit without training is:
+
+.. image:: ./images/single_qubit_model_result_no_train.PNG
+   :width: 600 px
+   :align: center
+
+|
+
+
+Make the input data, define the serial quantum model, and build the training model in combination with the QuantumLayer of the VQNet framework.
+
+.. code-block::
+
+    """
+    Quantum Fourier Series Serial
+    """
+    import numpy as np
+    from pyvqnet.nn.module import Module
+    from pyvqnet.nn.loss import MeanSquaredError
+    from pyvqnet.optim.adam import Adam
+    from pyvqnet.tensor.tensor import QTensor
+    import pyqpanda as pq
+    from pyvqnet.qnn.measure import expval
+    from pyvqnet.qnn.quantumlayer import QuantumLayer
+    import matplotlib.pyplot as plt
+    import matplotlib
+    try:
+        matplotlib.use("TkAgg")
+    except:  # pylint:disable=bare-except
+        print("Can not use matplot TkAgg")
+        pass
+
+    np.random.seed(42)
+
+    degree = 1  # degree of the target function
+    scaling = 1  # scaling of the data
+    coeffs = [0.15 + 0.15j]*degree  # coefficients of non-zero frequencies
+    coeff0 = 0.1  # coefficient of zero frequency
+
+    def target_function(x):
+        """Generate a truncated Fourier series, where the data gets re-scaled."""
+        res = coeff0
+        for idx, coeff in enumerate(coeffs):
+            exponent = np.complex128(scaling * (idx+1) * x * 1j)
+            conj_coeff = np.conjugate(coeff)
+            res += coeff * np.exp(exponent) + conj_coeff * np.exp(-exponent)
+        return np.real(res)
+
+    x = np.linspace(-6, 6, 70)
+    target_y = np.array([target_function(xx) for xx in x])
+
+    plt.plot(x, target_y, c='black')
+    plt.scatter(x, target_y, facecolor='white', edgecolor='black')
+    plt.ylim(-1, 1)
+    plt.show()
+
+
+    def S(x, qubits):
+        cir = pq.QCircuit()
+        cir.insert(pq.RX(qubits[0], x))
+        return cir
+
+    def W(theta, qubits):
+        cir = pq.QCircuit()
+        cir.insert(pq.RZ(qubits[0], theta[0]))
+        cir.insert(pq.RY(qubits[0], theta[1]))
+        cir.insert(pq.RZ(qubits[0], theta[2]))
+        return cir
+
+
+    r = 1
+    weights = 2 * np.pi * np.random.random(size=(r+1, 3))  # some random initial weights
+
+    x = np.linspace(-6, 6, 70)
+
+
+    def q_circuits_loop(x, weights, qubits, clist, machine):
+
+        result = []
+        for xx in x:
+            cir = pq.QCircuit()
+            weights = weights.reshape([2, 3])
+
+            for theta in weights[:-1]:
+                cir.insert(W(theta, qubits))
+                cir.insert(S(xx, qubits))
+
+            cir.insert(W(weights[-1], qubits))
+            prog = pq.QProg()
+            prog.insert(cir)
+
+            exp_vals = []
+            for position in range(1):
+                pauli_str = {"Z" + str(position): 1.0}
+                exp2 = expval(machine, prog, pauli_str, qubits)
+                exp_vals.append(exp2)
+                result.append(exp2)
+        return result
+
+    class Model(Module):
+        def __init__(self):
+            super(Model, self).__init__()
+            self.q_fourier_series = QuantumLayer(q_circuits_loop, 6, "CPU", 1)
+
+        def forward(self, x):
+            return self.q_fourier_series(x)
+
+    def run():
+        model = Model()
+
+        optimizer = Adam(model.parameters(), lr=0.5)
+        batch_size = 2
+        epoch = 5
+        loss = MeanSquaredError()
+        print("start training..............")
+        model.train()
+        max_steps = 50
+        for i in range(epoch):
+            sum_loss = 0
+            count = 0
+            for step in range(max_steps):
+                optimizer.zero_grad()
+                # Select batch of data
+                batch_index = np.random.randint(0, len(x), (batch_size,))
+                x_batch = x[batch_index]
+                y_batch = target_y[batch_index]
+                data, label = QTensor([x_batch]), QTensor([y_batch])
+                result = model(data)
+                loss_b = loss(label, result)
+                loss_b.backward()
+                optimizer._step()
+                sum_loss += loss_b.item()
+                count += batch_size
+            print(f"epoch:{i}, #### loss:{sum_loss/count} ")
+
+            model.eval()
+            predictions = []
+            for xx in x:
+                data = QTensor([[xx]])
+                result = model(data)
+                predictions.append(result.pdata[0])
+
+            plt.plot(x, target_y, c='black', label="true")
+            plt.scatter(x, target_y, facecolor='white', edgecolor='black')
+            plt.plot(x, predictions, c='blue', label="predict")
+            plt.ylim(-1, 1)
+            plt.legend(loc="upper right")
+            plt.show()
+
+    if __name__ == "__main__":
+        run()
+
+The quantum model is:
+
+.. image:: ./images/single_qubit_model_circuit.PNG
+   :width: 600 px
+   :align: center
+
+|
+
+The network training results are:
+
+.. image:: ./images/single_qubit_model_result.PNG
+   :width: 600 px
+   :align: center
+
+|
+
+The network training loss is:
+
+.. code-block::
+
+    start training..............
+    epoch:0, #### loss:0.04852807720773853
+    epoch:1, #### loss:0.012945819365559146
+    epoch:2, #### loss:0.0009359727291666786
+    epoch:3, #### loss:0.00015995280153333625
+    epoch:4, #### loss:3.988249877352246e-05
+
+
+1.2Fitting Fourier series with parallel Pauli-rotation encoding
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+
+As shown in the paper, we expect similar results to the serial model: a Fourier series of order r can only be fitted if the encoded gate has at least r repetitions in the quantum model. Quantum circuit:
+
+.. image:: ./images/parallel_model.png
+   :width: 600 px
+   :align: center
+
+|
+
+Make input data, define parallel quantum models, and do not perform model training results.
+
+.. code-block::
+
+    """
+    Quantum Fourier Series
+    """
+    import numpy as np
+    import pyqpanda as pq
+    from pyvqnet.qnn.measure import expval
+    import matplotlib.pyplot as plt
+    import matplotlib
+    try:
+        matplotlib.use("TkAgg")
+    except:  # pylint:disable=bare-except
+        print("Can not use matplot TkAgg")
+        pass
+
+    np.random.seed(42)
+
+    degree = 1  # degree of the target function
+    scaling = 1  # scaling of the data
+    coeffs = [0.15 + 0.15j] * degree  # coefficients of non-zero frequencies
+    coeff0 = 0.1  # coefficient of zero frequency
+
+    def target_function(x):
+        """Generate a truncated Fourier series, where the data gets re-scaled."""
+        res = coeff0
+        for idx, coeff in enumerate(coeffs):
+            exponent = np.complex128(scaling * (idx + 1) * x * 1j)
+            conj_coeff = np.conjugate(coeff)
+            res += coeff * np.exp(exponent) + conj_coeff * np.exp(-exponent)
+        return np.real(res)
+
+    x = np.linspace(-6, 6, 70)
+    target_y = np.array([target_function(xx) for xx in x])
+
+
+    def S1(x, qubits):
+        cir = pq.QCircuit()
+        for q in qubits:
+            cir.insert(pq.RX(q, x))
+        return cir
+
+    def W1(theta, qubits):
+        cir = pq.QCircuit()
+        for i in range(len(qubits)):
+            cir.insert(pq.RZ(qubits[i], theta[0][i][0]))
+            cir.insert(pq.RY(qubits[i], theta[0][i][1]))
+            cir.insert(pq.RZ(qubits[i], theta[0][i][2]))
+
+        for i in range(len(qubits) - 1):
+            cir.insert(pq.CNOT(qubits[i], qubits[i + 1]))
+        cir.insert(pq.CNOT(qubits[len(qubits) - 1], qubits[0]))
+
+        for i in range(len(qubits)):
+            cir.insert(pq.RZ(qubits[i], theta[1][i][0]))
+            cir.insert(pq.RY(qubits[i], theta[1][i][1]))
+            cir.insert(pq.RZ(qubits[i], theta[1][i][2]))
+
+        cir.insert(pq.CNOT(qubits[0], qubits[len(qubits) - 1]))
+        for i in range(len(qubits) - 1):
+            cir.insert(pq.CNOT(qubits[i + 1], qubits[i]))
+
+        for i in range(len(qubits)):
+            cir.insert(pq.RZ(qubits[i], theta[2][i][0]))
+            cir.insert(pq.RY(qubits[i], theta[2][i][1]))
+            cir.insert(pq.RZ(qubits[i], theta[2][i][2]))
+
+        for i in range(len(qubits) - 1):
+            cir.insert(pq.CNOT(qubits[i], qubits[i + 1]))
+        cir.insert(pq.CNOT(qubits[len(qubits) - 1], qubits[0]))
+
+        return cir
+
+    def parallel_quantum_model(weights, x, num_qubits):
+        cir = pq.QCircuit()
+        machine = pq.CPUQVM()  # outside
+        machine.init_qvm()  # outside
+        qubits = machine.qAlloc_many(num_qubits)
+
+        cir.insert(W1(weights[0], qubits))
+        cir.insert(S1(x, qubits))
+
+        cir.insert(W1(weights[1], qubits))
+        prog = pq.QProg()
+        prog.insert(cir)
+
+        exp_vals = []
+        for position in range(1):
+            pauli_str = {"Z" + str(position): 1.0}
+            exp2 = expval(machine, prog, pauli_str, qubits)
+            exp_vals.append(exp2)
+
+        return exp_vals
+
+    r = 3
+
+    trainable_block_layers = 3
+    weights = 2 * np.pi * np.random.random(size=(2, trainable_block_layers, r, 3))
+    # print(weights)
+    x = np.linspace(-6, 6, 70)
+    random_quantum_model_y = [parallel_quantum_model(weights, xx, r) for xx in x]
+
+    plt.plot(x, target_y, c='black', label="true")
+    plt.scatter(x, target_y, facecolor='white', edgecolor='black')
+    plt.plot(x, random_quantum_model_y, c='blue', label="predict")
+    plt.ylim(-1, 1)
+    plt.legend(loc="upper right")
+    plt.show()
+
+The result of running the quantum circuit without training is:
+
+.. image:: ./images/parallel_model_result_no_train.PNG
+   :width: 600 px
+   :align: center
+
+|
+
+
+Make the input data, define the parallel quantum model, and build the training model in combination with the QuantumLayer layer of the VQNet framework.
+
+.. code-block::
+
+    """
+    Quantum Fourier Series
+    """
+    import numpy as np
+
+    from pyvqnet.nn.module import Module
+    from pyvqnet.nn.loss import MeanSquaredError
+    from pyvqnet.optim.adam import Adam
+    from pyvqnet.tensor.tensor import QTensor
+    import pyqpanda as pq
+    from pyvqnet.qnn.measure import expval
+    from pyvqnet.qnn.quantumlayer import QuantumLayer, QuantumLayerMultiProcess
+    import matplotlib.pyplot as plt
+    import matplotlib
+    try:
+        matplotlib.use("TkAgg")
+    except:  # pylint:disable=bare-except
+        print("Can not use matplot TkAgg")
+        pass
+
+    np.random.seed(42)
+
+    degree = 1  # degree of the target function
+    scaling = 1  # scaling of the data
+    coeffs = [0.15 + 0.15j] * degree  # coefficients of non-zero frequencies
+    coeff0 = 0.1  # coefficient of zero frequency
+
+    def target_function(x):
+        """Generate a truncated Fourier series, where the data gets re-scaled."""
+        res = coeff0
+        for idx, coeff in enumerate(coeffs):
+            exponent = np.complex128(scaling * (idx + 1) * x * 1j)
+            conj_coeff = np.conjugate(coeff)
+            res += coeff * np.exp(exponent) + conj_coeff * np.exp(-exponent)
+        return np.real(res)
+
+    x = np.linspace(-6, 6, 70)
+    target_y = np.array([target_function(xx) for xx in x])
+
+    plt.plot(x, target_y, c='black')
+    plt.scatter(x, target_y, facecolor='white', edgecolor='black')
+    plt.ylim(-1, 1)
+    plt.show()
+
+    def S1(x, qubits):
+        cir = pq.QCircuit()
+        for q in qubits:
+            cir.insert(pq.RX(q, x))
+        return cir
+
+    def W1(theta, qubits):
+        cir = pq.QCircuit()
+        for i in range(len(qubits)):
+            cir.insert(pq.RZ(qubits[i], theta[0][i][0]))
+            cir.insert(pq.RY(qubits[i], theta[0][i][1]))
+            cir.insert(pq.RZ(qubits[i], theta[0][i][2]))
+
+        for i in range(len(qubits) - 1):
+            cir.insert(pq.CNOT(qubits[i], qubits[i + 1]))
+        cir.insert(pq.CNOT(qubits[len(qubits) - 1], qubits[0]))
+
+        for i in range(len(qubits)):
+            cir.insert(pq.RZ(qubits[i], theta[1][i][0]))
+            cir.insert(pq.RY(qubits[i], theta[1][i][1]))
+            cir.insert(pq.RZ(qubits[i], theta[1][i][2]))
+
+        cir.insert(pq.CNOT(qubits[0], qubits[len(qubits) - 1]))
+        for i in range(len(qubits) - 1):
+            cir.insert(pq.CNOT(qubits[i + 1], qubits[i]))
+
+        for i in range(len(qubits)):
+            cir.insert(pq.RZ(qubits[i], theta[2][i][0]))
+            cir.insert(pq.RY(qubits[i], theta[2][i][1]))
+            cir.insert(pq.RZ(qubits[i], theta[2][i][2]))
+
+        for i in range(len(qubits) - 1):
+            cir.insert(pq.CNOT(qubits[i], qubits[i + 1]))
+        cir.insert(pq.CNOT(qubits[len(qubits) - 1], qubits[0]))
+
+        return cir
+
+    def q_circuits_loop(x, weights, qubits, clist, machine):
+
+        result = []
+        for xx in x:
+            cir = pq.QCircuit()
+            weights = weights.reshape([2, 3, 3, 3])
+
+            cir.insert(W1(weights[0], qubits))
+            cir.insert(S1(xx, qubits))
+
+            cir.insert(W1(weights[1], qubits))
+            prog = pq.QProg()
+            prog.insert(cir)
+
+            exp_vals = []
+            for position in range(1):
+                pauli_str = {"Z" + str(position): 1.0}
+                exp2 = expval(machine, prog, pauli_str, qubits)
+                exp_vals.append(exp2)
+                result.append(exp2)
+        return result
+
+
+    class Model(Module):
+        def __init__(self):
+            super(Model, self).__init__()
+
+            self.q_fourier_series = QuantumLayer(q_circuits_loop, 2 * 3 * 3 * 3, "CPU", 1)
+
+        def forward(self, x):
+            return self.q_fourier_series(x)
+
+    def run():
+        model = Model()
+
+        optimizer = Adam(model.parameters(), lr=0.01)
+        batch_size = 2
+        epoch = 5
+        loss = MeanSquaredError()
+        print("start training..............")
+        model.train()
+        max_steps = 50
+        for i in range(epoch):
+            sum_loss = 0
+            count = 0
+            for step in range(max_steps):
+                optimizer.zero_grad()
+                # Select batch of data
+                batch_index = np.random.randint(0, len(x), (batch_size,))
+                x_batch = x[batch_index]
+                y_batch = target_y[batch_index]
+                data, label = QTensor([x_batch]), QTensor([y_batch])
+                result = model(data)
+                loss_b = loss(label, result)
+                loss_b.backward()
+                optimizer._step()
+                sum_loss += loss_b.item()
+                count += batch_size
+
+            loss_cout = sum_loss / count
+            print(f"epoch:{i}, #### loss:{loss_cout} ")
+
+            if loss_cout < 0.002:
+                model.eval()
+                predictions = []
+                for xx in x:
+                    data = QTensor([[xx]])
+                    result = model(data)
+                    predictions.append(result.pdata[0])
+
+                plt.plot(x, target_y, c='black', label="true")
+                plt.scatter(x, target_y, facecolor='white', edgecolor='black')
+                plt.plot(x, predictions, c='blue', label="predict")
+                plt.ylim(-1, 1)
+                plt.legend(loc="upper right")
+                plt.show()
+
+
+
+    if __name__ == "__main__":
+        run()
+
+
+The quantum model is:
+
+.. image:: ./images/parallel_model_circuit.PNG
+   :width: 600 px
+   :align: center
+
+|
+
+The network training results are:
+
+.. image:: ./images/parallel_model_result.PNG
+   :width: 600 px
+   :align: center
+
+|
+
+The network training loss is:
+
+.. code-block::
+
+    start training..............
+    epoch:0, #### loss:0.0037272341538482578
+    epoch:1, #### loss:5.271130586635309e-05
+    epoch:2, #### loss:4.714951917250687e-07
+    epoch:3, #### loss:1.0968826371082763e-08
+    epoch:4, #### loss:2.1258629738507562e-10

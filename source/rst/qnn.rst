@@ -215,6 +215,103 @@ If you are more familiar with pyQPanda syntax, please using QuantumLayerV2 class
         # [0.2500000, 0.2500000, 0.2500000, 0.2500000]
         # ]
 
+
+QuantumLayerMultiProcess
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+If you are more familiar with pyQPanda syntax, please using QuantumLayerMultiProcess class, you can define the quantum circuits function by using ``qubits``, ``cbits`` and ``machine``, then take it as a argument ``qprog_with_measure`` of QuantumLayerMultiProcess.
+
+.. py:class:: pyvqnet.qnn.quantumlayer.QuantumLayerMultiProcess(qprog_with_measure, para_num, machine_type_or_cloud_token, num_of_qubits: int, num_of_cbits: int = 1, diff_method: str = 'parameter_shift', delta: float = 0.01)
+
+    Abstract calculation module for variational quantum circuits. It simulates a parameterized quantum circuit and gets the measurement result.
+    QuantumLayer inherits from Module ,so that it can calculate gradients of circuits parameters,and train variational quantum circuits model or embed variational quantum circuits into hybird quantum and classic model.
+
+    To use this module, you need to create your quantum virtual machine and allocate qubits and cbits.
+
+    :param qprog_with_measure: callable quantum circuits functions ,cosntructed by qpanda
+    :param para_num: `int` - Number of parameter
+    :param machine_type_or_cloud_token: qpanda machine type or pyQPANDA QCLOUD token : https://pyqpanda-toturial.readthedocs.io/zh/latest/Realchip.html
+    :param num_of_qubits: num of qubits
+    :param num_of_cbits: num of classic bits
+    :param diff_method: 'parameter_shift' or 'finite_diff'
+    :param delta:  delta for diff
+    :return: a module can calculate quantum circuits .
+
+    .. note::
+        qprog_with_measure is quantum circuits function defined in pyQPanda :https://pyqpanda-toturial.readthedocs.io/zh/latest/QCircuit.html.
+
+        This function should contains following parameters,otherwise it can not run properly in QuantumLayerMultiProcess.
+
+        Compare to QuantumLayer.you should allocate qubits and simulator: https://pyqpanda-toturial.readthedocs.io/zh/latest/QuantumMachine.html,
+
+        you may also need to allocate cbits if qprog_with_measure needs quantum measure: https://pyqpanda-toturial.readthedocs.io/zh/latest/Measure.html
+
+        qprog_with_measure (input,param)
+
+        `input`: array_like input 1-dim classic data
+
+        `param`: array_like input 1-dim quantum circuit's parameters
+
+
+    Example::
+
+        import pyqpanda as pq
+        from pyvqnet.qnn.measure import ProbsMeasure
+        from pyvqnet.qnn.quantumlayer import QuantumLayerMultiProcess
+        import numpy as np
+        from pyvqnet.tensor import QTensor
+        def pqctest (input,param,nqubits,ncubits):
+            machine = pq.CPUQVM()
+            machine.init_qvm()
+            qubits = machine.qAlloc_many(nqubits)
+            circuit = pq.QCircuit()
+            circuit.insert(pq.H(qubits[0]))
+            circuit.insert(pq.H(qubits[1]))
+            circuit.insert(pq.H(qubits[2]))
+            circuit.insert(pq.H(qubits[3]))
+
+            circuit.insert(pq.RZ(qubits[0],input[0]))
+            circuit.insert(pq.RZ(qubits[1],input[1]))
+            circuit.insert(pq.RZ(qubits[2],input[2]))
+            circuit.insert(pq.RZ(qubits[3],input[3]))
+
+            circuit.insert(pq.CNOT(qubits[0],qubits[1]))
+            circuit.insert(pq.RZ(qubits[1],param[0]))
+            circuit.insert(pq.CNOT(qubits[0],qubits[1]))
+
+            circuit.insert(pq.CNOT(qubits[1],qubits[2]))
+            circuit.insert(pq.RZ(qubits[2],param[1]))
+            circuit.insert(pq.CNOT(qubits[1],qubits[2]))
+
+            circuit.insert(pq.CNOT(qubits[2],qubits[3]))
+            circuit.insert(pq.RZ(qubits[3],param[2]))
+            circuit.insert(pq.CNOT(qubits[2],qubits[3]))
+            #print(circuit)
+
+            prog = pq.QProg()
+            prog.insert(circuit)
+
+            rlt_prob = ProbsMeasure([0,2],prog,machine,qubits)
+            return rlt_prob
+
+
+        pqc = QuantumLayerMultiProcess(pqctest,3,"cpu",4,1)
+        #classic data as input
+        input = QTensor([[1,2,3,4],[4,2,2,3],[3,3,2,2]] )
+        #forward circuits
+        rlt = pqc(input)
+        grad = QTensor(np.ones(rlt.data.shape)*1000)
+        #backward circuits
+        rlt.backward(grad)
+        print(rlt)
+
+        # [
+        # [0.2500000, 0.2500000, 0.2500000, 0.2500000],
+        # [0.2500000, 0.2500000, 0.2500000, 0.2500000],
+        # [0.2500000, 0.2500000, 0.2500000, 0.2500000]
+        # ]
+
+
 NoiseQuantumLayer
 ^^^^^^^^^^^^^^^^^^^
 
