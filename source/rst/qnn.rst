@@ -1009,7 +1009,7 @@ HardwareEfficientAnsatz
     :param single_rot_gate_list: A single qubit rotation gate list is constructed by one or several rotation gate that act on every qubit.Currently support Rx, Ry, Rz.
     :param qubits: Qubits allocated by pyqpanda api.
     :param entangle_gate: The non parameterized entanglement gate.CNOT,CZ is supported.default:CNOT.
-    :param entangle_rules: How entanglement gate is used in the circuit. ``linear`` means the entanglement gate will be act on every neighboring qubits. ``full`` means the entanglment gate will be act on any two qbuits. Default: ``linear``。
+    :param entangle_rules: How entanglement gate is used in the circuit. ``linear`` means the entanglement gate will be act on every neighboring qubits. ``full`` means the entanglment gate will be act on any two qbuits. Default: ``linear``.
     :param depth: The depth of ansatz, default:1.
 
     Example::
@@ -1100,12 +1100,12 @@ StronglyEntanglingTemplate
     The argument ``weights`` contains the weights for each layer. The number of layers :math:`L` is therefore derived
     from the first dimension of ``weights``.
 
-    The 2-qubit CNOT gate,act on the :math:`M` number of qubits, :math:`i = 1,...,M`. The second qubit of each gate is given by
+    The 2-qubit CNOT gate, act on the :math:`M` number of qubits, :math:`i = 1,...,M`. The second qubit of each gate is given by
     :math:`(i+r)\mod M`, where :math:`r` is a  hyperparameter called the *range*, and :math:`0 < r < M`.
 
     :param weights: weight tensor of shape ``(L, M, 3)`` , default: None, use random tensor with shape ``(1,1,3)`` .
     :param num_qubits: number of qubits, default: 1.
-    :param ranges: sequence determining the range hyperparameter for each subsequent layer; default: None
+    :param ranges: sequence determining the range hyperparameter for each subsequent layer; default: None,
                                 using :math:`r=l \mod M` for the :math:`l` th layer and :math:`M` qubits.
 
     Example::
@@ -1280,7 +1280,7 @@ DensityMatrixFromQstate
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 .. py:function:: pyvqnet.qnn.measure.DensityMatrixFromQstate(state, indices)
 
-    Calculate the density matrix
+    Calculate the density matrix of quantum state vector in the computational basis.
 
     :param state: one-dimensional list state vector. The size of this list should be ``(2**N,)`` for some integer value ``N``. qstate should start from 000 -> 111.
     :param indices: list of qubit indices in the considered subsystem.
@@ -1308,7 +1308,7 @@ VN_Entropy
     :param state: one-dimensional list state vector. The size of this list should be ``(2**N,)`` for some integer value ``N``.
                     qstate should start from 000 ->111.
     :param indices: list of qubit indices in the considered subsystem.
-    :param base: the base of the logarithm. If not, the natural logarithm is used.
+    :param base: the base of the logarithm. If None, the natural logarithm is used. Default: None.
 
     :return: floating point value for the von Neumann entropy.
 
@@ -1326,7 +1326,7 @@ Mutal_Info
 ^^^^^^^^^^^^^^^
 .. py:function:: pyvqnet.qnn.measure.Mutal_Info(state, indices0, indices1, base=None)
 
-    According to the mutual information of the state vectors on the given two lists of sub-qubits.
+    Calculates the mutual information of the state vectors on the given two lists of sub-qubits.
 
     .. math::
         I(A, B) = S(\rho^A) + S(\rho^B) - S(\rho^{AB})
@@ -1340,7 +1340,7 @@ Mutal_Info
     :param state: one-dimensional list state vector. The size of this list should be ``(2**N,)`` for some integer value ``N``.qstate should start from 000 ->111
     :param indices0: list of qubit indices in the first subsystem.
     :param indices1: a list of qubit indices in the second subsystem.
-    :param base: the base of the logarithm. If not, the natural logarithm is used.
+    :param base: the base of the logarithm. If None, the natural logarithm is used. Default: None.
 
     :return: Mutual information between subsystems
 
@@ -1373,7 +1373,7 @@ For this quantum perceptron, the data processed is a string of 0 1 binary bits. 
 
 |
 
-It is encoded using a binary bit string, where black is 0 and white is 1, so that w is encoded as (1, 1, 1, 1, 1, 1, 0, 1, 1, 0, 0, 0, 1, 1, 0, 1). A total of 16-bit strings can be encoded into the sign of the amplitude of the 4-bit quantum state. The sign is 0 for negative numbers, and 1 for positive numbers. Through the above encoding method, our algorithm input is converted into a 16-bit binary string. Such non-repetitive binary strings can respectively correspond to specific input lines Ui.
+It is encoded using a binary bit string, where black is 0 and white is 1, so that w is encoded as (1, 1, 1, 1, 1, 1, 0, 1, 1, 0, 0, 0, 1, 1, 0, 1). A total of 16-bit strings can be encoded into the sign of the amplitude of the 4-bit quantum state. The sign is 0 for negative numbers, and 1 for positive numbers. Through the above encoding method, our algorithm input is converted into a 16-bit binary string. Such non-repetitive binary strings can respectively correspond to specific input :math:`U_i` .
 
 The circuit structure of the quantum perceptron proposed in this paper is as follows:
 
@@ -1383,17 +1383,17 @@ The circuit structure of the quantum perceptron proposed in this paper is as fol
 
 |
 
-The coding circuit Ui is constructed on bits 0~3, including multiple controlled CZ, CNOT gates, and H gates; the weight conversion circuit Uw is constructed immediately after Ui, which is also composed of controlled gates and H gates. Ui can be used to perform unitary matrix transformations to encode data into quantum states:
+The coding circuit :math:`U_i` is constructed on bits 0~3, including multiple controlled :math:`CZ` , :math:`CNOT` gates, and :math:`H` gates; the weight conversion circuit :math:`U_w` is constructed immediately after :math:`U_i` , which is also composed of controlled gates and :math:`H` gates. :math:`U_i` can be used to perform unitary matrix transformations to encode data into quantum states:
 
 .. math::
     U_i|0\rangle^{\otimes N}=\left|\psi_i\right\rangle
 
-Use the unitary matrix transformation Uw to compute the inner product between the input and the weights:
+Use the unitary matrix transformation :math:`U_w` to compute the inner product between the input and the weights:
 
 .. math::
     U_w\left|\psi_i\right\rangle=\sum_{j=0}^{m-1} c_j|j\rangle \equiv\left|\phi_{i, w}\right\rangle
 
-The normalized activation probability values for Ui and Uw can be obtained by using a CNX gate with target bits on auxiliary bits, and using some subsequent H gates, X gates, and CX gates as activation functions:
+The normalized activation probability values for :math:`U_i` and :math:`U_w` can be obtained by using a multi-controlled NOT gate with target bits on auxiliary bits, and using some subsequent :math:`H` gates, :math:`X` gates, and :math:`CX` gates as activation functions:
 
 .. math::
     \left|\phi_{i, w}\right\rangle|0\rangle_a \rightarrow \sum_{j=0}^{m-2} c_j|j\rangle|0\rangle_a+c_{m-1}|m-1\rangle|1\rangle_a
@@ -1412,7 +1412,7 @@ Use the ``gen_4bitstring_data`` interface to generate various data in the paper 
 
     training_label, test_label = perceptron.gen_4bitstring_data()
 
-Using the ``train`` interface to traverse all the data, you can get the last trained quantum perceptron circuit Uw.
+Using the ``train`` interface to traverse all the data, you can get the last trained quantum perceptron circuit :math:`U_w`.
 
 .. code-block::
 
