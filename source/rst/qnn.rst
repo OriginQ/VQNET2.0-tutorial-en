@@ -215,6 +215,105 @@ If you are more familiar with pyQPanda syntax, please using QuantumLayerV2 class
         # [0.2500000, 0.2500000, 0.2500000, 0.2500000]
         # ]
 
+
+QuantumLayerMultiProcess
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+If you are more familiar with pyQPanda syntax, please using QuantumLayerMultiProcess class, you can define the quantum circuits function by using ``qubits``, ``cbits`` and ``machine``, then take it as a argument ``qprog_with_measure`` of QuantumLayerMultiProcess.
+
+.. py:class:: pyvqnet.qnn.quantumlayer.QuantumLayerMultiProcess(qprog_with_measure, para_num, machine_type_or_cloud_token, num_of_qubits: int, num_of_cbits: int = 1, diff_method: str = 'parameter_shift', delta: float = 0.01)
+
+    Abstract calculation module for variational quantum circuits. This class uses multiprocess to accelerate quantum circuit simulation.
+    
+    It simulates a parameterized quantum circuit and gets the measurement result.
+    QuantumLayer inherits from Module ,so that it can calculate gradients of circuits parameters,and train variational quantum circuits model or embed variational quantum circuits into hybird quantum and classic model.
+
+    To use this module, you need to create your quantum virtual machine and allocate qubits and cbits.
+
+    :param qprog_with_measure: callable quantum circuits functions ,cosntructed by qpanda
+    :param para_num: `int` - Number of parameter
+    :param machine_type_or_cloud_token: qpanda machine type or pyQPANDA QCLOUD token : https://pyqpanda-toturial.readthedocs.io/zh/latest/Realchip.html
+    :param num_of_qubits: num of qubits
+    :param num_of_cbits: num of classic bits
+    :param diff_method: 'parameter_shift' or 'finite_diff'
+    :param delta:  delta for diff
+    :return: a module can calculate quantum circuits .
+
+    .. note::
+        qprog_with_measure is quantum circuits function defined in pyQPanda :https://pyqpanda-toturial.readthedocs.io/zh/latest/QCircuit.html.
+
+        This function should contains following parameters,otherwise it can not run properly in QuantumLayerMultiProcess.
+
+        Compare to QuantumLayer.you should allocate qubits and simulator: https://pyqpanda-toturial.readthedocs.io/zh/latest/QuantumMachine.html,
+
+        you may also need to allocate cbits if qprog_with_measure needs quantum measure: https://pyqpanda-toturial.readthedocs.io/zh/latest/Measure.html
+
+        qprog_with_measure (input,param)
+
+        `input`: array_like input 1-dim classic data
+
+        `param`: array_like input 1-dim quantum circuit's parameters
+
+
+    Example::
+
+        import pyqpanda as pq
+        from pyvqnet.qnn.measure import ProbsMeasure
+        from pyvqnet.qnn.quantumlayer import QuantumLayerMultiProcess
+        import numpy as np
+        from pyvqnet.tensor import QTensor
+        def pqctest (input,param,nqubits,ncubits):
+            machine = pq.CPUQVM()
+            machine.init_qvm()
+            qubits = machine.qAlloc_many(nqubits)
+            circuit = pq.QCircuit()
+            circuit.insert(pq.H(qubits[0]))
+            circuit.insert(pq.H(qubits[1]))
+            circuit.insert(pq.H(qubits[2]))
+            circuit.insert(pq.H(qubits[3]))
+
+            circuit.insert(pq.RZ(qubits[0],input[0]))
+            circuit.insert(pq.RZ(qubits[1],input[1]))
+            circuit.insert(pq.RZ(qubits[2],input[2]))
+            circuit.insert(pq.RZ(qubits[3],input[3]))
+
+            circuit.insert(pq.CNOT(qubits[0],qubits[1]))
+            circuit.insert(pq.RZ(qubits[1],param[0]))
+            circuit.insert(pq.CNOT(qubits[0],qubits[1]))
+
+            circuit.insert(pq.CNOT(qubits[1],qubits[2]))
+            circuit.insert(pq.RZ(qubits[2],param[1]))
+            circuit.insert(pq.CNOT(qubits[1],qubits[2]))
+
+            circuit.insert(pq.CNOT(qubits[2],qubits[3]))
+            circuit.insert(pq.RZ(qubits[3],param[2]))
+            circuit.insert(pq.CNOT(qubits[2],qubits[3]))
+            #print(circuit)
+
+            prog = pq.QProg()
+            prog.insert(circuit)
+
+            rlt_prob = ProbsMeasure([0,2],prog,machine,qubits)
+            return rlt_prob
+
+
+        pqc = QuantumLayerMultiProcess(pqctest,3,"cpu",4,1)
+        #classic data as input
+        input = QTensor([[1,2,3,4],[4,2,2,3],[3,3,2,2]] )
+        #forward circuits
+        rlt = pqc(input)
+        grad = QTensor(np.ones(rlt.data.shape)*1000)
+        #backward circuits
+        rlt.backward(grad)
+        print(rlt)
+
+        # [
+        # [0.2500000, 0.2500000, 0.2500000, 0.2500000],
+        # [0.2500000, 0.2500000, 0.2500000, 0.2500000],
+        # [0.2500000, 0.2500000, 0.2500000, 0.2500000]
+        # ]
+
+
 NoiseQuantumLayer
 ^^^^^^^^^^^^^^^^^^^
 
@@ -894,6 +993,164 @@ CSWAPcircuit
         #           │
         # q_2:  |0>─X─
 
+
+
+Commonly used quantum circuits
+----------------------------------
+VQNet provides some quantum circuits commonly used in quantum machine learning research.
+
+
+HardwareEfficientAnsatz
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. py:class:: pyvqnet.qnn.ansatz.HardwareEfficientAnsatz(n_qubits,single_rot_gate_list,qubits,entangle_gate="CNOT",entangle_rules='linear',depth=1)
+
+    The implementation of Hardware Efficient Ansatz introduced in the paper: `Hardware-efficient Variational Quantum Eigensolver for Small Molecules <https://arxiv.org/pdf/1704.05018.pdf>`__ 。
+
+    :param n_qubits: Number of qubits.
+    :param single_rot_gate_list: A single qubit rotation gate list is constructed by one or several rotation gate that act on every qubit.Currently support Rx, Ry, Rz.
+    :param qubits: Qubits allocated by pyqpanda api.
+    :param entangle_gate: The non parameterized entanglement gate.CNOT,CZ is supported.default:CNOT.
+    :param entangle_rules: How entanglement gate is used in the circuit. ``linear`` means the entanglement gate will be act on every neighboring qubits. ``full`` means the entanglment gate will be act on any two qbuits. Default: ``linear``.
+    :param depth: The depth of ansatz, default:1.
+
+    Example::
+
+        import pyqpanda as pq
+        from pyvqnet.tensor import QTensor,tensor
+        from pyvqnet.qnn import HardwareEfficientAnsatz
+        machine = pq.CPUQVM()
+        machine.init_qvm()
+        qlist = machine.qAlloc_many(4)
+        c = HardwareEfficientAnsatz(4, ["rx", "RY", "rz"],
+                                    qlist,
+                                    entangle_gate="cnot",
+                                    entangle_rules="linear",
+                                    depth=1)
+        w = tensor.ones([c.get_para_num()])
+
+        cir = c.create_ansatz(w)
+        print(cir)
+        #           ┌────────────┐ ┌────────────┐ ┌────────────┐        ┌────────────┐ ┌────────────┐ ┌────────────┐
+        # q_0:  |0>─┤RX(1.000000)├ ┤RY(1.000000)├ ┤RZ(1.000000)├ ───■── ┤RX(1.000000)├ ┤RY(1.000000)├ ┤RZ(1.000000)├ ────────────── ──────────────
+        #           ├────────────┤ ├────────────┤ ├────────────┤ ┌──┴─┐ └────────────┘ ├────────────┤ ├────────────┤ ┌────────────┐
+        # q_1:  |0>─┤RX(1.000000)├ ┤RY(1.000000)├ ┤RZ(1.000000)├ ┤CNOT├ ───■────────── ┤RX(1.000000)├ ┤RY(1.000000)├ ┤RZ(1.000000)├ ──────────────
+        #           ├────────────┤ ├────────────┤ ├────────────┤ └────┘ ┌──┴─┐         └────────────┘ ├────────────┤ ├────────────┤ ┌────────────┐
+        # q_2:  |0>─┤RX(1.000000)├ ┤RY(1.000000)├ ┤RZ(1.000000)├ ────── ┤CNOT├──────── ───■────────── ┤RX(1.000000)├ ┤RY(1.000000)├ ┤RZ(1.000000)├
+        #           ├────────────┤ ├────────────┤ ├────────────┤        └────┘         ┌──┴─┐         ├────────────┤ ├────────────┤ ├────────────┤
+        # q_3:  |0>─┤RX(1.000000)├ ┤RY(1.000000)├ ┤RZ(1.000000)├ ────── ────────────── ┤CNOT├──────── ┤RX(1.000000)├ ┤RY(1.000000)├ ┤RZ(1.000000)├
+        #           └────────────┘ └────────────┘ └────────────┘                       └────┘         └────────────┘ └────────────┘ └────────────┘
+
+BasicEntanglerTemplate
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. py:class:: pyvqnet.qnn.template.BasicEntanglerTemplate(weights=None, num_qubits=1, rotation=pyqpanda.RX)
+
+    Layers consisting of one-parameter single-qubit rotations on each qubit, followed by a closed chain or *ring* of CNOT gates.
+
+    The ring of CNOT gates connects every qubit with its neighbour, with the last qubit being considered as a neighbour to the first qubit.
+
+    The number of layers :math:`L` is determined by the first dimension of the argument ``weights``.
+
+    :param weights: Weight tensor of shape ``(L, len(qubits))`` . Each weight is used as a parameter for the rotation, default: None, use random tensor with shape ``(1,1)`` .
+    :param num_qubits: number of qubits, default: 1.
+    :param rotation: one-parameter single-qubit gate to use, default: `pyqpanda.RX`
+
+    Example::
+
+        import pyqpanda as pq
+        import numpy as np
+        from pyvqnet.qnn.template import BasicEntanglerTemplate
+        np.random.seed(42)
+        num_qubits = 5
+        shape = [1, num_qubits]
+        weights = np.random.random(size=shape)
+
+        machine = pq.CPUQVM()
+        machine.init_qvm()
+        qubits = machine.qAlloc_many(num_qubits)
+
+        circuit = BasicEntanglerTemplate(weights=weights, num_qubits=num_qubits, rotation=pq.RZ)
+        result = circuit.create_circuit(qubits)
+        circuit.print_circuit(qubits)
+
+        prob = machine.prob_run_dict(result, qubits[0], -1)
+        prob = list(prob.values())
+        print(prob)
+        #           ┌────────────┐                             ┌────┐
+        # q_0:  |0>─┤RZ(0.374540)├ ───■── ────── ────── ────── ┤CNOT├
+        #           ├────────────┤ ┌──┴─┐                      └──┬─┘
+        # q_1:  |0>─┤RZ(0.950714)├ ┤CNOT├ ───■── ────── ────── ───┼──
+        #           ├────────────┤ └────┘ ┌──┴─┐                  │
+        # q_2:  |0>─┤RZ(0.731994)├ ────── ┤CNOT├ ───■── ────── ───┼──
+        #           ├────────────┤        └────┘ ┌──┴─┐           │
+        # q_3:  |0>─┤RZ(0.598658)├ ────── ────── ┤CNOT├ ───■── ───┼──
+        #           ├────────────┤               └────┘ ┌──┴─┐    │
+        # q_4:  |0>─┤RZ(0.156019)├ ────── ────── ────── ┤CNOT├ ───■──
+        #           └────────────┘                      └────┘
+
+        # [1.0, 0.0]
+
+
+StronglyEntanglingTemplate
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. py:class:: pyvqnet.qnn.template.StronglyEntanglingTemplate(weights=None, num_qubits=1, ranges=None)
+
+    Layers consisting of single qubit rotations and entanglers, inspired by the `circuit-centric classifier design <https://arxiv.org/abs/1804.00633>`__ .
+
+    The argument ``weights`` contains the weights for each layer. The number of layers :math:`L` is therefore derived
+    from the first dimension of ``weights``.
+
+    The 2-qubit CNOT gate, act on the :math:`M` number of qubits, :math:`i = 1,...,M`. The second qubit of each gate is given by
+    :math:`(i+r)\mod M`, where :math:`r` is a  hyperparameter called the *range*, and :math:`0 < r < M`.
+
+    :param weights: weight tensor of shape ``(L, M, 3)`` , default: None, use random tensor with shape ``(1,1,3)`` .
+    :param num_qubits: number of qubits, default: 1.
+    :param ranges: sequence determining the range hyperparameter for each subsequent layer; default: None,
+                                using :math:`r=l \mod M` for the :math:`l` th layer and :math:`M` qubits.
+
+    Example::
+
+        import pyqpanda as pq
+        import numpy as np
+        from pyvqnet.qnn.template import StronglyEntanglingTemplate
+        np.random.seed(42)
+        num_qubits = 3
+        shape = [2, num_qubits, 3]
+        weights = np.random.random(size=shape)
+
+        machine = pq.CPUQVM()  # outside
+        machine.init_qvm()  # outside
+        qubits = machine.qAlloc_many(num_qubits)
+
+        circuit = StronglyEntanglingTemplate(weights, num_qubits=num_qubits)
+        result = circuit.create_circuit(qubits)
+        circuit.print_circuit(qubits)
+
+        prob = machine.prob_run_dict(result, qubits[0], -1)
+        prob = list(prob.values())
+        print(prob)
+        #           ┌────────────┐ ┌────────────┐ ┌────────────┐               ┌────┐             ┌────────────┐ >
+        # q_0:  |0>─┤RZ(0.374540)├ ┤RY(0.950714)├ ┤RZ(0.731994)├ ───■── ────── ┤CNOT├──────────── ┤RZ(0.708073)├ >
+        #           ├────────────┤ ├────────────┤ ├────────────┤ ┌──┴─┐        └──┬┬┴───────────┐ ├────────────┤ >
+        # q_1:  |0>─┤RZ(0.598658)├ ┤RY(0.156019)├ ┤RZ(0.155995)├ ┤CNOT├ ───■── ───┼┤RZ(0.832443)├ ┤RY(0.212339)├ >
+        #           ├────────────┤ ├────────────┤ ├────────────┤ └────┘ ┌──┴─┐    │└────────────┘ ├────────────┤ >
+        # q_2:  |0>─┤RZ(0.058084)├ ┤RY(0.866176)├ ┤RZ(0.601115)├ ────── ┤CNOT├ ───■────────────── ┤RZ(0.183405)├ >
+        #           └────────────┘ └────────────┘ └────────────┘        └────┘                    └────────────┘ >
+        #
+        #          ┌────────────┐ ┌────────────┐        ┌────┐
+        # q_0:  |0>┤RY(0.020584)├ ┤RZ(0.969910)├ ───■── ┤CNOT├ ──────
+        #          ├────────────┤ └────────────┘    │   └──┬─┘ ┌────┐
+        # q_1:  |0>┤RZ(0.181825)├ ────────────── ───┼── ───■── ┤CNOT├
+        #          ├────────────┤ ┌────────────┐ ┌──┴─┐        └──┬─┘
+        # q_2:  |0>┤RY(0.304242)├ ┤RZ(0.524756)├ ┤CNOT├ ────── ───■──
+        #          └────────────┘ └────────────┘ └────┘
+        #[0.6881335561525671, 0.31186644384743273]
+
+
+
+
 Measure the quantum circuit
 ----------------------------------
 
@@ -1021,6 +1278,352 @@ ProbsMeasure
         #[0.2499999999999947, 0.2499999999999947, 0.2499999999999947, 0.2499999999999947]
 
 
+DensityMatrixFromQstate
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.. py:function:: pyvqnet.qnn.measure.DensityMatrixFromQstate(state, indices)
+
+    Calculate the density matrix of quantum state vector in the computational basis.
+
+    :param state: one-dimensional list state vector. The size of this list should be ``(2**N,)`` for some integer value ``N``. qstate should start from 000 -> 111.
+    :param indices: list of qubit indices in the considered subsystem.
+    :return: A density matrix of size "(2**len(indices), 2**len(indices))".
+
+    Example::
+
+        from pyvqnet.qnn.measure import DensityMatrixFromQstate
+        qstate = [(0.9306699299765968+0j), (0.18865613455240968+0j), (0.1886561345524097+0j), (0.03824249173404786+0j), -0.048171819846746615j, -0.00976491131165138j, -0.23763904794287155j, -0.048171819846746615j]
+        print(DensityMatrixFromQstate(qstate,[0,1]))
+        # [[0.86846704+0.j 0.1870241 +0.j 0.17604699+0.j 0.03791166+0.j]
+        #  [0.1870241 +0.j 0.09206345+0.j 0.03791166+0.j 0.01866219+0.j]
+        #  [0.17604699+0.j 0.03791166+0.j 0.03568649+0.j 0.00768507+0.j]
+        #  [0.03791166+0.j 0.01866219+0.j 0.00768507+0.j 0.00378301+0.j]]
+
+VN_Entropy
+^^^^^^^^^^^^^^^
+.. py:function:: pyvqnet.qnn.measure.VN_Entropy(state, indices, base=None)
+
+    Computes Von Neumann entropy from a state vector on a given list of qubits.
+
+    .. math::
+        S( \rho ) = -\text{Tr}( \rho \log ( \rho ))
+
+    :param state: one-dimensional list state vector. The size of this list should be ``(2**N,)`` for some integer value ``N``.
+                    qstate should start from 000 ->111.
+    :param indices: list of qubit indices in the considered subsystem.
+    :param base: the base of the logarithm. If None, the natural logarithm is used. Default: None.
+
+    :return: floating point value for the von Neumann entropy.
+
+    Example::
+
+        from pyvqnet.qnn.measure import VN_Entropy
+        qstate = [(0.9022961387408862 + 0j), -0.06676534788028633j,
+                (0.18290448232350312 + 0j), -0.3293638014158896j,
+                (0.03707657410649268 + 0j), -0.06676534788028635j,
+                (0.18290448232350312 + 0j), -0.013534006039561714j]
+        print(VN_Entropy(qstate, [0, 1]))
+        #0.14592917648464448
+
+Mutal_Info
+^^^^^^^^^^^^^^^
+.. py:function:: pyvqnet.qnn.measure.Mutal_Info(state, indices0, indices1, base=None)
+
+    Calculates the mutual information of the state vectors on the given two lists of sub-qubits.
+
+    .. math::
+        I(A, B) = S(\rho^A) + S(\rho^B) - S(\rho^{AB})
+
+    where :math:`S` is the von Neumann entropy.
+
+    Mutual information is a measure of the correlation between two subsystems. More specifically, it quantifies the amount of information one system gains by measuring another.
+
+    Each state can be given as a state vector in the computation base.
+
+    :param state: one-dimensional list state vector. The size of this list should be ``(2**N,)`` for some integer value ``N``.qstate should start from 000 ->111
+    :param indices0: list of qubit indices in the first subsystem.
+    :param indices1: a list of qubit indices in the second subsystem.
+    :param base: the base of the logarithm. If None, the natural logarithm is used. Default: None.
+
+    :return: Mutual information between subsystems
+
+    Example::
+
+        from pyvqnet.qnn.measure import Mutal_Info
+        qstate = [(0.9022961387408862 + 0j), -0.06676534788028633j,
+                (0.18290448232350312 + 0j), -0.3293638014158896j,
+                (0.03707657410649268 + 0j), -0.06676534788028635j,
+                (0.18290448232350312 + 0j), -0.013534006039561714j]
+        print(Mutal_Info(qstate, [0], [2], 2))
+        #0.13763425302805887
 
 
+
+Quantum Machine Learning Algorithm Interface
+-------------------------------------------------
+
+Quantum Perceptron
+^^^^^^^^^^^^^^^^^^^^^
+
+Artificial neural networks are the heart of machine learning algorithms and artificial intelligence protocols. Historically, the simplest implementation of an artificial neuron traces back to the classical Rosenblatt's `perceptron`, but its long term practical applications may be hindered by the fast scaling up of computational complexity, especially relevant for the training of multilayered perceptron networks.
+Here we refer to the paper `An Artificial Neuron Implemented on an Actual Quantum Processor <https://arxiv.org/abs/1811.02266>`__ introduce a quantum information-based algorithm implementing the quantum computer version of a perceptron, which shows exponential advantage in encoding resources over alternative realizations.
+
+For this quantum perceptron, the data processed is a string of 0 1 binary bits. The goal is to identify patterns that are shaped like a w cross as shown in the figure below.
+
+.. image:: ./images/QP-data.PNG
+   :width: 600 px
+   :align: center
+
+|
+
+It is encoded using a binary bit string, where black is 0 and white is 1, so that w is encoded as (1, 1, 1, 1, 1, 1, 0, 1, 1, 0, 0, 0, 1, 1, 0, 1). A total of 16-bit strings can be encoded into the sign of the amplitude of the 4-bit quantum state. The sign is 0 for negative numbers, and 1 for positive numbers. Through the above encoding method, our algorithm input is converted into a 16-bit binary string. Such non-repetitive binary strings can respectively correspond to specific input :math:`U_i` .
+
+The circuit structure of the quantum perceptron proposed in this paper is as follows:
+
+.. image:: ./images/QP-cir.PNG
+   :width: 600 px
+   :align: center
+
+|
+
+The coding circuit :math:`U_i` is constructed on bits 0~3, including multiple controlled :math:`CZ` , :math:`CNOT` gates, and :math:`H` gates; the weight conversion circuit :math:`U_w` is constructed immediately after :math:`U_i` , which is also composed of controlled gates and :math:`H` gates. :math:`U_i` can be used to perform unitary matrix transformations to encode data into quantum states:
+
+.. math::
+    U_i|0\rangle^{\otimes N}=\left|\psi_i\right\rangle
+
+Use the unitary matrix transformation :math:`U_w` to compute the inner product between the input and the weights:
+
+.. math::
+    U_w\left|\psi_i\right\rangle=\sum_{j=0}^{m-1} c_j|j\rangle \equiv\left|\phi_{i, w}\right\rangle
+
+The normalized activation probability values for :math:`U_i` and :math:`U_w` can be obtained by using a multi-controlled NOT gate with target bits on auxiliary bits, and using some subsequent :math:`H` gates, :math:`X` gates, and :math:`CX` gates as activation functions:
+
+.. math::
+    \left|\phi_{i, w}\right\rangle|0\rangle_a \rightarrow \sum_{j=0}^{m-2} c_j|j\rangle|0\rangle_a+c_{m-1}|m-1\rangle|1\rangle_a
+
+When the binary string of the input i is exactly the same as w, the normalized probability value should be the largest.
+
+VQNet provides the ``QuantumNeuron`` module to implement this algorithm. First initialize a quantum perceptron ``QuantumNeuron``.
+
+.. code-block::
+
+    perceptron = QuantumNeuron()
+
+Use the ``gen_4bitstring_data`` interface to generate various data in the paper and its category labels.
+
+.. code-block::
+
+    training_label, test_label = perceptron.gen_4bitstring_data()
+
+Using the ``train`` interface to traverse all the data, you can get the last trained quantum perceptron circuit :math:`U_w`.
+
+.. code-block::
+
+    trained_para = perceptron.train(training_label, test_label)
+
+.. image:: ./images/QP-pic.PNG
+   :width: 600 px
+   :align: center
+
+|
+
+On the test data, the accuracy results on the test data can be obtained
+
+.. image:: ./images/QP-acc.PNG
+   :width: 600 px
+   :align: center
+
+|
+
+
+Quantum Generative Adversarial Networks for learning and loading random distributions
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Quantum Generative Adversarial Networks(`QGAN <https://www.nature.com/articles/s41534-019-0223-2>`_ )algorithm uses pure quantum variational circuits to prepare the generated quantum states with specific random distribution, which can reduce the logic gates required to generate specific quantum states and reduce the complexity of quantum circuits.It uses the classical GAN model structure, which has two sub-models: Generator and Discriminator. The Generator generates a specific distribution for the quantum circuit.And the Discriminator discriminates the generated data samples generated by the Generator and the real randomly distributed training data samples.
+Here is an example of VQNet implementing QGAN learning and loading random distributions based on the paper `Quantum Generative Adversarial Networks for learning and loading random distributions <https://www.nature.com/articles/s41534-019-0223-2>`_ of Christa Zoufal.
+
+.. image:: ./images/qgan-arch.PNG
+   :width: 600 px
+   :align: center
+
+|
+
+In order to realize the construction of ``QGANAPI`` class of quantum generative adversarial network by VQNet, the quantum generator is used to prepare the initial state of the real distributed data. The number of quantum bits is 3, and the repetition times of the internal parametric circuit module of the quantum generator is 1. Meanwhile, KL is used as the metric for the QGAN loading random distribution.
+
+.. code-block::
+
+    import pickle
+    import os
+    import pyqpanda as pq
+    from pyvqnet.qnn.qgan.qgan_utils import QGANAPI
+    import numpy as np
+
+    num_of_qubits = 3  # paper config
+    rep = 1
+    number_of_data = 10000
+    # Load data samples from different distributions
+    mu = 1
+    sigma = 1
+    real_data = np.random.lognormal(mean=mu, sigma=sigma, size=number_of_data)
+
+
+    # intial
+    save_dir = None
+    qgan_model = QGANAPI(
+        real_data,
+        # numpy generated data distribution, 1 - dim.
+        num_of_qubits,
+        batch_size=2000,
+        num_epochs=2000,
+        q_g_cir=None,
+        bounds = [0.0,2**num_of_qubits -1],
+        reps=rep,
+        metric="kl",
+        tol_rel_ent=0.01,
+        if_save_param_dir=save_dir
+    )
+
+The following is the ``train`` module of QGAN.
+
+.. code-block::
+
+    # train
+    qgan_model.train()  # train qgan
+
+
+The ``eval`` module of QGAN is designed to draw the loss function curve and probability distribution diagram between the random distribution prepared by QGAN and the real distribution.
+
+.. code-block::
+
+    # show probability distribution function of generated distribution and real distribution
+    qgan_model.eval(real_data)  #draw pdf
+
+The ``get_trained_quantum_parameters`` module of QGAN is used to get training parameters and output them as a numpy array. If ``save_DIR`` is not empty, the training parameters are saved to a file.The ``Load_param_and_eval`` module of QGAN loads training parameters, and the ``get_circuits_with_trained_param`` module obtains pyQPanda circuit generated by quantum generator after training.
+
+.. code-block::
+
+    # get trained quantum parameters
+    param = qgan_model.get_trained_quantum_parameters()
+    print(f" trained param {param}")
+
+    #load saved parameters files
+    if save_dir is not None:
+        path = os.path.join(
+            save_dir, qgan_model._start_time + "trained_qgan_param.pickle")
+        with open(path, "rb") as file:
+            t3 = pickle.load(file)
+        param = t3["quantum_parameters"]
+        print(f" trained param {param}")
+
+    #show probability distribution function of generated distribution and real distribution
+    qgan_model.load_param_and_eval(param)
+
+    #calculate metric
+    print(qgan_model.eval_metric(param, "kl"))
+
+    #get generator quantum circuit
+    m_machine = pq.CPUQVM()
+    m_machine.init_qvm()
+    qubits = m_machine.qAlloc_many(num_of_qubits)
+    qpanda_cir = qgan_model.get_circuits_with_trained_param(qubits)
+    print(qpanda_cir)
+
+In general, QGAN learning and loading random distribution requires multiple training models with different random seeds to obtain the expected results. For example, the following is the graph of the probability distribution function between the lognormal distribution implemented by QGAN and the real lognormal distribution, and the loss function curve between QGAN's generator and discriminator.
+
+.. image:: ./images/qgan-loss.PNG
+   :width: 600 px
+   :align: center
+
+|
+
+.. image:: ./images/qgan-pdf.PNG
+   :width: 600 px
+   :align: center
+
+|
+
+
+quantum kernal SVM
+^^^^^^^^^^^^^^^^^^^
+
+In machine learning tasks, data often cannot be separated by a hyperplane in the original space. A common technique for finding such hyperplanes is to apply a nonlinear transformation function to the data.
+This function is called a feature map, through which we can calculate how close the data points are in this new feature space for the classification task of machine learning.
+
+This example refers to the thesis: `Supervised learning with quantum enhanced feature spaces <https://arxiv.org/pdf/1804.11326.pdf>`_ .
+The first method constructs variational circuits for data classification tasks.
+
+``gen_vqc_qsvm_data`` is the data needed to generate this example. ``vqc_qsvm`` is a variable sub-circuit class used to classify the input data.
+The ``vqc_qsvm.plot()`` function visualizes the distribution of the data.
+
+.. image:: ./images/VQC-SVM.PNG
+   :width: 600 px
+   :align: center
+
+|
+
+    .. code-block::
+
+        """
+        VQC QSVM
+        """
+        from pyvqnet.qnn.svm import vqc_qsvm, gen_vqc_qsvm_data
+        import matplotlib.pyplot as plt
+        import numpy as np
+
+        batch_size = 40
+        maxiter = 40
+        training_size = 20
+        test_size = 10
+        gap = 0.3
+        #sub-circuits repeat times
+        rep = 3
+
+        #defines QSVM class
+        VQC_QSVM = vqc_qsvm(batch_size, maxiter, rep)
+        #randomly generates data from thesis.
+        train_features, test_features, train_labels, test_labels, samples = \
+            gen_vqc_qsvm_data(training_size=training_size, test_size=test_size, gap=gap)
+        VQC_QSVM.plot(train_features, test_features, train_labels, test_labels, samples)
+        #train
+        VQC_QSVM.train(train_features, train_labels)
+        #test
+        rlt, acc_1 = VQC_QSVM.predict(test_features, test_labels)
+        print(f"testing_accuracy {acc_1}")
+
+
+In addition to the above-mentioned direct use of variational quantum circuits to map classical data features to quantum feature spaces, in the paper `Supervised learning with quantum enhanced feature spaces <https://arxiv.org/pdf/1804.11326.pdf>`_,
+the method of directly estimating kernel functions using quantum circuits and classifying them using classical support vector machines is also introduced.
+Analogy to various kernel functions in classical SVM :math:`K(i,j)` , use quantum kernel function to define the inner product of classical data in quantum feature space :math:`\phi(\mathbf{x}_i)` :
+
+.. math::
+    |\langle \phi(\mathbf{x}_j) | \phi(\mathbf{x}_i) \rangle |^2 =  |\langle 0 | U^\dagger(\mathbf{x}_j) U(\mathbf{x}_i) | 0 \rangle |^2
+
+Using VQNet and pyQPanda, we define a ``QuantumKernel_VQNet`` to generate a quantum kernel function and use ``sklearn`` for classification:
+
+.. image:: ./images/qsvm-kernel.png
+   :width: 600 px
+   :align: center
+
+|
+
+.. code-block::
+
+    import numpy as np
+    import pyqpanda as pq
+    from sklearn.svm import SVC
+    from pyqpanda import *
+    from pyqpanda.Visualization.circuit_draw import *
+    from pyvqnet.qnn.svm import QuantumKernel_VQNet, gen_vqc_qsvm_data
+    import matplotlib
+    try:
+        matplotlib.use('TkAgg')
+    except:
+        pass
+    import matplotlib.pyplot as plt
+
+    train_features, test_features,train_labels, test_labels, samples = gen_vqc_qsvm_data(20,5,0.3)
+    quantum_kernel = QuantumKernel_VQNet(n_qbits=2)
+    quantum_svc = SVC(kernel=quantum_kernel.evaluate)
+    quantum_svc.fit(train_features, train_labels)
+    score = quantum_svc.score(test_features, test_labels)
+    print(f"quantum kernel classification test score: {score}")
 
