@@ -223,7 +223,9 @@ If you are more familiar with pyQPanda syntax, please using QuantumLayerMultiPro
 
 .. py:class:: pyvqnet.qnn.quantumlayer.QuantumLayerMultiProcess(qprog_with_measure, para_num, machine_type_or_cloud_token, num_of_qubits: int, num_of_cbits: int = 1, diff_method: str = 'parameter_shift', delta: float = 0.01)
 
-    Abstract calculation module for variational quantum circuits. It simulates a parameterized quantum circuit and gets the measurement result.
+    Abstract calculation module for variational quantum circuits. This class uses multiprocess to accelerate quantum circuit simulation.
+    
+    It simulates a parameterized quantum circuit and gets the measurement result.
     QuantumLayer inherits from Module ,so that it can calculate gradients of circuits parameters,and train variational quantum circuits model or embed variational quantum circuits into hybird quantum and classic model.
 
     To use this module, you need to create your quantum virtual machine and allocate qubits and cbits.
