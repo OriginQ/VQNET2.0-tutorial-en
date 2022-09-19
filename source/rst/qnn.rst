@@ -230,23 +230,23 @@ If you are more familiar with pyQPanda syntax, please using QuantumLayerMultiPro
 
     To use this module, you need to create your quantum virtual machine and allocate qubits and cbits.
 
-    :param qprog_with_measure: callable quantum circuits functions ,cosntructed by qpanda
+    :param qprog_with_measure: callable quantum circuits functions ,cosntructed by qpanda.
     :param para_num: `int` - Number of parameter
-    :param machine_type_or_cloud_token: qpanda machine type or pyQPANDA QCLOUD token : https://pyqpanda-toturial.readthedocs.io/zh/latest/Realchip.html
-    :param num_of_qubits: num of qubits
-    :param num_of_cbits: num of classic bits
-    :param diff_method: 'parameter_shift' or 'finite_diff'
-    :param delta:  delta for diff
+    :param machine_type_or_cloud_token: qpanda machine type or pyQPANDA QCLOUD token.
+    :param num_of_qubits: num of qubits.
+    :param num_of_cbits: num of classic bits.
+    :param diff_method: 'parameter_shift' or 'finite_diff'.
+    :param delta:  delta for diff.
     :return: a module can calculate quantum circuits .
 
     .. note::
-        qprog_with_measure is quantum circuits function defined in pyQPanda :https://pyqpanda-toturial.readthedocs.io/zh/latest/QCircuit.html.
+        qprog_with_measure is quantum circuits function defined in pyQPanda : https://github.com/OriginQ/QPanda-2.
 
         This function should contains following parameters,otherwise it can not run properly in QuantumLayerMultiProcess.
 
-        Compare to QuantumLayer.you should allocate qubits and simulator: https://pyqpanda-toturial.readthedocs.io/zh/latest/QuantumMachine.html,
+        Compare to QuantumLayer.you should allocate qubits and simulator,
 
-        you may also need to allocate cbits if qprog_with_measure needs quantum measure: https://pyqpanda-toturial.readthedocs.io/zh/latest/Measure.html
+        you may also need to allocate cbits if qprog_with_measure needs quantum Measure.
 
         qprog_with_measure (input,param)
 
@@ -704,8 +704,8 @@ The way to deal with qubits is called quantum gates. Using quantum gates, we con
 Basic quantum gates
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-In VQNet, we use each logic gate of `pyQPanda <https://pyqpanda-toturial.readthedocs.io/zh/latest/>`_ developed by the original quantum to build quantum circuit and conduct quantum simulation.
-The gates currently supported by pyQPanda can be defined in pyQPanda's `quantum gate <https://pyqpanda-toturial.readthedocs.io/zh/latest/>`_ section.
+In VQNet, we use each logic gate of `pyQPanda <https://pyqpanda-tutorial-en.readthedocs.io/en/latest/>`_ developed by the original quantum to build quantum circuit and conduct quantum simulation.
+The gates currently supported by pyQPanda can be defined in pyQPanda's `quantum gate <https://pyqpanda-tutorial-en.readthedocs.io/en/latest/chapter2/index.html#quantum-logic-gate>`_ section.
 In addition, VQNet also encapsulates some quantum gate combinations commonly used in quantum machine learning.
 
 
@@ -732,7 +732,7 @@ BasicEmbeddingCircuit
         m_machine = pq.init_quantum_machine(pq.QMachineType.CPU)
 
         qlist = m_machine.qAlloc_many(3)
-        circuit = pyvqnet.qnn.template.BasicEmbeddingCircuit(input_feat,qlist)
+        circuit = BasicEmbeddingCircuit(input_feat,qlist)
         print(circuit)
 
         #           ┌─┐
@@ -1011,7 +1011,7 @@ HardwareEfficientAnsatz
     :param single_rot_gate_list: A single qubit rotation gate list is constructed by one or several rotation gate that act on every qubit.Currently support Rx, Ry, Rz.
     :param qubits: Qubits allocated by pyqpanda api.
     :param entangle_gate: The non parameterized entanglement gate.CNOT,CZ is supported.default:CNOT.
-    :param entangle_rules: How entanglement gate is used in the circuit. ``linear`` means the entanglement gate will be act on every neighboring qubits. ``full`` means the entanglment gate will be act on any two qbuits. Default: ``linear``.
+    :param entangle_rules: How entanglement gate is used in the circuit. ``linear`` means the entanglement gate will be act on every neighboring qubits. ``all`` means the entanglment gate will be act on any two qbuits. Default: ``linear``.
     :param depth: The depth of ansatz, default:1.
 
     Example::
