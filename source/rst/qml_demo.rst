@@ -1417,7 +1417,7 @@ These samples are divided into training data training_data and testing data test
 Construct Quantum Circuits
 """"""""""""""""""""""""""""""
 
-In this example, we use the `pyQPanda <https://pyqpanda-toturial.readthedocs.io/zh/latest/>`_ , A simple quantum circuit of 1 qubit is defined. The circuit takes the output of the classical neural network layer as input,encodes quantum data through ``H`` , ``RY``  quantum logic gates, and calculates the expected value of Hamiltonian in the z direction as output.
+In this example, we use the `pyQPanda <https://pyqpanda-tutorial-en.readthedocs.io/en/latest/chapter2/index.html#quantum-circuit>`_ , A simple quantum circuit of 1 qubit is defined. The circuit takes the output of the classical neural network layer as input,encodes quantum data through ``H`` , ``RY``  quantum logic gates, and calculates the expected value of Hamiltonian in the z direction as output.
 
 .. code-block::
 
@@ -3219,6 +3219,23 @@ Model training using quantumlayer in VQNet
     from pyqpanda import *
     random.seed(1234)
 
+    qvc_train_data = [0,1,0,0,1,
+    0, 1, 0, 1, 0,
+    0, 1, 1, 0, 0,
+    0, 1, 1, 1, 1,
+    1, 0, 0, 0, 1,
+    1, 0, 0, 1, 0,
+    1, 0, 1, 0, 0,
+    1, 0, 1, 1, 1,
+    1, 1, 0, 0, 0,
+    1, 1, 0, 1, 1,
+    1, 1, 1, 0, 1,
+    1, 1, 1, 1, 0]
+    qvc_test_data= [0, 0, 0, 0, 0,
+    0, 0, 0, 1, 1,
+    0, 0, 1, 0, 1,
+    0, 0, 1, 1, 0]
+
     def qvc_circuits(input,weights,qlist,clist,machine):
 
         def get_cnot(nqubits):
@@ -3277,14 +3294,6 @@ Model training using quantumlayer in VQNet
         def forward(self, x):
             return self.qvc(x)
 
-
-    def get_data(PATH):
-        datasets = np.loadtxt(PATH)
-        data = datasets[:,:-1]
-        label = datasets[:,-1].astype(int)
-        label = np.eye(2)[label].reshape(-1,2)
-        return data, label
-
     def dataloader(data,label,batch_size, shuffle = True)->np:
         if shuffle:
             for _ in range(len(data)//batch_size):
@@ -3293,6 +3302,19 @@ Model training using quantumlayer in VQNet
         else:
             for i in range(0,len(data)-batch_size+1,batch_size):
                 yield data[i:i+batch_size], label[i:i+batch_size]
+
+    def get_data(dataset_str):
+        if dataset_str == "train":
+            datasets = np.array(qvc_train_data)
+
+        else:
+            datasets = np.array(qvc_test_data)
+
+        datasets = datasets.reshape([-1,5])
+        data = datasets[:,:-1]
+        label = datasets[:,-1].astype(int)
+        label = np.eye(2)[label].reshape(-1,2)
+        return data, label
 
     def get_accuary(result,label):
         result,label = np.array(result.data), np.array(label.data)
@@ -3309,8 +3331,8 @@ Model training using quantumlayer in VQNet
         loss = CategoricalCrossEntropy()
         print("start training..............")
         model.train()
-        PATH = os.path.abspath('..//..//data//qvc_data.txt')
-        datas,labels = get_data(PATH)
+
+        datas,labels = get_data("train")
         print(datas)
         print(labels)
         print(datas.shape)
@@ -3337,8 +3359,7 @@ Model training using quantumlayer in VQNet
         print("start testing..............")
         model.eval()
         count = 0
-        test_PATH = os.path.abspath('../../data/qvc_data_test.txt')
-        test_data, test_label = get_data(test_PATH)
+        test_data, test_label = get_data("test")
         test_batch_size = 1
         accuary = 0
         sum_loss = 0
@@ -3354,7 +3375,6 @@ Model training using quantumlayer in VQNet
     if __name__=="__main__":
 
         Run()
-
 
 Loss and accuracy results of the run:
 
@@ -3716,7 +3736,7 @@ Use the ``run`` function to define the line operation mode and measurement.
 
 .. code-block::
 
-   """
+    """
     using pyqpanda VQC api to build model and train VQNet model demo.
 
     """

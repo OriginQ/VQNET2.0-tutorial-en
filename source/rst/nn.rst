@@ -683,7 +683,7 @@ LayerNormNd
     .. math::
         y = \frac{x - \mathrm{E}[x]}{ \sqrt{\mathrm{Var}[x] + \epsilon}} * \gamma + \beta
 
-    For inputs like (B,C,H,W,D),  :attr:`norm_shape` can be [C,H,W,D],[H,W,D],[W,D] or [D] .
+    For inputs like (B,C,H,W,D), ``norm_shape`` can be [C,H,W,D],[H,W,D],[W,D] or [D] .
 
     :param norm_shape: `float` - standardize the shape.
     :param epsilon: `float` - numerical stability constant, defaults to 1e-5.
@@ -700,6 +700,7 @@ LayerNormNd
         test_conv = LayerNormNd([2,2])
         x = QTensor(np.arange(1,17).reshape([2,2,2,2]),requires_grad=True)
         y = test_conv.forward(x)
+        print(y)
         # [
         # [[[-1.3416355, -0.4472118],
         #  [0.4472118, 1.3416355]],
@@ -726,7 +727,7 @@ LayerNorm2d
 
     The mean and standard-deviation are calculated over the last  `D` dimensions size.
 
-    For input like (B,C,H,W), :attr:`norm_size` should equals to C * H * W.
+    For input like (B,C,H,W), ``norm_size`` should equals to C * H * W.
 
     :param norm_size: `float` - normalize size,equals to C * H * W
     :param epsilon: `float` - numerical stability constant, defaults to 1e-5
@@ -775,8 +776,8 @@ LayerNorm1d
     .. math::
         y = \frac{x - \mathrm{E}[x]}{ \sqrt{\mathrm{Var}[x] + \epsilon}} * \gamma + \beta
 
-    The mean and standard-deviation are calculated over the last dimensions size, where `norm_size`
-    is the value  of :attr:`norm_size`.
+    The mean and standard-deviation are calculated over the last dimensions size, where ``norm_size`` 
+    is the value of last dim size.
 
     :param norm_size: `float` - normalize size,equals to last dim
     :param epsilon: `float` - numerical stability constant, defaults to 1e-5
@@ -1139,19 +1140,19 @@ MeanSquaredError
 
     Parameters for loss forward function:
 
-    Target: :math:`(N, *)`, same shape as the input
+        x: :math:`(N, *)` where :math:`*` means, any number of additional dimensions
 
-    Input: :math:`(N, *)` where :math:`*` means, any number of additional dimensions
+        y: :math:`(N, *)`, same shape as the input
 
     Example::
     
         import numpy as np
         from pyvqnet.tensor import QTensor
-        target = QTensor([[0, 0, 1, 0, 0, 0, 0, 0, 0, 0]], requires_grad=True)
-        input = QTensor([[0.1, 0.05, 0.7, 0, 0.05, 0.1, 0, 0, 0, 0]], requires_grad=True)
+        y = QTensor([[0, 0, 1, 0, 0, 0, 0, 0, 0, 0]], requires_grad=True)
+        x = QTensor([[0.1, 0.05, 0.7, 0, 0.05, 0.1, 0, 0, 0, 0]], requires_grad=True)
 
         loss_result = pyvqnet.nn.MeanSquaredError()
-        result = loss_result(target, input)
+        result = loss_result(y, x)
         print(result)
 
         # [0.0115000]
@@ -1179,19 +1180,19 @@ BinaryCrossEntropy
 
     Parameters for loss forward function:
 
-    Target: :math:`(N, *)`, same shape as the input
+        x: :math:`(N, *)` where :math:`*` means, any number of additional dimensions
 
-    Input: :math:`(N, *)` where :math:`*` means, any number of additional dimensions
+        y: :math:`(N, *)`, same shape as the input
 
     Example::
 
         import numpy as np
         from pyvqnet.tensor import QTensor
-        output = QTensor([[0.3, 0.7, 0.2], [0.2, 0.3, 0.1]], requires_grad=True)
-        target = QTensor([[0, 1, 0], [0, 0, 1]], requires_grad=True)
+        x = QTensor([[0.3, 0.7, 0.2], [0.2, 0.3, 0.1]], requires_grad=True)
+        y = QTensor([[0, 1, 0], [0, 0, 1]], requires_grad=True)
 
         loss_result = pyvqnet.nn.BinaryCrossEntropy()
-        result = loss_result(target, output)
+        result = loss_result(y, x)
         result.backward()
         print(result)
 
@@ -1204,7 +1205,7 @@ CategoricalCrossEntropy
 
     This criterion combines LogSoftmax and NLLLoss in one single class.
 
-    The loss can be described as:
+    The loss can be described as below, where `class` is index of target's class:
 
     .. math::
         \text{loss}(x, class) = -\log\left(\frac{\exp(x[class])}{\sum_j \exp(x[j])}\right)
@@ -1214,20 +1215,20 @@ CategoricalCrossEntropy
 
     Parameters for loss forward function:
 
-    Target: :math:`(N, *)`, same shape as the input
+        x: :math:`(N, *)` where :math:`*` means, any number of additional dimensions
 
-    Input: :math:`(N, *)` where :math:`*` means, any number of additional dimensions
+        y: :math:`(N, *)`, same shape as the input
 
     Example::
 
         from pyvqnet.tensor import QTensor
         from pyvqnet.nn import CategoricalCrossEntropy
-        output = QTensor([[1, 2, 3, 4, 5],
+        x = QTensor([[1, 2, 3, 4, 5],
         [1, 2, 3, 4, 5],
         [1, 2, 3, 4, 5]], requires_grad=True)
-        target = QTensor([[0, 1, 0, 0, 0], [0, 1, 0, 0, 0], [1, 0, 0, 0, 0]], requires_grad=True)
+        y = QTensor([[0, 1, 0, 0, 0], [0, 1, 0, 0, 0], [1, 0, 0, 0, 0]], requires_grad=True)
         loss_result = CategoricalCrossEntropy()
-        result = loss_result(target, output)
+        result = loss_result(y, x)
         print(result)
 
         # [3.7852428]
@@ -1239,7 +1240,7 @@ SoftmaxCrossEntropy
 
     This criterion combines LogSoftmax and NLLLoss in one single class with more numeral stablity.
 
-    The loss can be described as:
+    The loss can be described as below, where `class` is index of target's class:
 
     .. math::
         \text{loss}(x, class) = -\log\left(\frac{\exp(x[class])}{\sum_j \exp(x[j])}\right)
@@ -1249,20 +1250,20 @@ SoftmaxCrossEntropy
 
     Parameters for loss forward function:
 
-    Target: :math:`(N, *)`, same shape as the input
+        x: :math:`(N, *)` where :math:`*` means, any number of additional dimensions
 
-    Input: :math:`(N, *)` where :math:`*` means, any number of additional dimensions
+        y: :math:`(N, *)`, same shape as the input
 
     Example::
 
         from pyvqnet.tensor import QTensor
         from pyvqnet.nn import SoftmaxCrossEntropy
-        output = QTensor([[1, 2, 3, 4, 5],
+        x = QTensor([[1, 2, 3, 4, 5],
         [1, 2, 3, 4, 5],
         [1, 2, 3, 4, 5]], requires_grad=True)
-        target = QTensor([[0, 1, 0, 0, 0], [0, 1, 0, 0, 0], [1, 0, 0, 0, 0]], requires_grad=True)
+        y = QTensor([[0, 1, 0, 0, 0], [0, 1, 0, 0, 0], [1, 0, 0, 0, 0]], requires_grad=True)
         loss_result = SoftmaxCrossEntropy()
-        result = loss_result(target, output)
+        result = loss_result(y, x)
         result.backward()
         print(result)
 
@@ -1276,37 +1277,41 @@ NLL_Loss
 
     The average negative log likelihood loss. It is useful to train a classification problem with `C` classes
 
-    The `output` given through a forward call is expected to contain log-probabilities of each class. `output` has to be a Tensor of size either :math:`(N, C)` or :math:`(N, C, d_1, d_2, ..., d_K)`
-    with :math:`K \geq 1` for the `K`-dimensional case. The `target` that this loss expects should be a class index in the range :math:`[0, C-1]` where `C = number of classes`.
+    The `x` given through a forward call is expected to contain log-probabilities of each class. `x` has to be a Tensor of size either :math:`(N, C)` or :math:`(N, C, d_1, d_2, ..., d_K)`
+    with :math:`K \geq 1` for the `K`-dimensional case. The `y` that this loss expects should be a class index in the range :math:`[0, C-1]` where `C = number of classes`.
 
     .. math::
 
-        \ell(output, target) = L = \{l_1,\dots,l_N\}^\top, \quad
+        \ell(x, y) = L = \{l_1,\dots,l_N\}^\top, \quad
         l_n = -
-            \sum_{n=1}^N \frac{1}{N}output_{n,target_n}, \quad
+            \sum_{n=1}^N \frac{1}{N}x_{n,y_n}, \quad
 
-    :param target: :math:`(N, *)`, the true value expected by the loss function.
-    :param output: :math:`(N, *)`, the output of the loss function, which can be a multidimensional variable.
     :return: a NLL_Loss class
+
+    Parameters for loss forward function:
+
+        x: :math:`(N, *)`, the output of the loss function, which can be a multidimensional variable.
+
+        y: :math:`(N, *)`, the true value expected by the loss function.
 
     Example::
 
         import numpy as np
         from pyvqnet.nn import NLL_Loss
         from pyvqnet.tensor import QTensor
-        output = QTensor([
+        x = QTensor([
             0.9476322568516703, 0.226547421131723, 0.5944201443911326,
             0.42830868492969476, 0.76414068655387, 0.00286059168094277,
             0.3574236812873617, 0.9096948856639084, 0.4560809854582528,
             0.9818027091583286, 0.8673569904602182, 0.9860275114020933,
             0.9232667066664217, 0.303693313961628, 0.8461034903175555
         ])
-        output.reshape_([1, 3, 1, 5])
-        output.requires_grad = True
-        y_test = np.array([[[2, 1, 0, 0, 2]]])
+        x.reshape_([1, 3, 1, 5])
+        x.requires_grad = True
+        y = np.array([[[2, 1, 0, 0, 2]]])
 
         loss_result = NLL_Loss()
-        result = loss_result(y_test, output)
+        result = loss_result(y, output)
         print(result)
         #[-0.6187226]
 
@@ -1317,35 +1322,39 @@ CrossEntropyLoss
 
     This criterion combines LogSoftmax and NLLLoss in one single class.
 
-    `output` is expected to contain raw, unnormalized scores for each class. `output` has to be a Tensor of size :math:`(C)` for unbatched input, :math:`(N, C)` or :math:`(N, C, d_1, d_2, ..., d_K)` with :math:`K \geq 1` for the `K`-dimensional case.
+    `x` is expected to contain raw, unnormalized scores for each class. `x` has to be a Tensor of size :math:`(C)` for unbatched input, :math:`(N, C)` or :math:`(N, C, d_1, d_2, ..., d_K)` with :math:`K \geq 1` for the `K`-dimensional case.
 
-    The loss can be described as:
+    The loss can be described as below, where `class` is index of target's class:
 
     .. math::
 
         \text{loss}(x, class) = -\log\left(\frac{\exp(x[class])}{\sum_j \exp(x[j])}\right)
                        = -x[class] + \log\left(\sum_j \exp(x[j])\right)
 
-    :param target: :math:`(N, *)`, the true value expected by the loss function.
-    :param output: :math:`(N, *)`, the output of the loss function, which can be a multidimensional variable.
     :return: a CrossEntropyLoss class
+
+    Parameters for loss forward function:
+
+        x: :math:`(N, *)`, the output of the loss function, which can be a multidimensional variable.
+
+        y: :math:`(N, *)`, the true value expected by the loss function.
 
     Example::
 
         import numpy as np
         from pyvqnet.nn import CrossEntropyLoss
         from pyvqnet.tensor import QTensor
-        output = QTensor([
+        x = QTensor([
             0.9476322568516703, 0.226547421131723, 0.5944201443911326, 0.42830868492969476, 0.76414068655387,
             0.00286059168094277, 0.3574236812873617, 0.9096948856639084, 0.4560809854582528, 0.9818027091583286,
             0.8673569904602182, 0.9860275114020933, 0.9232667066664217, 0.303693313961628, 0.8461034903175555
         ])
-        output.reshape_([1, 3, 1, 5])
-        output.requires_grad = True
-        y_test = np.array([[[2, 1, 0, 0, 2]]])
+        x.reshape_([1, 3, 1, 5])
+        x.requires_grad = True
+        y = np.array([[[2, 1, 0, 0, 2]]])
 
         loss_result = CrossEntropyLoss()
-        result = loss_result(y_test, output)
+        result = loss_result(y, output)
         print(result)
         #[1.1508200]
 
