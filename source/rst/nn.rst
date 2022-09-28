@@ -204,18 +204,21 @@ Classical Neural Network Layer
 Conv1D
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. py:class:: pyvqnet.nn.Conv1D(input_channels:int,output_channels:int,kernel_size:int ,stride:int= 1,padding:str="valid",use_bias:str = True,kernel_initializer = None,bias_initializer =None)
+.. py:class:: pyvqnet.nn.Conv1D(input_channels:int,output_channels:int,kernel_size:int ,stride:int= 1,padding = "valid",use_bias:str = True,kernel_initializer = None,bias_initializer =None, dilation_rate: int = 1, group: int = 1)
 
     Apply a 1-dimensional convolution kernel over an input . Inputs to the conv module are of shape (batch_size, input_channels, height)
 
     :param input_channels: `int` - Number of input channels
     :param output_channels: `int` - Number of kernels
-    :param kernel_size: `int` - Size of a single kernel. kernel shape = [input_channels,output_channels,kernel_size,1]
+    :param kernel_size: `int` - Size of a single kernel. kernel shape = [output_channels,input_channels/group,kernel_size,1]
     :param stride: `int` - Stride, defaults to 1
-    :param padding: `str` - Padding, defaults to "valid"
+    :param padding: `str|int` - padding option, which can be a string {'valid', 'same'} or an integer giving the amount of implicit padding to apply . Default "valid".
     :param use_bias: `bool` - if use bias, defaults to True
     :param kernel_initializer: `callable` - Defaults to None
     :param bias_initializer: `callable` - Defaults to None
+    :param dilation_rate: `int` - dilated size, defaults: 1
+    :param group: `int` -  number of groups of grouped convolutions. Default: 1
+
     :return: a Conv1D class
 
     .. note::
@@ -246,18 +249,20 @@ Conv1D
 Conv2D
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. py:class:: pyvqnet.nn.Conv2D(input_channels:int,output_channels:int,kernel_size:tuple,stride:tuple=(1, 1),padding="valid",use_bias = True,kernel_initializer=None,bias_initializer=None)
+.. py:class:: pyvqnet.nn.Conv2D(input_channels:int,output_channels:int,kernel_size:tuple,stride:tuple=(1, 1),padding="valid",use_bias = True,kernel_initializer=None,bias_initializer=None, dilation_rate: int = 1, group: int = 1)
 
     Apply a two-dimensional convolution kernel over an input . Inputs to the conv module are of shape (batch_size, input_channels, height, width)
 
     :param input_channels: `int` - Number of input channels
     :param output_channels: `int` - Number of kernels
-    :param kernel_size: `tuple|list` - Size of a single kernel.
+    :param kernel_size: `tuple|list` - Size of a single kernel. kernel shape = [output_channels,input_channels/group,kernel_size,kernel_size]
     :param stride: `tuple|list` - Stride, defaults to (1, 1)|[1,1]
-    :param padding: `str` - Padding, defaults to "valid"
+    :param padding: `str|tuple` - padding option, which can be a string {'valid', 'same'} or a tuple of integers giving the amount of implicit padding to apply on both sides. Default "valid".
     :param use_bias: `bool` - if use bias, defaults to True
     :param kernel_initializer: `callable` - Defaults to None
     :param bias_initializer: `callable` - Defaults to None
+    :param dilation_rate: `int` - dilated size, defaults: 1
+    :param group: `int` -  number of groups of grouped convolutions. Default: 1
     :return: a Conv2D class
 
     .. note::
@@ -296,18 +301,20 @@ Conv2D
 ConvT2D
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. py:class:: pyvqnet.nn.ConvT2D(input_channels,output_channels,kernel_size,stride=[1, 1],padding="valid",use_bias="True", kernel_initializer=None,bias_initializer=None)
+.. py:class:: pyvqnet.nn.ConvT2D(input_channels,output_channels,kernel_size,stride=[1, 1],padding="valid",use_bias="True", kernel_initializer=None,bias_initializer=None, dilation_rate: int = 1, group: int = 1)
 
     Apply a two-dimensional transposed convolution kernel over an input. Inputs to the convT module are of shape (batch_size, input_channels, height, width)
 
     :param input_channels: `int` - Number of input channels
     :param output_channels: `int` - Number of kernels
-    :param kernel_size: `tuple|list` - Size of a single kernel.
+    :param kernel_size: `tuple|list` - Size of a single kernel. kernel shape = [input_channels,output_channels/group,kernel_size,kernel_size]
     :param stride: `tuple|list` - Stride, defaults to (1, 1)|[1,1]
-    :param padding:  Padding, defaults to "valid"
+    :param padding: `str|tuple` - padding option, which can be a string {'valid', 'same'} or a tuple of integers giving the amount of implicit padding to apply on both sides. Default "valid".
     :param use_bias: `bool` - Whether to use a offset item. Default to use
     :param kernel_initializer: `callable` - Defaults to None
     :param bias_initializer: `callable` - Defaults to None
+    :param dilation_rate: `int` - dilated size, defaults: 1
+    :param group: `int` -  number of groups of grouped convolutions. Default: 1
     :return: a ConvT2D class
 
     .. note::
@@ -560,6 +567,7 @@ Embedding
         #  [-0.0246447, -0.0241158, -0.1402829]]]]
         # ]
 
+
 BatchNorm2d
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -617,6 +625,7 @@ BatchNorm2d
         #  [1.3242440]]]
         # ]
 
+
 BatchNorm1d
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -661,10 +670,54 @@ BatchNorm1d
         # [1.3416405, 1.3416405, 1.3416405, 1.3416405]
         # ]
 
+
+
+LayerNormNd
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. py:class:: pyvqnet.nn.layer_norm.LayerNormNd(normalized_shape: list, epsilon: float = 1e-5, affine: bool = True, name="")
+
+    Layer normalization is performed on the last several dimensions of any input. The specific method is as described in the paper:
+    `Layer Normalization <https://arxiv.org/abs/1607.06450>`__。
+
+    .. math::
+        y = \frac{x - \mathrm{E}[x]}{ \sqrt{\mathrm{Var}[x] + \epsilon}} * \gamma + \beta
+
+    For inputs like (B,C,H,W,D), ``norm_shape`` can be [C,H,W,D],[H,W,D],[W,D] or [D] .
+
+    :param norm_shape: `float` - standardize the shape.
+    :param epsilon: `float` - numerical stability constant, defaults to 1e-5.
+    :param affine: `bool` - whether to use the applied affine transformation, the default is True.
+    :param name: name of the output layer.
+    :return: a LayerNormNd class.
+
+    Example::
+
+        import numpy as np
+        from pyvqnet.tensor import QTensor
+        from pyvqnet.nn.layer_norm import LayerNormNd
+        ic = 4
+        test_conv = LayerNormNd([2,2])
+        x = QTensor(np.arange(1,17).reshape([2,2,2,2]),requires_grad=True)
+        y = test_conv.forward(x)
+        print(y)
+        # [
+        # [[[-1.3416355, -0.4472118],
+        #  [0.4472118, 1.3416355]],
+        # [[-1.3416355, -0.4472118],
+        #  [0.4472118, 1.3416355]]],
+        # [[[-1.3416355, -0.4472118],
+        #  [0.4472118, 1.3416355]],
+        # [[-1.3416355, -0.4472118],
+        #  [0.4472118, 1.3416355]]]
+        # ]
+
+
+
 LayerNorm2d
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. py:class:: pyvqnet.nn.layer_norm.LayerNorm2d(norm_size:int, epsilon:float = 1e-5, name="")
+.. py:class:: pyvqnet.nn.layer_norm.LayerNorm2d(norm_size:int, epsilon:float = 1e-5, affine: bool = True, name="")
 
     Applies Layer Normalization over a mini-batch of 4D inputs as described in
     the paper `Layer Normalization <https://arxiv.org/abs/1607.06450>`__
@@ -674,10 +727,11 @@ LayerNorm2d
 
     The mean and standard-deviation are calculated over the last  `D` dimensions size.
 
-    For input like (B,C,H,W), :attr:`norm_size` should equals to C * H * W.
+    For input like (B,C,H,W), ``norm_size`` should equals to C * H * W.
 
     :param norm_size: `float` - normalize size,equals to C * H * W
     :param epsilon: `float` - numerical stability constant, defaults to 1e-5
+    :param affine: `bool` - whether to use the applied affine transformation, the default is True
     :param name: name of the output layer
     :return: a LayerNorm2d class
 
@@ -714,7 +768,7 @@ LayerNorm2d
 LayerNorm1d
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. py:class:: pyvqnet.nn.layer_norm.LayerNorm1d(norm_size:int, epsilon:float = 1e-5, name="")
+.. py:class:: pyvqnet.nn.layer_norm.LayerNorm1d(norm_size:int, epsilon:float = 1e-5, affine: bool = True, name="")
 
     Applies Layer Normalization over a mini-batch of 2D inputs as described in
     the paper `Layer Normalization <https://arxiv.org/abs/1607.06450>`__
@@ -722,12 +776,14 @@ LayerNorm1d
     .. math::
         y = \frac{x - \mathrm{E}[x]}{ \sqrt{\mathrm{Var}[x] + \epsilon}} * \gamma + \beta
 
-    The mean and standard-deviation are calculated over the last dimensions size, where `norm_size`
-    is the value  of :attr:`norm_size`.
+    The mean and standard-deviation are calculated over the last dimensions size, where ``norm_size`` 
+    is the value of last dim size.
 
     :param norm_size: `float` - normalize size,equals to last dim
     :param epsilon: `float` - numerical stability constant, defaults to 1e-5
+    :param affine: `bool` - whether to use the applied affine transformation, the default is True
     :param name: name of the output layer
+
     :return: a LayerNorm1d class
 
     Example::
@@ -912,6 +968,7 @@ RNN
     :param input_size: Input feature dimensions.
     :param hidden_size: Hidden feature dimensions.
     :param num_layers: Stack layer numbers. default: 1.
+    :param nonlinearity: non-linear activation function, default: ``'tanh'`` .
     :param batch_first: If batch_first is True, input shape should be [batch_size,seq_len,feature_dim],
      if batch_first is False, the input shape should be [seq_len,batch_size,feature_dim],default: True.
     :param use_bias: If use_bias is False, this module will not contain bias. default: True.
@@ -1083,19 +1140,19 @@ MeanSquaredError
 
     Parameters for loss forward function:
 
-    Target: :math:`(N, *)`, same shape as the input
+        x: :math:`(N, *)` where :math:`*` means, any number of additional dimensions
 
-    Input: :math:`(N, *)` where :math:`*` means, any number of additional dimensions
+        y: :math:`(N, *)`, same shape as the input
 
     Example::
     
         import numpy as np
         from pyvqnet.tensor import QTensor
-        target = QTensor([[0, 0, 1, 0, 0, 0, 0, 0, 0, 0]], requires_grad=True)
-        input = QTensor([[0.1, 0.05, 0.7, 0, 0.05, 0.1, 0, 0, 0, 0]], requires_grad=True)
+        y = QTensor([[0, 0, 1, 0, 0, 0, 0, 0, 0, 0]], requires_grad=True)
+        x = QTensor([[0.1, 0.05, 0.7, 0, 0.05, 0.1, 0, 0, 0, 0]], requires_grad=True)
 
         loss_result = pyvqnet.nn.MeanSquaredError()
-        result = loss_result(target, input)
+        result = loss_result(y, x)
         print(result)
 
         # [0.0115000]
@@ -1123,19 +1180,19 @@ BinaryCrossEntropy
 
     Parameters for loss forward function:
 
-    Target: :math:`(N, *)`, same shape as the input
+        x: :math:`(N, *)` where :math:`*` means, any number of additional dimensions
 
-    Input: :math:`(N, *)` where :math:`*` means, any number of additional dimensions
+        y: :math:`(N, *)`, same shape as the input
 
     Example::
 
         import numpy as np
         from pyvqnet.tensor import QTensor
-        output = QTensor([[0.3, 0.7, 0.2], [0.2, 0.3, 0.1]], requires_grad=True)
-        target = QTensor([[0, 1, 0], [0, 0, 1]], requires_grad=True)
+        x = QTensor([[0.3, 0.7, 0.2], [0.2, 0.3, 0.1]], requires_grad=True)
+        y = QTensor([[0, 1, 0], [0, 0, 1]], requires_grad=True)
 
         loss_result = pyvqnet.nn.BinaryCrossEntropy()
-        result = loss_result(target, output)
+        result = loss_result(y, x)
         result.backward()
         print(result)
 
@@ -1148,7 +1205,7 @@ CategoricalCrossEntropy
 
     This criterion combines LogSoftmax and NLLLoss in one single class.
 
-    The loss can be described as:
+    The loss can be described as below, where `class` is index of target's class:
 
     .. math::
         \text{loss}(x, class) = -\log\left(\frac{\exp(x[class])}{\sum_j \exp(x[j])}\right)
@@ -1158,20 +1215,20 @@ CategoricalCrossEntropy
 
     Parameters for loss forward function:
 
-    Target: :math:`(N, *)`, same shape as the input
+        x: :math:`(N, *)` where :math:`*` means, any number of additional dimensions
 
-    Input: :math:`(N, *)` where :math:`*` means, any number of additional dimensions
+        y: :math:`(N, *)`, same shape as the input
 
     Example::
 
         from pyvqnet.tensor import QTensor
         from pyvqnet.nn import CategoricalCrossEntropy
-        output = QTensor([[1, 2, 3, 4, 5],
+        x = QTensor([[1, 2, 3, 4, 5],
         [1, 2, 3, 4, 5],
         [1, 2, 3, 4, 5]], requires_grad=True)
-        target = QTensor([[0, 1, 0, 0, 0], [0, 1, 0, 0, 0], [1, 0, 0, 0, 0]], requires_grad=True)
+        y = QTensor([[0, 1, 0, 0, 0], [0, 1, 0, 0, 0], [1, 0, 0, 0, 0]], requires_grad=True)
         loss_result = CategoricalCrossEntropy()
-        result = loss_result(target, output)
+        result = loss_result(y, x)
         print(result)
 
         # [3.7852428]
@@ -1183,7 +1240,7 @@ SoftmaxCrossEntropy
 
     This criterion combines LogSoftmax and NLLLoss in one single class with more numeral stablity.
 
-    The loss can be described as:
+    The loss can be described as below, where `class` is index of target's class:
 
     .. math::
         \text{loss}(x, class) = -\log\left(\frac{\exp(x[class])}{\sum_j \exp(x[j])}\right)
@@ -1193,24 +1250,114 @@ SoftmaxCrossEntropy
 
     Parameters for loss forward function:
 
-    Target: :math:`(N, *)`, same shape as the input
+        x: :math:`(N, *)` where :math:`*` means, any number of additional dimensions
 
-    Input: :math:`(N, *)` where :math:`*` means, any number of additional dimensions
+        y: :math:`(N, *)`, same shape as the input
 
     Example::
 
         from pyvqnet.tensor import QTensor
         from pyvqnet.nn import SoftmaxCrossEntropy
-        output = QTensor([[1, 2, 3, 4, 5],
+        x = QTensor([[1, 2, 3, 4, 5],
         [1, 2, 3, 4, 5],
         [1, 2, 3, 4, 5]], requires_grad=True)
-        target = QTensor([[0, 1, 0, 0, 0], [0, 1, 0, 0, 0], [1, 0, 0, 0, 0]], requires_grad=True)
+        y = QTensor([[0, 1, 0, 0, 0], [0, 1, 0, 0, 0], [1, 0, 0, 0, 0]], requires_grad=True)
         loss_result = SoftmaxCrossEntropy()
-        result = loss_result(target, output)
+        result = loss_result(y, x)
         result.backward()
         print(result)
 
         # [3.7852478]
+
+
+NLL_Loss
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. py:class:: pyvqnet.nn.NLL_Loss()
+
+    The average negative log likelihood loss. It is useful to train a classification problem with `C` classes
+
+    The `x` given through a forward call is expected to contain log-probabilities of each class. `x` has to be a Tensor of size either :math:`(N, C)` or :math:`(N, C, d_1, d_2, ..., d_K)`
+    with :math:`K \geq 1` for the `K`-dimensional case. The `y` that this loss expects should be a class index in the range :math:`[0, C-1]` where `C = number of classes`.
+
+    .. math::
+
+        \ell(x, y) = L = \{l_1,\dots,l_N\}^\top, \quad
+        l_n = -
+            \sum_{n=1}^N \frac{1}{N}x_{n,y_n}, \quad
+
+    :return: a NLL_Loss class
+
+    Parameters for loss forward function:
+
+        x: :math:`(N, *)`, the output of the loss function, which can be a multidimensional variable.
+
+        y: :math:`(N, *)`, the true value expected by the loss function.
+
+    Example::
+
+        import numpy as np
+        from pyvqnet.nn import NLL_Loss
+        from pyvqnet.tensor import QTensor
+        x = QTensor([
+            0.9476322568516703, 0.226547421131723, 0.5944201443911326,
+            0.42830868492969476, 0.76414068655387, 0.00286059168094277,
+            0.3574236812873617, 0.9096948856639084, 0.4560809854582528,
+            0.9818027091583286, 0.8673569904602182, 0.9860275114020933,
+            0.9232667066664217, 0.303693313961628, 0.8461034903175555
+        ])
+        x.reshape_([1, 3, 1, 5])
+        x.requires_grad = True
+        y = np.array([[[2, 1, 0, 0, 2]]])
+
+        loss_result = NLL_Loss()
+        result = loss_result(y, output)
+        print(result)
+        #[-0.6187226]
+
+CrossEntropyLoss
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. py:class:: pyvqnet.nn.CrossEntropyLoss()
+
+    This criterion combines LogSoftmax and NLLLoss in one single class.
+
+    `x` is expected to contain raw, unnormalized scores for each class. `x` has to be a Tensor of size :math:`(C)` for unbatched input, :math:`(N, C)` or :math:`(N, C, d_1, d_2, ..., d_K)` with :math:`K \geq 1` for the `K`-dimensional case.
+
+    The loss can be described as below, where `class` is index of target's class:
+
+    .. math::
+
+        \text{loss}(x, class) = -\log\left(\frac{\exp(x[class])}{\sum_j \exp(x[j])}\right)
+                       = -x[class] + \log\left(\sum_j \exp(x[j])\right)
+
+    :return: a CrossEntropyLoss class
+
+    Parameters for loss forward function:
+
+        x: :math:`(N, *)`, the output of the loss function, which can be a multidimensional variable.
+
+        y: :math:`(N, *)`, the true value expected by the loss function.
+
+    Example::
+
+        import numpy as np
+        from pyvqnet.nn import CrossEntropyLoss
+        from pyvqnet.tensor import QTensor
+        x = QTensor([
+            0.9476322568516703, 0.226547421131723, 0.5944201443911326, 0.42830868492969476, 0.76414068655387,
+            0.00286059168094277, 0.3574236812873617, 0.9096948856639084, 0.4560809854582528, 0.9818027091583286,
+            0.8673569904602182, 0.9860275114020933, 0.9232667066664217, 0.303693313961628, 0.8461034903175555
+        ])
+        x.reshape_([1, 3, 1, 5])
+        x.requires_grad = True
+        y = np.array([[[2, 1, 0, 0, 2]]])
+
+        loss_result = CrossEntropyLoss()
+        result = loss_result(y, output)
+        print(result)
+        #[1.1508200]
+
 
 
 Activation Function
