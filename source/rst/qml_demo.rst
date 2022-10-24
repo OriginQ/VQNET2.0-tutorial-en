@@ -3961,7 +3961,7 @@ The paper  `The effect of data encoding on the expressive power of variational q
 
 First we show how quantum models that use Pauli rotations as data-encoding gates can only fit Fourier series up to a certain degree.  For simplicity we will only look at single-qubit circuits:
 
-.. image:: ./images/single_qubit_model.PNG
+.. image:: ./images/single_qubit_model.png
    :width: 600 px
    :align: center
 
@@ -4062,7 +4062,7 @@ Make input data, define parallel quantum models, and do not perform model traini
 
 The result of running the quantum circuit without training is:
 
-.. image:: ./images/single_qubit_model_result_no_train.PNG
+.. image:: ./images/single_qubit_model_result_no_train.png
    :width: 600 px
    :align: center
 
@@ -4214,7 +4214,7 @@ Make the input data, define the serial quantum model, and build the training mod
 
 The quantum model is:
 
-.. image:: ./images/single_qubit_model_circuit.PNG
+.. image:: ./images/single_qubit_model_circuit.png
    :width: 600 px
    :align: center
 
@@ -4222,7 +4222,7 @@ The quantum model is:
 
 The network training results are:
 
-.. image:: ./images/single_qubit_model_result.PNG
+.. image:: ./images/single_qubit_model_result.png
    :width: 600 px
    :align: center
 
@@ -4364,7 +4364,7 @@ Make input data, define parallel quantum models, and do not perform model traini
 
 The result of running the quantum circuit without training is:
 
-.. image:: ./images/parallel_model_result_no_train.PNG
+.. image:: ./images/parallel_model_result_no_train.png
    :width: 600 px
    :align: center
 
@@ -4541,7 +4541,7 @@ Make the input data, define the parallel quantum model, and build the training m
 
 The quantum model is:
 
-.. image:: ./images/parallel_model_circuit.PNG
+.. image:: ./images/parallel_model_circuit.png
    :width: 600 px
    :align: center
 
@@ -4549,7 +4549,7 @@ The quantum model is:
 
 The network training results are:
 
-.. image:: ./images/parallel_model_result.PNG
+.. image:: ./images/parallel_model_result.png
    :width: 600 px
    :align: center
 

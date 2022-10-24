@@ -1369,7 +1369,7 @@ Here we refer to the paper `An Artificial Neuron Implemented on an Actual Quantu
 
 For this quantum perceptron, the data processed is a string of 0 1 binary bits. The goal is to identify patterns that are shaped like a w cross as shown in the figure below.
 
-.. image:: ./images/QP-data.PNG
+.. image:: ./images/QP-data.png
    :width: 600 px
    :align: center
 
@@ -1379,7 +1379,7 @@ It is encoded using a binary bit string, where black is 0 and white is 1, so tha
 
 The circuit structure of the quantum perceptron proposed in this paper is as follows:
 
-.. image:: ./images/QP-cir.PNG
+.. image:: ./images/QP-cir.png
    :width: 600 px
    :align: center
 
@@ -1420,7 +1420,7 @@ Using the ``train`` interface to traverse all the data, you can get the last tra
 
     trained_para = perceptron.train(training_label, test_label)
 
-.. image:: ./images/QP-pic.PNG
+.. image:: ./images/QP-pic.png
    :width: 600 px
    :align: center
 
@@ -1428,7 +1428,7 @@ Using the ``train`` interface to traverse all the data, you can get the last tra
 
 On the test data, the accuracy results on the test data can be obtained
 
-.. image:: ./images/QP-acc.PNG
+.. image:: ./images/QP-acc.png
    :width: 600 px
    :align: center
 
@@ -1529,13 +1529,13 @@ The ``get_trained_quantum_parameters`` module of QGAN is used to get training pa
 
 In general, QGAN learning and loading random distribution requires multiple training models with different random seeds to obtain the expected results. For example, the following is the graph of the probability distribution function between the lognormal distribution implemented by QGAN and the real lognormal distribution, and the loss function curve between QGAN's generator and discriminator.
 
-.. image:: ./images/qgan-loss.PNG
+.. image:: ./images/qgan-loss.png
    :width: 600 px
    :align: center
 
 |
 
-.. image:: ./images/qgan-pdf.PNG
+.. image:: ./images/qgan-pdf.png
    :width: 600 px
    :align: center
 
@@ -1554,7 +1554,7 @@ The first method constructs variational circuits for data classification tasks.
 ``gen_vqc_qsvm_data`` is the data needed to generate this example. ``vqc_qsvm`` is a variable sub-circuit class used to classify the input data.
 The ``vqc_qsvm.plot()`` function visualizes the distribution of the data.
 
-.. image:: ./images/VQC-SVM.PNG
+.. image:: ./images/VQC-SVM.png
    :width: 600 px
    :align: center
 
