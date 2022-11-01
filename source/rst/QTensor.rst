@@ -13,7 +13,7 @@ QTensor's Functions and Attributes
 __init__
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. py:method:: QTensor.__init__(data, requires_grad=False, nodes=None, DEVICE=0)
+.. py:method:: QTensor.__init__(data, requires_grad=False, nodes=None, device=0)
 
     Wrapper of data structure with dynamic computational graph construction
     and automatic differentiation.
@@ -21,7 +21,7 @@ __init__
     :param data: _core.Tensor or numpy array which represents a QTensor
     :param requires_grad: should tensor's gradient be tracked, defaults to False
     :param nodes: list of successors in the computational graph, defaults to None
-    :param DEVICE: current device to save QTensor ,default = 0
+    :param device: current device to save QTensor ,default = 0
     :return: output QTensor
 
     .. note::
@@ -894,12 +894,12 @@ ones_like
 full
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. py:function:: pyvqnet.tensor.full(shape, value, dev: int = 0)
+.. py:function:: pyvqnet.tensor.full(shape, value, device=0)
 
     Create a QTensor of the specified shape and fill it with value.
 
     :param shape: shape of the QTensor to create
-    :param dev: device to use,default = 0 ,use cpu device.
+    :param device: device to use,default = 0 ,use cpu device.
     :param value: value to fill the QTensor with
     :return: output QTensor
 
@@ -991,7 +991,7 @@ zeros_like
 arange
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. py:function:: pyvqnet.tensor.arange(start, end, step=1, device: int = 0,requires_grad=False)
+.. py:function:: pyvqnet.tensor.arange(start, end, step=1, device=0,requires_grad=False)
 
     Create a 1D QTensor with evenly spaced values within a given interval.
 
@@ -1014,7 +1014,7 @@ arange
 linspace
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. py:function:: pyvqnet.tensor.linspace(start, end, num, device: int = 0, requires_grad= False)
+.. py:function:: pyvqnet.tensor.linspace(start, end, num, device=0, requires_grad= False)
 
     Create a 1D QTensor with evenly spaced values within a given interval.
 
@@ -1037,7 +1037,7 @@ linspace
 logspace
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. py:function:: pyvqnet.tensor.logspace(start, end, num, base, dev: int = 0, requires_grad)
+.. py:function:: pyvqnet.tensor.logspace(start, end, num, base, device=0, requires_grad)
 
     Create a 1D QTensor with evenly spaced values on a log scale.
 
@@ -1045,7 +1045,7 @@ logspace
     :param end: ``base ** end`` is the final value of the sequence
     :param nums: number of samples to generate
     :param base: the base of the log space
-    :param dev: device to use,default = 0 ,use cpu device
+    :param device: device to use,default = 0 ,use cpu device
     :param requires_grad: should tensor’s gradient be tracked, defaults to False
     :return: output QTensor
 
@@ -1062,14 +1062,14 @@ logspace
 eye
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. py:function:: pyvqnet.tensor.eye(size, offset: int = 0, dev: int = 0)
+.. py:function:: pyvqnet.tensor.eye(size, offset: int = 0, device=0)
 
     Create a size x size QTensor with ones on the diagonal and zeros
     elsewhere.
 
     :param size: size of the (square) QTensor to create
     :param offset: Index of the diagonal: 0 (the default) refers to the main diagonal, a positive value refers to an upper diagonal, and a negative value to a lower diagonal.
-    :param dev: device to use,default = 0 ,use cpu device
+    :param device: device to use,default = 0 ,use cpu device
     :return: output QTensor
 
     Example::
@@ -1167,12 +1167,12 @@ diag
 randu
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. py:function:: pyvqnet.tensor.randu(shape, dev: int = 0)
+.. py:function:: pyvqnet.tensor.randu(shape, device=0)
 
     Create a QTensor with uniformly distributed random values.
 
     :param shape: shape of the QTensor to create
-    :param dev: device to use,default = 0 ,use cpu device
+    :param device: device to use,default = 0 ,use cpu device
     :return: output QTensor
 
 
@@ -1192,12 +1192,12 @@ randu
 randn
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. py:function:: pyvqnet.tensor.randn(shape, dev: int = 0)
+.. py:function:: pyvqnet.tensor.randn(shape, device=0)
 
     Create a QTensor with normally distributed random values.
 
     :param shape: shape of the QTensor to create
-    :param dev: device to use,default = 0 ,use cpu device.
+    :param device: device to use,default = 0 ,use cpu device.
     :return: output QTensor
 
     Example::
