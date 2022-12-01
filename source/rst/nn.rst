@@ -359,7 +359,7 @@ AvgPool1D
 
     :param kernel: size of the average pooling windows
     :param strides: factor by which to downscale
-    :param padding: one of "none", "valid" or "same" ,defaults to "valid"
+    :param padding: one of "valid", "same" or integer specifies the padding value, defaults to "valid"
     :param name: name of the output layer
     :return: AvgPool1D layer
 
@@ -375,7 +375,7 @@ AvgPool1D
         import numpy as np
         from pyvqnet.tensor import QTensor
         from pyvqnet.nn import AvgPool1D
-        test_mp = AvgPool1D([2],[2],"same")
+        test_mp = AvgPool1D([3],[2],"same")
         x= QTensor(np.array([0, 1, 0, 4, 5,
                                     2, 3, 2, 1, 3,
                                     4, 4, 0, 4, 3,
@@ -386,11 +386,11 @@ AvgPool1D
         print(y)
 
         # [
-        # [[0.0000000, 0.5000000, 4.5000000],
-        #  [1.0000000, 2.5000000, 2.0000000],
-        #  [2.0000000, 2.0000000, 3.5000000],
-        #  [1.0000000, 3.5000000, 5.0000000],
-        #  [0.5000000, 0.0000000, 6.0000000]]
+        # [[0.3333333, 1.6666666, 3.0000000],
+        #  [1.6666666, 2.0000000, 1.3333334],
+        #  [2.6666667, 2.6666667, 2.3333333],
+        #  [2.3333333, 4.3333335, 3.3333333],
+        #  [0.3333333, 1.6666666, 4.0000000]]
         # ]
 
 MaxPool1D
@@ -402,7 +402,7 @@ MaxPool1D
 
     :param kernel: size of the max pooling windows
     :param strides: factor by which to downscale
-    :param padding: one of "none", "valid" or "same" ,defaults to "valid"
+    :param padding: one of "valid", "same" or integer specifies the padding value, defaults to "valid"
     :param name: name of the output layer
     :return: MaxPool1D layer
 
@@ -418,7 +418,7 @@ MaxPool1D
         import numpy as np
         from pyvqnet.tensor import QTensor
         from pyvqnet.nn import MaxPool1D
-        test_mp = MaxPool1D([2],[2],"same")
+        test_mp = MaxPool1D([3],[2],"same")
         x= QTensor(np.array([0, 1, 0, 4, 5,
                                     2, 3, 2, 1, 3,
                                     4, 4, 0, 4, 3,
@@ -428,11 +428,11 @@ MaxPool1D
         y= test_mp.forward(x)
         print(y)
         # [
-        # [[0.0000000, 1.0000000, 5.0000000],
-        #  [2.0000000, 3.0000000, 3.0000000],
+        # [[1.0000000, 4.0000000, 5.0000000],
+        #  [3.0000000, 3.0000000, 3.0000000],
         #  [4.0000000, 4.0000000, 4.0000000],
-        #  [2.0000000, 5.0000000, 6.0000000],
-        #  [1.0000000, 0.0000000, 7.0000000]]
+        #  [5.0000000, 6.0000000, 6.0000000],
+        #  [1.0000000, 5.0000000, 7.0000000]]
         # ]
 
 AvgPool2D
@@ -444,7 +444,7 @@ AvgPool2D
 
     :param kernel: size of the average pooling windows
     :param strides: factors by which to downscale
-    :param padding: one of  "valid" or "same",defaults to "valid"
+    :param padding: one of "valid", "same" or tuple with integers specifies the padding value of column and row,defaults to "valid"
     :param name: name of the output layer
     :return: AvgPool2D layer
 
@@ -459,7 +459,7 @@ AvgPool2D
         import numpy as np
         from pyvqnet.tensor import QTensor
         from pyvqnet.nn import AvgPool2D
-        test_mp = AvgPool2D([2,2],[2,2],"same")
+        test_mp = AvgPool2D([2,2],[2,2],"valid")
         x= QTensor(np.array([0, 1, 0, 4, 5,
                                     2, 3, 2, 1, 3,
                                     4, 4, 0, 4, 3,
@@ -469,9 +469,8 @@ AvgPool2D
         y= test_mp.forward(x)
         print(y)
         # [
-        # [[[0.0000000, 0.2500000, 2.2500000],
-        #  [1.50000000, 2.2500000, 2.7500000],
-        #  [0.7500000, 1.75000000, 5.5000000]]]
+        # [[[1.5000000, 1.7500000],
+        #  [3.7500000, 3.0000000]]]
         # ]
 
 MaxPool2D
@@ -483,7 +482,7 @@ MaxPool2D
 
     :param kernel: size of the max pooling windows
     :param strides: factor by which to downscale
-    :param padding: one of "none", "valid" or "same" ,defaults to "valid"
+    :param padding: one of "valid", "same" or tuple with integers specifies the padding value of column and row, defaults to "valid"
     :param name: name of the output layer
     :return: MaxPool2D layer
 
@@ -498,7 +497,7 @@ MaxPool2D
         import numpy as np
         from pyvqnet.tensor import QTensor
         from pyvqnet.nn import MaxPool2D
-        test_mp = MaxPool2D([2,2],[2,2],"same")
+        test_mp = MaxPool2D([2,2],[2,2],"valid")
         x= QTensor(np.array([0, 1, 0, 4, 5,
                                     2, 3, 2, 1, 3,
                                     4, 4, 0, 4, 3,
@@ -507,11 +506,9 @@ MaxPool2D
 
         y= test_mp.forward(x)
         print(y)
-
         # [
-        # [[[0.0000000, 1.0000000, 5.0000000],
-        #  [4.0000000, 4.0000000, 4.0000000],
-        #  [2.0000000, 5.0000000, 7.0000000]]]
+        # [[[3.0000000, 4.0000000],
+        #  [5.0000000, 6.0000000]]]
         # ]
 
 Embedding

@@ -1417,7 +1417,7 @@ These samples are divided into training data training_data and testing data test
 Construct Quantum Circuits
 """"""""""""""""""""""""""""""
 
-In this example, we use the `pyQPanda <https://pyqpanda-tutorial-en.readthedocs.io/en/latest/chapter2/index.html#quantum-circuit>`_ , A simple quantum circuit of 1 qubit is defined. The circuit takes the output of the classical neural network layer as input,encodes quantum data through ``H`` , ``RY``  quantum logic gates, and calculates the expected value of Hamiltonian in the z direction as output.
+In this example, we use the `pyQPanda <https://pyqpanda-tutorial-en.readthedocs.io/en/latest/chapter2/index.html#quantum-circuit>`__ , A simple quantum circuit of 1 qubit is defined. The circuit takes the output of the classical neural network layer as input,encodes quantum data through ``H`` , ``RY``  quantum logic gates, and calculates the expected value of Hamiltonian in the z direction as output.
 
 .. code-block::
 
@@ -2398,7 +2398,7 @@ it is to give a picture and classify each pixel on the picture. Separate the pix
 to different objects. `Unet <https://arxiv.org/abs/1505.04597>`_ is a classical image segmentation algorithm.
 
 Here, we explore how to partially quantify the classical neural network to create a hybrid quantum classical
-`QUnet`  neural network. We will write a simple example of integrating `pyQPanda <https://pyqpanda-toturial.readthedocs.io/zh/latest/>`_ with `VQNet` .
+`QUnet`  neural network. We will write a simple example of integrating `pyQPanda <https://pyqpanda-tutorial-en.readthedocs.io/en/latest/>`__ with `VQNet` .
 Qunet is mainly used to solve the technology of image segmentation.
 
 
@@ -4565,3 +4565,4 @@ The network training loss is:
     epoch:2, #### loss:4.714951917250687e-07
     epoch:3, #### loss:1.0968826371082763e-08
     epoch:4, #### loss:2.1258629738507562e-10
+
