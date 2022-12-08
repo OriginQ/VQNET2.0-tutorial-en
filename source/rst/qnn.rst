@@ -2067,6 +2067,7 @@ Meets :math:`-2\sin(2\theta_1)` , which is exactly the differential of :math:`\c
 
 .. code-block::
 
+    theta2, theta3 = -0.15, 1.6
     angles = np.linspace(0, 2 * np.pi, 50)
     pos_vals = np.array([[
         pq_SPSRgates([theta1, theta2, theta3], s=s, sign=+1)
@@ -2142,6 +2143,10 @@ VQNet implements an example of this algorithm: solving the ground state energy o
     init_params = np.random.uniform(low=0,
                                     high=2 * np.pi,
                                     size=param_shape)
+    # some basic Pauli matrices
+    I = np.eye(2)
+    X = np.array([[0, 1], [1, 0]])
+    Z = np.array([[1, 0], [0, -1]])
     def pq_circuit(params):
         params = params.reshape(param_shape)
         num_qubits = 2
@@ -2209,6 +2214,22 @@ observation. Here, the moving average moving_average() is used for calculation.
 
 .. code-block::
 
+
+    from pyqpanda import *
+
+    ##############################################################################
+    # Optimizing the circuit using gradient descent via the parameter-shift rule:
+    qlayer_ana = QuantumLayerV2(vqe_func_analytic, 2*2*3 )
+    qlayer_shots = QuantumLayerV2(vqe_func_shots, 2*2*3 )
+    cost_sgd = []
+    cost_dsgd = []
+    temp = _core.Tensor(init_params)
+    _core.vqnet.copyTensor(temp, qlayer_ana.m_para.data)
+    opti_ana = SGD(qlayer_ana.parameters())
+
+    _core.vqnet.copyTensor(temp, qlayer_shots.m_para.data)
+    opti_shots = SGD(qlayer_shots.parameters())
+    
     for i in range(steps):
         opti_ana.zero_grad()
         loss = qlayer_ana(QTensor([[1]]))

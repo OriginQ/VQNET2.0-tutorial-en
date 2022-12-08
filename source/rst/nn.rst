@@ -15,7 +15,7 @@ The following classical neural network modules support automatic back propagatio
     hw = 4      # input width and heights
 
     # two dimension convolution layer
-    test_conv = Conv2D(ic,oc,(3,3),(2,2),"same")
+    test_conv = Conv2D(ic,oc,(2,2),(2,2),"same")
 
     # input of shape [b,ic,hw,hw]
     x0 = QTensor(CoreTensor.range(1,b*ic*hw*hw).reshape([b,ic,hw,hw]),requires_grad=True)
@@ -738,7 +738,7 @@ LayerNorm2d
         from pyvqnet.tensor import QTensor
         from pyvqnet.nn.layer_norm import LayerNorm2d
         ic = 4
-        test_conv = LayerNorm2d([8])
+        test_conv = LayerNorm2d(8)
         x = QTensor(np.arange(1,17).reshape([2,2,4,1]),requires_grad=True)
         y = test_conv.forward(x)
         print(y)
@@ -788,7 +788,7 @@ LayerNorm1d
         import numpy as np
         from pyvqnet.tensor import QTensor
         from pyvqnet.nn.layer_norm import LayerNorm1d
-        test_conv = LayerNorm1d([4])
+        test_conv = LayerNorm1d(4)
         x = QTensor(np.arange(1,17).reshape([4,4]),requires_grad=True)
         y = test_conv.forward(x)
         print(y)

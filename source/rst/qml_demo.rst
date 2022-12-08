@@ -1423,6 +1423,7 @@ In this example, we use the `pyQPanda <https://pyqpanda-tutorial-en.readthedocs.
 
     from pyqpanda import *
     import pyqpanda as pq
+    import numpy as np
     def circuit(weights):
         num_qubits = 1
         #Use pyQPanda to create a simulator 
