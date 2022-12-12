@@ -1358,6 +1358,84 @@ Mutal_Info
 
 
 
+MeasurePauliSum
+^^^^^^^^^^^^^^^^^^^^
+.. py:function:: pyvqnet.qnn.measure.MeasurePauliSum(machine, prog, obs_list, qlists)
+
+    Expectation value of the supplied Hamiltonian observables.
+
+    :param machine: machine created by qpanda.
+    :param prog: quantum program created by qpanda.
+    :param pauli_str_dict: Hamiltonian observables.
+    :param qlists: qubit allocated by pyQpanda.qAlloc_many().
+
+    :return: expectation
+
+    Example::
+
+        from pyvqnet.qnn.measure import MeasurePauliSum
+        import pyqpanda as pq
+        x = [0.56, 0.1]
+        obs_list = [{'wires': [0, 2, 3], 'observables': ['X', 'Y', 'Z'], 'coefficient': [1, 0.5, 0.4]},
+                    {'wires': [0, 1, 2], 'observables': ['X', 'Y', 'Z'], 'coefficient': [1, 0.5, 0.4]}]
+
+        m_machine = pq.CPUQVM()
+        m_machine.init_qvm()
+
+        m_prog = pq.QProg()
+        m_qlist = m_machine.qAlloc_many(4)
+
+        cir = pq.QCircuit()
+        cir.insert(pq.RZ(m_qlist[0], x[0]))
+        cir.insert(pq.RZ(m_qlist[1], x[0]))
+        cir.insert(pq.CNOT(m_qlist[0], m_qlist[1]))
+        cir.insert(pq.RY(m_qlist[2], x[1]))
+        cir.insert(pq.CNOT(m_qlist[0], m_qlist[2]))
+        cir.insert(pq.RZ(m_qlist[3], x[1]))
+
+        m_prog.insert(cir)
+        result = MeasurePauliSum(m_machine, m_prog, obs_list, m_qlist)
+        print(result)
+        m_machine.finalize()
+        # [0.40000000000000013, 0.3980016661112104]
+
+
+VarMeasure
+^^^^^^^^^^^^^^^^^^^^
+.. py:function:: pyvqnet.qnn.measure.VarMeasure(machine, prog, actual_qlist)
+
+    Variance of the supplied observable.
+
+    :param machine: machine created by qpanda.
+    :param prog: quantum program created by qpanda.
+    :param actual_qlist: qubit allocated by pyQpanda.qAlloc_many().
+
+    :return: var
+
+    Example::
+
+        import pyqpanda as pq
+        from pyvqnet.qnn.measure import VarMeasure
+        cir = pq.QCircuit()
+        machine = pq.CPUQVM()  # outside
+        machine.init_qvm()  # outside
+        qubits = machine.qAlloc_many(2)
+
+        cir.insert(pq.RX(qubits[0], 0.5))
+        cir.insert(pq.H(qubits[1]))
+        cir.insert(pq.CNOT(qubits[0], qubits[1]))
+
+        prog1 = pq.QProg()
+        prog1.insert(cir)
+        var_result = VarMeasure(machine, prog1, qubits[0])
+        print(var_result)
+        # 0.2298488470659339
+
+
+
+
+
+
 Quantum Machine Learning Algorithm Interface
 -------------------------------------------------
 
