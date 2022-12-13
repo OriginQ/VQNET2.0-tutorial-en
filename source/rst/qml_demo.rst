@@ -1667,15 +1667,15 @@ The visualization curve of data loss function and accuracy on train and test dat
     for x, y in data_generator(x_test, y_test, batch_size=1, shuffle=True):
         if count == n_samples_show:
             break
-            x = x.reshape(-1, 1, 28, 28)
-            output = model(x)
-            pred = QTensor.argmax(output, [1])
-            axes[count].imshow(x[0].squeeze(), cmap='gray')
-            axes[count].set_xticks([])
-            axes[count].set_yticks([])
-            axes[count].set_title('Predicted {}'.format(np.array(pred.data)))
-            count += 1
-            plt.show()
+        x = x.reshape(-1, 1, 28, 28)
+        output = model(x)
+        pred = QTensor.argmax(output, [1])
+        axes[count].imshow(x[0].squeeze(), cmap='gray')
+        axes[count].set_xticks([])
+        axes[count].set_yticks([])
+        axes[count].set_title('Predicted {}'.format(np.array(pred.data)))
+        count += 1
+    plt.show()
 
 .. figure:: ./images/eval_test.png
    :width: 600 px
