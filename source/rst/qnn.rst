@@ -1736,10 +1736,11 @@ Simultaneous Perturbation Stochastic Approximation optimizers
 
     Example::
 
+
         from pyvqnet.qnn import AngleEmbeddingCircuit, expval, QuantumLayerV2, SPSA
         from pyvqnet.qnn.template import BasicEntanglerTemplate
         import pyqpanda as pq
-        
+        from pyvqnet.nn.module import Module
 
         class Model_spsa(Module):
             def __init__(self):
@@ -1754,9 +1755,9 @@ Simultaneous Perturbation Stochastic Approximation optimizers
         def layer_fn_spsa_pq(input, weights):
             num_of_qubits = 1
 
-            m_machine = pq.CPUQVM()
-            m_machine.init_qvm()
-            qubits = m_machine.qAlloc_many(num_of_qubits)
+            machine = pq.CPUQVM()
+            machine.init_qvm()
+            qubits = machine.qAlloc_many(num_of_qubits)
             c1 = AngleEmbeddingCircuit(input, qubits)
             weights =weights.reshape([4,1])
             bc_class = BasicEntanglerTemplate(weights, 1)
@@ -1765,7 +1766,7 @@ Simultaneous Perturbation Stochastic Approximation optimizers
             m_prog.insert(c1)
             m_prog.insert(c2)
             pauli_dict = {'Z0': 1}
-            exp2 = expval(m_machine, m_prog, pauli_dict, qubits)
+            exp2 = expval(machine, m_prog, pauli_dict, qubits)
 
             return exp2
 
@@ -1790,11 +1791,20 @@ Simultaneous Perturbation Stochastic Approximation optimizers
 
     Example::
 
-        from pyvqnet.qnn import AngleEmbeddingCircuit, expval, QuantumLayerV2, SPSA
-        from pyvqnet.qnn.template import BasicEntanglerTemplate
+        import numpy as np
         import pyqpanda as pq
-        
-        #define a VQC model
+
+        import sys
+        sys.path.insert(0, "../")
+        import pyvqnet
+
+        from pyvqnet.nn.module import Module
+        from pyvqnet.qnn import SPSA
+        from pyvqnet.tensor.tensor import QTensor
+        from pyvqnet.qnn import AngleEmbeddingCircuit, expval, QuantumLayerV2, expval
+        from pyvqnet.qnn.template import BasicEntanglerTemplate
+
+
         class Model_spsa(Module):
             def __init__(self):
                 super(Model_spsa, self).__init__()
@@ -1804,13 +1814,13 @@ Simultaneous Perturbation Stochastic Approximation optimizers
                 y = self.qvc(x)
                 return y
 
-        #minimize expectation
+
         def layer_fn_spsa_pq(input, weights):
             num_of_qubits = 1
 
-            m_machine = pq.CPUQVM()
-            m_machine.init_qvm()
-            qubits = m_machine.qAlloc_many(num_of_qubits)
+            machine = pq.CPUQVM()
+            machine.init_qvm()
+            qubits = machine.qAlloc_many(num_of_qubits)
             c1 = AngleEmbeddingCircuit(input, qubits)
             weights =weights.reshape([4,1])
             bc_class = BasicEntanglerTemplate(weights, 1)
@@ -1819,27 +1829,28 @@ Simultaneous Perturbation Stochastic Approximation optimizers
             m_prog.insert(c1)
             m_prog.insert(c2)
             pauli_dict = {'Z0': 1}
-            exp2 = expval(m_machine, m_prog, pauli_dict, qubits)
+            exp2 = expval(machine, m_prog, pauli_dict, qubits)
 
             return exp2
 
         model = Model_spsa()
-        #Define a SPSA optimizer
+
         optimizer = SPSA(maxiter=20,
-            init_para = model.parameters(),
+            init_para=model.parameters(),
             model=model,
         )
-        #Initialization parameters
-        data = QTensor(np. array([[0.27507603]]))
+
+        data = QTensor(np.array([[0.27507603]]))
         p = model.parameters()
         p[0].data = pyvqnet._core.Tensor( np.array([3.97507603, 3.12950603, 1.00854038,
                         1.25907603]))
-        #Call SPSA for iterative optimization
+
         optimizer._step(input_data=data)
-    
-        # Calculate the optimized VQC expected value
+
+
         y = model(data)
         print(y)
+
 
 Quantum Nature Gradient
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -2224,7 +2235,9 @@ VQNet implements an example of this algorithm: solving the ground state energy o
     # some basic Pauli matrices
     I = np.eye(2)
     X = np.array([[0, 1], [1, 0]])
+    Y = np.array([[0, -1j], [1j, 0]])
     Z = np.array([[1, 0], [0, -1]])
+
     def pq_circuit(params):
         params = params.reshape(param_shape)
         num_qubits = 2

@@ -45,6 +45,7 @@ Here are an example using multiple Parameterized rotated gates like `RX`, `RY`, 
 measurement as a output based on a single qubit.
 
 .. code-block::
+
     import pyqpanda as pq
     def qdrl_circuit(input,weights,qlist,clist,machine):
 
