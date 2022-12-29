@@ -2306,7 +2306,6 @@ observation. Here, the moving average moving_average() is used for calculation.
 .. code-block::
 
 
-    from pyqpanda import *
 
     ##############################################################################
     # Optimizing the circuit using gradient descent via the parameter-shift rule:
