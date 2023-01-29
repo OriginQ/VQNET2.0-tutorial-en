@@ -704,7 +704,7 @@ The way to deal with qubits is called quantum gates. Using quantum gates, we con
 Basic quantum gates
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-In VQNet, we use each logic gate of `pyQPanda <https://pyqpanda-tutorial-en.readthedocs.io/en/latest/>`_ developed by the original quantum to build quantum circuit and conduct quantum simulation.
+In VQNet, we use each logic gate of `pyQPanda <https://pyqpanda-tutorial-en.readthedocs.io/en/latest/>`__ developed by the original quantum to build quantum circuit and conduct quantum simulation.
 The gates currently supported by pyQPanda can be defined in pyQPanda's `quantum gate <https://pyqpanda-tutorial-en.readthedocs.io/en/latest/chapter2/index.html#quantum-logic-gate>`_ section.
 In addition, VQNet also encapsulates some quantum gate combinations commonly used in quantum machine learning.
 
@@ -1358,6 +1358,84 @@ Mutal_Info
 
 
 
+MeasurePauliSum
+^^^^^^^^^^^^^^^^^^^^
+.. py:function:: pyvqnet.qnn.measure.MeasurePauliSum(machine, prog, obs_list, qlists)
+
+    Expectation value of the supplied Hamiltonian observables.
+
+    :param machine: machine created by qpanda.
+    :param prog: quantum program created by qpanda.
+    :param pauli_str_dict: Hamiltonian observables.
+    :param qlists: qubit allocated by pyQpanda.qAlloc_many().
+
+    :return: expectation
+
+    Example::
+
+        from pyvqnet.qnn.measure import MeasurePauliSum
+        import pyqpanda as pq
+        x = [0.56, 0.1]
+        obs_list = [{'wires': [0, 2, 3], 'observables': ['X', 'Y', 'Z'], 'coefficient': [1, 0.5, 0.4]},
+                    {'wires': [0, 1, 2], 'observables': ['X', 'Y', 'Z'], 'coefficient': [1, 0.5, 0.4]}]
+
+        m_machine = pq.CPUQVM()
+        m_machine.init_qvm()
+
+        m_prog = pq.QProg()
+        m_qlist = m_machine.qAlloc_many(4)
+
+        cir = pq.QCircuit()
+        cir.insert(pq.RZ(m_qlist[0], x[0]))
+        cir.insert(pq.RZ(m_qlist[1], x[0]))
+        cir.insert(pq.CNOT(m_qlist[0], m_qlist[1]))
+        cir.insert(pq.RY(m_qlist[2], x[1]))
+        cir.insert(pq.CNOT(m_qlist[0], m_qlist[2]))
+        cir.insert(pq.RZ(m_qlist[3], x[1]))
+
+        m_prog.insert(cir)
+        result = MeasurePauliSum(m_machine, m_prog, obs_list, m_qlist)
+        print(result)
+        m_machine.finalize()
+        # [0.40000000000000013, 0.3980016661112104]
+
+
+VarMeasure
+^^^^^^^^^^^^^^^^^^^^
+.. py:function:: pyvqnet.qnn.measure.VarMeasure(machine, prog, actual_qlist)
+
+    Variance of the supplied observable.
+
+    :param machine: machine created by qpanda.
+    :param prog: quantum program created by qpanda.
+    :param actual_qlist: qubit allocated by pyQpanda.qAlloc_many().
+
+    :return: var
+
+    Example::
+
+        import pyqpanda as pq
+        from pyvqnet.qnn.measure import VarMeasure
+        cir = pq.QCircuit()
+        machine = pq.CPUQVM()  # outside
+        machine.init_qvm()  # outside
+        qubits = machine.qAlloc_many(2)
+
+        cir.insert(pq.RX(qubits[0], 0.5))
+        cir.insert(pq.H(qubits[1]))
+        cir.insert(pq.CNOT(qubits[0], qubits[1]))
+
+        prog1 = pq.QProg()
+        prog1.insert(cir)
+        var_result = VarMeasure(machine, prog1, qubits[0])
+        print(var_result)
+        # 0.2298488470659339
+
+
+
+
+
+
 Quantum Machine Learning Algorithm Interface
 -------------------------------------------------
 
@@ -1627,3 +1705,654 @@ Using VQNet and pyQPanda, we define a ``QuantumKernel_VQNet`` to generate a quan
     score = quantum_svc.score(test_features, test_labels)
     print(f"quantum kernel classification test score: {score}")
 
+
+Simultaneous Perturbation Stochastic Approximation optimizers
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+
+.. py:function:: pyvqnet.qnn.SPSA(maxiter: int = 1000, save_steps: int = 1, last_avg: int = 1, c0: float = _C0, c1: float = 0.2, c2: float = 0.602, c3: float = 0.101, c4: float = 0, init_para=None, model=None, calibrate_flag=False)
+    
+
+    Simultaneous Perturbation Stochastic Approximation (SPSA) optimizer.
+
+    SPSA provides a stochastic method for approximating the gradient of a multivariate differentiable cost function.
+    To achieve this, the cost function is evaluated twice using a perturbed parameter vector: each component of the original parameter vector is simultaneously shifted by a randomly generated value.
+    Further information is available on the `SPSA website <http://www.jhuapl.edu/SPSA>`__.
+
+    :param maxiter: The maximum number of iterations to perform. Default value: 1000.
+    :param save_steps: Save the intermediate information of each save_steps step. Default value: 1.
+    :param last_avg: Averaging parameter for last_avg iterations.
+        If last_avg = 1, only the last iteration is considered. Default value: 1.
+    :param c0: initial a. Step size for updating parameters. Default value: 0.2*pi
+    :param c1: initial c. The step size used to approximate the gradient. Default: 0.1.
+    :param c2: alpha from the paper, used to adjust a(c0) at each iteration. Default value: 0.602.
+    :param c3: gamma in the paper, used to adjust c(c1) at each iteration. Default value: 0.101.
+    :param c4: Also used to control the parameters of a. Default value: 0.
+    :param init_para: Initialization parameters. Default: None.
+    :param model: Parametric model: model. Default: None.
+    :param calibrate_flag: whether to calibrate hpyer parameters a and c, default value: False.
+
+    :return: an SPSA optimizer instance
+
+    Example::
+
+
+        from pyvqnet.qnn import AngleEmbeddingCircuit, expval, QuantumLayerV2, SPSA
+        from pyvqnet.qnn.template import BasicEntanglerTemplate
+        import pyqpanda as pq
+        from pyvqnet.nn.module import Module
+
+        class Model_spsa(Module):
+            def __init__(self):
+                super(Model_spsa, self).__init__()
+                self.qvc = QuantumLayerV2(layer_fn_spsa_pq, 3)
+
+            def forward(self, x):
+                y = self.qvc(x)
+                return y
+
+
+        def layer_fn_spsa_pq(input, weights):
+            num_of_qubits = 1
+
+            machine = pq.CPUQVM()
+            machine.init_qvm()
+            qubits = machine.qAlloc_many(num_of_qubits)
+            c1 = AngleEmbeddingCircuit(input, qubits)
+            weights =weights.reshape([4,1])
+            bc_class = BasicEntanglerTemplate(weights, 1)
+            c2 = bc_class.create_circuit(qubits)
+            m_prog = pq.QProg()
+            m_prog.insert(c1)
+            m_prog.insert(c2)
+            pauli_dict = {'Z0': 1}
+            exp2 = expval(machine, m_prog, pauli_dict, qubits)
+
+            return exp2
+
+        model = Model_spsa()
+
+        optimizer = SPSA(maxiter=20,
+            init_para=model.parameters(),
+            model=model,
+        )
+
+
+.. py:function:: pyvqnet.qnn.SPSA._step(input_data)
+
+    use SPSA to optimize input data.
+
+    :param input_data: input data
+    :return:
+
+        train_para: final parameter
+
+        theta_best: The average parameters of after last `last_avg`.
+
+    Example::
+
+        import numpy as np
+        import pyqpanda as pq
+
+        import sys
+        sys.path.insert(0, "../")
+        import pyvqnet
+
+        from pyvqnet.nn.module import Module
+        from pyvqnet.qnn import SPSA
+        from pyvqnet.tensor.tensor import QTensor
+        from pyvqnet.qnn import AngleEmbeddingCircuit, expval, QuantumLayerV2, expval
+        from pyvqnet.qnn.template import BasicEntanglerTemplate
+
+
+        class Model_spsa(Module):
+            def __init__(self):
+                super(Model_spsa, self).__init__()
+                self.qvc = QuantumLayerV2(layer_fn_spsa_pq, 3)
+
+            def forward(self, x):
+                y = self.qvc(x)
+                return y
+
+
+        def layer_fn_spsa_pq(input, weights):
+            num_of_qubits = 1
+
+            machine = pq.CPUQVM()
+            machine.init_qvm()
+            qubits = machine.qAlloc_many(num_of_qubits)
+            c1 = AngleEmbeddingCircuit(input, qubits)
+            weights =weights.reshape([4,1])
+            bc_class = BasicEntanglerTemplate(weights, 1)
+            c2 = bc_class.create_circuit(qubits)
+            m_prog = pq.QProg()
+            m_prog.insert(c1)
+            m_prog.insert(c2)
+            pauli_dict = {'Z0': 1}
+            exp2 = expval(machine, m_prog, pauli_dict, qubits)
+
+            return exp2
+
+        model = Model_spsa()
+
+        optimizer = SPSA(maxiter=20,
+            init_para=model.parameters(),
+            model=model,
+        )
+
+        data = QTensor(np.array([[0.27507603]]))
+        p = model.parameters()
+        p[0].data = pyvqnet._core.Tensor( np.array([3.97507603, 3.12950603, 1.00854038,
+                        1.25907603]))
+
+        optimizer._step(input_data=data)
+
+
+        y = model(data)
+        print(y)
+
+
+Quantum Nature Gradient
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Quantum machine learning models generally use the gradient descent method to optimize parameters in variable quantum logic circuits. The formula of the classic gradient descent method is as follows:
+
+.. math:: \theta_{t+1} = \theta_t -\eta \nabla \mathcal{L}(\theta),
+
+Essentially, at each iteration, we will calculate the direction of the steepest gradient drop in the parameter space as the direction of parameter change.
+In any direction in space, the speed of descent in the local range is not as fast as that of the negative gradient direction.
+In different spaces, the derivation of the direction of steepest descent is dependent on the norm of parameter differentiation - the distance metric. The distance metric plays a central role here,
+Different metrics result in different directions of steepest descent. For the Euclidean space where the parameters in the classical optimization problem are located, the direction of the steepest descent is the direction of the negative gradient.
+Even so, at each step of parameter optimization, as the loss function changes with parameters, its parameter space is transformed. Make it possible to find another better distance norm.
+
+`Quantum natural gradient method <https://arxiv.org/abs/1909.02108>`_ draws on concepts from `classical natural gradient method Amari <https://www.mitpressjournals.org/doi/abs/10.1162/089976698300017746>`__ ,
+We instead view the optimization problem as a probability distribution of possible output values for a given input (i.e., maximum likelihood estimation), a better approach is in the distribution
+Gradient descent is performed in the space, which is dimensionless and invariant with respect to the parameterization. Therefore, regardless of the parameterization, each optimization step will always choose the optimal step size for each parameter.
+In quantum machine learning tasks, the quantum state space has a unique invariant metric tensor called the Fubini-Study metric tensor :math:`g_{ij}`.
+This tensor converts the steepest descent in the quantum circuit parameter space to the steepest descent in the distribution space.
+The formula for the quantum natural gradient is as follows:
+
+.. math:: \theta_{t+1} = \theta_t - \eta g^{+}(\theta_t)\nabla \mathcal{L}(\theta),
+
+where :math:`g^{+}` is the pseudo-inverse.
+
+The following is an example of quantum natural gradient optimization of a quantum variational circuit parameter based on VQNet. It can be seen that the use of quantum natural gradient (Quantum Nature Gradient) makes some loss functions decline faster.
+
+Our goal is to minimize the expectation of the following quantum variational circuit. It can be seen that there are two layers of 3 quantum parametric logic gates in total. The first layer is composed of RZ and RY logic gates on bits 0 and 1, 
+and the second layer is composed of RX logic gate on 2 bits constitutes.
+
+.. image:: ./images/qng_all_cir.png
+   :width: 600 px
+   :align: center
+
+|
+
+.. code-block::
+
+    import pyqpanda as pq
+    import numpy as np
+    from pyvqnet.tensor import QTensor
+    from pyvqnet.qnn.measure import expval, ProbsMeasure
+    from pyvqnet.qnn import insert_pauli_for_mt, get_metric_tensor, QNG,QuantumLayer
+    import matplotlib.pyplot as plt
+    from pyvqnet.optim import SGD
+    from pyvqnet import _core
+    ###################################################
+    # Quantum Nature Gradients Examples
+    ###################################################
+    class pyqpanda_config_wrapper:
+        """
+        A wrapper for pyqpanda config,including QVM machine, allocated qubits, classic bits.
+        """
+        def __init__(self, qubits_num) -> None:
+            self._machine = pq.CPUQVM()
+            self._machine.init_qvm()
+            self._qubits = self._machine.qAlloc_many(qubits_num)
+            self._cubits = self._machine.cAlloc_many(qubits_num)
+            self._qcir = pq.QCircuit()
+        def __del__(self):
+            self._machine.finalize()
+    # use quantum nature gradient optimzer to optimize circuit quantum_net
+    steps = 200
+    def quantum_net(
+            q_input_features,
+            params,
+            qubits,
+            cubits,
+            machine):
+        qcir = pq.QCircuit()
+        qcir.insert(pq.RY(qubits[0], np.pi / 4))
+        qcir.insert(pq.RY(qubits[1], np.pi / 3))
+        qcir.insert(pq.RY(qubits[2], np.pi / 7))
+        qcir.insert(pq.RZ(qubits[0], params[0]))
+        qcir.insert(pq.RY(qubits[1], params[1]))
+        qcir.insert(pq.CNOT(qubits[0], qubits[1]))
+        qcir.insert(pq.CNOT(qubits[1], qubits[2]))
+        qcir.insert(pq.RX(qubits[2], params[2]))
+        qcir.insert(pq.CNOT(qubits[0], qubits[1]))
+        qcir.insert(pq.CNOT(qubits[1], qubits[2]))
+        m_prog = pq.QProg()
+        m_prog.insert(qcir)
+        return expval(machine, m_prog, {'Y0': 1}, qubits)
+
+To use the quantum natural gradient algorithm, we first need to compute the metric tensor.
+According to the definition of the algorithm, we manually defined the following two sub-circuits to calculate the Fubini-Study tensor of the two-layer circuit with parameters.
+The first parameter layer calculates the sub-circuit of the metric tensor as follows:
+
+.. image:: ./images/qng_subcir1.png
+   :width: 600 px
+   :align: center
+
+|
+
+.. code-block::
+
+    def layer0_subcircuit(config: pyqpanda_config_wrapper, params):
+        qcir = pq.QCircuit()
+        qcir.insert(pq.RY(config._qubits[0], np.pi / 4))
+        qcir.insert(pq.RY(config._qubits[1], np.pi / 3))
+        return qcir
+    def get_p01_diagonal_(config, params, target_gate_type, target_gate_bits,
+                            wires):
+        qcir = layer0_subcircuit(config, params)
+        qcir2 = insert_pauli_for_mt(config._qubits, target_gate_type,
+                                    target_gate_bits)
+        qcir3 = pq.QCircuit()
+        qcir3.insert(qcir)
+        qcir3.insert(qcir2)
+        m_prog = pq.QProg()
+        m_prog.insert(qcir3)
+        return ProbsMeasure(wires, m_prog, config._machine, config._qubits)
+
+The sub-circuit for computing the metric tensor in the second parameter layer is as follows:
+
+.. image:: ./images/qng_subcir2.png
+   :width: 600 px
+   :align: center
+
+|
+
+.. code-block::
+
+    def layer1_subcircuit(config: pyqpanda_config_wrapper, params):
+        qcir = pq.QCircuit()
+        qcir.insert(pq.RY(config._qubits[0], np.pi / 4))
+        qcir.insert(pq.RY(config._qubits[1], np.pi / 3))
+        qcir.insert(pq.RY(config._qubits[2], np.pi / 7))
+        qcir.insert(pq.RZ(config._qubits[0], params[0]))
+        qcir.insert(pq.RY(config._qubits[1], params[1]))
+        qcir.insert(pq.CNOT(config._qubits[0], config._qubits[1]))
+        qcir.insert(pq.CNOT(config._qubits[1], config._qubits[2]))
+        return qcir
+    def get_p1_diagonal_(config, params, target_gate_type, target_gate_bits,
+                            wires):
+        qcir = layer1_subcircuit(config, params)
+        qcir2 = insert_pauli_for_mt(config._qubits, target_gate_type,
+                                    target_gate_bits)
+        qcir3 = pq.QCircuit()
+        qcir3.insert(qcir)
+        qcir3.insert(qcir2)
+        m_prog = pq.QProg()
+        m_prog.insert(qcir3)
+        
+        return ProbsMeasure(wires, m_prog, config._machine, config._qubits)
+
+Use the quantum natural gradient class defined by the `QNG` class, where [['RZ', 'RY'], ['RX']] are 3 gate types with parameter logic gates,
+[[0, 1], [2]] is the active bit, qcir is the circuit function list of the calculation tensor, and [0,1,2] is the qubit index of the entire circuit.
+
+.. code-block::
+
+    config = pyqpanda_config_wrapper(3)
+    qcir = []
+    qcir.append(get_p01_diagonal_)
+    qcir.append(get_p1_diagonal_)
+    # define QNG optimzer
+    opt = QNG(config, quantum_net, 0.02, [['RZ', 'RY'], ['RX']], [[0, 1], [2]],
+                qcir, [0, 1, 2])
+
+For iterative optimization, use the `opt` function for single-step optimization, where the first input parameter is the input data,
+There is no input in the line here, so it is None, and the second input parameter is the parameter to be optimized theta.
+
+.. code-block::
+
+    qng_cost = []
+    theta2 = QTensor([0.432, 0.543, 0.233])
+    # iteration
+    for _ in range(steps):
+        theta2 = opt.step(None, theta2)
+        qng_cost.append(
+            quantum_net(None, theta2, config._qubits, config._cubits,
+                        config._machine))
+
+Using the SGD classic gradient descent method as a baseline to compare the changes in the loss value of the two under the same number of iterations,
+it can be seen that the loss function declines faster using the quantum natural gradient.
+
+.. code-block::
+
+    # use gradient descent as the baseline
+    sgd_cost = []
+    qlayer = QuantumLayer(quantum_net, 3, 'cpu', 3)
+    temp = _core.Tensor([0.432, 0.543, 0.233])
+    _core.vqnet.copyTensor(temp, qlayer.m_para.data)
+    opti = SGD(qlayer.parameters())
+    for i in range(steps):
+        opti.zero_grad()
+        loss = qlayer(QTensor([[1]]))
+        print(f'step {i}')
+        print(f'q param before {qlayer.m_para}')
+        loss.backward()
+        sgd_cost.append(loss.item())
+        opti._step()
+        print(f'q param after{qlayer.m_para}')
+        
+    plt.style.use("seaborn")
+    plt.plot(qng_cost, "b", label="Quantum natural gradient descent")
+    plt.plot(sgd_cost, "g", label="Vanilla gradient descent")
+    plt.ylabel("Cost function value")
+    plt.xlabel("Optimization steps")
+    plt.legend()
+    plt.show()
+
+.. image:: ./images/qng_vs_sgd.png
+   :width: 600 px
+   :align: center
+
+|
+
+Stochastic parameter shift algorithm
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+In the quantum variational circuit, it is a common method to use the parameter shift method `parameter-shift` to calculate the gradient of the quantum parameter.
+The parameter shift method is not universally applicable to all quantum parametric logic gates.
+In cases where it does not hold (or is not known to hold), we either have to factorize the gates into compatible gates, or use an alternative estimator of the gradient, such as a finite difference approximation.
+However, both alternatives may have drawbacks due to increased circuit complexity or potential errors in gradient values.
+Banchi and Crooks 1 discovered a `Stochastic Parameter-Shift Rule <https://arxiv.org/abs/2005.10299>`_ that can be applied to any unitary matrix quantum logic gate.
+
+The following shows an example of applying VQNet to calculate the gradient using the random parameter offset method for a quantum variational circuit. An example line definition is as follows:
+
+.. code-block::
+
+    import pyqpanda as pq
+    import numpy as np
+    from pyvqnet.qnn.measure import expval
+    from scipy.linalg import expm
+    import matplotlib
+    try:
+        matplotlib.use('TkAgg')
+    except:
+        pass
+    import matplotlib.pyplot as plt
+    machine = pq.init_quantum_machine(pq.QMachineType.CPU)
+    q = machine.qAlloc_many(2)
+    c = machine.cAlloc_many(2)
+    # some basic Pauli matrices
+    I = np.eye(2)
+    X = np.array([[0, 1], [1, 0]])
+    Z = np.array([[1, 0], [0, -1]])
+    def Generator(theta1, theta2, theta3):
+        G = theta1.item() * np.kron(X, I) - \
+            theta2 * np.kron(Z, X) + \
+            theta3 * np.kron(I, X)
+        return G
+    def pq_demo_circuit(gate_pars):
+        G = Generator(*gate_pars)
+        G = expm(-1j * G)
+        x = G.flatten().tolist()
+        cir = pq.matrix_decompose(q, x)
+        m_prog = pq.QProg()
+        m_prog.insert(cir)
+        pauli_dict = {'Z0': 1}
+        exp2 = expval(machine, m_prog, pauli_dict, q)
+        return exp2
+
+The stochastic parameter shift method first randomly samples a variable
+ s from the uniform distribution of [0,1], 
+ and then performs the following unitary matrix transformation on the lines:
+
+      a) :math:`e^{i(1-s)(\hat{H} + \theta\hat{V})}`
+      b) :math:`e^{+i\tfrac{\pi}{4}\hat{V}}`
+      c) :math:`e^{is(\hat{H} + \theta\hat{V})}`
+
+where :math:`\hat{V}` is a tensor product of Pauli operators, and :math:`\hat{H}` is a linear combination of any Pauli operator tensor product.
+We define the expected value of the observabley obtained at this time as :math:`\langle r_+ \rangle`.
+
+.. code-block::
+
+    def pq_SPSRgates(gate_pars, s, sign):
+        G = Generator(*gate_pars)
+        # step a)
+        G1 = expm(1j * (1 - s) * G)
+        x = G1.flatten().tolist()
+        cir = pq.matrix_decompose(q, x)
+        m_prog = pq.QProg()
+        m_prog.insert(cir)
+        # step b)
+        G2 = expm(1j * sign * np.pi / 4 * X)
+        x = G2.flatten().tolist()
+        cir = pq.matrix_decompose(q[0], x)
+        m_prog.insert(cir)
+        # step c)
+        G3 = expm(1j * s * G)
+        x = G3.flatten().tolist()
+        cir = pq.matrix_decompose(q, x)
+        m_prog.insert(cir)
+        pauli_dict = {'Z0': 1}
+        exp2 = expval(machine, m_prog, pauli_dict, q)
+        return exp2
+
+Change :math:`\tfrac{\pi}{4}` in the previous step to :math:`-\tfrac{\pi}{4}`,
+Repeat operations a, b, c to obtain observable
+
+The gradient formula calculated by the stochastic parameter shift algorithm is as follows:
+
+ .. math::
+     \mathbb{E}_{s\in\mathcal{U}[0,1]}[\langle r_+ \rangle - \langle r_-\rangle]
+
+In the following figure, the gradient of the parameter :math:`\theta_1` is showed, using the stochastic parameter shift method.
+It can be seen that the observable is expected to 
+conform to the functional form of :math:`\cos(2\theta_1)`; 
+and the gradient is calculated using the random parameter shift method,
+
+Meets :math:`-2\sin(2\theta_1)` , which is exactly the differential of :math:`\cos(2\theta_1)`.
+
+.. code-block::
+
+    theta2, theta3 = -0.15, 1.6
+    angles = np.linspace(0, 2 * np.pi, 50)
+    pos_vals = np.array([[
+        pq_SPSRgates([theta1, theta2, theta3], s=s, sign=+1)
+        for s in np.random.uniform(size=10)
+    ] for theta1 in angles])
+    neg_vals = np.array([[
+        pq_SPSRgates([theta1, theta2, theta3], s=s, sign=-1)
+        for s in np.random.uniform(size=10)
+    ] for theta1 in angles])
+    # Plot the results
+    evals = [pq_demo_circuit([theta1, theta2, theta3]) for theta1 in angles]
+    spsr_vals = (pos_vals - neg_vals).mean(axis=1)
+    plt.plot(angles, evals, 'b', label="Expectation Value")
+    plt.plot(angles, spsr_vals, 'r', label="Stochastic parameter-shift rule")
+    plt.xlabel("theta1")
+    plt.legend()
+    plt.title("VQNet")
+    plt.show()
+
+.. image:: ./images/stochastic_parameter-shift.png
+   :width: 600 px
+   :align: center
+
+|
+
+Doubly Stochastic Gradient Descent
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+In variational quantum algorithms, parameterized quantum circuits are optimized by 
+classical gradient descent to minimize the expected function value.
+Although the expected value can be calculated analytically in classical simulator,
+on quantum hardware the program is limited to sampling from the expected value;
+as the number of samples and the number of shots increase, 
+the expected value obtained in this way will converge to the theoretical expected value,
+but may always be accurate value.
+Sweke et al. found a double stochastic gradient descent method in `the paper <https://arxiv.org/abs/1910.01155>`_.
+In this paper, they show that quantum gradient descent, which uses a finite number of measurement 
+samples (or shots) to estimate gradients, is a form of stochastic gradient descent.
+Furthermore, if the optimization involves a linear combination of 
+expected values (such as VQE), sampling from the terms in that 
+linear combination can further reduce the required time complexity.
+
+VQNet implements an example of this algorithm: solving the ground state energy of the target Hamiltonian using VQE. Note that here we set the number of shots for quantum circuit observations to only 1.
+
+.. math::
+
+    H = \begin{bmatrix}
+          8 & 4 & 0 & -6\\
+          4 & 0 & 4 & 0\\
+          0 & 4 & 8 & 0\\
+          -6 & 0 & 0 & 0
+        \end{bmatrix}.
+
+.. code-block::
+
+    import numpy as np
+    import pyqpanda as pq
+    from pyvqnet.qnn.template import StronglyEntanglingTemplate
+    from pyvqnet.qnn.measure import Hermitian_expval
+    from pyvqnet.qnn import QuantumLayerV2
+    from pyvqnet.optim import SGD
+    import pyvqnet._core as _core
+    from pyvqnet.tensor import QTensor
+    from matplotlib import pyplot as plt
+    num_layers = 2
+    num_wires = 2
+    eta = 0.01
+    steps = 200
+    n = 1
+    param_shape = [2, 2, 3]
+    shots = 1
+    H = np.array([[8, 4, 0, -6], [4, 0, 4, 0], [0, 4, 8, 0], [-6, 0, 0, 0]])
+    init_params = np.random.uniform(low=0,
+                                    high=2 * np.pi,
+                                    size=param_shape)
+    # some basic Pauli matrices
+    I = np.eye(2)
+    X = np.array([[0, 1], [1, 0]])
+    Y = np.array([[0, -1j], [1j, 0]])
+    Z = np.array([[1, 0], [0, -1]])
+
+    def pq_circuit(params):
+        params = params.reshape(param_shape)
+        num_qubits = 2
+        machine = pq.CPUQVM()
+        machine.init_qvm()
+        qubits = machine.qAlloc_many(num_qubits)
+        circuit = StronglyEntanglingTemplate(params, num_qubits=num_qubits)
+        qcir = circuit.create_circuit(qubits)
+        prog = pq.QProg()
+        prog.insert(qcir)
+        machine.directly_run(prog)
+        result = machine.get_qstate()
+        return result
+
+The Hamiltonian in this example is a Hermitian matrix,
+ which we can always represent as a sum of Pauli matrices.
+
+.. math::
+
+    H = \sum_{i,j=0,1,2,3} a_{i,j} (\sigma_i\otimes \sigma_j)
+
+and 
+
+.. math::
+
+    a_{i,j} = \frac{1}{4}\text{tr}[(\sigma_i\otimes \sigma_j )H], ~~ \sigma = \{I, X, Y, Z\}.
+
+Substituting into the above formula, we can see that
+
+.. math::
+
+    H = 4  + 2I\otimes X + 4I \otimes Z - X\otimes X + 5 Y\otimes Y + 2Z\otimes X.
+
+To perform "doubly stochastic" gradient descent, we simply apply the stochastic gradient descent method, but additionally uniformly sample a subset of the Hamiltonian expectation at each optimization step.
+The vqe_func_analytic() function uses parameter shift to calculate theoretical gradients, 
+and vqe_func_shots() uses random sampled values and randomly sampled Hamiltonian 
+expectation subsets for "doubly stochastic" gradient calculations.
+
+.. code-block::
+
+    terms = np.array([
+        2 * np.kron(I, X),
+        4 * np.kron(I, Z),
+        -np.kron(X, X),
+        5 * np.kron(Y, Y),
+        2 * np.kron(Z, X),
+    ])
+    def vqe_func_analytic(input, init_params):
+        qstate = pq_circuit(init_params)
+        expval = Hermitian_expval(H, qstate, [0, 1], 2)
+        return  expval
+    def vqe_func_shots(input, init_params):
+        qstate = pq_circuit(init_params)
+        idx = np.random.choice(np.arange(5), size=n, replace=False)
+        A = np.sum(terms[idx], axis=0)
+        expval = Hermitian_expval(A, qstate, [0, 1], 2, shots)
+        return 4 + (5 / 1) * expval
+
+
+Use VQNet for parameter optimization, and compare the curve of the loss function.
+Since the double stochastic gradient descent method only calculates the partial Pauli 
+operator sum of H each time,
+Therefore, the average value can be used to represent the expected result of the final 
+observation. Here, the moving average moving_average() is used for calculation.
+
+.. code-block::
+
+
+
+    ##############################################################################
+    # Optimizing the circuit using gradient descent via the parameter-shift rule:
+    qlayer_ana = QuantumLayerV2(vqe_func_analytic, 2*2*3 )
+    qlayer_shots = QuantumLayerV2(vqe_func_shots, 2*2*3 )
+    cost_sgd = []
+    cost_dsgd = []
+    temp = _core.Tensor(init_params)
+    _core.vqnet.copyTensor(temp, qlayer_ana.m_para.data)
+    opti_ana = SGD(qlayer_ana.parameters())
+
+    _core.vqnet.copyTensor(temp, qlayer_shots.m_para.data)
+    opti_shots = SGD(qlayer_shots.parameters())
+    
+    for i in range(steps):
+        opti_ana.zero_grad()
+        loss = qlayer_ana(QTensor([[1]]))
+        loss.backward()
+        cost_sgd.append(loss.item())
+        opti_ana._step()
+    for i in range(steps+50):
+        opti_shots.zero_grad()
+        loss = qlayer_shots(QTensor([[1]]))
+        loss.backward()
+        cost_dsgd.append(loss.item())
+        opti_shots._step()
+    def moving_average(data, n=3):
+        ret = np.cumsum(data, dtype=np.float64)
+        ret[n:] = ret[n:] - ret[:-n]
+        return ret[n - 1:] / n
+    ta = moving_average(np.array(cost_dsgd), n=50)
+    ta = ta[:-26]
+    average = np.vstack([np.arange(25, 200),ta ])
+    final_param = qlayer_shots.parameters()[0].to_numpy()
+    print("Doubly stochastic gradient descent min energy = ", vqe_func_analytic(QTensor([1]),final_param))
+    final_param  = qlayer_ana.parameters()[0].to_numpy()
+    print("stochastic gradient descent min energy = ", vqe_func_analytic(QTensor([1]),final_param))
+    plt.plot(cost_sgd, label="Vanilla gradient descent")
+    plt.plot(cost_dsgd, ".", label="Doubly QSGD")
+    plt.plot(average[0], average[1], "--", label="Doubly QSGD (moving average)")
+    plt.ylabel("Cost function value")
+    plt.xlabel("Optimization steps")
+    plt.xlim(-2, 200)
+    plt.legend()
+    plt.show()
+    #Doubly stochastic gradient descent min energy =  -4.337801834749975
+    #stochastic gradient descent min energy =  -4.531484333030544
+.. image:: ./images/dsgd.png
+   :width: 600 px
+   :align: center

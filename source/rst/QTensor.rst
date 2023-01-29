@@ -2150,6 +2150,33 @@ log
 
         # [0.0000000, 0.6931471, 1.0986123]
 
+log_softmax
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. py:function:: pyvqnet.tensor.log_softmax(t, axis=-1)
+    
+    Sequentially calculate the results of the softmax function and the log function on the axis axis.
+
+    :param t: input QTensor .
+    :param axis: The axis used to calculate softmax, the default is -1.
+
+    :return: Output QTensor。
+
+    Example::
+
+        from pyvqnet import tensor
+        output = tensor.arange(1,13).reshape([3,2,2])
+        t = tensor.log_softmax(output,1)
+        print(t)
+        # [
+        # [[-2.1269281, -2.1269281],
+        #  [-0.1269280, -0.1269280]],
+        # [[-2.1269281, -2.1269281],
+        #  [-0.1269280, -0.1269280]],
+        # [[-2.1269281, -2.1269281],
+        #  [-0.1269280, -0.1269280]]
+        # ]
+
 sqrt
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -2191,6 +2218,36 @@ square
         print(x)
 
         # [1.0000000, 4.0000000, 9.0000000]
+
+frobenius_norm
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. py:function:: pyvqnet.tensor.frobenius_norm(t: QTensor, axis: int = None, keepdims=False):
+
+    Computes the F-norm of the tensor on the input QTensor along the axis set by axis ,
+    if axis is None, returns the F-norm of all elements.
+
+    :param t: Inpout QTensor .
+    :param axis: The axis used to find the F norm, the default is None.
+    :param keepdims: Whether the output tensor preserves the reduced dimensionality. The default is False.
+    :return: Output a QTensor or F-norm value.
+
+
+    Example::
+
+        from pyvqnet import tensor,QTensor
+        t = QTensor([[[1., 2., 3.], [4., 5., 6.]], [[7., 8., 9.], [10., 11., 12.]],
+                    [[13., 14., 15.], [16., 17., 18.]]])
+        t.requires_grad = True
+        result = tensor.frobenius_norm(t, -2, False)
+        print(result)
+        # [
+        # [4.1231055, 5.3851647, 6.7082038],
+        #  [12.2065554, 13.6014709, 15.0000000],
+        #  [20.6155281, 22.0227146, 23.4307499]
+        # ]
+
+
 
 Logic Functions
 --------------------------
@@ -3093,6 +3150,41 @@ reshape
         # [6.0000000, 7.0000000, 8.0000000],
         # [9.0000000, 10.0000000, 11.0000000]
         # ]
+
+flip
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. py:function:: pyvqnet.tensor.flip(t, flip_dims)
+    
+    Reverses the QTensor along the specified axis, returning a new tensor.
+
+    :param t: Input QTensor 。
+    :param flip_dims: The axis or list of axes to flip.
+
+    :return: Output QTensor 。
+
+    Example::
+
+        from pyvqnet import tensor
+        t = tensor.arange(1, 3 * 2 *2 * 2 + 1).reshape([3, 2, 2, 2])
+        t.requires_grad = True
+        y = tensor.flip(t, [0, -1])
+        print(y)
+        # [
+        # [[[18.0000000, 17.0000000], 
+        #  [20.0000000, 19.0000000]], 
+        # [[22.0000000, 21.0000000],  
+        #  [24.0000000, 23.0000000]]],
+        # [[[10.0000000, 9.0000000],  
+        #  [12.0000000, 11.0000000]], 
+        # [[14.0000000, 13.0000000],  
+        #  [16.0000000, 15.0000000]]],
+        # [[[2.0000000, 1.0000000],   
+        #  [4.0000000, 3.0000000]],   
+        # [[6.0000000, 5.0000000],    
+        #  [8.0000000, 7.0000000]]]   
+        # ]
+
 
 Utility Functions
 -----------------------------
