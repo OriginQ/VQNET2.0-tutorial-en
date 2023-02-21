@@ -3984,6 +3984,8 @@ We will write a simple example of integrating `pyQPanda <https://pyqpanda-toturi
 Building Hybrid Classical-Quantum Neural Networks
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
+Requires ``gym`` == 0.23.0 , ``pygame`` == 2.1.2 .
+
 .. code-block::
 
 
