@@ -696,6 +696,208 @@ and then the final fully connected result is obtained through the derivation ope
 
 |
 
+grad
+^^^^^^^^^^
+.. py:function:: pyvqnet.qnn.quantumlayer.grad(quantum_prog_func,params)
+
+    The grad function provides an interface to compute the gradient of a user-designed subcircuit with parametric parameters.
+    Users can use pyqpanda to design the line running function ``quantum_prog_func`` according to the following example, and send it as a parameter to the grad function.
+    The second parameter of the grad function is the coordinates at which you want to calculate the gradient of the quantum logic gate parameters.
+    The return value has shape [num of parameters,num of output].
+
+    :param quantum_prog_func: The quantum circuit operation function designed by pyqpanda.
+    :param params: The coordinates of the parameters whose gradient is to be obtained.
+    :return:
+            gradient of parameters
+
+    Examples::
+
+        from pyvqnet.qnn import grad, ProbsMeasure
+        import pyqpanda as pq
+
+        def pqctest(param):
+            machine = pq.CPUQVM()
+            machine.init_qvm()
+            qubits = machine.qAlloc_many(2)
+            circuit = pq.QCircuit()
+
+            circuit.insert(pq.RX(qubits[0], param[0]))
+
+            circuit.insert(pq.RY(qubits[1], param[1]))
+            circuit.insert(pq.CNOT(qubits[0], qubits[1]))
+
+            circuit.insert(pq.RX(qubits[1], param[2]))
+
+            prog = pq.QProg()
+            prog.insert(circuit)
+
+            EXP = ProbsMeasure([1],prog,machine,qubits)
+            return EXP
+
+
+        g = grad(pqctest, [0.1,0.2, 0.3])
+        print(g)
+        # [[-0.04673668  0.04673668]
+        # [-0.09442394  0.09442394]
+        # [-0.14409127  0.14409127]]
+
+
+MNIST_Dataset
+^^^^^^^^^^^^^^^^^
+
+.. py:class:: pyvqnet.data.MNIST_Dataset(mode: str,encoding: str,num_qubits: int,classes: list,data_num=-1,target_dimension=-1,need_cropping=True,need_relabel=True,seed=0,tmp_data_dir="./tmp")
+
+    The MNIST data is encoded using the quantum encoding method, and use quantum state data to build a dataset.
+
+    :param mode: Data mode including ``train`` and ``test``.
+    :param encoding: which support encoding methods: ``angle_encoding_rx`` , ``angle_encoding_ry`` , ``angle_encoding_rz`` , ``amplitude_encoding`` , ``strongly_entangling_encoding`` , ``basic_entangler_encoding_rx`` , ``basic_entangler_encoding_ry`` , ``basic_entangler_encoding_rz`` , ``IQP_encoding`` .
+    :param num_qubits: Qubit number.
+    :param classes: Classes needed to classify, categories are indicated by numeric labels.
+    :param data_num: select specific data number from dataset,default:-1.
+    :param target_dimension:  The dimension after downscaling, which is not allowed to surpass the figure size. Defaults to ``-1``.
+    :param need_cropping: Whether needed to crop, If ``True``, ``image[0:27][0:27]`` will be cropped to ``image[4:24][4:24]``. Defaults to ``True``.
+    :param need_relabel: Whether we need to relabel the labels to 0,1,2… for binary classification.For example [1,2] will be relabeled to [0,1] Defaults to ``True``.
+    :param seed: Select random seed. Defaults to ``0``.
+    :param tmp_data_dir: download data files directory. default: "./tmp".
+
+    Examples::
+
+        from pyvqnet.data import MNIST_Dataset
+        # encoding methods
+        RX_ANGLE_ENCODING = "angle_encoding_rx"
+        RY_ANGLE_ENCODING = "angle_encoding_ry"
+        RZ_ANGLE_ENCODING = "angle_encoding_rz"
+        AMPLITUDE_ENCODING = "amplitude_encoding"
+        StronglyEntanglingEncoding = "strongly_entangling_encoding"
+        RX_BasicEntanglerEncoding = "basic_entangler_encoding_rx"
+        RY_BasicEntanglerEncoding = "basic_entangler_encoding_ry"
+        RZ_BasicEntanglerEncoding = "basic_entangler_encoding_rz"
+        IQP_ENCODING = "IQP_encoding"
+
+        for m in ("TRAIN", "TEST"):
+            for encoding in [
+                    IQP_ENCODING, StronglyEntanglingEncoding,
+                    RX_BasicEntanglerEncoding, RY_BasicEntanglerEncoding,
+                    RZ_BasicEntanglerEncoding
+            ]:
+                nqubits =3
+                dim = 4 #resize ->2*2
+
+                print(
+                    f"nqubits {nqubits} dim {dim} encoding {encoding}")
+                qd = MNIST_Dataset(m, encoding, nqubits, [2, 4], 5,
+                                    dim)
+
+                print(len(qd.quantum_data))
+                print(qd.quantum_data[0].shape)
+        #nqubits 3 dim 4 encoding IQP_encoding
+        # 5
+        # (8,)
+        # nqubits 3 dim 4 encoding strongly_entangling_encoding
+        # 5
+        # (8,)
+        # nqubits 3 dim 4 encoding basic_entangler_encoding_rx
+        # 5
+        # (8,)
+        # nqubits 3 dim 4 encoding basic_entangler_encoding_ry
+        # 5
+        # (8,)
+        # nqubits 3 dim 4 encoding basic_entangler_encoding_rz
+        # 5
+        # (8,)
+        # nqubits 3 dim 4 encoding IQP_encoding
+        # 5
+        # (8,)
+        # nqubits 3 dim 4 encoding strongly_entangling_encoding
+        # 5
+        # (8,)
+        # nqubits 3 dim 4 encoding basic_entangler_encoding_rx
+        # 5
+        # (8,)
+        # nqubits 3 dim 4 encoding basic_entangler_encoding_ry
+        # 5
+        # (8,)
+        # nqubits 3 dim 4 encoding basic_entangler_encoding_rz
+        # 5
+        # (8,)
+
+CIFAR10_Dataset
+^^^^^^^^^^^^^^^^^
+
+.. py:class:: pyvqnet.data.CIFAR10_Dataset(mode: str,encoding: str,num_qubits: int,classes: list,data_num=-1,target_dimension=-1,need_relabel=True,seed=0,tmp_data_dir="./tmp")
+
+    Build `CIFAR10 <https://www.cs.toronto.edu/~kriz/cifar.html>`_ quantum Dataset.
+
+    :param mode: Data mode including ``train`` and ``test``.
+    :param encoding: which support encoding methods: ``angle_encoding_rx`` , ``angle_encoding_ry`` , ``angle_encoding_rz`` , ``amplitude_encoding`` , ``strongly_entangling_encoding`` , ``basic_entangler_encoding_rx`` , ``basic_entangler_encoding_ry`` , ``basic_entangler_encoding_rz`` , ``IQP_encoding`` .
+    :param num_qubits: Qubit number.
+    :param classes: Classes needed to classify, categories are indicated by numeric labels.
+    :param data_num: select specific data number from dataset,default:-1.
+    :param target_dimension:  The dimension after downscaling, which is not allowed to surpass the figure size. Defaults to ``-1``.
+    :param need_relabel: Whether we need to relabel the labels to 0,1,2… for binary classification.For example [1,2] will be relabeled to [0,1] Defaults to ``True``.
+    :param seed: Select random seed. Defaults to ``0``.
+    :param tmp_data_dir: download data files directory. default: "./tmp".
+
+    Examples::
+
+        from pyvqnet.data import MNIST_Dataset,CIFAR10_Dataset
+        # encoding methods
+        RX_ANGLE_ENCODING = "angle_encoding_rx"
+        RY_ANGLE_ENCODING = "angle_encoding_ry"
+        RZ_ANGLE_ENCODING = "angle_encoding_rz"
+        AMPLITUDE_ENCODING = "amplitude_encoding"
+        StronglyEntanglingEncoding = "strongly_entangling_encoding"
+        RX_BasicEntanglerEncoding = "basic_entangler_encoding_rx"
+        RY_BasicEntanglerEncoding = "basic_entangler_encoding_ry"
+        RZ_BasicEntanglerEncoding = "basic_entangler_encoding_rz"
+        IQP_ENCODING = "IQP_encoding"
+
+        for m in ("TRAIN", "TEST"):
+            for encoding in [
+                    IQP_ENCODING, StronglyEntanglingEncoding,
+                    RX_BasicEntanglerEncoding, RY_BasicEntanglerEncoding,
+                    RZ_BasicEntanglerEncoding
+            ]:
+                nqubits =3
+                dim = 4 #resize ->2*2
+
+                print(
+                    f"nqubits {nqubits} dim {dim} encoding {encoding}")
+                qd = CIFAR10_Dataset(m, encoding, nqubits, [2, 4], 5, dim)
+
+                print(len(qd.quantum_data))
+                print(qd.quantum_data[0].shape)
+        # nqubits 3 dim 4 encoding IQP_encoding
+        # 5
+        # (8,)
+        # nqubits 3 dim 4 encoding strongly_entangling_encoding
+        # 5
+        # (8,)
+        # nqubits 3 dim 4 encoding basic_entangler_encoding_rx
+        # 5
+        # (8,)
+        # nqubits 3 dim 4 encoding basic_entangler_encoding_ry
+        # 5
+        # (8,)
+        # nqubits 3 dim 4 encoding basic_entangler_encoding_rz
+        # 5
+        # (8,)
+        # nqubits 3 dim 4 encoding IQP_encoding
+        # 5
+        # (8,)
+        # nqubits 3 dim 4 encoding strongly_entangling_encoding
+        # 5
+        # (8,)
+        # nqubits 3 dim 4 encoding basic_entangler_encoding_rx
+        # 5
+        # (8,)
+        # nqubits 3 dim 4 encoding basic_entangler_encoding_ry
+        # 5
+        # (8,)
+        # nqubits 3 dim 4 encoding basic_entangler_encoding_rz
+        # 5
+        # (8,)
+
 Quantum gate
 ----------------------------------
 
@@ -993,6 +1195,285 @@ CSWAPcircuit
         #           │
         # q_2:  |0>─X─
 
+
+Controlled_Hadamard
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. py:function:: pyvqnet.qnn.template.Controlled_Hadamard(qubits)
+
+    Controlled Hadamard logic gates.
+
+    .. math:: CH = \begin{bmatrix}
+            1 & 0 & 0 & 0 \\
+            0 & 1 & 0 & 0 \\
+            0 & 0 & \frac{1}{\sqrt{2}} & \frac{1}{\sqrt{2}} \\
+            0 & 0 & \frac{1}{\sqrt{2}} & -\frac{1}{\sqrt{2}}
+        \end{bmatrix}.
+
+    :param qubits: Qubits requested using pyqpanda.
+
+    Examples::
+
+        import pyqpanda as pq
+
+        machine = pq.CPUQVM()
+        machine.init_qvm()
+        qubits = machine.qAlloc_many(2)
+        from pyvqnet.qnn import Controlled_Hadamard
+
+        cir = Controlled_Hadamard(qubits)
+        print(cir)
+        # q_0:  |0>──────────────── ──■─ ──────────────
+        #           ┌─────────────┐ ┌─┴┐ ┌────────────┐
+        # q_1:  |0>─┤RY(-0.785398)├ ┤CZ├ ┤RY(0.785398)├
+        #           └─────────────┘ └──┘ └────────────┘
+
+CCZ
+^^^^^^^^^^^^^^^^
+
+.. py:function:: pyvqnet.qnn.template.CCZ(qubits)
+
+    Controlled-controlled-Z (controlled-controlled-Z) logic gate.
+
+    .. math::
+        CCZ =
+        \begin{pmatrix}
+        1 & 0 & 0 & 0 & 0 & 0 & 0 & 0\\
+        0 & 1 & 0 & 0 & 0 & 0 & 0 & 0\\
+        0 & 0 & 1 & 0 & 0 & 0 & 0 & 0\\
+        0 & 0 & 0 & 1 & 0 & 0 & 0 & 0\\
+        0 & 0 & 0 & 0 & 1 & 0 & 0 & 0\\
+        0 & 0 & 0 & 0 & 0 & 1 & 0 & 0\\
+        0 & 0 & 0 & 0 & 0 & 0 & 1 & 0\\
+        0 & 0 & 0 & 0 & 0 & 0 & 0 & -1
+        \end{pmatrix}
+    
+    :param qubits: Qubits requested using pyqpanda.
+
+    :return:
+            pyqpanda QCircuit 
+
+    Example::
+
+        import pyqpanda as pq
+
+        machine = pq.CPUQVM()
+        machine.init_qvm()
+        qubits = machine.qAlloc_many(3)
+        from pyvqnet.qnn import CCZ
+
+        cir = CCZ(qubits)
+        print(cir)
+        # q_0:  |0>─────── ─────── ───■── ─── ────── ─────── ───■── ───■── ┤T├──── ───■──
+        #                             │              ┌─┐        │   ┌──┴─┐ ├─┴───┐ ┌──┴─┐
+        # q_1:  |0>────■── ─────── ───┼── ─── ───■── ┤T├──── ───┼── ┤CNOT├ ┤T.dag├ ┤CNOT├
+        #           ┌──┴─┐ ┌─────┐ ┌──┴─┐ ┌─┐ ┌──┴─┐ ├─┴───┐ ┌──┴─┐ ├─┬──┘ ├─┬───┘ ├─┬──┘
+        # q_2:  |0>─┤CNOT├ ┤T.dag├ ┤CNOT├ ┤T├ ┤CNOT├ ┤T.dag├ ┤CNOT├ ┤T├─── ┤H├──── ┤H├───
+        #           └────┘ └─────┘ └────┘ └─┘ └────┘ └─────┘ └────┘ └─┘    └─┘     └─┘
+
+FermionicSingleExcitation
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. py:function:: pyvqnet.qnn.template.FermionicSingleExcitation(weight, wires, qubits)
+    
+    A coupled cluster single-excitation operator for exponentiating the tensor product of a Pauli matrix. The matrix form is given by:
+
+    .. math::
+        \hat{U}_{pr}(\theta) = \mathrm{exp} \{ \theta_{pr} (\hat{c}_p^\dagger \hat{c}_r
+        -\mathrm{H.c.}) \}
+
+    :param weight: Variable parameter on qubit p.
+    :param wires: Indicates a subset of qubit indices in the interval [r, p]. Minimum length must be 2. The first index value is interpreted as r and the last index value as p.
+                 The intermediate index is acted on by the CNOT gate to calculate the parity of the qubit set.
+    :param qubits: Qubits applied by pyqpanda.
+
+    Examples::
+
+        from pyvqnet.qnn import FermionicSingleExcitation, expval
+
+        weight = 0.5
+        import pyqpanda as pq
+        machine = pq.CPUQVM()
+        machine.init_qvm()
+        qlists = machine.qAlloc_many(3)
+
+        cir = FermionicSingleExcitation(weight, [1, 0, 2], qlists)
+
+        prog = pq.QProg()
+        prog.insert(cir)
+        pauli_dict = {'Z0': 1}
+        exp2 = expval(machine, prog, pauli_dict, qlists)
+        print(f"vqnet {exp2}")
+        #vqnet 1.0000000000000013
+
+
+FermionicDoubleExcitation
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. py:function:: pyvqnet.qnn.template.FermionicDoubleExcitation(weight,  wires1, wires2, qubits)
+    
+    The coupled clustering dual excitation operator that exponentiates the tensor product of the Pauli matrix, the matrix form is given by:
+
+    .. math::
+        \hat{U}_{pqrs}(\theta) = \mathrm{exp} \{ \theta (\hat{c}_p^\dagger \hat{c}_q^\dagger
+        \hat{c}_r \hat{c}_s - \mathrm{H.c.}) \}
+
+    where :math:`\hat{c}` and :math:`\hat{c}^\dagger` are the fermion annihilation and
+    Create operators and indices :math:`r, s` and :math:`p, q` in the occupied and
+    are empty molecular orbitals, respectively. Use the `Jordan-Wigner transformation <https://arxiv.org/abs/1208.5986>`_
+    The fermion operator defined above can be written as
+    According to the Pauli matrix (for more details, see `arXiv:1805.04340 <https://arxiv.org/abs/1805.04340>`_)
+
+    .. math::
+
+        \hat{U}_{pqrs}(\theta) = \mathrm{exp} \Big\{
+        \frac{i\theta}{8} \bigotimes_{b=s+1}^{r-1} \hat{Z}_b \bigotimes_{a=q+1}^{p-1}
+        \hat{Z}_a (\hat{X}_s \hat{X}_r \hat{Y}_q \hat{X}_p +
+        \hat{Y}_s \hat{X}_r \hat{Y}_q \hat{Y}_p +\\ \hat{X}_s \hat{Y}_r \hat{Y}_q \hat{Y}_p +
+        \hat{X}_s \hat{X}_r \hat{X}_q \hat{Y}_p - \mathrm{H.c.}  ) \Big\}
+    
+    :param weight: variable parameter
+    :param wires1: The index list of the represented qubits occupies a subset of qubits in the interval [s, r]. The first index is interpreted as s, the last as r. CNOT gates operate on intermediate indices to compute the parity of a set of qubits.
+    :param wires2: The index list of the represented qubits occupies a subset of qubits in the interval [q, p]. The first index is interpreted as q, the last as p. CNOT gates operate on intermediate indices to compute the parity of a set of qubits.
+    :param qubits: Qubits applied by pyqpanda.
+    :return:
+        pyqpanda QCircuit
+
+    Examples::
+
+        import pyqpanda as pq
+        from pyvqnet.qnn import FermionicDoubleExcitation, expval
+        machine = pq.CPUQVM()
+        machine.init_qvm()
+        qlists = machine.qAlloc_many(5)
+        weight = 1.5
+        cir = FermionicDoubleExcitation(weight,
+                                        wires1=[0, 1],
+                                        wires2=[2, 3, 4],
+                                        qubits=qlists)
+
+        prog = pq.QProg()
+        prog.insert(cir)
+        pauli_dict = {'Z0': 1}
+        exp2 = expval(machine, prog, pauli_dict, qlists)
+        print(f"vqnet {exp2}")
+        #vqnet 1.0000000000000058
+
+UCCSD
+^^^^^^^^^^^^^
+
+.. py:function:: pyvqnet.qnn.template.UCCSD(weights, wires, s_wires, d_wires, init_state, qubits)
+
+    Realize the unitary coupled cluster single-excitation and double-excitation design (UCCSD). UCCSD is the proposed VQE design, commonly used to run quantum chemistry simulations.
+
+    Within the first-order Trotter approximation, the UCCSD unitary function is given by:
+
+    .. math::
+        \hat{U}(\vec{\theta}) =
+        \prod_{p > r} \mathrm{exp} \Big\{\theta_{pr}
+        (\hat{c}_p^\dagger \hat{c}_r-\mathrm{H.c.}) \Big\}
+        \prod_{p > q > r > s} \mathrm{exp} \Big\{\theta_{pqrs}
+        (\hat{c}_p^\dagger \hat{c}_q^\dagger \hat{c}_r \hat{c}_s-\mathrm{H.c.}) \Big\}
+
+    where :math:`\hat{c}` and :math:`\hat{c}^\dagger` are the fermion annihilation and
+    Create operators and indices :math:`r, s` and :math:`p, q` in the occupied and
+    are empty molecular orbitals, respectively. (For more details see `arXiv:1805.04340 <https://arxiv.org/abs/1805.04340>`_):
+
+
+    :param weights: ``(len(s_wires)+ len(d_wires))`` tensor containing the size of the parameters
+         :math:`\theta_{pr}` and :math:`\theta_{pqrs}` input Z rotation
+         ``FermionicSingleExcitation`` and ``FermionicDoubleExcitation``.
+    :param wires: qubit index for template action
+    :param s_wires: sequence of lists containing qubit indices ``[r,...,p]``
+         produced by a single excitation
+         :math:`\vert r, p \rangle = \hat{c}_p^\dagger \hat{c}_r \vert \mathrm{HF} \rangle`,
+         where :math:`\vert \mathrm{HF} \rangle` denotes the Hartee-Fock reference state.
+    :param d_wires: list sequence, each list contains two lists
+         specify indices ``[s, ...,r]`` and ``[q,...,p]``
+         Define double excitation :math:`\vert s, r, q, p \rangle = \hat{c}_p^\dagger \hat{c}_q^\dagger \hat{c}_r\hat{c}_s \ vert \mathrm{HF} \rangle`.
+    :param init_state: length ``len(wires)`` occupation-number vector representation
+         high frequency state. ``init_state`` is the qubit initialization state.
+    :param qubits: Qubits allocated by pyqpanda.
+
+    Examples::
+
+        import pyqpanda as pq
+        from pyvqnet.tensor import tensor
+        from pyvqnet.qnn import UCCSD, expval
+        machine = pq.CPUQVM()
+        machine.init_qvm()
+        qlists = machine.qAlloc_many(6)
+        weight = tensor.zeros([8])
+        cir = UCCSD(weight,wires = [0,1,2,3,4,5,6],
+                                        s_wires=[[0, 1, 2], [0, 1, 2, 3, 4], [1, 2, 3], [1, 2, 3, 4, 5]],
+                                        d_wires=[[[0, 1], [2, 3]], [[0, 1], [2, 3, 4, 5]], [[0, 1], [3, 4]], [[0, 1], [4, 5]]],
+                                        init_state=[1, 1, 0, 0, 0, 0],
+                                        qubits=qlists)
+
+        prog = pq.QProg()
+        prog.insert(cir)
+        pauli_dict = {'Z0': 1}
+        exp2 = expval(machine, prog, pauli_dict, qlists)
+        print(f"vqnet {exp2}")
+        #vqnet -1.0000000000000004
+
+
+QuantumPoolingCircuit
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. py:function:: pyvqnet.qnn.template.QuantumPoolingCircuit(sources_wires, sinks_wires, params,qubits)
+    
+    A quantum circuit that downsamples data.
+    To reduce the number of qubits in our circuit, we first create pairs of qubits in our system.
+    After initially pairing all qubits, we apply our generalized 2-qubit unitary to each pair.
+    After applying the two-qubit unitary, we ignore one qubit in each pair of qubits for the rest of the neural network.
+
+    :param sources_wires: Source qubit indices that will be ignored.
+    :param sinks_wires: Destination qubit indices that will be kept.
+    :param params: Input parameters.
+    :param qubits: list of qubits allocated by pyqpanda.
+
+    :return:
+        pyqpanda QCircuit
+
+    Examples:: 
+
+        from pyvqnet.qnn import QuantumPoolingCircuit
+        import pyqpanda as pq
+        from pyvqnet import tensor
+        machine = pq.CPUQVM()
+        machine.init_qvm()
+        qlists = machine.qAlloc_many(4)
+        p = tensor.full([6], 0.35)
+        cir = QuantumPoolingCircuit([0, 1], [2, 3], p, qlists)
+        print(cir)
+
+        #                           ┌────┐ ┌────────────┐                           !
+        # >
+        # q_0:  |0>──────────────── ┤CNOT├ ┤RZ(0.350000)├ ───■── ────────────── ────! ─────────────── ────── ────────────── 
+        # >
+        #                           └──┬─┘ └────────────┘    │                      !                 ┌────┐ ┌────────────┐ 
+        # >
+        # q_1:  |0>──────────────── ───┼── ────────────── ───┼── ────────────── ────! ─────────────── ┤CNOT├ ┤RZ(0.350000)├ 
+        # >
+        #           ┌─────────────┐    │   ┌────────────┐ ┌──┴─┐ ┌────────────┐     !                 └──┬─┘ └────────────┘ 
+        # >
+        # q_2:  |0>─┤RZ(-1.570796)├ ───■── ┤RY(0.350000)├ ┤CNOT├ ┤RY(0.350000)├ ────! ─────────────── ───┼── ────────────── 
+        # >
+        #           └─────────────┘        └────────────┘ └────┘ └────────────┘     ! ┌─────────────┐    │   ┌────────────┐ 
+        # >
+        # q_3:  |0>──────────────── ────── ────────────── ────── ────────────── ────! ┤RZ(-1.570796)├ ───■── ┤RY(0.350000)├ 
+        # >
+        #                                                                           ! └─────────────┘        └────────────┘ 
+        # >
+        #                                    !
+        # q_0:  |0>────── ────────────── ────!
+        #                                    !
+        # q_1:  |0>───■── ────────────── ────!
+        #             │                      !
+        # q_2:  |0>───┼── ────────────── ────!
+        #          ┌──┴─┐ ┌────────────┐     !
+        # q_3:  |0>┤CNOT├ ┤RY(0.350000)├ ────!
 
 
 Commonly used quantum circuits
@@ -1432,86 +1913,42 @@ VarMeasure
         # 0.2298488470659339
 
 
+Purity
+^^^^^^^^^^^^^^^^^^^^
 
+.. py:function:: pyvqnet.qnn.measure.Purity(state, qubits_idx)
+
+    Calculate the purity on a particular qubit from the state vector.
+
+    .. math::
+        \gamma = \text{Tr}(\rho^2)
+
+    where :math:`\rho` is a density matrix. The purity of a normalized
+    quantum state satisfies :math:`\frac{1}{d} \leq \gamma \leq 1` ,
+    where :math:`d` is the dimension of the Hilbert space.
+    The purity of the pure state is 1.
+
+    :param state: Quantum state obtained from pyqpanda get_qstate()
+    :param qubits_idx: index of qubits whose purity is to be calculated
+
+    :return:
+        purity
+
+    Examples::
+
+        from pyvqnet.qnn import Purity
+        qstate = [(0.9306699299765968 + 0j), (0.18865613455240968 + 0j),
+                (0.1886561345524097 + 0j), (0.03824249173404786 + 0j),
+                -0.048171819846746615j, -0.00976491131165138j, -0.23763904794287155j,
+                -0.048171819846746615j]
+        pp = Purity(qstate, [1])
+        print(pp)
+        #0.902503479761881
 
 
 
 Quantum Machine Learning Algorithm Interface
 -------------------------------------------------
-
-Quantum Perceptron
-^^^^^^^^^^^^^^^^^^^^^
-
-Artificial neural networks are the heart of machine learning algorithms and artificial intelligence protocols. Historically, the simplest implementation of an artificial neuron traces back to the classical Rosenblatt's `perceptron`, but its long term practical applications may be hindered by the fast scaling up of computational complexity, especially relevant for the training of multilayered perceptron networks.
-Here we refer to the paper `An Artificial Neuron Implemented on an Actual Quantum Processor <https://arxiv.org/abs/1811.02266>`__ introduce a quantum information-based algorithm implementing the quantum computer version of a perceptron, which shows exponential advantage in encoding resources over alternative realizations.
-
-For this quantum perceptron, the data processed is a string of 0 1 binary bits. The goal is to identify patterns that are shaped like a w cross as shown in the figure below.
-
-.. image:: ./images/QP-data.png
-   :width: 600 px
-   :align: center
-
-|
-
-It is encoded using a binary bit string, where black is 0 and white is 1, so that w is encoded as (1, 1, 1, 1, 1, 1, 0, 1, 1, 0, 0, 0, 1, 1, 0, 1). A total of 16-bit strings can be encoded into the sign of the amplitude of the 4-bit quantum state. The sign is 0 for negative numbers, and 1 for positive numbers. Through the above encoding method, our algorithm input is converted into a 16-bit binary string. Such non-repetitive binary strings can respectively correspond to specific input :math:`U_i` .
-
-The circuit structure of the quantum perceptron proposed in this paper is as follows:
-
-.. image:: ./images/QP-cir.png
-   :width: 600 px
-   :align: center
-
-|
-
-The coding circuit :math:`U_i` is constructed on bits 0~3, including multiple controlled :math:`CZ` , :math:`CNOT` gates, and :math:`H` gates; the weight conversion circuit :math:`U_w` is constructed immediately after :math:`U_i` , which is also composed of controlled gates and :math:`H` gates. :math:`U_i` can be used to perform unitary matrix transformations to encode data into quantum states:
-
-.. math::
-    U_i|0\rangle^{\otimes N}=\left|\psi_i\right\rangle
-
-Use the unitary matrix transformation :math:`U_w` to compute the inner product between the input and the weights:
-
-.. math::
-    U_w\left|\psi_i\right\rangle=\sum_{j=0}^{m-1} c_j|j\rangle \equiv\left|\phi_{i, w}\right\rangle
-
-The normalized activation probability values for :math:`U_i` and :math:`U_w` can be obtained by using a multi-controlled NOT gate with target bits on auxiliary bits, and using some subsequent :math:`H` gates, :math:`X` gates, and :math:`CX` gates as activation functions:
-
-.. math::
-    \left|\phi_{i, w}\right\rangle|0\rangle_a \rightarrow \sum_{j=0}^{m-2} c_j|j\rangle|0\rangle_a+c_{m-1}|m-1\rangle|1\rangle_a
-
-When the binary string of the input i is exactly the same as w, the normalized probability value should be the largest.
-
-VQNet provides the ``QuantumNeuron`` module to implement this algorithm. First initialize a quantum perceptron ``QuantumNeuron``.
-
-.. code-block::
-
-    perceptron = QuantumNeuron()
-
-Use the ``gen_4bitstring_data`` interface to generate various data in the paper and its category labels.
-
-.. code-block::
-
-    training_label, test_label = perceptron.gen_4bitstring_data()
-
-Using the ``train`` interface to traverse all the data, you can get the last trained quantum perceptron circuit :math:`U_w`.
-
-.. code-block::
-
-    trained_para = perceptron.train(training_label, test_label)
-
-.. image:: ./images/QP-pic.png
-   :width: 600 px
-   :align: center
-
-|
-
-On the test data, the accuracy results on the test data can be obtained
-
-.. image:: ./images/QP-acc.png
-   :width: 600 px
-   :align: center
-
-|
-
 
 Quantum Generative Adversarial Networks for learning and loading random distributions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -1736,11 +2173,18 @@ Simultaneous Perturbation Stochastic Approximation optimizers
 
     Example::
 
-
-        from pyvqnet.qnn import AngleEmbeddingCircuit, expval, QuantumLayerV2, SPSA
-        from pyvqnet.qnn.template import BasicEntanglerTemplate
+        import numpy as np
         import pyqpanda as pq
+
+        import sys
+        sys.path.insert(0, "../")
+        import pyvqnet
+
         from pyvqnet.nn.module import Module
+        from pyvqnet.qnn import SPSA
+        from pyvqnet.tensor.tensor import QTensor
+        from pyvqnet.qnn import AngleEmbeddingCircuit, expval, QuantumLayerV2, expval
+        from pyvqnet.qnn.template import BasicEntanglerTemplate
 
         class Model_spsa(Module):
             def __init__(self):
@@ -1852,507 +2296,8 @@ Simultaneous Perturbation Stochastic Approximation optimizers
         print(y)
 
 
-Quantum Nature Gradient
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-Quantum machine learning models generally use the gradient descent method to optimize parameters in variable quantum logic circuits. The formula of the classic gradient descent method is as follows:
 
-.. math:: \theta_{t+1} = \theta_t -\eta \nabla \mathcal{L}(\theta),
 
-Essentially, at each iteration, we will calculate the direction of the steepest gradient drop in the parameter space as the direction of parameter change.
-In any direction in space, the speed of descent in the local range is not as fast as that of the negative gradient direction.
-In different spaces, the derivation of the direction of steepest descent is dependent on the norm of parameter differentiation - the distance metric. The distance metric plays a central role here,
-Different metrics result in different directions of steepest descent. For the Euclidean space where the parameters in the classical optimization problem are located, the direction of the steepest descent is the direction of the negative gradient.
-Even so, at each step of parameter optimization, as the loss function changes with parameters, its parameter space is transformed. Make it possible to find another better distance norm.
 
-`Quantum natural gradient method <https://arxiv.org/abs/1909.02108>`_ draws on concepts from `classical natural gradient method Amari <https://www.mitpressjournals.org/doi/abs/10.1162/089976698300017746>`__ ,
-We instead view the optimization problem as a probability distribution of possible output values for a given input (i.e., maximum likelihood estimation), a better approach is in the distribution
-Gradient descent is performed in the space, which is dimensionless and invariant with respect to the parameterization. Therefore, regardless of the parameterization, each optimization step will always choose the optimal step size for each parameter.
-In quantum machine learning tasks, the quantum state space has a unique invariant metric tensor called the Fubini-Study metric tensor :math:`g_{ij}`.
-This tensor converts the steepest descent in the quantum circuit parameter space to the steepest descent in the distribution space.
-The formula for the quantum natural gradient is as follows:
 
-.. math:: \theta_{t+1} = \theta_t - \eta g^{+}(\theta_t)\nabla \mathcal{L}(\theta),
 
-where :math:`g^{+}` is the pseudo-inverse.
-
-The following is an example of quantum natural gradient optimization of a quantum variational circuit parameter based on VQNet. It can be seen that the use of quantum natural gradient (Quantum Nature Gradient) makes some loss functions decline faster.
-
-Our goal is to minimize the expectation of the following quantum variational circuit. It can be seen that there are two layers of 3 quantum parametric logic gates in total. The first layer is composed of RZ and RY logic gates on bits 0 and 1, 
-and the second layer is composed of RX logic gate on 2 bits constitutes.
-
-.. image:: ./images/qng_all_cir.png
-   :width: 600 px
-   :align: center
-
-|
-
-.. code-block::
-
-    import pyqpanda as pq
-    import numpy as np
-    from pyvqnet.tensor import QTensor
-    from pyvqnet.qnn.measure import expval, ProbsMeasure
-    from pyvqnet.qnn import insert_pauli_for_mt, get_metric_tensor, QNG,QuantumLayer
-    import matplotlib.pyplot as plt
-    from pyvqnet.optim import SGD
-    from pyvqnet import _core
-    ###################################################
-    # Quantum Nature Gradients Examples
-    ###################################################
-    class pyqpanda_config_wrapper:
-        """
-        A wrapper for pyqpanda config,including QVM machine, allocated qubits, classic bits.
-        """
-        def __init__(self, qubits_num) -> None:
-            self._machine = pq.CPUQVM()
-            self._machine.init_qvm()
-            self._qubits = self._machine.qAlloc_many(qubits_num)
-            self._cubits = self._machine.cAlloc_many(qubits_num)
-            self._qcir = pq.QCircuit()
-        def __del__(self):
-            self._machine.finalize()
-    # use quantum nature gradient optimzer to optimize circuit quantum_net
-    steps = 200
-    def quantum_net(
-            q_input_features,
-            params,
-            qubits,
-            cubits,
-            machine):
-        qcir = pq.QCircuit()
-        qcir.insert(pq.RY(qubits[0], np.pi / 4))
-        qcir.insert(pq.RY(qubits[1], np.pi / 3))
-        qcir.insert(pq.RY(qubits[2], np.pi / 7))
-        qcir.insert(pq.RZ(qubits[0], params[0]))
-        qcir.insert(pq.RY(qubits[1], params[1]))
-        qcir.insert(pq.CNOT(qubits[0], qubits[1]))
-        qcir.insert(pq.CNOT(qubits[1], qubits[2]))
-        qcir.insert(pq.RX(qubits[2], params[2]))
-        qcir.insert(pq.CNOT(qubits[0], qubits[1]))
-        qcir.insert(pq.CNOT(qubits[1], qubits[2]))
-        m_prog = pq.QProg()
-        m_prog.insert(qcir)
-        return expval(machine, m_prog, {'Y0': 1}, qubits)
-
-To use the quantum natural gradient algorithm, we first need to compute the metric tensor.
-According to the definition of the algorithm, we manually defined the following two sub-circuits to calculate the Fubini-Study tensor of the two-layer circuit with parameters.
-The first parameter layer calculates the sub-circuit of the metric tensor as follows:
-
-.. image:: ./images/qng_subcir1.png
-   :width: 600 px
-   :align: center
-
-|
-
-.. code-block::
-
-    def layer0_subcircuit(config: pyqpanda_config_wrapper, params):
-        qcir = pq.QCircuit()
-        qcir.insert(pq.RY(config._qubits[0], np.pi / 4))
-        qcir.insert(pq.RY(config._qubits[1], np.pi / 3))
-        return qcir
-    def get_p01_diagonal_(config, params, target_gate_type, target_gate_bits,
-                            wires):
-        qcir = layer0_subcircuit(config, params)
-        qcir2 = insert_pauli_for_mt(config._qubits, target_gate_type,
-                                    target_gate_bits)
-        qcir3 = pq.QCircuit()
-        qcir3.insert(qcir)
-        qcir3.insert(qcir2)
-        m_prog = pq.QProg()
-        m_prog.insert(qcir3)
-        return ProbsMeasure(wires, m_prog, config._machine, config._qubits)
-
-The sub-circuit for computing the metric tensor in the second parameter layer is as follows:
-
-.. image:: ./images/qng_subcir2.png
-   :width: 600 px
-   :align: center
-
-|
-
-.. code-block::
-
-    def layer1_subcircuit(config: pyqpanda_config_wrapper, params):
-        qcir = pq.QCircuit()
-        qcir.insert(pq.RY(config._qubits[0], np.pi / 4))
-        qcir.insert(pq.RY(config._qubits[1], np.pi / 3))
-        qcir.insert(pq.RY(config._qubits[2], np.pi / 7))
-        qcir.insert(pq.RZ(config._qubits[0], params[0]))
-        qcir.insert(pq.RY(config._qubits[1], params[1]))
-        qcir.insert(pq.CNOT(config._qubits[0], config._qubits[1]))
-        qcir.insert(pq.CNOT(config._qubits[1], config._qubits[2]))
-        return qcir
-    def get_p1_diagonal_(config, params, target_gate_type, target_gate_bits,
-                            wires):
-        qcir = layer1_subcircuit(config, params)
-        qcir2 = insert_pauli_for_mt(config._qubits, target_gate_type,
-                                    target_gate_bits)
-        qcir3 = pq.QCircuit()
-        qcir3.insert(qcir)
-        qcir3.insert(qcir2)
-        m_prog = pq.QProg()
-        m_prog.insert(qcir3)
-        
-        return ProbsMeasure(wires, m_prog, config._machine, config._qubits)
-
-Use the quantum natural gradient class defined by the `QNG` class, where [['RZ', 'RY'], ['RX']] are 3 gate types with parameter logic gates,
-[[0, 1], [2]] is the active bit, qcir is the circuit function list of the calculation tensor, and [0,1,2] is the qubit index of the entire circuit.
-
-.. code-block::
-
-    config = pyqpanda_config_wrapper(3)
-    qcir = []
-    qcir.append(get_p01_diagonal_)
-    qcir.append(get_p1_diagonal_)
-    # define QNG optimzer
-    opt = QNG(config, quantum_net, 0.02, [['RZ', 'RY'], ['RX']], [[0, 1], [2]],
-                qcir, [0, 1, 2])
-
-For iterative optimization, use the `opt` function for single-step optimization, where the first input parameter is the input data,
-There is no input in the line here, so it is None, and the second input parameter is the parameter to be optimized theta.
-
-.. code-block::
-
-    qng_cost = []
-    theta2 = QTensor([0.432, 0.543, 0.233])
-    # iteration
-    for _ in range(steps):
-        theta2 = opt.step(None, theta2)
-        qng_cost.append(
-            quantum_net(None, theta2, config._qubits, config._cubits,
-                        config._machine))
-
-Using the SGD classic gradient descent method as a baseline to compare the changes in the loss value of the two under the same number of iterations,
-it can be seen that the loss function declines faster using the quantum natural gradient.
-
-.. code-block::
-
-    # use gradient descent as the baseline
-    sgd_cost = []
-    qlayer = QuantumLayer(quantum_net, 3, 'cpu', 3)
-    temp = _core.Tensor([0.432, 0.543, 0.233])
-    _core.vqnet.copyTensor(temp, qlayer.m_para.data)
-    opti = SGD(qlayer.parameters())
-    for i in range(steps):
-        opti.zero_grad()
-        loss = qlayer(QTensor([[1]]))
-        print(f'step {i}')
-        print(f'q param before {qlayer.m_para}')
-        loss.backward()
-        sgd_cost.append(loss.item())
-        opti._step()
-        print(f'q param after{qlayer.m_para}')
-        
-    plt.style.use("seaborn")
-    plt.plot(qng_cost, "b", label="Quantum natural gradient descent")
-    plt.plot(sgd_cost, "g", label="Vanilla gradient descent")
-    plt.ylabel("Cost function value")
-    plt.xlabel("Optimization steps")
-    plt.legend()
-    plt.show()
-
-.. image:: ./images/qng_vs_sgd.png
-   :width: 600 px
-   :align: center
-
-|
-
-Stochastic parameter shift algorithm
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-In the quantum variational circuit, it is a common method to use the parameter shift method `parameter-shift` to calculate the gradient of the quantum parameter.
-The parameter shift method is not universally applicable to all quantum parametric logic gates.
-In cases where it does not hold (or is not known to hold), we either have to factorize the gates into compatible gates, or use an alternative estimator of the gradient, such as a finite difference approximation.
-However, both alternatives may have drawbacks due to increased circuit complexity or potential errors in gradient values.
-Banchi and Crooks 1 discovered a `Stochastic Parameter-Shift Rule <https://arxiv.org/abs/2005.10299>`_ that can be applied to any unitary matrix quantum logic gate.
-
-The following shows an example of applying VQNet to calculate the gradient using the random parameter offset method for a quantum variational circuit. An example line definition is as follows:
-
-.. code-block::
-
-    import pyqpanda as pq
-    import numpy as np
-    from pyvqnet.qnn.measure import expval
-    from scipy.linalg import expm
-    import matplotlib
-    try:
-        matplotlib.use('TkAgg')
-    except:
-        pass
-    import matplotlib.pyplot as plt
-    machine = pq.init_quantum_machine(pq.QMachineType.CPU)
-    q = machine.qAlloc_many(2)
-    c = machine.cAlloc_many(2)
-    # some basic Pauli matrices
-    I = np.eye(2)
-    X = np.array([[0, 1], [1, 0]])
-    Z = np.array([[1, 0], [0, -1]])
-    def Generator(theta1, theta2, theta3):
-        G = theta1.item() * np.kron(X, I) - \
-            theta2 * np.kron(Z, X) + \
-            theta3 * np.kron(I, X)
-        return G
-    def pq_demo_circuit(gate_pars):
-        G = Generator(*gate_pars)
-        G = expm(-1j * G)
-        x = G.flatten().tolist()
-        cir = pq.matrix_decompose(q, x)
-        m_prog = pq.QProg()
-        m_prog.insert(cir)
-        pauli_dict = {'Z0': 1}
-        exp2 = expval(machine, m_prog, pauli_dict, q)
-        return exp2
-
-The stochastic parameter shift method first randomly samples a variable
- s from the uniform distribution of [0,1], 
- and then performs the following unitary matrix transformation on the lines:
-
-      a) :math:`e^{i(1-s)(\hat{H} + \theta\hat{V})}`
-      b) :math:`e^{+i\tfrac{\pi}{4}\hat{V}}`
-      c) :math:`e^{is(\hat{H} + \theta\hat{V})}`
-
-where :math:`\hat{V}` is a tensor product of Pauli operators, and :math:`\hat{H}` is a linear combination of any Pauli operator tensor product.
-We define the expected value of the observabley obtained at this time as :math:`\langle r_+ \rangle`.
-
-.. code-block::
-
-    def pq_SPSRgates(gate_pars, s, sign):
-        G = Generator(*gate_pars)
-        # step a)
-        G1 = expm(1j * (1 - s) * G)
-        x = G1.flatten().tolist()
-        cir = pq.matrix_decompose(q, x)
-        m_prog = pq.QProg()
-        m_prog.insert(cir)
-        # step b)
-        G2 = expm(1j * sign * np.pi / 4 * X)
-        x = G2.flatten().tolist()
-        cir = pq.matrix_decompose(q[0], x)
-        m_prog.insert(cir)
-        # step c)
-        G3 = expm(1j * s * G)
-        x = G3.flatten().tolist()
-        cir = pq.matrix_decompose(q, x)
-        m_prog.insert(cir)
-        pauli_dict = {'Z0': 1}
-        exp2 = expval(machine, m_prog, pauli_dict, q)
-        return exp2
-
-Change :math:`\tfrac{\pi}{4}` in the previous step to :math:`-\tfrac{\pi}{4}`,
-Repeat operations a, b, c to obtain observable
-
-The gradient formula calculated by the stochastic parameter shift algorithm is as follows:
-
- .. math::
-     \mathbb{E}_{s\in\mathcal{U}[0,1]}[\langle r_+ \rangle - \langle r_-\rangle]
-
-In the following figure, the gradient of the parameter :math:`\theta_1` is showed, using the stochastic parameter shift method.
-It can be seen that the observable is expected to 
-conform to the functional form of :math:`\cos(2\theta_1)`; 
-and the gradient is calculated using the random parameter shift method,
-
-Meets :math:`-2\sin(2\theta_1)` , which is exactly the differential of :math:`\cos(2\theta_1)`.
-
-.. code-block::
-
-    theta2, theta3 = -0.15, 1.6
-    angles = np.linspace(0, 2 * np.pi, 50)
-    pos_vals = np.array([[
-        pq_SPSRgates([theta1, theta2, theta3], s=s, sign=+1)
-        for s in np.random.uniform(size=10)
-    ] for theta1 in angles])
-    neg_vals = np.array([[
-        pq_SPSRgates([theta1, theta2, theta3], s=s, sign=-1)
-        for s in np.random.uniform(size=10)
-    ] for theta1 in angles])
-    # Plot the results
-    evals = [pq_demo_circuit([theta1, theta2, theta3]) for theta1 in angles]
-    spsr_vals = (pos_vals - neg_vals).mean(axis=1)
-    plt.plot(angles, evals, 'b', label="Expectation Value")
-    plt.plot(angles, spsr_vals, 'r', label="Stochastic parameter-shift rule")
-    plt.xlabel("theta1")
-    plt.legend()
-    plt.title("VQNet")
-    plt.show()
-
-.. image:: ./images/stochastic_parameter-shift.png
-   :width: 600 px
-   :align: center
-
-|
-
-Doubly Stochastic Gradient Descent
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-In variational quantum algorithms, parameterized quantum circuits are optimized by 
-classical gradient descent to minimize the expected function value.
-Although the expected value can be calculated analytically in classical simulator,
-on quantum hardware the program is limited to sampling from the expected value;
-as the number of samples and the number of shots increase, 
-the expected value obtained in this way will converge to the theoretical expected value,
-but may always be accurate value.
-Sweke et al. found a double stochastic gradient descent method in `the paper <https://arxiv.org/abs/1910.01155>`_.
-In this paper, they show that quantum gradient descent, which uses a finite number of measurement 
-samples (or shots) to estimate gradients, is a form of stochastic gradient descent.
-Furthermore, if the optimization involves a linear combination of 
-expected values (such as VQE), sampling from the terms in that 
-linear combination can further reduce the required time complexity.
-
-VQNet implements an example of this algorithm: solving the ground state energy of the target Hamiltonian using VQE. Note that here we set the number of shots for quantum circuit observations to only 1.
-
-.. math::
-
-    H = \begin{bmatrix}
-          8 & 4 & 0 & -6\\
-          4 & 0 & 4 & 0\\
-          0 & 4 & 8 & 0\\
-          -6 & 0 & 0 & 0
-        \end{bmatrix}.
-
-.. code-block::
-
-    import numpy as np
-    import pyqpanda as pq
-    from pyvqnet.qnn.template import StronglyEntanglingTemplate
-    from pyvqnet.qnn.measure import Hermitian_expval
-    from pyvqnet.qnn import QuantumLayerV2
-    from pyvqnet.optim import SGD
-    import pyvqnet._core as _core
-    from pyvqnet.tensor import QTensor
-    from matplotlib import pyplot as plt
-    num_layers = 2
-    num_wires = 2
-    eta = 0.01
-    steps = 200
-    n = 1
-    param_shape = [2, 2, 3]
-    shots = 1
-    H = np.array([[8, 4, 0, -6], [4, 0, 4, 0], [0, 4, 8, 0], [-6, 0, 0, 0]])
-    init_params = np.random.uniform(low=0,
-                                    high=2 * np.pi,
-                                    size=param_shape)
-    # some basic Pauli matrices
-    I = np.eye(2)
-    X = np.array([[0, 1], [1, 0]])
-    Y = np.array([[0, -1j], [1j, 0]])
-    Z = np.array([[1, 0], [0, -1]])
-
-    def pq_circuit(params):
-        params = params.reshape(param_shape)
-        num_qubits = 2
-        machine = pq.CPUQVM()
-        machine.init_qvm()
-        qubits = machine.qAlloc_many(num_qubits)
-        circuit = StronglyEntanglingTemplate(params, num_qubits=num_qubits)
-        qcir = circuit.create_circuit(qubits)
-        prog = pq.QProg()
-        prog.insert(qcir)
-        machine.directly_run(prog)
-        result = machine.get_qstate()
-        return result
-
-The Hamiltonian in this example is a Hermitian matrix,
- which we can always represent as a sum of Pauli matrices.
-
-.. math::
-
-    H = \sum_{i,j=0,1,2,3} a_{i,j} (\sigma_i\otimes \sigma_j)
-
-and 
-
-.. math::
-
-    a_{i,j} = \frac{1}{4}\text{tr}[(\sigma_i\otimes \sigma_j )H], ~~ \sigma = \{I, X, Y, Z\}.
-
-Substituting into the above formula, we can see that
-
-.. math::
-
-    H = 4  + 2I\otimes X + 4I \otimes Z - X\otimes X + 5 Y\otimes Y + 2Z\otimes X.
-
-To perform "doubly stochastic" gradient descent, we simply apply the stochastic gradient descent method, but additionally uniformly sample a subset of the Hamiltonian expectation at each optimization step.
-The vqe_func_analytic() function uses parameter shift to calculate theoretical gradients, 
-and vqe_func_shots() uses random sampled values and randomly sampled Hamiltonian 
-expectation subsets for "doubly stochastic" gradient calculations.
-
-.. code-block::
-
-    terms = np.array([
-        2 * np.kron(I, X),
-        4 * np.kron(I, Z),
-        -np.kron(X, X),
-        5 * np.kron(Y, Y),
-        2 * np.kron(Z, X),
-    ])
-    def vqe_func_analytic(input, init_params):
-        qstate = pq_circuit(init_params)
-        expval = Hermitian_expval(H, qstate, [0, 1], 2)
-        return  expval
-    def vqe_func_shots(input, init_params):
-        qstate = pq_circuit(init_params)
-        idx = np.random.choice(np.arange(5), size=n, replace=False)
-        A = np.sum(terms[idx], axis=0)
-        expval = Hermitian_expval(A, qstate, [0, 1], 2, shots)
-        return 4 + (5 / 1) * expval
-
-
-Use VQNet for parameter optimization, and compare the curve of the loss function.
-Since the double stochastic gradient descent method only calculates the partial Pauli 
-operator sum of H each time,
-Therefore, the average value can be used to represent the expected result of the final 
-observation. Here, the moving average moving_average() is used for calculation.
-
-.. code-block::
-
-
-
-    ##############################################################################
-    # Optimizing the circuit using gradient descent via the parameter-shift rule:
-    qlayer_ana = QuantumLayerV2(vqe_func_analytic, 2*2*3 )
-    qlayer_shots = QuantumLayerV2(vqe_func_shots, 2*2*3 )
-    cost_sgd = []
-    cost_dsgd = []
-    temp = _core.Tensor(init_params)
-    _core.vqnet.copyTensor(temp, qlayer_ana.m_para.data)
-    opti_ana = SGD(qlayer_ana.parameters())
-
-    _core.vqnet.copyTensor(temp, qlayer_shots.m_para.data)
-    opti_shots = SGD(qlayer_shots.parameters())
-    
-    for i in range(steps):
-        opti_ana.zero_grad()
-        loss = qlayer_ana(QTensor([[1]]))
-        loss.backward()
-        cost_sgd.append(loss.item())
-        opti_ana._step()
-    for i in range(steps+50):
-        opti_shots.zero_grad()
-        loss = qlayer_shots(QTensor([[1]]))
-        loss.backward()
-        cost_dsgd.append(loss.item())
-        opti_shots._step()
-    def moving_average(data, n=3):
-        ret = np.cumsum(data, dtype=np.float64)
-        ret[n:] = ret[n:] - ret[:-n]
-        return ret[n - 1:] / n
-    ta = moving_average(np.array(cost_dsgd), n=50)
-    ta = ta[:-26]
-    average = np.vstack([np.arange(25, 200),ta ])
-    final_param = qlayer_shots.parameters()[0].to_numpy()
-    print("Doubly stochastic gradient descent min energy = ", vqe_func_analytic(QTensor([1]),final_param))
-    final_param  = qlayer_ana.parameters()[0].to_numpy()
-    print("stochastic gradient descent min energy = ", vqe_func_analytic(QTensor([1]),final_param))
-    plt.plot(cost_sgd, label="Vanilla gradient descent")
-    plt.plot(cost_dsgd, ".", label="Doubly QSGD")
-    plt.plot(average[0], average[1], "--", label="Doubly QSGD (moving average)")
-    plt.ylabel("Cost function value")
-    plt.xlabel("Optimization steps")
-    plt.xlim(-2, 200)
-    plt.legend()
-    plt.show()
-    #Doubly stochastic gradient descent min energy =  -4.337801834749975
-    #stochastic gradient descent min energy =  -4.531484333030544
-.. image:: ./images/dsgd.png
-   :width: 600 px
-   :align: center
