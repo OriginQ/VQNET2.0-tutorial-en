@@ -5156,7 +5156,7 @@ The following uses VQNet to demonstrate the quantum circuit expression capabilit
     import numpy as np
     from pyvqnet.qnn.ansatz import HardwareEfficientAnsatz
     from pyvqnet.tensor import tensor
-    from pyvqnet.qnn.quantum_expressibility import fidelity_of_cir, fidelity_harr_sample
+    from pyvqnet.qnn.quantum_expressibility.quantum_express import fidelity_of_cir, fidelity_harr_sample
     num_qubit = 1  # the number of qubit
     num_sample = 2000  # the number of sample
     outputs_y = list()  # save QNN outputs

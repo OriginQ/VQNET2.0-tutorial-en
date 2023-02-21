@@ -1630,6 +1630,62 @@ StronglyEntanglingTemplate
         #[0.6881335561525671, 0.31186644384743273]
 
 
+Quantum_Embedding
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. py:class:: pyvqnet.qnn.Quantum_Embedding(qubits, machine, num_repetitions_input, depth_input, num_unitary_layers, num_repetitions)
+
+    Use RZ,RY,RZ to create variational quantum circuits that encode classical data into quantum states.
+    See `Quantum embeddings for machine learning <https://arxiv.org/abs/2001.03622>`_.
+    After the class is initialized, its member function ``compute_circuit`` is a running function, which can be input as a parameter.
+    The ``QuantumLayerV2`` class can utilize ``compute_circuit`` to build a layer of quantum machine learning model.
+
+    :param qubits: Qubits requested by pyqpanda.
+    :param machine: Quantum virtual machine applied by pyqpanda.
+    :param num_repetitions_input: Number of repetitions to encode input in the submodule.
+    :param depth_input: The feature dimension of the input data.
+    :param num_unitary_layers: Number of repetitions of the variational quantum gates in each submodule.
+    :param num_repetitions: Number of repetitions for the submodule.
+
+    Example::
+
+
+        from pyvqnet.qnn import QuantumLayerV2,Quantum_Embedding
+        from pyvqnet.tensor import tensor
+        depth_input = 2
+        num_repetitions = 2
+        num_repetitions_input = 2
+        num_unitary_layers = 2
+
+        loacl_machine = pq.CPUQVM()
+        loacl_machine.init_qvm()
+        nq = depth_input * num_repetitions_input
+        qubits = loacl_machine.qAlloc_many(nq)
+        cubits = loacl_machine.cAlloc_many(nq)
+
+        data_in = tensor.ones([12, depth_input])
+
+        qe = Quantum_Embedding(qubits, loacl_machine, num_repetitions_input,
+                            depth_input, num_unitary_layers, num_repetitions)
+        qlayer = QuantumLayerV2(qe.compute_circuit,
+                                qe.param_num)
+
+        data_in.requires_grad = True
+        y = qlayer.forward(data_in)
+        # [
+        # [0.2302894],
+        #  [0.2302894],
+        #  [0.2302894],
+        #  [0.2302894],
+        #  [0.2302894],
+        #  [0.2302894],
+        #  [0.2302894],
+        #  [0.2302894],
+        #  [0.2302894],
+        #  [0.2302894],
+        #  [0.2302894],
+        #  [0.2302894]
+        # ]
 
 
 Measure the quantum circuit
