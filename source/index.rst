@@ -59,6 +59,7 @@ It can promote in a variety of applications such as the design of quantum algori
     rst/nn.rst
     rst/qnn.rst
     rst/utils.rst
+    rst/CHANGELOG.rst
 
 
 
