@@ -148,5 +148,5 @@ Added
 - Add 4 loss functions, including MSE, BCE, CCE, SCE, etc.
 - Add 10 activation functions, including ReLu, Sigmoid, ELU, etc.
 - Add 6 optimizers, including SGD, RMSPROP, ADAM, etc.
-- Added machine learning examples: QVC, QDRL, Q-KMEANS, QUnet, HQCNN, VSQL, Quantum Autoencoder.
+- Added machine learning examples: VQC, QDRL, Q-KMEANS, QUnet, HQCNN, VSQL, Quantum Autoencoder.
 - Add quantum machine learning layers: QuantumLayer, NoiseQuantumLayer.

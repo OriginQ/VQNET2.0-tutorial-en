@@ -6,7 +6,7 @@ The following are some examples of quantum machine learning algorithms.
 Application of Parameterized Quantum Circuit in Classification Task
 ----------------------------------------------------------------------
 
-1. QVC demo
+1. VQC demo
 ^^^^^^^^^^^^^^^^^^
 
 This example uses VQNet to implement the algorithm in the thesis: `Circuit-centric quantum classifiers <https://arxiv.org/pdf/1804.00633.pdf>`_  .
@@ -6013,7 +6013,7 @@ Probabilistically skips some gradient computations.
 
 The pruning ratio :math:`r` , the cumulative window width :math:`\omega_a` and the pruning window width :math:`\omega_p` respectively determine the reliability of the gradient trend evaluation.
 Thus, the percentage time saved by our probabilistic gradient pruning method is :math:`r\tfrac{\omega_p}{\omega_a +\omega_p}\times 100\%`.
-The following is the application of the QVC classification example using the gradient pruning algorithm.
+The following is the application of the VQC classification example using the gradient pruning algorithm.
 
 .. code-block::
 
