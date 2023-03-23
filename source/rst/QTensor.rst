@@ -119,6 +119,25 @@ size
 
         # 4
 
+numel
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. py:method:: QTensor.numel()
+    
+    Returns the number of elements in the tensor.
+
+    :return: The number of elements in the tensor.
+
+    Example::
+
+        from pyvqnet.tensor import tensor
+        from pyvqnet.tensor import QTensor
+
+        a = QTensor([2, 3, 4, 5], requires_grad=True)
+        print(a.numel())
+
+        # 4
+
 zero_grad
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -1212,6 +1231,35 @@ randn
         # [-0.9529880, -0.4947567, -0.6399882],
         # [-0.6987777, -0.0089036, -0.5084590]
         # ]
+
+
+multinomial
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. py:function:: pyvqnet.tensor.multinomial(t, num_samples)
+
+    Returns a Tensor where each row contains num_samples indexed samples.
+    From the multinomial probability distribution located in the corresponding row of the tensor input.
+
+    :param t: Input probability distribution。
+    :param num_samples: numbers of sample。
+
+    :return:
+        output sample index
+
+    Examples::
+
+        from pyvqnet import tensor
+        weights = tensor.QTensor([0,10, 3, 1]) 
+        idx = tensor.multinomial(weights,3)
+        print(idx)
+
+        from pyvqnet import tensor
+        weights = tensor.QTensor([0,10, 3, 0]) 
+        idx = tensor.multinomial(weights,3)
+        print(idx)
+        #[2.0000000, 1.0000000, 3.0000000]
+        #[1.0000000, 2.0000000, 0.0000000]
 
 triu
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -3207,3 +3255,170 @@ to_tensor
         print(t)
         # [10.0000000]
 
+
+pad_sequence
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. py:function:: pyvqnet.tensor.pad_sequence(qtensor_list, batch_first=False, padding_value=0)
+
+    Pad a list of variable-length tensors with ``padding_value``. ``pad_sequence`` stacks lists of tensors along new dimensions and pads them to equal length.
+    The input is a sequence of lists of size ``L x *``. L is variable length.
+
+    :param qtensor_list: `list[QTensor]` - list of variable length sequences.
+    :param batch_first: 'bool' - If true, the output will be ``batch size x longest sequence length x *``, otherwise ``longest sequence length x batch size x *``. Default: False.
+    :param padding_value: 'float' - padding value. Default value: 0.
+
+    :return:
+         If batch_first is ``False``, the tensor size is ``batch size x longest sequence length x *``.
+         Otherwise the size of the tensor is ``longest sequence length x batch size x *``.
+
+    Examples::
+
+        from pyvqnet.tensor import tensor
+        a = tensor.ones([4, 2,3])
+        b = tensor.ones([1, 2,3])
+        c = tensor.ones([2, 2,3])
+        a.requires_grad = True
+        b.requires_grad = True
+        c.requires_grad = True
+        y = tensor.pad_sequence([a, b, c], True)
+
+        print(y)
+        # [
+        # [[[1.0000000, 1.0000000, 1.0000000],
+        #  [1.0000000, 1.0000000, 1.0000000]],
+        # [[1.0000000, 1.0000000, 1.0000000],
+        #  [1.0000000, 1.0000000, 1.0000000]],
+        # [[1.0000000, 1.0000000, 1.0000000],
+        #  [1.0000000, 1.0000000, 1.0000000]],
+        # [[1.0000000, 1.0000000, 1.0000000],
+        #  [1.0000000, 1.0000000, 1.0000000]]],
+        # [[[1.0000000, 1.0000000, 1.0000000],
+        #  [1.0000000, 1.0000000, 1.0000000]],
+        # [[0.0000000, 0.0000000, 0.0000000],
+        #  [0.0000000, 0.0000000, 0.0000000]],
+        # [[0.0000000, 0.0000000, 0.0000000],
+        #  [0.0000000, 0.0000000, 0.0000000]],
+        # [[0.0000000, 0.0000000, 0.0000000],
+        #  [0.0000000, 0.0000000, 0.0000000]]],
+        # [[[1.0000000, 1.0000000, 1.0000000],
+        #  [1.0000000, 1.0000000, 1.0000000]],
+        # [[1.0000000, 1.0000000, 1.0000000],
+        #  [1.0000000, 1.0000000, 1.0000000]],
+        # [[0.0000000, 0.0000000, 0.0000000],
+        #  [0.0000000, 0.0000000, 0.0000000]],
+        # [[0.0000000, 0.0000000, 0.0000000],
+        #  [0.0000000, 0.0000000, 0.0000000]]]
+        # ]
+
+
+pad_packed_sequence
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. py:function:: pyvqnet.tensor.pad_packed_sequence(sequence, batch_first=False, padding_value=0, total_length=None)
+    
+    Pad a batch of packed variable-length sequences. It is the inverse of `pack_pad_sequence`.
+    When ``batch_first`` is True, it returns a tensor of shape ``B x T x *``, otherwise it returns ``T x B x *``.
+    Where `T` is the longest sequence length and `B` is the batch size.
+
+    :param sequence: 'QTensor' - the data to be processed.
+    :param batch_first: 'bool' - If ``True``, batch will be the first dimension of the input. Default value: False.
+    :param padding_value: 'bool' - padding value. Default: 0.
+    :param total_length: 'bool' - If not ``None``, the output will be padded to length :attr:`total_length`. Default: None.
+    :return:
+        A tuple of tensors containing the padded sequences, and a list of lengths for each sequence in the batch. Batch elements will be reordered in their original order.
+    
+    Examples::
+
+        from pyvqnet.tensor import tensor
+        a = tensor.ones([4, 2,3])
+        b = tensor.ones([2, 2,3])
+        c = tensor.ones([1, 2,3])
+        a.requires_grad = True
+        b.requires_grad = True
+        c.requires_grad = True
+        y = tensor.pad_sequence([a, b, c], True)
+        seq_len = [4, 2, 1]
+        data = tensor.pack_pad_sequence(y,
+                                seq_len,
+                                batch_first=True,
+                                enforce_sorted=True)
+
+        seq_unpacked, lens_unpacked = tensor.pad_packed_sequence(data, batch_first=True)
+        print(seq_unpacked)
+        # [
+        # [[1.0000000, 1.0000000],
+        #  [1.0000000, 1.0000000],
+        #  [1.0000000, 1.0000000]],
+        # [[1.0000000, 1.0000000],
+        #  [0.0000000, 0.0000000],
+        #  [1.0000000, 1.0000000]],
+        # [[1.0000000, 1.0000000],
+        #  [0.0000000, 0.0000000],
+        #  [0.0000000, 0.0000000]],
+        # [[1.0000000, 1.0000000],
+        #  [0.0000000, 0.0000000],
+        #  [0.0000000, 0.0000000]]
+        # ]
+        print(lens_unpacked)
+        # [4 1 2]
+
+
+pack_pad_sequence
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. py:function:: pyvqnet.tensor.pack_pad_sequence(input, lengths, batch_first=False, enforce_sorted=True)
+    
+    Pack a Tensor containing variable-length padded sequences. If batch_first is True, `input` should have shape [batch size, length,*], otherwise shape [length, batch size,*].
+
+    For unsorted sequences, use ``enforce_sorted`` is False. If :attr:`enforce_sorted` is ``True``, sequences should be sorted in descending order by length.
+    
+    :param input: 'QTensor' - variable-length sequence batches for padding.
+    :parma lengths: 'list' - list of sequence lengths for each batch
+         element.
+    :param batch_first: 'bool' - if ``True``, the input is expected to be ``B x T x *``
+         format, default: False.
+    :param enforce_sorted: 'bool' - if ``True``, the input should be
+         Contains sequences in descending order of length. If ``False``, the input will be sorted unconditionally. Default: True.
+
+    :return: A :class:`PackedSequence` object.
+
+    Examples::
+
+        from pyvqnet.tensor import tensor
+        a = tensor.ones([4, 2,3])
+        b = tensor.ones([2, 2,3])
+        c = tensor.ones([1, 2,3])
+        a.requires_grad = True
+        b.requires_grad = True
+        c.requires_grad = True
+        y = tensor.pad_sequence([a, b, c], True)
+        seq_len = [4, 2, 1]
+        data = tensor.pack_pad_sequence(y,
+                                seq_len,
+                                batch_first=True,
+                                enforce_sorted=True)
+        print(data.data)
+        print(data.batch_sizes)
+        print(data.sort_indice)
+        print(data.unsorted_indice)
+
+        # [
+        # [[1.0000000, 1.0000000, 1.0000000],
+        #  [1.0000000, 1.0000000, 1.0000000]],
+        # [[1.0000000, 1.0000000, 1.0000000],
+        #  [1.0000000, 1.0000000, 1.0000000]],
+        # [[1.0000000, 1.0000000, 1.0000000],
+        #  [1.0000000, 1.0000000, 1.0000000]],
+        # [[1.0000000, 1.0000000, 1.0000000],
+        #  [1.0000000, 1.0000000, 1.0000000]],
+        # [[1.0000000, 1.0000000, 1.0000000],
+        #  [1.0000000, 1.0000000, 1.0000000]],
+        # [[1.0000000, 1.0000000, 1.0000000],
+        #  [1.0000000, 1.0000000, 1.0000000]],
+        # [[1.0000000, 1.0000000, 1.0000000],
+        #  [1.0000000, 1.0000000, 1.0000000]]
+        # ]
+        # [3, 2, 1, 1]
+        # [0, 2, 1]
+        # [0, 2, 1]
