@@ -58,7 +58,8 @@ It can promote in a variety of applications such as the design of quantum algori
     rst/QTensor.rst
     rst/nn.rst
     rst/qnn.rst
-    rst/onnx.rst
+    rst/utils.rst
+    rst/CHANGELOG.rst
 
 
 
