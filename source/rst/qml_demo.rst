@@ -34,54 +34,54 @@ In this example, we encode the binary input onto the qubits in the corresponding
 
     import pyqpanda as pq
 
-    def qvc_circuits(input,weights,qlist,clist,machine):
+        def qvc_circuits(input,weights,qlist,clist,machine):
 
-        def get_cnot(nqubits):
-            cir = pq.QCircuit()
-            for i in range(len(nqubits)-1):
-                cir.insert(pq.CNOT(nqubits[i],nqubits[i+1]))
-            cir.insert(pq.CNOT(nqubits[len(nqubits)-1],nqubits[0]))
-            return cir
+            def get_cnot(nqubits):
+                cir = pq.QCircuit()
+                for i in range(len(nqubits)-1):
+                    cir.insert(pq.CNOT(nqubits[i],nqubits[i+1]))
+                cir.insert(pq.CNOT(nqubits[len(nqubits)-1],nqubits[0]))
+                return cir
 
-        def build_circult(weights, xx, nqubits):
-            
-            def Rot(weights_j, qubits):
+            def build_circult(weights, xx, nqubits):
+
+                def Rot(weights_j, qubits):
+                    circult = pq.QCircuit()
+                    circult.insert(pq.RZ(qubits, weights_j[0]))
+                    circult.insert(pq.RY(qubits, weights_j[1]))
+                    circult.insert(pq.RZ(qubits, weights_j[2]))
+                    return circult
+                def basisstate():
+                    circult = pq.QCircuit()
+                    for i in range(len(nqubits)):
+                        if xx[i] == 1:
+                            circult.insert(pq.X(nqubits[i]))
+                    return circult
+
                 circult = pq.QCircuit()
-                circult.insert(pq.RZ(qubits, weights_j[0]))
-                circult.insert(pq.RY(qubits, weights_j[1]))
-                circult.insert(pq.RZ(qubits, weights_j[2]))
-                return circult
-            def basisstate():
-                circult = pq.QCircuit()
-                for i in range(len(nqubits)):
-                    if xx[i] == 1:
-                        circult.insert(pq.X(nqubits[i]))
-                return circult
+                circult.insert(basisstate())
 
-            circult = pq.QCircuit()
-            circult.insert(basisstate())
+                for i in range(weights.shape[0]):
 
-            for i in range(weights.shape[0]):
-                
-                weights_i = weights[i,:,:]
-                for j in range(len(nqubits)):
-                    weights_j = weights_i[j]
-                    circult.insert(Rot(weights_j,nqubits[j]))
-                cnots = get_cnot(nqubits)  
-                circult.insert(cnots) 
+                    weights_i = weights[i,:,:]
+                    for j in range(len(nqubits)):
+                        weights_j = weights_i[j]
+                        circult.insert(Rot(weights_j,nqubits[j]))
+                    cnots = get_cnot(nqubits)
+                    circult.insert(cnots)
 
-            circult.insert(pq.Z(nqubits[0]))
-            
-            prog = pq.QProg() 
-            prog.insert(circult)
-            return prog
+                circult.insert(pq.Z(nqubits[0]))
 
-        weights = weights.reshape([2,4,3])
-        prog = build_circult(weights,input,qlist)  
-        prob = machine.prob_run_dict(prog, qlist[0], -1)
-        prob = list(prob.values())
-        
-        return prob
+                prog = pq.QProg()
+                prog.insert(circult)
+                return prog
+
+            weights = weights.reshape([2,4,3])
+            prog = build_circult(weights,input,qlist)
+            prob = machine.prob_run_dict(prog, qlist[0], -1)
+            prob = list(prob.values())
+
+            return prob
 
 Model building
 """"""""""""""""
@@ -102,6 +102,7 @@ In the ``forward()`` function, the user defines the logic of the model to run fo
     from pyvqnet.optim.sgd import SGD
     from pyvqnet.nn.loss import CategoricalCrossEntropy
     from pyvqnet.tensor.tensor import QTensor
+    from pyvqnet.data import data_generator as dataloader
     import pyqpanda as pq
     from pyvqnet.qnn.quantumlayer import QuantumLayer
     from pyqpanda import *
@@ -139,14 +140,6 @@ The data as follows.
     0, 0, 0, 1, 1,
     0, 0, 1, 0, 1,
     0, 0, 1, 1, 0]
-    def dataloader(data,label,batch_size, shuffle = True)->np:
-        if shuffle:
-            for _ in range(len(data)//batch_size):
-                random_index = np.random.randint(0, len(data), (batch_size, 1))
-                yield data[random_index].reshape(batch_size,-1),label[random_index].reshape(batch_size,-1)
-        else:
-            for i in range(0,len(data)-batch_size+1,batch_size):
-                yield data[i:i+batch_size], label[i:i+batch_size]
 
     def get_data(dataset_str):
         if dataset_str == "train":
@@ -173,19 +166,17 @@ The training data used is generated above, and the test data is qvc_test_data an
         score = np.sum(np.argmax(result,axis=1)==np.argmax(label,1))
         return score
 
-    #Example Model Class
     model = Model()
-    #Create a SGD  optimizer to optimize the model's parameters
+
     optimizer = SGD(model.parameters(),lr =0.1)
-    #set batch_size = 3
+
     batch_size = 3
-    #maximum epochs
+
     epoch = 20
-    #model's loss function
+
     loss = CategoricalCrossEntropy()
 
     model.train()
-
     datas,labels = get_data("train")
 
     for i in range(epoch):
@@ -209,11 +200,9 @@ The training data used is generated above, and the test data is qvc_test_data an
 
         print(f"epoch:{i}, #### loss:{sum_loss/count} #####accuray:{accuary/count}")
 
-
     model.eval()
     count = 0
-
-    test_data, test_label = get_data("test")
+    test_data,test_label = get_data("test")
     test_batch_size = 1
     accuary = 0
     sum_loss = 0
@@ -276,60 +265,57 @@ transformations :math:`U(\theta_1,\theta_2,\theta_3)`.However, in the Quantum Da
 
 .. code-block::
 
-    """
-    Parameterized quantum circuit for Quantum Data Re-upLoading
-    """
-    import os
     import sys
+    sys.path.insert(0, "../")
+    import numpy as np
     from pyvqnet.nn.linear import Linear
     from pyvqnet.qnn.qdrl.vqnet_model import vmodel
-    from pyvqnet import _core as vcore
     from pyvqnet.optim import sgd
-    from pyvqnet.nn import loss
     from pyvqnet.nn.loss import CategoricalCrossEntropy
-    #hyperparameters
     from pyvqnet.tensor.tensor import QTensor
-    from pyvqnet.tensor import tensor
-    import matplotlib
-    matplotlib.use('TkAgg')
-    import matplotlib.pyplot as plt
-    import numpy as np
-    np.random.seed(42)
     from pyvqnet.nn.module import Module
-    num_layers =  3
+    import matplotlib.pyplot as plt
+    import matplotlib
+    from pyvqnet.data import data_generator as get_minibatch_data
+    try:
+        matplotlib.use("TkAgg")
+    except:  #pylint:disable=bare-except
+        print("Can not use matplot TkAgg")
+        pass
+
+    np.random.seed(42)
+
+    num_layers = 3
     params = np.random.uniform(size=(num_layers, 3))
 
-    #Create a Module to define the model
-    class Model(Module):
 
+    class Model(Module):
         def __init__(self):
 
             super(Model, self).__init__()
             self.pqc = vmodel(params.shape)
+            self.fc2 = Linear(2, 2)
+
         def forward(self, x):
             x = self.pqc(x)
             return x
 
-    def circle(samples:int,  reps =  np.sqrt(1/2)) :
+
+    def circle(samples: int, reps=np.sqrt(1 / 2)):
         data_x, data_y = [], []
-        for i in range(samples):
+        for _ in range(samples):
             x = np.random.rand(2)
-            y = [0,1]
+            y = [0, 1]
             if np.linalg.norm(x) < reps:
-                y = [1,0]
+                y = [1, 0]
             data_x.append(x)
             data_y.append(y)
         return np.array(data_x), np.array(data_y)
 
-    def plot_data(x, y, fig=None, ax=None):
-        """
-        Plot data with red/blue values for a binary classification.
 
-        Args:
-            x (array[tuple]): array of data points as tuples
-            y (array[int]): array of data points as tuples
-        """
-        if fig == None:
+    def plot_data(x, y, fig=None, ax=None):
+
+        if fig is None:
             fig, ax = plt.subplots(1, 1, figsize=(5, 5))
         reds = y == 0
         blues = y == 1
@@ -338,72 +324,75 @@ transformations :math:`U(\theta_1,\theta_2,\theta_3)`.However, in the Quantum Da
         ax.set_xlabel("$x_1$")
         ax.set_ylabel("$x_2$")
 
-    def get_minibatch_data(x_data, label, batch_size):
-        for i in range(0,x_data.data.shape[0]-batch_size+1,batch_size):
-            yield x_data.data.select(["{}:{}".format(i,i+batch_size)]), 
-            label.data.select(["{}:{}".format(i,i+batch_size)]).reshape([batch_size,2])
 
     def get_score(pred, label):
         pred, label = np.array(pred.data), np.array(label.data)
-        score = np.sum(np.argmax(pred,axis=1) == np.argmax(label,1))
+        score = np.sum(np.argmax(pred, axis=1) == np.argmax(label, 1))
         return score
 
-    model = Model()
-    optimizer = sgd.SGD(model.parameters(),lr =1)
 
-    batch_size = 5
-    #train on random genearated samples
+    model = Model()
+    optimizer = sgd.SGD(model.parameters(), lr=1)
+
+
     def train():
+        """
+        Main function for train qdrl model
+        """
+        batch_size = 5
         model.train()
         x_train, y_train = circle(500)
         x_train = np.hstack((x_train, np.ones((x_train.shape[0], 1))))  # 500*3
-        x_train, y_train = QTensor(x_train),QTensor(y_train)
+
         epoch = 10
         print("start training...........")
         for i in range(epoch):
             accuracy = 0
             count = 0
             loss = 0
-            for data, label in get_minibatch_data(x_train, y_train,batch_size):
+            for data, label in get_minibatch_data(x_train, y_train, batch_size):
                 optimizer.zero_grad()
 
-                data,label = QTensor(data), QTensor(label)
+                data, label = QTensor(data), QTensor(label)
 
                 output = model(data)
 
-                Closs = CategoricalCrossEntropy()
-                losss = Closs(label, output)
+                loss_fun = CategoricalCrossEntropy()
+                losss = loss_fun(label, output)
 
                 losss.backward()
-                optimizer._step()
 
-                accuracy += get_score(output,label)
+                optimizer._step()
+                accuracy += get_score(output, label)
+
                 loss += losss.item()
-                print(f"epoch:{i}, train_accuracy:{accuracy}")
-                print(f"epoch:{i}, train_loss:{losss.data.getdata()}")
+
                 count += batch_size
 
             print(f"epoch:{i}, train_accuracy_for_each_batch:{accuracy/count}")
             print(f"epoch:{i}, train_loss_for_each_batch:{loss/count}")
 
-    #test on random genearated samples
+
     def test():
+        batch_size = 5
         model.eval()
         print("start eval...................")
         x_test, y_test = circle(500)
         test_accuracy = 0
         count = 0
         x_test = np.hstack((x_test, np.ones((x_test.shape[0], 1))))
-        x_test, y_test = QTensor(x_test), QTensor(y_test)
-        for test_data, test_label in get_minibatch_data(x_test,y_test, batch_size):
 
-            test_data, test_label = QTensor(test_data),QTensor(test_label)
+        for test_data, test_label in get_minibatch_data(x_test, y_test,
+                                                        batch_size):
+
+            test_data, test_label = QTensor(test_data), QTensor(test_label)
             output = model(test_data)
             test_accuracy += get_score(output, test_label)
             count += batch_size
         print(f"test_accuracy:{test_accuracy/count}")
 
-    if __name__=="__main__":
+
+    if __name__ == "__main__":
         train()
         test()
 
@@ -445,304 +434,229 @@ Following figures show the local quantum circuits structure on each qubits:
 
 .. code-block::
 
-
-    """
-    Parameterized quantum circuit for VSQL
-
-    """
-
-    import os
     import sys
+    sys.path.insert(0, "../")
+    import os
+    import os.path
+    import struct
+    import gzip
     from pyvqnet.nn.module import Module
     from pyvqnet.nn.loss import CategoricalCrossEntropy
     from pyvqnet.optim.adam import Adam
     from pyvqnet.data.data import data_generator
     from pyvqnet.tensor import tensor
-    import numpy as np
-
-    import pyqpanda as pq
-    import matplotlib
-    try:
-        matplotlib.use('TkAgg')
-    except:
-        pass
-    import matplotlib.pyplot as plt
-
     from pyvqnet.qnn.measure import expval
     from pyvqnet.qnn.quantumlayer import QuantumLayer
     from pyvqnet.qnn.template import AmplitudeEmbeddingCircuit
     from pyvqnet.nn.linear import Linear
+    import numpy as np
+    import pyqpanda as pq
+    import matplotlib.pyplot as plt
+    import matplotlib
+    try:
+        matplotlib.use("TkAgg")
+    except:  #pylint:disable=bare-except
+        print("Can not use matplot TkAgg")
+        pass
 
     try:
         import urllib.request
     except ImportError:
-        raise ImportError('You should use Python 3.x')
-    import os.path
-    import gzip
+        raise ImportError("You should use Python 3.x")
 
-    url_base = 'http://yann.lecun.com/exdb/mnist/'
+    url_base = "http://yann.lecun.com/exdb/mnist/"
     key_file = {
-        'train_img':'train-images-idx3-ubyte.gz',
-        'train_label':'train-labels-idx1-ubyte.gz',
-        'test_img':'t10k-images-idx3-ubyte.gz',
-        'test_label':'t10k-labels-idx1-ubyte.gz'
+        "train_img": "train-images-idx3-ubyte.gz",
+        "train_label": "train-labels-idx1-ubyte.gz",
+        "test_img": "t10k-images-idx3-ubyte.gz",
+        "test_label": "t10k-labels-idx1-ubyte.gz"
     }
 
 
-
-    def _download(dataset_dir,file_name):
+    def _download(dataset_dir, file_name):
+        """
+        Download function for mnist dataset file
+        """
         file_path = dataset_dir + "/" + file_name
 
         if os.path.exists(file_path):
-            with gzip.GzipFile(file_path) as f:
-                file_path_ungz = file_path[:-3].replace('\\', '/')
+            with gzip.GzipFile(file_path) as file:
+                file_path_ungz = file_path[:-3].replace("\\", "/")
                 if not os.path.exists(file_path_ungz):
-                    open(file_path_ungz,"wb").write(f.read())
+                    open(file_path_ungz, "wb").write(file.read())
             return
 
         print("Downloading " + file_name + " ... ")
         urllib.request.urlretrieve(url_base + file_name, file_path)
         if os.path.exists(file_path):
-                with gzip.GzipFile(file_path) as f:
-                    file_path_ungz = file_path[:-3].replace('\\', '/')
-                    file_path_ungz = file_path_ungz.replace('-idx', '.idx')
-                    if not os.path.exists(file_path_ungz):
-                        open(file_path_ungz,"wb").write(f.read())
+            with gzip.GzipFile(file_path) as file:
+                file_path_ungz = file_path[:-3].replace("\\", "/")
+                file_path_ungz = file_path_ungz.replace("-idx", ".idx")
+                if not os.path.exists(file_path_ungz):
+                    open(file_path_ungz, "wb").write(file.read())
         print("Done")
+
 
     def download_mnist(dataset_dir):
         for v in key_file.values():
-            _download(dataset_dir,v)
+            _download(dataset_dir, v)
+
 
     if not os.path.exists("./result"):
         os.makedirs("./result")
     else:
         pass
 
-    def circuits_of_vsql(input,weights,qlist,clist,machine):
 
-        n = 10
-        n_qsc=2
-        depth=1
+    def circuits_of_vsql(x, weights, qlist, clist, machine):  #pylint:disable=unused-argument
+        """
+        VSQL model of quantum circuits
+        """
         weights = weights.reshape([depth + 1, 3, n_qsc])
 
-        def subcir(weights,qlist,depth,n_qsc,n_start):
+        def subcir(weights, qlist, depth, n_qsc, n_start):  #pylint:disable=redefined-outer-name
             cir = pq.QCircuit()
 
             for i in range(n_qsc):
-                cir.insert(pq.RX(qlist[n_start + i],weights[0][0][i] ))
-                cir.insert(pq.RY(qlist[n_start + i],weights[0][1][i]))
-                cir.insert(pq.RX(qlist[n_start + i],weights[0][2][i]))
+                cir.insert(pq.RX(qlist[n_start + i], weights[0][0][i]))
+                cir.insert(pq.RY(qlist[n_start + i], weights[0][1][i]))
+                cir.insert(pq.RX(qlist[n_start + i], weights[0][2][i]))
             for repeat in range(1, depth + 1):
                 for i in range(n_qsc - 1):
                     cir.insert(pq.CNOT(qlist[n_start + i], qlist[n_start + i + 1]))
-                cir.insert(pq.CNOT(qlist[n_start + n_qsc - 1],qlist[ n_start]))
+                cir.insert(pq.CNOT(qlist[n_start + n_qsc - 1], qlist[n_start]))
                 for i in range(n_qsc):
-                    cir.insert(pq.RY(qlist[ n_start + i], weights[repeat][1][i]))
+                    cir.insert(pq.RY(qlist[n_start + i], weights[repeat][1][i]))
 
             return cir
-        def get_pauli_str(n_start, n_qsc=2):
-            pauli_str = ','.join('X' + str(i) for i in range(n_start, n_start + n_qsc))
-            return {pauli_str:1.0}
+
+        def get_pauli_str(n_start, n_qsc):  #pylint:disable=redefined-outer-name
+            pauli_str = ",".join("X" + str(i)
+                                for i in range(n_start, n_start + n_qsc))
+            return {pauli_str: 1.0}
 
         f_i = []
-
+        origin_in = AmplitudeEmbeddingCircuit(x, qlist)
         for st in range(n - n_qsc + 1):
-            psd = get_pauli_str(st,n_qsc)
+            psd = get_pauli_str(st, n_qsc)
             cir = pq.QCircuit()
-            cir.insert(AmplitudeEmbeddingCircuit(input,qlist))
-            cir.insert(subcir(weights,qlist,depth,n_qsc,st))
+            cir.insert(origin_in)
+            cir.insert(subcir(weights, qlist, depth, n_qsc, st))
             prog = pq.QProg()
             prog.insert(cir)
 
-            f_ij = expval(machine,prog,psd,qlist)
+            f_ij = expval(machine, prog, psd, qlist)
             f_i.append(f_ij)
         f_i = np.array(f_i)
         return f_i
+
 
     #GLOBAL VAR
     n = 10
     n_qsc = 2
     depth = 1
+
+
     class QModel(Module):
+        """
+        Model of VSQL
+        """
         def __init__(self):
             super().__init__()
-            self.vq = QuantumLayer(circuits_of_vsql,(depth + 1)*3* n_qsc,"cpu",10)
+            self.vq = QuantumLayer(circuits_of_vsql, (depth + 1) * 3 * n_qsc,
+                                "cpu", 10)
             self.fc = Linear(n - n_qsc + 1, 2)
+
         def forward(self, x):
             x = self.vq(x)
             x = self.fc(x)
 
             return x
 
-    class Model(Module):
 
+    class Model(Module):
         def __init__(self):
             super().__init__()
-            self.fc1 = Linear(input_channels=28*28,output_channels=2)
+            self.fc1 = Linear(input_channels=28 * 28, output_channels=2)
 
         def forward(self, x):
 
-            x = tensor.flatten(x,1)
+            x = tensor.flatten(x, 1)
             x = self.fc1(x)
             return x
 
+
     def load_mnist(dataset="training_data", digits=np.arange(2), path="./"):
-        import os, struct
+        """
+        load mnist data
+        """
         from array import array as pyarray
         download_mnist(path)
         if dataset == "training_data":
-            fname_image = os.path.join(path, 'train-images.idx3-ubyte').replace('\\', '/')
-            fname_label = os.path.join(path, 'train-labels.idx1-ubyte').replace('\\', '/')
+            fname_image = os.path.join(path, "train-images.idx3-ubyte").replace(
+                "\\", "/")
+            fname_label = os.path.join(path, "train-labels.idx1-ubyte").replace(
+                "\\", "/")
         elif dataset == "testing_data":
-            fname_image = os.path.join(path, 't10k-images.idx3-ubyte').replace('\\', '/')
-            fname_label = os.path.join(path, 't10k-labels.idx1-ubyte').replace('\\', '/')
+            fname_image = os.path.join(path, "t10k-images.idx3-ubyte").replace(
+                "\\", "/")
+            fname_label = os.path.join(path, "t10k-labels.idx1-ubyte").replace(
+                "\\", "/")
         else:
             raise ValueError("dataset must be 'training_data' or 'testing_data'")
 
-        flbl = open(fname_label, 'rb')
-        magic_nr, size = struct.unpack(">II", flbl.read(8))
+        flbl = open(fname_label, "rb")
+        _, size = struct.unpack(">II", flbl.read(8))
 
         lbl = pyarray("b", flbl.read())
         flbl.close()
 
-        fimg = open(fname_image, 'rb')
-        magic_nr, size, rows, cols = struct.unpack(">IIII", fimg.read(16))
+        fimg = open(fname_image, "rb")
+        _, size, rows, cols = struct.unpack(">IIII", fimg.read(16))
         img = pyarray("B", fimg.read())
         fimg.close()
 
         ind = [k for k in range(size) if lbl[k] in digits]
-        N = len(ind)
-        images = np.zeros((N, rows, cols))
+        num = len(ind)
+        images = np.zeros((num, rows, cols), dtype=np.float32)
 
-        labels = np.zeros((N, 1), dtype=int)
+        labels = np.zeros((num, 1), dtype=int)
         for i in range(len(ind)):
-            images[i] = np.array(img[ind[i] * rows * cols: (ind[i] + 1) * rows * cols]).reshape((rows, cols))
+            images[i] = np.array(img[ind[i] * rows * cols:(ind[i] + 1) * rows *
+                                    cols]).reshape((rows, cols))
             labels[i] = lbl[ind[i]]
 
         return images, labels
 
-    def show_image():
-        image, label = load_mnist()
-        for img in range(len(image)):
-            plt.imshow(image[img])
-            plt.show()
 
-    """
-    compared classic fc model
-    """
-    def run_fc01():
-
-        digits = [0,1]
-        x_train, y_train = load_mnist("training_data",digits)
-        x_train = x_train / 255
-
-
-        y_train = y_train.reshape(-1, 1)
-        y_train = np.eye(len(digits))[y_train].reshape(-1, len(digits))
-
-        x_test, y_test = load_mnist("testing_data",digits)
-        x_test = x_test / 255
-        y_test = y_test.reshape(-1, 1)
-        y_test = np.eye(len(digits))[y_test].reshape(-1, len(digits))
-
-        x_train = x_train[:500]
-        y_train = y_train[:500]
-
-        x_test = x_test[:100]
-        y_test = y_test[:100]
-        print("model start")
-        model = Model()
-
-        optimizer = Adam(model.parameters(),lr=0.01)
-
-        model.train()
-        F1 = open("./result/qfcrlt.txt","w")
-        for epoch in range(1,20):
-
-            model.train()
-            full_loss = 0
-            n_loss = 0
-            n_eval =0
-            batch_size = 128
-            correct = 0
-            iter = 0
-            for x, y in data_generator(x_train, y_train, batch_size=batch_size, shuffle=True):#shuffle batch rather than data
-
-                optimizer.zero_grad()
-                try:
-                    x = x.reshape(batch_size, 1, 28, 28)
-                except:
-                    x = x.reshape(-1,1,28,28)
-
-                output = model(x)
-                iter +=1
-
-                CCEloss = CategoricalCrossEntropy()
-                loss = CCEloss( y,output)
-                loss.backward()
-                optimizer._step()
-
-                full_loss += loss.item()
-                n_loss += batch_size
-                np_output = np.array(output.data,copy=False)
-                mask  = np_output.argmax(1) == y.argmax(1)
-                correct += sum(mask)
-
-            print(f"Train Accuracy: {correct/n_loss}%")
-            print(f"Epoch: {epoch}, Loss: {full_loss / n_loss}")
-            F1.write(f"{epoch}\t{full_loss / n_loss:.4f}\t{correct/n_loss:.4f}\t")
-
-        # Evaluation
-            model.eval()
-            print("eval")
-            correct = 0
-            full_loss = 0
-            n_loss = 0
-            n_eval = 0
-            batch_size = 1
-            for x, y in data_generator(x_test, y_test, batch_size=batch_size, shuffle=True):
-                x = x.reshape(1, 1, 28, 28)
-                output = model(x)
-
-                CCEloss = CategoricalCrossEntropy()
-                loss = CCEloss( y,output)
-                full_loss += loss.item()
-                np_output = np.array(output.data,copy=False)
-                mask  = np_output.argmax(1) == y.argmax(1)
-                correct += sum(mask)
-                n_eval += 1
-                n_loss += 1
-
-            print(f"Eval Accuracy: {correct/n_eval}")
-            F1.write(f"{full_loss / n_loss:.4f}\t{correct/n_eval:.4f}\n")
-
-        F1.close()
-        del model
-        print("\ndone\n")
-
-    """
-    VQSL MODEL
-    """
-    def run_VSQL():
-        digits = [0,1]
-        x_train, y_train = load_mnist("training_data",digits)
+    def run_vsql():
+        """
+        VQSL MODEL
+        """
+        digits = [0, 1]
+        x_train, y_train = load_mnist("training_data", digits)
         x_train = x_train / 255
         y_train = y_train.reshape(-1, 1)
-        y_train = np.eye(len(digits))[y_train].reshape(-1, len(digits))
-        x_test, y_test = load_mnist("testing_data",digits)
+        y_train = np.eye(len(digits))[y_train].reshape(-1, len(digits)).astype(
+            np.int64)
+        x_test, y_test = load_mnist("testing_data", digits)
         x_test = x_test / 255
         y_test = y_test.reshape(-1, 1)
-        y_test = np.eye(len(digits))[y_test].reshape(-1, len(digits))
+        y_test = np.eye(len(digits))[y_test].reshape(-1,
+                                                    len(digits)).astype(np.int64)
 
-        x_train_list =[]
+        x_train_list = []
         x_test_list = []
         for i in range(x_train.shape[0]):
-            x_train_list.append(np.pad(x_train[i,:,:].flatten(),(0, 240), constant_values=(0, 0)))
+            x_train_list.append(
+                np.pad(x_train[i, :, :].flatten(), (0, 240),
+                    constant_values=(0, 0)))
         x_train = np.array(x_train_list)
 
         for i in range(x_test.shape[0]):
-            x_test_list.append(np.pad(x_test[i,:,:].flatten(),(0, 240), constant_values=(0, 0)))
+            x_test_list.append(
+                np.pad(x_test[i, :, :].flatten(), (0, 240),
+                    constant_values=(0, 0)))
 
         x_test = np.array(x_test_list)
 
@@ -754,45 +668,45 @@ Following figures show the local quantum circuits structure on each qubits:
         print("model start")
         model = QModel()
 
-        optimizer = Adam(model.parameters(),lr=0.1)
+        optimizer = Adam(model.parameters(), lr=0.1)
 
         model.train()
-        F1 = open("./result/vqslrlt.txt","w")
-        for epoch in range(1,20):
+        result_file = open("./result/vqslrlt.txt", "w")
+        for epoch in range(1, 3):
 
             model.train()
             full_loss = 0
             n_loss = 0
-            n_eval =0
+            n_eval = 0
             batch_size = 1
             correct = 0
-            iter = 0
-            for x, y in data_generator(x_train, y_train, batch_size=batch_size, shuffle=True):
+            for x, y in data_generator(x_train,
+                                    y_train,
+                                    batch_size=batch_size,
+                                    shuffle=True):
                 optimizer.zero_grad()
                 try:
                     x = x.reshape(batch_size, 1024)
-                except:
-                    x = x.reshape(-1,1024)
+                except:  #pylint:disable=bare-except
+                    x = x.reshape(-1, 1024)
 
                 output = model(x)
-                iter +=1
-
-                CCEloss = CategoricalCrossEntropy()
-                loss = CCEloss( y,output)
+                cceloss = CategoricalCrossEntropy()
+                loss = cceloss(y, output)
                 loss.backward()
                 optimizer._step()
 
                 full_loss += loss.item()
                 n_loss += batch_size
-                np_output = np.array(output.data,copy=False)
-                mask  = np_output.argmax(1) == y.argmax(1)
+                np_output = np.array(output.data, copy=False)
+                mask = np_output.argmax(1) == y.argmax(1)
                 correct += sum(mask)
-                print(f"{iter}")
-            print(f"Train Accuracy: {correct/n_loss}%")
+                print(f" n_loss {n_loss} Train Accuracy: {correct/n_loss} ")
+            print(f"Train Accuracy: {correct/n_loss} ")
             print(f"Epoch: {epoch}, Loss: {full_loss / n_loss}")
-            F1.write(f"{epoch}\t{full_loss / n_loss}\t{correct/n_loss}\t")
+            result_file.write(f"{epoch}\t{full_loss / n_loss}\t{correct/n_loss}\t")
 
-        # Evaluation
+            # Evaluation
             model.eval()
             print("eval")
             correct = 0
@@ -800,32 +714,34 @@ Following figures show the local quantum circuits structure on each qubits:
             n_loss = 0
             n_eval = 0
             batch_size = 1
-            for x, y in data_generator(x_test, y_test, batch_size=batch_size, shuffle=True):
+            for x, y in data_generator(x_test,
+                                    y_test,
+                                    batch_size=batch_size,
+                                    shuffle=True):
                 x = x.reshape(1, 1024)
                 output = model(x)
 
-                CCEloss = CategoricalCrossEntropy()
-                loss = CCEloss( y,output)
+                cceloss = CategoricalCrossEntropy()
+                loss = cceloss(y, output)
                 full_loss += loss.item()
 
-                np_output = np.array(output.data,copy=False)
-                mask  = np_output.argmax(1) == y.argmax(1)
+                np_output = np.array(output.data, copy=False)
+                mask = np_output.argmax(1) == y.argmax(1)
                 correct += sum(mask)
                 n_eval += 1
                 n_loss += 1
 
             print(f"Eval Accuracy: {correct/n_eval}")
-            F1.write(f"{full_loss / n_loss}\t{correct/n_eval}\n")
+            result_file.write(f"{full_loss / n_loss}\t{correct/n_eval}\n")
 
-
-        F1.close()
+        result_file.close()
         del model
         print("\ndone vqsl\n")
 
 
-    if __name__ == '__main__':
+    if __name__ == "__main__":
 
-        run_VSQL()
+        run_vsql()
 
 The following shows the curve of model's accuacy and loss：
 
@@ -893,10 +809,12 @@ Mnist dataset definition
     except:  #pylint:disable=bare-except
         print("Can not use matplot TkAgg")
         pass
+
     try:
         import urllib.request
     except ImportError:
         raise ImportError("You should use Python 3.x")
+
     url_base = "http://yann.lecun.com/exdb/mnist/"
     key_file = {
         "train_img": "train-images-idx3-ubyte.gz",
@@ -904,17 +822,21 @@ Mnist dataset definition
         "test_img": "t10k-images-idx3-ubyte.gz",
         "test_label": "t10k-labels-idx1-ubyte.gz"
     }
+
+
     def _download(dataset_dir, file_name):
         """
         Download function for mnist dataset file
         """
         file_path = dataset_dir + "/" + file_name
+
         if os.path.exists(file_path):
             with gzip.GzipFile(file_path) as file:
                 file_path_ungz = file_path[:-3].replace("\\", "/")
                 if not os.path.exists(file_path_ungz):
                     open(file_path_ungz, "wb").write(file.read())
             return
+
         print("Downloading " + file_name + " ... ")
         urllib.request.urlretrieve(url_base + file_name, file_path)
         if os.path.exists(file_path):
@@ -924,13 +846,19 @@ Mnist dataset definition
                 if not os.path.exists(file_path_ungz):
                     open(file_path_ungz, "wb").write(file.read())
         print("Done")
+
+
     def download_mnist(dataset_dir):
         for v in key_file.values():
             _download(dataset_dir, v)
+
+
     if not os.path.exists("./result"):
         os.makedirs("./result")
     else:
         pass
+
+
     def load_mnist(dataset="training_data", digits=np.arange(10), path="./"):
         """
         load mnist data
@@ -949,64 +877,82 @@ Mnist dataset definition
                 "\\", "/")
         else:
             raise ValueError("dataset must be 'training_data' or 'testing_data'")
+
         flbl = open(fname_label, "rb")
         _, size = struct.unpack(">II", flbl.read(8))
+
         lbl = pyarray("b", flbl.read())
         flbl.close()
+
         fimg = open(fname_image, "rb")
         _, size, rows, cols = struct.unpack(">IIII", fimg.read(16))
         img = pyarray("B", fimg.read())
         fimg.close()
+
         ind = [k for k in range(size) if lbl[k] in digits]
         num = len(ind)
         images = np.zeros((num, rows, cols))
+
         labels = np.zeros((num, 1), dtype=int)
         for i in range(len(ind)):
             images[i] = np.array(img[ind[i] * rows * cols:(ind[i] + 1) * rows *
                                     cols]).reshape((rows, cols))
             labels[i] = lbl[ind[i]]
+
         return images, labels
-    def show_image():
-        image, _ = load_mnist()
-        for img in range(len(image)):
-            plt.imshow(image[img])
-            plt.show()
 
 Module definition and process function's definition
 
 .. code-block::
 
     class QModel(Module):
+
         def __init__(self):
             super().__init__()
             self.vq = Quanvolution([4, 2], (2, 2))
             self.fc = Linear(4 * 14 * 14, 10)
+
         def forward(self, x):
             x = self.vq(x)
             x = tensor.flatten(x, 1)
             x = self.fc(x)
             x = tensor.log_softmax(x)
             return x
+
+
+
     def run_quanvolution():
+
         digit = 10
         x_train, y_train = load_mnist("training_data", digits=np.arange(digit))
         x_train = x_train / 255
+
         y_train = y_train.flatten()
+
         x_test, y_test = load_mnist("testing_data", digits=np.arange(digit))
+
         x_test = x_test / 255
         y_test = y_test.flatten()
+
         x_train = x_train[:500]
         y_train = y_train[:500]
+
         x_test = x_test[:100]
         y_test = y_test[:100]
+
         print("model start")
         model = QModel()
+
         optimizer = Adam(model.parameters(), lr=5e-3)
+
         model.train()
         result_file = open("quanvolution.txt", "w")
+
         cceloss = NLL_Loss()
         N_EPOCH = 15
+
         for epoch in range(1, N_EPOCH):
+
             model.train()
             full_loss = 0
             n_loss = 0
@@ -1022,22 +968,25 @@ Module definition and process function's definition
                     x = x.reshape(batch_size, 1, 28, 28)
                 except:  #pylint:disable=bare-except
                     x = x.reshape(-1, 1, 28, 28)
+
                 output = model(x)
+
                 loss = cceloss(y, output)
                 print(f"loss {loss}")
                 loss.backward()
                 optimizer._step()
+
                 full_loss += loss.item()
                 n_loss += batch_size
                 np_output = np.array(output.data, copy=False)
                 mask = np_output.argmax(1) == y
-                print(np_output.argmax(1))
-                print(y)
+
                 correct += sum(mask)
                 print(f"correct {correct}")
             print(f"Train Accuracy: {correct/n_loss}%")
             print(f"Epoch: {epoch}, Loss: {full_loss / n_loss}")
             result_file.write(f"{epoch}\t{full_loss / n_loss}\t{correct/n_loss}\t")
+
             # Evaluation
             model.eval()
             print("eval")
@@ -1052,19 +1001,26 @@ Module definition and process function's definition
                                     shuffle=True):
                 x = x.reshape(-1, 1, 28, 28)
                 output = model(x)
+
                 loss = cceloss(y, output)
                 full_loss += loss.item()
+
                 np_output = np.array(output.data, copy=False)
                 mask = np_output.argmax(1) == y
                 correct += sum(mask)
                 n_eval += 1
                 n_loss += 1
+
             print(f"Eval Accuracy: {correct/n_eval}")
             result_file.write(f"{full_loss / n_loss}\t{correct/n_eval}\n")
+
         result_file.close()
         del model
         print("\ndone\n")
+
+
     if __name__ == "__main__":
+
         run_quanvolution()
 
 Training set, verification set loss, training set, verification set classification accuracy with Epoch transformation.
@@ -1105,7 +1061,7 @@ We apply our model in the context of quantum simulation to compress the Hubbard 
 This algorithm is based on `Quantum autoencoders for efficient compression of quantum data <https://arxiv.org/pdf/1612.02806.pdf>`_ .
 
 
-QAE quantum circuits：
+QAE quantum circuits:
 
 .. figure:: ./images/QAE_Quantum_Cir.png
    :width: 600 px
@@ -1114,11 +1070,6 @@ QAE quantum circuits：
 |
 
 .. code-block::
-
-    """
-    Quantum AutoEncoder demo
-
-    """
 
     import os
     import sys
@@ -1186,7 +1137,7 @@ QAE quantum circuits：
             x = self.pqc(x)
             return x
 
-    def load_mnist(dataset="training_data", digits=np.arange(2), path="./"):
+    def load_mnist(dataset="training_data", digits=np.arange(2), path="./"):         
         import os, struct
         from array import array as pyarray
         download_mnist(path)
@@ -1223,8 +1174,8 @@ QAE quantum circuits：
     def run2():
         ##load dataset
 
-        x_train, y_train = load_mnist("training_data")
-        x_train = x_train / 255
+        x_train, y_train = load_mnist("training_data")                       
+        x_train = x_train / 255                                             
 
         x_test, y_test = load_mnist("testing_data")
 
@@ -1291,7 +1242,6 @@ QAE quantum circuits：
             print(f"Epoch: {epoch}, Loss: {loss_output}")
             loss_list.append(loss_output)
 
-            # F1.write(f"{epoch}\t{full_loss / n_loss}\t{correct/n_loss}\t")
 
             # Evaluation
             model.eval()
@@ -1363,32 +1313,35 @@ The approach here is that this set of optimal quantum logic gates should make th
     Quantum Circuits Strcture Learning Demo
 
     """
-
-    import os
     import sys
-    
+    sys.path.insert(0,"../")
+
+    import copy
     import pyqpanda as pq
     from pyvqnet.tensor.tensor import QTensor
-    from pyvqnet.nn.module import Module
-    import numpy as np
-    from pyvqnet._core import Tensor as CoreTensor
-    import copy
     from pyvqnet.qnn.measure import expval
+    import numpy as np
+    import matplotlib.pyplot as plt
+    import matplotlib
+    try:
+        matplotlib.use("TkAgg")
+    except:  #pylint:disable=bare-except
+        print("Can not use matplot TkAgg")
+        pass
+
     machine = pq.CPUQVM()
     machine.init_qvm()
     nqbits = machine.qAlloc_many(2)
 
-    #genearate candidate quantum gates 
-    def gen(param:CoreTensor,generators,qbits,circuit):
+    def gen(param, generators, qbits, circuit):
         if generators == "X":
-            circuit.insert(pq.RX(qbits,param))
-        elif generators =="Y":
-            circuit.insert(pq.RY(qbits,param))
+            circuit.insert(pq.RX(qbits, param))
+        elif generators == "Y":
+            circuit.insert(pq.RY(qbits, param))
         else:
-            circuit.insert(pq.RZ(qbits,param))
-    
-    #generate circuits based on candidate quantum gates
-    def circuits(params,generators,circuit):
+            circuit.insert(pq.RZ(qbits, param))
+
+    def circuits(params, generators, circuit):
         gen(params[0], generators[0], nqbits[0], circuit)
         gen(params[1], generators[1], nqbits[1], circuit)
         circuit.insert(pq.CNOT(nqbits[0], nqbits[1]))
@@ -1396,73 +1349,80 @@ The approach here is that this set of optimal quantum logic gates should make th
         prog.insert(circuit)
         return prog
 
-    def ansatz1(params:QTensor,generators):
+    def ansatz1(params: QTensor, generators):
         circuit = pq.QCircuit()
-        params = params.data.getdata()
-        prog = circuits(params,generators,circuit)
-        return expval(machine,prog,{"Z0":1},nqbits), expval(machine,prog,{"Y1":1},nqbits)
-
-    def ansatz2(params:QTensor,generators):
-        circuit = pq.QCircuit()
-        params = params.data.getdata()
+        params = params.to_numpy()
         prog = circuits(params, generators, circuit)
-        return expval(machine,prog,{"X0":1},nqbits)
+        return expval(machine, prog, {"Z0": 1},
+                    nqbits), expval(machine, prog, {"Y1": 1}, nqbits)
 
-    #target loss function
-    def loss(params,generators):
-        Z, Y = ansatz1(params,generators)
-        X = ansatz2(params,generators)
-        return 0.5 * Y + 0.8 * Z - 0.2 * X
 
-    #rotosolve algorithm to find optimal parameter
-    def rotosolve(d, params, generators, cost, M_0):  # M_0 only calculated once
+    def ansatz2(params: QTensor, generators):
+        circuit = pq.QCircuit()
+        params = params.to_numpy()
+        prog = circuits(params, generators, circuit)
+        return expval(machine, prog, {"X0": 1}, nqbits)
+
+
+    def loss(params, generators):
+        z, y = ansatz1(params, generators)
+        x = ansatz2(params, generators)
+        return 0.5 * y + 0.8 * z - 0.2 * x
+
+
+    def rotosolve(d, params, generators, cost, M_0):#pylint:disable=invalid-name
+        """
+        rotosolve algorithm implementation
+        """
         params[d] = np.pi / 2.0
-        M_0_plus = cost(QTensor(params), generators)
+        m0_plus = cost(QTensor(params), generators)
         params[d] = -np.pi / 2.0
-        M_0_minus = cost(QTensor(params), generators)
-        a = np.arctan2(
-            2.0 * M_0 - M_0_plus - M_0_minus, M_0_plus - M_0_minus
-        )  # returns value in (-pi,pi]
+        m0_minus = cost(QTensor(params), generators)
+        a = np.arctan2(2.0 * M_0 - m0_plus - m0_minus,
+                    m0_plus - m0_minus)  # returns value in (-pi,pi]
         params[d] = -np.pi / 2.0 - a
         if params[d] <= -np.pi:
             params[d] += 2 * np.pi
         return cost(QTensor(params), generators)
 
-    #rotoselect algorithm to find best circuits structure
-    def optimal_theta_and_gen_helper(index,params,generators):
+
+    def optimal_theta_and_gen_helper(index, params, generators):
+        """
+        find optimal varaibles
+        """
         params[index] = 0.
-        M_0 = loss(QTensor(params),generators)#init value
-        for kind in ["X","Y","Z"]:
+        m0 = loss(QTensor(params), generators)  #init value
+        for kind in ["X", "Y", "Z"]:
             generators[index] = kind
-            params_cost = rotosolve(index, params, generators, loss, M_0)
+            params_cost = rotosolve(index, params, generators, loss, m0)
             if kind == "X" or params_cost <= params_opt_cost:
                 params_opt_d = params[index]
                 params_opt_cost = params_cost
                 generators_opt_d = kind
         return params_opt_d, generators_opt_d
 
-    def rotoselect_cycle(params:np,generators):
+
+    def rotoselect_cycle(params: np, generators):
         for index in range(params.shape[0]):
-            params[index], generators[index] = optimal_theta_and_gen_helper(index,params,generators)
-        return params,generators
+            params[index], generators[index] = optimal_theta_and_gen_helper(
+                index, params, generators)
+        return params, generators
 
 
-    params = QTensor(np.array([0.3,0.25]))
-    params = params.data.getdata()
-    generator = ["X","Y"]
+    params = QTensor(np.array([0.3, 0.25]))
+    params = params.to_numpy()
+    generator = ["X", "Y"]
     generators = copy.deepcopy(generator)
     epoch = 20
     state_save = []
     for i in range(epoch):
         state_save.append(loss(QTensor(params), generators))
-        params, generators = rotoselect_cycle(params,generators)
+        params, generators = rotoselect_cycle(params, generators)
 
     print("Optimal generators are: {}".format(generators))
+    print("Optimal params are: {}".format(params))
     steps = np.arange(0, epoch)
 
-    import matplotlib
-    matplotlib.use('TkAgg')
-    import matplotlib.pyplot as plt
 
     plt.plot(steps, state_save, "o-")
     plt.title("rotoselect")
@@ -1546,107 +1506,118 @@ These samples are divided into training data training_data and testing data test
     except ImportError:
         raise ImportError("You should use Python 3.x")
 
-    url_base = "http://yann.lecun.com/exdb/mnist/"
+    url_base = 'http://yann.lecun.com/exdb/mnist/'
     key_file = {
-        "train_img": "train-images-idx3-ubyte.gz",
-        "train_label": "train-labels-idx1-ubyte.gz",
-        "test_img": "t10k-images-idx3-ubyte.gz",
-        "test_label": "t10k-labels-idx1-ubyte.gz"
+        'train_img':'train-images-idx3-ubyte.gz',
+        'train_label':'train-labels-idx1-ubyte.gz',
+        'test_img':'t10k-images-idx3-ubyte.gz',
+        'test_label':'t10k-labels-idx1-ubyte.gz'
     }
 
-    def _download(dataset_dir, file_name):
-        """
-        Download mnist data if needed.
-        """
+    def _download(dataset_dir,file_name):
         file_path = dataset_dir + "/" + file_name
 
         if os.path.exists(file_path):
-            with gzip.GzipFile(file_path) as file:
-                file_path_ungz = file_path[:-3].replace("\\", "/")
+            with gzip.GzipFile(file_path) as f:
+                file_path_ungz = file_path[:-3].replace('\\', '/')
                 if not os.path.exists(file_path_ungz):
-                    open(file_path_ungz, "wb").write(file.read())
+                    open(file_path_ungz,"wb").write(f.read())
             return
 
         print("Downloading " + file_name + " ... ")
         urllib.request.urlretrieve(url_base + file_name, file_path)
         if os.path.exists(file_path):
-            with gzip.GzipFile(file_path) as file:
-                file_path_ungz = file_path[:-3].replace("\\", "/")
-                file_path_ungz = file_path_ungz.replace("-idx", ".idx")
-                if not os.path.exists(file_path_ungz):
-                    open(file_path_ungz, "wb").write(file.read())
+                with gzip.GzipFile(file_path) as f:
+                    file_path_ungz = file_path[:-3].replace('\\', '/')
+                    file_path_ungz = file_path_ungz.replace('-idx', '.idx')
+                    if not os.path.exists(file_path_ungz):
+                        open(file_path_ungz,"wb").write(f.read())
         print("Done")
 
     def download_mnist(dataset_dir):
         for v in key_file.values():
-            _download(dataset_dir, v)
+            _download(dataset_dir,v)
 
-    def load_mnist(dataset="training_data", digits=np.arange(2), path="./"):
-        """
-        load mnist data
-        """
+    def load_mnist(dataset="training_data", digits=np.arange(2), path="./"):         
+        import os, struct
         from array import array as pyarray
         download_mnist(path)
         if dataset == "training_data":
-            fname_image = os.path.join(path, "train-images.idx3-ubyte").replace(
-                "\\", "/")
-            fname_label = os.path.join(path, "train-labels.idx1-ubyte").replace(
-                "\\", "/")
+            fname_image = os.path.join(path, 'train-images.idx3-ubyte').replace('\\', '/')
+            fname_label = os.path.join(path, 'train-labels.idx1-ubyte').replace('\\', '/')
         elif dataset == "testing_data":
-            fname_image = os.path.join(path, "t10k-images.idx3-ubyte").replace(
-                "\\", "/")
-            fname_label = os.path.join(path, "t10k-labels.idx1-ubyte").replace(
-                "\\", "/")
+            fname_image = os.path.join(path, 't10k-images.idx3-ubyte').replace('\\', '/')
+            fname_label = os.path.join(path, 't10k-labels.idx1-ubyte').replace('\\', '/')
         else:
             raise ValueError("dataset must be 'training_data' or 'testing_data'")
 
-        flbl = open(fname_label, "rb")
-        _, size = struct.unpack(">II", flbl.read(8))
+        flbl = open(fname_label, 'rb')
+        magic_nr, size = struct.unpack(">II", flbl.read(8))
         lbl = pyarray("b", flbl.read())
         flbl.close()
 
-        fimg = open(fname_image, "rb")
-        _, size, rows, cols = struct.unpack(">IIII", fimg.read(16))
+        fimg = open(fname_image, 'rb')
+        magic_nr, size, rows, cols = struct.unpack(">IIII", fimg.read(16))
         img = pyarray("B", fimg.read())
         fimg.close()
 
         ind = [k for k in range(size) if lbl[k] in digits]
-        num = len(ind)
-        images = np.zeros((num, rows, cols))
-        labels = np.zeros((num, 1), dtype=int)
+        N = len(ind)
+        images = np.zeros((N, rows, cols))
+        labels = np.zeros((N, 1), dtype=int)
         for i in range(len(ind)):
-            images[i] = np.array(img[ind[i] * rows * cols:(ind[i] + 1) * rows *
-                                    cols]).reshape((rows, cols))
+            images[i] = np.array(img[ind[i] * rows * cols: (ind[i] + 1) * rows * cols]).reshape((rows, cols))
             labels[i] = lbl[ind[i]]
 
         return images, labels
 
-
     def data_select(train_num, test_num):
-        """
-        Select data from mnist dataset.
-        """
         x_train, y_train = load_mnist("training_data")
         x_test, y_test = load_mnist("testing_data")
-        idx_train = np.append(
-            np.where(y_train == 0)[0][:train_num],
-            np.where(y_train == 1)[0][:train_num])
-
+        # Train Leaving only labels 0 and 1
+        idx_train = np.append(np.where(y_train == 0)[0][:train_num],
+                        np.where(y_train == 1)[0][:train_num])
         x_train = x_train[idx_train]
         y_train = y_train[idx_train]
         x_train = x_train / 255
         y_train = np.eye(2)[y_train].reshape(-1, 2)
-
         # Test Leaving only labels 0 and 1
-        idx_test = np.append(
-            np.where(y_test == 0)[0][:test_num],
-            np.where(y_test == 1)[0][:test_num])
-
+        idx_test = np.append(np.where(y_test == 0)[0][:test_num],
+                        np.where(y_test == 1)[0][:test_num])
         x_test = x_test[idx_test]
         y_test = y_test[idx_test]
         x_test = x_test / 255
         y_test = np.eye(2)[y_test].reshape(-1, 2)
         return x_train, y_train, x_test, y_test
+
+    n_samples_show = 6
+
+    x_train, y_train, x_test, y_test = data_select(100, 50)
+    fig, axes = plt.subplots(nrows=1, ncols=n_samples_show, figsize=(10, 3))
+
+    for img ,targets in zip(x_test,y_test):
+        if n_samples_show <= 3:
+            break
+
+        if targets[0] == 1:
+            axes[n_samples_show - 1].set_title("Labeled: 0")
+            axes[n_samples_show - 1].imshow(img.squeeze(), cmap='gray')
+            axes[n_samples_show - 1].set_xticks([])
+            axes[n_samples_show - 1].set_yticks([])
+            n_samples_show -= 1
+
+    for img ,targets in zip(x_test,y_test):
+        if n_samples_show <= 0:
+            break
+
+        if targets[0] == 0:
+            axes[n_samples_show - 1].set_title("Labeled: 1")
+            axes[n_samples_show - 1].imshow(img.squeeze(), cmap='gray')
+            axes[n_samples_show - 1].set_xticks([])
+            axes[n_samples_show - 1].set_yticks([])
+            n_samples_show -= 1
+
+    plt.show()
 
 .. figure:: ./images/mnsit_data_examples.png
    :width: 600 px
@@ -2019,7 +1990,6 @@ Quantum partial circuit diagram are illustrated below:
             _download(dataset_dir,v)
 
 
-    IF_PLOT = False
     if not os.path.exists("./result"):
         os.makedirs("./result")
     else:
@@ -2063,7 +2033,7 @@ Quantum partial circuit diagram are illustrated below:
             x = self.fc3(x)  # 1 1
             return x
 
-    def load_mnist(dataset="training_data", digits=np.arange(2), path="./"):         # 下载数据
+    def load_mnist(dataset="training_data", digits=np.arange(2), path="./"):         
         import os, struct
         from array import array as pyarray
         download_mnist(path)
@@ -2682,7 +2652,7 @@ Import necessary libraries and functions
     from pyvqnet.nn.loss import BinaryCrossEntropy
     from pyvqnet.optim.adam import Adam
 
-    from pyvqnet.tensor import tensor
+    from pyvqnet.tensor import tensor,kfloat32
     from pyvqnet.tensor.tensor import QTensor
     import pyqpanda as pq
     from pyqpanda import *
@@ -2716,14 +2686,14 @@ Preprocessing data
                 temp_data = cv2.imread(self.path+"/images" + '/' + list_path[i], cv2.IMREAD_COLOR)
                 temp_data = cv2.resize(temp_data, (128, 128))
                 grayimg = cv2.cvtColor(temp_data, cv2.COLOR_BGR2GRAY)
-                temp_data = grayimg.reshape(temp_data.shape[0], temp_data.shape[0], 1)
+                temp_data = grayimg.reshape(temp_data.shape[0], temp_data.shape[0], 1).astype(np.float32)
                 self.x_data.append(temp_data)
 
                 label_data = cv2.imread(self.path+"/labels" + '/' +list_path[i].split(".")[0] + ".png", cv2.IMREAD_COLOR)
                 label_data = cv2.resize(label_data, (128, 128))
 
                 label_data = cv2.cvtColor(label_data, cv2.COLOR_BGR2GRAY)
-                label_data = label_data.reshape(label_data.shape[0], label_data.shape[0], 1)
+                label_data = label_data.reshape(label_data.shape[0], label_data.shape[0], 1).astype(np.int64)
                 self.y_label.append(label_data)
 
             return self.x_data, self.y_label
@@ -2836,7 +2806,7 @@ are connected through concatenate for feature fusion.
             self.BatchNorm2d2 = BatchNorm2d(out_ch)
             self.Relu2 = F.ReLu()
             self.conv3 = Conv2D(input_channels=out_ch, output_channels=out_ch, kernel_size=(3, 3), stride=(2, 2),
-                                padding="same")
+                                padding="(1,1))
             self.BatchNorm2d3 = BatchNorm2d(out_ch)
             self.Relu3 = F.ReLu()
 
@@ -2871,7 +2841,7 @@ are connected through concatenate for feature fusion.
             self.Relu2 = F.ReLu()
 
             self.conv3 = ConvT2D(input_channels=out_ch * 2, output_channels=out_ch, kernel_size=(3, 3), stride=(2, 2),
-                                 padding="same")
+                                 padding=(1,1))
             self.BatchNorm2d3 = BatchNorm2d(out_ch)
             self.Relu3 = F.ReLu()
 
@@ -2928,13 +2898,20 @@ are connected through concatenate for feature fusion.
             out_4, out4 = self.d4(out3)
 
             out5 = self.u1(out4)
-            cat_out5 = tensor.concatenate([out5, out_4], axis=1)
+            out5_pad_out4 = tensor.pad2d(out5, (1, 0, 1, 0), 0)
+            cat_out5 = tensor.concatenate([out5_pad_out4, out_4], axis=1)
+
             out6 = self.u2(cat_out5)
-            cat_out6 = tensor.concatenate([out6, out_3], axis=1)
+            out6_pad_out_3 = tensor.pad2d(out6, (1, 0, 1, 0), 0)
+            cat_out6 = tensor.concatenate([out6_pad_out_3, out_3], axis=1)
+
             out7 = self.u3(cat_out6)
-            cat_out7 = tensor.concatenate([out7, out_2], axis=1)
+            out7_pad_out_2 = tensor.pad2d(out7, (1, 0, 1, 0), 0)
+            cat_out7 = tensor.concatenate([out7_pad_out_2, out_2], axis=1)
+
             out8 = self.u4(cat_out7)
-            cat_out8 = tensor.concatenate([out8, out_1], axis=1)
+            out8_pad_out_1 = tensor.pad2d(out8, (1, 0, 1, 0), 0)
+            cat_out8 = tensor.concatenate([out8_pad_out_1, out_1], axis=1)
             out = self.conv1(cat_out8)
             out = self.BatchNorm2d1(out)
             out = self.Relu1(out)
@@ -2953,10 +2930,11 @@ we also need to instantiate the model, define the loss function and optimizer, a
 testing process. For the hybrid neural network model as shown in the figure below, we calculate the loss value in
 forward function the gradient of each parameter in
 reverse calculation automatically, and use the optimizer to optimize the parameters until the number of
-iterations meets the preset value.
-
+iterations meets the preset value.If ``PREPROCESS`` is False，the code will skip the quantum data preprocessing.
 
 .. code-block::
+
+    PREPROCESS = True
 
     class MyDataset():
         def __init__(self, x_data, x_label):
@@ -2996,9 +2974,7 @@ iterations meets the preset value.
     test_images = test_images / 255
 
     # use quantum encoder to preprocess data
-    # PREPROCESS = True
-    PREPROCESS = False
-    
+
     if PREPROCESS == True:
         print("Quantum pre-processing of train images:")
         q_train_images = quantum_data_preprocessing(train_images)
@@ -3045,9 +3021,9 @@ iterations meets the preset value.
         total_loss = []
         model.train()
         for i, (x, y) in enumerate(trainset):
-            x_img = QTensor(x)
+            x_img = QTensor(x, dtype=kfloat32)
             x_img_Qtensor = tensor.unsqueeze(x_img, 0)
-            y_img = QTensor(y)
+            y_img = QTensor(y, dtype=kfloat32)
             y_img_Qtensor = tensor.unsqueeze(y_img, 0)
             optimizer.zero_grad()
             img_out = model(x_img_Qtensor)
@@ -3123,9 +3099,9 @@ The loss function curve of training data is displayed and saved, and the test da
     model.eval()
 
     for i, (x1, y1) in enumerate(testset):
-        x_img = QTensor(x1)
+        x_img = QTensor(x1, dtype=kfloat32)
         x_img_Qtensor = tensor.unsqueeze(x_img, 0)
-        y_img = QTensor(y1)
+        y_img = QTensor(y1, dtype=kfloat32)
         y_img_Qtensor = tensor.unsqueeze(y_img, 0)
         img_out = model(x_img_Qtensor)
         loss = loss_func(y_img_Qtensor, img_out)
@@ -3875,8 +3851,7 @@ Building Hybrid Classical-Quantum Neural Networks
         def __init__(self):
             super(QMLPModel, self).__init__()
             self.ave_pool2d = AvgPool2D([7, 7], [7, 7], "valid")
-            # self.quantum_circuit = QuantumLayer(build_qmlp_circuit, 128, "CPU", 16, diff_method="finite_diff")
-            self.quantum_circuit = QuantumLayerMultiProcess(build_multiprocess_qmlp_circuit, 128, "CPU",
+            self.quantum_circuit = QuantumLayerMultiProcess(build_multiprocess_qmlp_circuit, 128, 
                                                             16, 1, diff_method="finite_diff")
             self.linear = Linear(16, 10)
 
@@ -3988,7 +3963,6 @@ Requires ``gym`` == 0.23.0 , ``pygame`` == 2.1.2 .
 
 .. code-block::
 
-
     import numpy as np
     import random
     import gym
@@ -3998,82 +3972,84 @@ Requires ``gym`` == 0.23.0 , ``pygame`` == 2.1.2 .
     from pyvqnet.nn.module import Module
     from pyvqnet.nn.loss import MeanSquaredError
     from pyvqnet.optim.adam import Adam
-    from pyvqnet.tensor.tensor import QTensor
+    from pyvqnet.tensor.tensor import QTensor,kfloat32
     from pyvqnet.qnn.quantumlayer import QuantumLayerMultiProcess
     from pyvqnet.tensor import tensor
     from pyvqnet.qnn.measure import expval
     from pyvqnet._core import Tensor as CoreTensor
-
     import matplotlib
     from matplotlib import pyplot as plt
     try:
         matplotlib.use("TkAgg")
     except:  # pylint:disable=bare-except
         print("Can not use matplot TkAgg")
-
     def display_frames_as_gif(frames, c_index):
         patch = plt.imshow(frames[0])
         plt.axis('off')
         def animate(i):
             patch.set_data(frames[i])
-
         anim = animation.FuncAnimation(plt.gcf(), animate, frames=len(frames), interval=5)
         name_result = "./result_"+str(c_index)+".gif"
         anim.save(name_result, writer='pillow', fps=10)
-
-
     CIRCUIT_SIZE = 4
     MAX_ITERATIONS = 50
     MAX_STEPS = 250
     BATCHSIZE = 5
     TARGET_MAX = 20
     GAMMA = 0.99
-
     STATE_T = 0
     ACTION = 1
     REWARD = 2
     STATE_NT = 3
     DONE = 4
-
-
     def RotCircuit(para, qlist):
-
+        r"""
+        Arbitrary single qubit rotation.Number of qlist should be 1,and number of parameters should
+        be 3
+        .. math::
+            R(\phi,\theta,\omega) = RZ(\omega)RY(\theta)RZ(\phi)= \begin{bmatrix}
+            e^{-i(\phi+\omega)/2}\cos(\theta/2) & -e^{i(\phi-\omega)/2}\sin(\theta/2) \\
+            e^{-i(\phi-\omega)/2}\sin(\theta/2) & e^{i(\phi+\omega)/2}\cos(\theta/2)
+            \end{bmatrix}.
+        :param para: numpy array which represents paramters [\phi, \theta, \omega]
+        :param qlist: qubits allocated by pyQpanda.qAlloc_many()
+        :return: quantum circuits
+        Example::
+            m_machine = pq.init_quantum_machine(pq.QMachineType.CPU)
+            m_clist = m_machine.cAlloc_many(2)
+            m_prog = pq.QProg()
+            m_qlist = m_machine.qAlloc_many(1)
+            param = np.array([3,4,5])
+            c = RotCircuit(param,m_qlist)
+            print(c)
+            pq.destroy_quantum_machine(m_machine)
+        """
         if isinstance(para, QTensor):
             para = QTensor._to_numpy(para)
         if para.ndim > 1:
             raise ValueError(" dim of paramters in Rot should be 1")
         if para.shape[0] != 3:
             raise ValueError(" numbers of paramters in Rot should be 3")
-
         cir = pq.QCircuit()
         cir.insert(pq.RZ(qlist, para[2]))
         cir.insert(pq.RY(qlist, para[1]))
         cir.insert(pq.RZ(qlist, para[0]))
-
         return cir
-
-
     def layer_circuit(qubits, weights):
         cir = pq.QCircuit()
         # Entanglement block
         cir.insert(pq.CNOT(qubits[0], qubits[1]))
         cir.insert(pq.CNOT(qubits[1], qubits[2]))
         cir.insert(pq.CNOT(qubits[2], qubits[3]))
-
         # u3 gate
         cir.insert(RotCircuit(weights[0], qubits[0]))  # weights shape = [4, 3]
         cir.insert(RotCircuit(weights[1], qubits[1]))
         cir.insert(RotCircuit(weights[2], qubits[2]))
         cir.insert(RotCircuit(weights[3], qubits[3]))
-
         return cir
-
-
     def encoder(encodings):
         encodings = int(encodings[0])
         return [i for i, b in enumerate(f'{encodings:0{CIRCUIT_SIZE}b}') if b == '1']
-
-
     def build_qc(x, weights, num_qubits, num_clist):
         machine = pq.CPUQVM()
         machine.init_qvm()
@@ -4084,13 +4060,11 @@ Requires ``gym`` == 0.23.0 , ``pygame`` == 2.1.2 .
             for wire in wires:
                 cir.insert(pq.RX(qubits[wire], np.pi))
                 cir.insert(pq.RZ(qubits[wire], np.pi))
-
         # parameter number = 24
         weights = weights.reshape([2, 4, 3])
         # layer wise
         for w in weights:
             cir.insert(layer_circuit(qubits, w))
-
         prog = pq.QProg()
         prog.insert(cir)
         exp_vals = []
@@ -4098,39 +4072,29 @@ Requires ``gym`` == 0.23.0 , ``pygame`` == 2.1.2 .
             pauli_str = {"Z" + str(position): 1.0}
             exp2 = expval(machine, prog, pauli_str, qubits)
             exp_vals.append(exp2)
-
         return exp_vals
-
     class DRLModel(Module):
         def __init__(self):
             super(DRLModel, self).__init__()
-            self.quantum_circuit = QuantumLayerMultiProcess(build_qc, 24, "CPU",
+            self.quantum_circuit = QuantumLayerMultiProcess(build_qc, 24,
                                                             4, 1, diff_method="finite_diff")
-
         def forward(self, x):
             quanutum_result = self.quantum_circuit(x)
             return quanutum_result
-
     env = gym.make("FrozenLake-v1", is_slippery = False, map_name = '4x4')
     state = env.reset()
-
-
     n_layers = 2
     n_qubits = 4
     targ_counter = 0
     sampled_vs = []
     memory = {}
-
     param = QTensor(0.01 * np.random.randn(n_layers, n_qubits, 3))
     bias = QTensor([[0.0, 0.0, 0.0, 0.0]])
-
     param_targ = param.copy().reshape([1, -1]).pdata[0]
     bias_targ = bias.copy()
-
     loss_func = MeanSquaredError()
     model = DRLModel()
     opt = Adam(model.parameters(), lr=5)
-
     for i in range(MAX_ITERATIONS):
         start = time.time()
         state_t = env.reset()
@@ -4141,27 +4105,19 @@ Requires ``gym`` == 0.23.0 , ``pygame`` == 2.1.2 .
         for t in range(MAX_STEPS):
             frames.append(env.render(mode='rgb_array'))
             time.sleep(0.1)
-
-            input_x = QTensor([[state_t]])
-
+            input_x = QTensor([[state_t]],dtype=kfloat32)
             acts = model(input_x) + bias
-            # print(f'type of acts: {type(acts)}')
 
             act_t = tensor.QTensor.argmax(acts)
-            # print(f'act_t: {act_t} type of act_t: {type(act_t)}')
 
             act_t_np = int(act_t.pdata[0])
             print(f'Episode: {i}, Steps: {t}, act: {act_t_np}')
             state_nt, reward, done, info = env.step(action=act_t_np)
             targ_counter += 1
-
-
-            input_state_nt = QTensor([[state_nt]])
+            input_state_nt = QTensor([[state_nt]],dtype=kfloat32)
             act_nt = QTensor.argmax(model(input_state_nt)+bias)
             act_nt_np = int(act_nt.pdata[0])
-
             memory[i, t] = (state_t, act_t, reward, state_nt, done)
-
             if len(memory) >= BATCHSIZE:
                 # print('Optimizing...')
                 sampled_vs = [memory[k] for k in random.sample(list(memory), BATCHSIZE)]
@@ -4170,35 +4126,29 @@ Requires ``gym`` == 0.23.0 , ``pygame`` == 2.1.2 .
                     if s[DONE]:
                         target_temp.append(QTensor(s[REWARD]).reshape([1, -1]))
                     else:
-                        input_s = QTensor([[s[STATE_NT]]])
+                        input_s = QTensor([[s[STATE_NT]]],dtype=kfloat32)
                         out_temp = s[REWARD] + GAMMA * tensor.max(model(input_s) + bias_targ)
                         out_temp = out_temp.reshape([1, -1])
                         target_temp.append(out_temp)
-
                 target_out = []
                 for b in sampled_vs:
-                    input_b = QTensor([[b[STATE_T]]], requires_grad=True)
+                    input_b = QTensor([[b[STATE_T]]], requires_grad=True,dtype=kfloat32)
                     out_result = model(input_b) + bias
                     index = int(b[ACTION].pdata[0])
                     out_result_temp = out_result[0][index].reshape([1, -1])
                     target_out.append(out_result_temp)
-
-
                 opt.zero_grad()
                 target_label = tensor.concatenate(target_temp, 1)
                 output = tensor.concatenate(target_out, 1)
                 loss = loss_func(target_label, output)
                 loss.backward()
                 opt.step()
-
             # update parameters in target circuit
             if targ_counter == TARGET_MAX:
                 param_targ = param.copy().reshape([1, -1]).pdata[0]
                 bias_targ = bias.copy()
                 targ_counter = 0
-
             state_t, act_t_np = state_nt, act_nt_np
-
             if done:
                 print("reward", reward)
                 if reward == 1.0:
@@ -4284,10 +4234,12 @@ The data is randomly generated by make_blobs under SciPy, and the function is de
 
 .. code-block::
 
+    import sys
+    sys.path.insert(0, "../")
     import math
     import numpy as np
-    from pyvqnet.tensor import QTensor, zeros
-    import pyvqnet.tensor as tensor
+    from pyvqnet.tensor.tensor import QTensor, zeros
+    import pyvqnet.tensor.tensor as tensor
     import pyqpanda as pq
     from sklearn.datasets import make_blobs
     import matplotlib.pyplot as plt
@@ -4297,9 +4249,13 @@ The data is randomly generated by make_blobs under SciPy, and the function is de
     except:  #pylint:disable=bare-except
         print("Can not use matplot TkAgg")
         pass
-    # According to the data amount n of the data, the cluster center K and the data standard deviation std return the corresponding data point and the cluster center point
+
     def get_data(n, k, std):
-        data = make_blobs(n_samples=n, n_features=2, centers=k, cluster_std=std, random_state=100)
+        data = make_blobs(n_samples=n,
+                        n_features=2,
+                        centers=k,
+                        cluster_std=std,
+                        random_state=100)
         points = data[0]
         centers = data[1]
         return points, centers
@@ -4393,7 +4349,7 @@ Calculate the cluster center of relevant cluster data
         n = points.shape[0]
         k = centroids.shape[0]
 
-        centers = zeros([n])
+        centers = zeros([n], dtype=points.dtype)
 
         for i in range(n):
             min_dis = 10000
@@ -4412,7 +4368,7 @@ Calculate the cluster center of relevant cluster data
     def find_centroids(points, centers):
 
         k = int(tensor.max(centers).item()) + 1
-        centroids = tensor.zeros([k, 2])
+        centroids = tensor.zeros([k, 2], dtype=points.dtype)
         for i in range(k):
 
             cur_i = centers == i
@@ -5025,7 +4981,7 @@ Make the input data, define the parallel quantum model, and build the training m
         def __init__(self):
             super(Model, self).__init__()
 
-            self.q_fourier_series = QuantumLayer(q_circuits_loop, 2 * 3 * 3 * 3, "CPU", 1)
+            self.q_fourier_series = QuantumLayer(q_circuits_loop, 2 * 3 * 3 * 3, "CPU", 3)
 
         def forward(self, x):
             return self.q_fourier_series(x)
@@ -5512,7 +5468,7 @@ it can be seen that the loss function declines faster using the quantum natural 
     opti = SGD(qlayer.parameters())
     for i in range(steps):
         opti.zero_grad()
-        loss = qlayer(QTensor([[1]]))
+        loss = qlayer(QTensor([[1.0]]))
         print(f'step {i}')
         print(f'q param before {qlayer.m_para}')
         loss.backward()
@@ -6021,6 +5977,7 @@ The following is the application of the VQC classification example using the gra
     import numpy as np
     import pyqpanda as pq
 
+    from pyvqnet.data import data_generator as dataloader
     from pyvqnet.nn.module import Module
     from pyvqnet.optim import sgd
     from pyvqnet.qnn.quantumlayer import QuantumLayer
@@ -6143,16 +6100,6 @@ The following is the application of the VQC classification example using the gra
         return data, label
 
 
-    def dataloader(data, label, batch_size, shuffle=True) -> np:
-        if shuffle:
-            for _ in range(len(data) // batch_size):
-                random_index = np.random.randint(0, len(data), (batch_size, 1))
-                yield data[random_index].reshape(batch_size,
-                                                -1), label[random_index].reshape(
-                                                    batch_size, -1)
-        else:
-            for i in range(0, len(data) - batch_size + 1, batch_size):
-                yield data[i:i + batch_size], label[i:i + batch_size]
 
 
     def get_accuary(result, label):
@@ -6268,7 +6215,8 @@ Model training using quantumlayer in VQNet
     from pyvqnet.nn.module import Module
     from pyvqnet.optim import sgd
     import numpy as np
-    import os
+
+    from pyvqnet.data import data_generator as dataloader
     from pyvqnet.nn.linear import Linear
     from pyvqnet.nn.loss import CategoricalCrossEntropy
 
@@ -6353,15 +6301,6 @@ Model training using quantumlayer in VQNet
 
         def forward(self, x):
             return self.qvc(x)
-
-    def dataloader(data,label,batch_size, shuffle = True)->np:
-        if shuffle:
-            for _ in range(len(data)//batch_size):
-                random_index = np.random.randint(0, len(data), (batch_size, 1))
-                yield data[random_index].reshape(batch_size,-1),label[random_index].reshape(batch_size,-1)
-        else:
-            for i in range(0,len(data)-batch_size+1,batch_size):
-                yield data[i:i+batch_size], label[i:i+batch_size]
 
     def get_data(dataset_str):
         if dataset_str == "train":
@@ -6802,7 +6741,7 @@ Use the ``run`` function to define the line operation mode and measurement.
     """
     import sys,os
     import time
-
+    from pyvqnet.data import data_generator as dataloader
     from pyvqnet.nn.module import Module
     from pyvqnet.optim import sgd
     import numpy as np
@@ -6908,14 +6847,6 @@ Use the ``run`` function to define the line operation mode and measurement.
         label = np.eye(2)[label].reshape(-1, 2)
         return data, label
 
-    def dataloader(data,label,batch_size, shuffle = True)->np:
-        if shuffle:
-            for _ in range(len(data)//batch_size):
-                random_index = np.random.randint(0, len(data), (batch_size, 1))
-                yield data[random_index].reshape(batch_size,-1),label[random_index].reshape(batch_size,-1)
-        else:
-            for i in range(0,len(data)-batch_size+1,batch_size):
-                yield data[i:i+batch_size], label[i:i+batch_size]
 
     def get_accuary(result,label):
         result,label = np.array(result.data), np.array(label.data)

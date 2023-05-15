@@ -134,7 +134,7 @@ Definiting some functions of training model
                 y = [1,0]
             data_x.append(x)
             data_y.append(y)
-        return np.array(data_x), np.array(data_y)
+        return np.array(data_x,dtype=np.float32), np.array(data_y,np.int64)
 
     # a funntion to loading data
     def get_minibatch_data(x_data, label, batch_size):
@@ -169,7 +169,7 @@ A function to train the model
             
         #  generate data to be trained randomly   
         x_train, y_train = circle(500)
-        x_train = np.hstack((x_train, np.zeros((x_train.shape[0], 1))))  
+        x_train = np.hstack((x_train, np.zeros((x_train.shape[0], 1),dtype=np.float32))))  
         # define the number of data about each batch
         batch_size = 32
         # Maximum of training iteration times
@@ -212,7 +212,7 @@ A function to validate the model
         xtest, y_test = circle(500)
         test_accuracy = 0
         count = 0
-        x_test = np.hstack((xtest, np.zeros((xtest.shape[0], 1))))
+        x_test = np.hstack((xtest, np.zeros((xtest.shape[0], 1),dtype=np.float32)))
         predicted_test = []
         for test_data, test_label in get_minibatch_data(x_test,y_test, batch_size):
 
