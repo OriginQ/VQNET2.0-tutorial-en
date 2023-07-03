@@ -5,7 +5,7 @@ VQNet python package Installation
 ----------------------------------
 
 We provide different pre-compiled packages based on python with Linux, Windows, MacOS, 
-which Python version ==3.8, numpy>=1.18.5 and pyqpanda>=3.7.8 will required. 
+which **Python ==3.8, 3,9 or 3.10** , numpy>=1.18.5 and pyqpanda>=3.7.8 will required. 
 
 
 .. code-block::

@@ -1,6 +1,19 @@
 VQNet Changelog
 =================
 
+[v2.0.7] - 2023-07-23
+----------------------
+
+Added
+^^^^^^^^^^^^
+- For classic neural network, add kron, gather, scatter, broadcast_to interfaces.
+- Added support for different data precision: data type dtype supports kbool, kuint8, kint8, kint16, kint32, kint64, kfloat32, kfloat64, kcomplex64, kcomplex128, which respectively represent bool, uint8_t, int8_t, int16_t, int32_t, int64_t, float, double, complex<float>, complex<double>.
+- Support python 3.8, 3.9, 3.10.
+
+Changed
+^^^^^^^^^^^^
+- The init function of QTenor and Module class adds `dtype` parameter. The types of QTenor index and input of some neural network layers are restricted.
+- Quantum neural network, due to MacOS compatibility issues, the Mnist_Dataset and CIFAR10_Dataset interfaces have been removed.
 
 [v2.0.6] - 2023-02-22
 ----------------------
