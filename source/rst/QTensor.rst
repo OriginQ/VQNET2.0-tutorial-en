@@ -133,7 +133,8 @@ dtype
 
     Returns the data type of the tensor.
 
-    QTensor internal data type dtype supports kbool=0, kuint8=1, kint8=2, kint16=3, kint32=4, kint64=5, kfloat32=6, kfloat64=7, kcomplex64=8, kcomplex128=9.
+    QTensor internal data type dtype supports kbool=0, kuint8=1, kint8=2, kint16=3, kint32=4, 
+    kint64=5, kfloat32=6, kfloat64=7, kcomplex64=8, kcomplex128=9.
 
     :return: The data type of the tensor.
 

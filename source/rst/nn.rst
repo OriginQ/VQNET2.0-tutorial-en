@@ -825,11 +825,12 @@ LayerNorm2d
     Example::
 
         import numpy as np
+        import pyvqnet
         from pyvqnet.tensor import QTensor
         from pyvqnet.nn.layer_norm import LayerNorm2d
         ic = 4
         test_conv = LayerNorm2d(8)
-        x = QTensor(np.arange(1,17).reshape([2,2,4,1]),requires_grad=True)
+        x = QTensor(np.arange(1,17).reshape([2,2,4,1]),requires_grad=True,dtype=pyvqnet.kfloat32)
         y = test_conv.forward(x)
         print(y)
 

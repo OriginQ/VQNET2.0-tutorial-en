@@ -22,7 +22,7 @@ For details, please refer to the relevant interfaces and sample codes in this do
 
 Answer: Users may need to install the VC++ runtime library on Windows.
 Refer to https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist?view=msvc-170 to install the appropriate runtime library.
-In addition, VQNet currently only supports python3.8 version, so please confirm your python version.
+In addition, VQNet currently only supports python3.8,3.9,3.10 version, so please confirm your python version.
 
 **Q: How to call the original quantum cloud and quantum chip for calculation**
 
@@ -84,10 +84,16 @@ If the user wants to use a list containing multiple modules as a submodule in `M
                  ])
                  #Direct use of list cannot save the parameters in pqc3.
                  #self.pqc3 = [QuantumLayer(pqctest,3,"cpu",4,1), Linear(4,1)
-                 ]
+                 #]
              def forward(self, x, *args, **kwargs):
                  y = self.pqc2[0](x) + self.pqc2[1](x)
                  return y
 
          mm = M()
          print(mm. state_dict(). keys())
+
+**Q: Why did the original code not run in version 2.0.7**
+
+Answer: In version v2.0.7, we added different data types and dtype attributes to QTensor, and restricted input based on PyTorch. For example, the Emedding layer input needs to be kint64, CategoricalCrossEntropy, CrossEntropyLoss, SoftmaxCrossEntropy, NLL_Loss layers's label for Loss and needs to be kint64.
+
+You can use the 'astype()' interface to convert the type to the specified data type, or initialize the QTensor using the corresponding data type numpy array.
