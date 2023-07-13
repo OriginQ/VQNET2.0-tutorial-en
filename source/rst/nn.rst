@@ -5,46 +5,47 @@ The following classical neural network modules support automatic back propagatio
 
 .. code-block::
 
-    from pyvqnet.tensor import QTensor
-    from pyvqnet.nn import Conv2D
-    from pyvqnet._core import Tensor as CoreTensor
-    # an image feed into two dimension convolution layer
-    b = 2        # batch size
-    ic = 2       # input channels
-    oc = 2      # output channels
-    hw = 4      # input width and heights
+        from pyvqnet.tensor import arange
+        from pyvqnet import kfloat32
+        from pyvqnet.nn import Conv2D
 
-    # two dimension convolution layer
-    test_conv = Conv2D(ic,oc,(2,2),(2,2),"same")
+        # an image feed into two dimension convolution layer
+        b = 2        # batch size
+        ic = 2       # input channels
+        oc = 2      # output channels
+        hw = 4      # input width and heights
 
-    # input of shape [b,ic,hw,hw]
-    x0 = QTensor(CoreTensor.range(1,b*ic*hw*hw).reshape([b,ic,hw,hw]),requires_grad=True)
+        # two dimension convolution layer
+        test_conv = Conv2D(ic,oc,(2,2),(2,2),"same")
 
-    #forward function
-    x = test_conv(x0)
+        # input of shape [b,ic,hw,hw]
+        x0 = arange(1,b*ic*hw*hw+1,requires_grad=True,dtype=kfloat32).reshape([b,ic,hw,hw])
 
-    #backward function with autograd
-    x.backward()
-    print(x0.grad)
+        #forward function
+        x = test_conv(x0)
 
-    # [
-    # [[[0.3051388, 0.3040530, 0.3051388, 0.1224213],
-    #  [0.1118232, 0.1448178, 0.1118232, 0.2228756],
-    #  [0.3051388, 0.3040530, 0.3051388, 0.1224213],
-    #  [0.0281369, 0.2619222, 0.0281369, 0.0893420]],
-    # [[-0.2651831, 0.4174044, -0.2651831, 0.2255079],
-    #  [-0.3505684, 0.0706428, -0.3505684, 0.1537349],
-    #  [-0.2651831, 0.4174044, -0.2651831, 0.2255079],
-    #  [-0.0199047, -0.1207576, -0.0199047, 0.0083465]]],
-    # [[[0.3051388, 0.3040530, 0.3051388, 0.1224213],
-    #  [0.1118232, 0.1448178, 0.1118232, 0.2228756],
-    #  [0.3051388, 0.3040530, 0.3051388, 0.1224213],
-    #  [0.0281369, 0.2619222, 0.0281369, 0.0893420]],
-    # [[-0.2651831, 0.4174044, -0.2651831, 0.2255079],
-    #  [-0.3505684, 0.0706428, -0.3505684, 0.1537349],
-    #  [-0.2651831, 0.4174044, -0.2651831, 0.2255079],
-    #  [-0.0199047, -0.1207576, -0.0199047, 0.0083465]]]
-    # ]
+        #backward function with autograd
+        x.backward()
+        print(x0.grad)
+
+        # [
+        # [[[0.0958736, 0.3032238, 0.0958736, 0.3032238],
+        #  [-0.2665333, 0.1081382, -0.2665333, 0.1081382],
+        #  [0.0958736, 0.3032238, 0.0958736, 0.3032238],
+        #  [-0.2665333, 0.1081382, -0.2665333, 0.1081382]],
+        # [[-0.0068994, 0.0914679, -0.0068994, 0.0914679],
+        #  [-0.2820665, 0.3160213, -0.2820665, 0.3160213],
+        #  [-0.0068994, 0.0914679, -0.0068994, 0.0914679],
+        #  [-0.2820665, 0.3160213, -0.2820665, 0.3160213]]],
+        # [[[0.0958736, 0.3032238, 0.0958736, 0.3032238],
+        #  [-0.2665333, 0.1081382, -0.2665333, 0.1081382],
+        #  [0.0958736, 0.3032238, 0.0958736, 0.3032238],
+        #  [-0.2665333, 0.1081382, -0.2665333, 0.1081382]],
+        # [[-0.0068994, 0.0914679, -0.0068994, 0.0914679],
+        #  [-0.2820665, 0.3160213, -0.2820665, 0.3160213],
+        #  [-0.0068994, 0.0914679, -0.0068994, 0.0914679],
+        #  [-0.2820665, 0.3160213, -0.2820665, 0.3160213]]]
+        # ]
 
 .. currentmodule:: pyvqnet.nn
 
@@ -94,12 +95,15 @@ forward
 
         import numpy as np
         from pyvqnet.tensor import QTensor
+        import pyvqnet as vq
         from pyvqnet.nn import Conv2D
-        b= 2
+        b = 2
         ic = 3
         oc = 2
-        test_conv = Conv2D(ic,oc,(3,3),(2,2),"same")
-        x0 = QTensor(np.arange(1,b*ic*5*5+1).reshape([b,ic,5,5]),requires_grad=True)
+        test_conv = Conv2D(ic, oc, (3, 3), (2, 2), "same")
+        x0 = QTensor(np.arange(1, b * ic * 5 * 5 + 1).reshape([b, ic, 5, 5]),
+                    requires_grad=True,
+                    dtype=vq.kfloat32)
         x = test_conv.forward(x0)
         print(x)
 
@@ -198,13 +202,80 @@ load_parameters
         model_para =  pyvqnet.utils.storage.load_parameters("tmp.model")
         model1.load_state_dict(model_para)
 
+
+
+ModuleList
+--------------------------------------------------------------------------------
+
+.. py:class:: pyvqnet.nn.module.ModuleList([pyvqnet.nn.module.Module])
+
+
+    Save submodules in a list. ModuleList can be indexed like a normal Python list, and the internal parameters of the Module it contains can be saved.
+
+    :param modules: list of nn.Modules
+
+    :return: a list of modules
+
+    Example::
+
+        from pyvqnet.tensor import *
+        from pyvqnet.nn import Module,Linear,ModuleList
+        from pyvqnet.qnn import ProbsMeasure,QuantumLayer
+        import pyqpanda as pq
+        def pqctest (input,param,qubits,cubits,m_machine):
+            circuit = pq.QCircuit()
+            circuit.insert(pq.H(qubits[0]))
+            circuit.insert(pq.H(qubits[1]))
+            circuit.insert(pq.H(qubits[2]))
+            circuit.insert(pq.H(qubits[3]))
+
+            circuit.insert(pq.RZ(qubits[0],input[0]))
+            circuit.insert(pq.RZ(qubits[1],input[1]))
+            circuit.insert(pq.RZ(qubits[2],input[2]))
+            circuit.insert(pq.RZ(qubits[3],input[3]))
+
+            circuit.insert(pq.CNOT(qubits[0],qubits[1]))
+            circuit.insert(pq.RZ(qubits[1],param[0]))
+            circuit.insert(pq.CNOT(qubits[0],qubits[1]))
+
+            circuit.insert(pq.CNOT(qubits[1],qubits[2]))
+            circuit.insert(pq.RZ(qubits[2],param[1]))
+            circuit.insert(pq.CNOT(qubits[1],qubits[2]))
+
+            circuit.insert(pq.CNOT(qubits[2],qubits[3]))
+            circuit.insert(pq.RZ(qubits[3],param[2]))
+            circuit.insert(pq.CNOT(qubits[2],qubits[3]))
+            #print(circuit)
+
+            prog = pq.QProg()
+            prog.insert(circuit)
+
+            rlt_prob = ProbsMeasure([0,2],prog,m_machine,qubits)
+            return rlt_prob
+
+
+        class M(Module):
+            def __init__(self):
+                super(M, self).__init__()
+                self.pqc2 = ModuleList([QuantumLayer(pqctest,3,"cpu",4,1), Linear(4,1)
+                ])
+
+            def forward(self, x, *args, **kwargs):
+                y = self.pqc2[0](x)  + self.pqc2[1](x)
+                return y
+
+        mm = M()
+        print(mm.state_dict().keys())
+        #odict_keys(['pqc2.0.m_para', 'pqc2.1.weights', 'pqc2.1.bias'])
+
+
 Classical Neural Network Layer
 -------------------------------
 
 Conv1D
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. py:class:: pyvqnet.nn.Conv1D(input_channels:int,output_channels:int,kernel_size:int ,stride:int= 1,padding = "valid",use_bias:str = True,kernel_initializer = None,bias_initializer =None, dilation_rate: int = 1, group: int = 1)
+.. py:class:: pyvqnet.nn.Conv1D(input_channels:int,output_channels:int,kernel_size:int ,stride:int= 1,padding = "valid",use_bias:str = True,kernel_initializer = None,bias_initializer =None, dilation_rate: int = 1, group: int = 1, dtype=None, name='')
 
     Apply a 1-dimensional convolution kernel over an input . Inputs to the conv module are of shape (batch_size, input_channels, height)
 
@@ -218,7 +289,8 @@ Conv1D
     :param bias_initializer: `callable` - Defaults to None
     :param dilation_rate: `int` - dilated size, defaults: 1
     :param group: `int` -  number of groups of grouped convolutions. Default: 1
-
+    :param dtype: The data type of the parameter, defaults: None, use the default data type kfloat32, which represents a 32-bit floating point number.
+    :param name: The name of the module, default: "".
     :return: a Conv1D class
 
     .. note::
@@ -231,11 +303,12 @@ Conv1D
         import numpy as np
         from pyvqnet.tensor import QTensor
         from pyvqnet.nn import Conv1D
+        import pyvqnet
         b= 2
         ic =3
         oc = 2
         test_conv = Conv1D(ic,oc,3,2,"same")
-        x0 = QTensor(np.arange(1,b*ic*5*5 +1).reshape([b,ic,25]),requires_grad=True)
+        x0 = QTensor(np.arange(1,b*ic*5*5 +1).reshape([b,ic,25]),requires_grad=True,dtype=pyvqnet.kfloat32)
         x = test_conv.forward(x0)
         print(x)
 
@@ -249,7 +322,7 @@ Conv1D
 Conv2D
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. py:class:: pyvqnet.nn.Conv2D(input_channels:int,output_channels:int,kernel_size:tuple,stride:tuple=(1, 1),padding="valid",use_bias = True,kernel_initializer=None,bias_initializer=None, dilation_rate: int = 1, group: int = 1)
+.. py:class:: pyvqnet.nn.Conv2D(input_channels:int,output_channels:int,kernel_size:tuple,stride:tuple=(1, 1),padding="valid",use_bias = True,kernel_initializer=None,bias_initializer=None, dilation_rate: int = 1, group: int = 1, dtype = None, name = "")
 
     Apply a two-dimensional convolution kernel over an input . Inputs to the conv module are of shape (batch_size, input_channels, height, width)
 
@@ -262,7 +335,10 @@ Conv2D
     :param kernel_initializer: `callable` - Defaults to None
     :param bias_initializer: `callable` - Defaults to None
     :param dilation_rate: `int` - dilated size, defaults: 1
-    :param group: `int` -  number of groups of grouped convolutions. Default: 1
+    :param group: `int` -  number of groups of grouped convolutions. Default: 1.
+    :param dtype: The data type of the parameter, defaults: None, use the default data type kfloat32, which represents a 32-bit floating point number.
+    :param name: The name of the module, default: "".
+
     :return: a Conv2D class
 
     .. note::
@@ -275,11 +351,12 @@ Conv2D
         import numpy as np
         from pyvqnet.tensor import QTensor
         from pyvqnet.nn import Conv2D
+        import pyvqnet
         b= 2
         ic =3
         oc = 2
         test_conv = Conv2D(ic,oc,(3,3),(2,2),"same")
-        x0 = QTensor(np.arange(1,b*ic*5*5+1).reshape([b,ic,5,5]),requires_grad=True)
+        x0 = QTensor(np.arange(1,b*ic*5*5+1).reshape([b,ic,5,5]),requires_grad=True,dtype=pyvqnet.kfloat32)
         x = test_conv.forward(x0)
         print(x)
 
@@ -301,7 +378,7 @@ Conv2D
 ConvT2D
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. py:class:: pyvqnet.nn.ConvT2D(input_channels,output_channels,kernel_size,stride=[1, 1],padding="valid",use_bias="True", kernel_initializer=None,bias_initializer=None, dilation_rate: int = 1, group: int = 1)
+.. py:class:: pyvqnet.nn.ConvT2D(input_channels,output_channels,kernel_size,stride=[1, 1],padding="valid",use_bias="True", kernel_initializer=None,bias_initializer=None, dilation_rate: int = 1, group: int = 1, dtype=None, name='')
 
     Apply a two-dimensional transposed convolution kernel over an input. Inputs to the convT module are of shape (batch_size, input_channels, height, width)
 
@@ -314,7 +391,10 @@ ConvT2D
     :param kernel_initializer: `callable` - Defaults to None
     :param bias_initializer: `callable` - Defaults to None
     :param dilation_rate: `int` - dilated size, defaults: 1
-    :param group: `int` -  number of groups of grouped convolutions. Default: 1
+    :param group: `int` -  number of groups of grouped convolutions. Default: 1.
+    :param dtype: The data type of the parameter, defaults: None, use the default data type kfloat32, which represents a 32-bit floating point number.
+    :param name: The name of the module, default: "".
+
     :return: a ConvT2D class
 
     .. note::
@@ -328,8 +408,9 @@ ConvT2D
         import numpy as np
         from pyvqnet.tensor import QTensor
         from pyvqnet.nn import ConvT2D
+        import pyvqnet
         test_conv = ConvT2D(3, 2, (3, 3), (1, 1), "valid")
-        x = QTensor(np.arange(1, 1 * 3 * 5 * 5+1).reshape([1, 3, 5, 5]), requires_grad=True)
+        x = QTensor(np.arange(1, 1 * 3 * 5 * 5+1).reshape([1, 3, 5, 5]), requires_grad=True,dtype=pyvqnet.kfloat32)
         y = test_conv.forward(x)
         print(y)
 
@@ -360,7 +441,8 @@ AvgPool1D
     :param kernel: size of the average pooling windows
     :param strides: factor by which to downscale
     :param padding: one of "valid", "same" or integer specifies the padding value, defaults to "valid"
-    :param name: name of the output layer
+    :param name: name of the output layer.
+
     :return: AvgPool1D layer
 
     .. note::
@@ -384,26 +466,26 @@ AvgPool1D
 
         y= test_mp.forward(x)
         print(y)
-
         # [
-        # [[0.3333333, 1.6666666, 3.0000000],
-        #  [1.6666666, 2.0000000, 1.3333334],
+        # [[0.3333333, 1.6666666, 3],
+        #  [1.6666666, 2, 1.3333334],
         #  [2.6666667, 2.6666667, 2.3333333],
         #  [2.3333333, 4.3333335, 3.3333333],
-        #  [0.3333333, 1.6666666, 4.0000000]]
+        #  [0.3333333, 1.6666666, 4]]
         # ]
 
 MaxPool1D
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. py:class:: pyvqnet.nn.MaxPool1D(kernel, stride, padding='valid', name='')
+.. py:class:: pyvqnet.nn.MaxPool1D(kernel, stride, padding='valid', dtype=None, name='')
 
     This operation applies a 1D max pooling over an input signal composed of several input planes.
 
     :param kernel: size of the max pooling windows
     :param strides: factor by which to downscale
     :param padding: one of "valid", "same" or integer specifies the padding value, defaults to "valid"
-    :param name: name of the output layer
+    :param name: The name of the module, default: "".
+
     :return: MaxPool1D layer
 
     .. note::
@@ -427,13 +509,11 @@ MaxPool1D
 
         y= test_mp.forward(x)
         print(y)
-        # [
-        # [[1.0000000, 4.0000000, 5.0000000],
-        #  [3.0000000, 3.0000000, 3.0000000],
-        #  [4.0000000, 4.0000000, 4.0000000],
-        #  [5.0000000, 6.0000000, 6.0000000],
-        #  [1.0000000, 5.0000000, 7.0000000]]
-        # ]
+        #[[[1. 4. 5.]
+        #   [3. 3. 3.]
+        #   [4. 4. 4.]
+        #   [5. 6. 6.]
+        #   [1. 5. 7.]]]
 
 AvgPool2D
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -468,10 +548,8 @@ AvgPool2D
 
         y= test_mp.forward(x)
         print(y)
-        # [
-        # [[[1.5000000, 1.7500000],
-        #  [3.7500000, 3.0000000]]]
-        # ]
+        #[[[[1.5  1.75]
+        #    [3.75 3.  ]]]]
 
 MaxPool2D
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -506,24 +584,23 @@ MaxPool2D
 
         y= test_mp.forward(x)
         print(y)
-        # [
-        # [[[3.0000000, 4.0000000],
-        #  [5.0000000, 6.0000000]]]
-        # ]
+        # [[[[3. 4.]
+        #    [5. 6.]]]]
 
 Embedding
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. py:class:: pyvqnet.nn.embedding.Embedding(num_embeddings, embedding_dim, weight_initializer=<function xavier_normal>, name: str = '')
+.. py:class:: pyvqnet.nn.embedding.Embedding(num_embeddings, embedding_dim, weight_initializer=<function xavier_normal>,dtype=None, name: str = '')
 
     This module is often used to store word embeddings and retrieve them using indices.
     The input to the module is a list of indices, and the output is the corresponding
     word embeddings.
 
-    :param num_embeddings: `int` - size of the dictionary of embeddings
-    :param embedding_dim: `int` - the size of each embedding vector
-    :param weight_initializer: `callable` - defaults to normal
-    :param name: name of the output layer
+    :param num_embeddings: `int` - size of the dictionary of embeddings.
+    :param embedding_dim: `int` - the size of each embedding vector.
+    :param weight_initializer: `callable` - defaults to normal.
+    :param dtype: The data type of the parameter, defaults: None, use the default data type kfloat32, which represents a 32-bit floating point number.
+    :param name: name of the output layer.
 
     :return: a Embedding class
 
@@ -532,8 +609,9 @@ Embedding
         import numpy as np
         from pyvqnet.tensor import QTensor
         from pyvqnet.nn.embedding import Embedding
+        import pyvqnet
         vlayer = Embedding(30,3)
-        x = QTensor(np.arange(1,25).reshape([2,3,2,2]))
+        x = QTensor(np.arange(1,25).reshape([2,3,2,2]),dtype= pyvqnet.kint64)
         y = vlayer(x)
         print(y)
 
@@ -568,7 +646,7 @@ Embedding
 BatchNorm2d
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. py:class:: pyvqnet.nn.BatchNorm2d(channel_num:int, momentum:float=0.1, epsilon:float = 1e-5,beta_initializer=zeros, gamma_initializer=ones, name="")
+.. py:class:: pyvqnet.nn.BatchNorm2d(channel_num:int, momentum:float=0.1, epsilon:float = 1e-5,beta_initializer=zeros, gamma_initializer=ones, dtype=None, name="")
 
     Applies Batch Normalization over a 4D input (B,C,H,W) as described in the paper
     `Batch Normalization: Accelerating Deep Network Training by Reducing
@@ -582,11 +660,12 @@ BatchNorm2d
     estimates of its computed mean and variance, which are then used for normalization during evaluation.
     The running estimates are kept with a default momentum of 0.1.
 
-    :param channel_num: `int` - the number of input features channels
-    :param momentum: `float` - momentum when calculation exponentially weighted average, defaults to 0.1
-    :param beta_initializer: `callable` - defaults to zeros
-    :param gamma_initializer: `callable` - defaults to ones
-    :param epsilon: `float` - numerical stability constant, defaults to 1e-5
+    :param channel_num: `int` - the number of input features channels.
+    :param momentum: `float` - momentum when calculation exponentially weighted average, defaults to 0.1.
+    :param beta_initializer: `callable` - defaults to zeros.
+    :param gamma_initializer: `callable` - defaults to ones.
+    :param epsilon: `float` - numerical stability constant, defaults to 1e-5.
+    :param dtype: The data type of the parameter, defaults: None, use the default data type kfloat32, which represents a 32-bit floating point number.
     :param name: name of the output layer
     :return: a BatchNorm2d class
 
@@ -595,11 +674,14 @@ BatchNorm2d
         import numpy as np
         from pyvqnet.tensor import QTensor
         from pyvqnet.nn import BatchNorm2d
-        b= 2
-        ic =2
+        import pyvqnet
+        b = 2
+        ic = 2
         test_conv = BatchNorm2d(ic)
 
-        x = QTensor(np.arange(1,17).reshape([b,ic,4,1]),requires_grad=True)
+        x = QTensor(np.arange(1, 17).reshape([b, ic, 4, 1]),
+                    requires_grad=True,
+                    dtype=pyvqnet.kfloat32)
         y = test_conv.forward(x)
         print(y)
 
@@ -626,7 +708,7 @@ BatchNorm2d
 BatchNorm1d
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. py:class:: pyvqnet.nn.BatchNorm1d(channel_num:int, momentum:float=0.1, epsilon:float = 1e-5, beta_initializer=zeros, gamma_initializer=ones, name="")
+.. py:class:: pyvqnet.nn.BatchNorm1d(channel_num:int, momentum:float=0.1, epsilon:float = 1e-5, beta_initializer=zeros, gamma_initializer=ones, dtype=None, name="")
 
     Applies Batch Normalization over a 2D input (B,C) as described in the paper
     `Batch Normalization: Accelerating Deep Network Training by Reducing
@@ -641,11 +723,12 @@ BatchNorm1d
     The running estimates are kept with a default momentum of 0.1.
 
 
-    :param channel_num: `int` - the number of input features channels
+    :param channel_num: `int` - the number of input features channels.
     :param momentum: `float` - momentum when calculation exponentially weighted average, defaults to 0.1
-    :param beta_initializer: `callable` - defaults to zeros
-    :param gamma_initializer: `callable` - defaults to ones
-    :param epsilon: `float` - numerical stability constant, defaults to 1e-5
+    :param beta_initializer: `callable` - defaults to zeros.
+    :param gamma_initializer: `callable` - defaults to ones.
+    :param epsilon: `float` - numerical stability constant, defaults to 1e-5.
+    :param dtype: The data type of the parameter, defaults: None, use the default data type kfloat32, which represents a 32-bit floating point number.
     :param name: name of the output layer
     :return: a BatchNorm1d class
 
@@ -654,11 +737,15 @@ BatchNorm1d
         import numpy as np
         from pyvqnet.tensor import QTensor
         from pyvqnet.nn import BatchNorm1d
+        import pyvqnet
         test_conv = BatchNorm1d(4)
 
-        x = QTensor(np.arange(1,17).reshape([4,4]),requires_grad=True)
+        x = QTensor(np.arange(1, 17).reshape([4, 4]),
+                    requires_grad=True,
+                    dtype=pyvqnet.kfloat32)
         y = test_conv.forward(x)
         print(y)
+
 
         # [
         # [-1.3416405, -1.3416405, -1.3416405, -1.3416405],
@@ -672,7 +759,7 @@ BatchNorm1d
 LayerNormNd
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. py:class:: pyvqnet.nn.layer_norm.LayerNormNd(normalized_shape: list, epsilon: float = 1e-5, affine: bool = True, name="")
+.. py:class:: pyvqnet.nn.layer_norm.LayerNormNd(normalized_shape: list, epsilon: float = 1e-5, affine: bool = True, dtype=None,name="")
 
     Layer normalization is performed on the last several dimensions of any input. The specific method is as described in the paper:
     `Layer Normalization <https://arxiv.org/abs/1607.06450>`__。
@@ -686,16 +773,18 @@ LayerNormNd
     :param epsilon: `float` - numerical stability constant, defaults to 1e-5.
     :param affine: `bool` - whether to use the applied affine transformation, the default is True.
     :param name: name of the output layer.
+    :param dtype: The data type of the parameter, defaults: None, use the default data type kfloat32, which represents a 32-bit floating point number.
+    
     :return: a LayerNormNd class.
 
     Example::
 
         import numpy as np
-        from pyvqnet.tensor import QTensor
+        from pyvqnet.tensor import QTensor,kfloat32
         from pyvqnet.nn.layer_norm import LayerNormNd
         ic = 4
         test_conv = LayerNormNd([2,2])
-        x = QTensor(np.arange(1,17).reshape([2,2,2,2]),requires_grad=True)
+        x = QTensor(np.arange(1,17).reshape([2,2,2,2]),requires_grad=True,dtype=kfloat32)
         y = test_conv.forward(x)
         print(y)
         # [
@@ -710,11 +799,10 @@ LayerNormNd
         # ]
 
 
-
 LayerNorm2d
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. py:class:: pyvqnet.nn.layer_norm.LayerNorm2d(norm_size:int, epsilon:float = 1e-5, affine: bool = True, name="")
+.. py:class:: pyvqnet.nn.layer_norm.LayerNorm2d(norm_size:int, epsilon:float = 1e-5, affine: bool = True, dtype=None, name="")
 
     Applies Layer Normalization over a mini-batch of 4D inputs as described in
     the paper `Layer Normalization <https://arxiv.org/abs/1607.06450>`__
@@ -730,16 +818,19 @@ LayerNorm2d
     :param epsilon: `float` - numerical stability constant, defaults to 1e-5
     :param affine: `bool` - whether to use the applied affine transformation, the default is True
     :param name: name of the output layer
+    :param dtype: The data type of the parameter, defaults: None, use the default data type kfloat32, which represents a 32-bit floating point number.
+    
     :return: a LayerNorm2d class
 
     Example::
 
         import numpy as np
+        import pyvqnet
         from pyvqnet.tensor import QTensor
         from pyvqnet.nn.layer_norm import LayerNorm2d
         ic = 4
         test_conv = LayerNorm2d(8)
-        x = QTensor(np.arange(1,17).reshape([2,2,4,1]),requires_grad=True)
+        x = QTensor(np.arange(1,17).reshape([2,2,4,1]),requires_grad=True,dtype=pyvqnet.kfloat32)
         y = test_conv.forward(x)
         print(y)
 
@@ -765,7 +856,7 @@ LayerNorm2d
 LayerNorm1d
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. py:class:: pyvqnet.nn.layer_norm.LayerNorm1d(norm_size:int, epsilon:float = 1e-5, affine: bool = True, name="")
+.. py:class:: pyvqnet.nn.layer_norm.LayerNorm1d(norm_size:int, epsilon:float = 1e-5, affine: bool = True, dtype=None,name="")
 
     Applies Layer Normalization over a mini-batch of 2D inputs as described in
     the paper `Layer Normalization <https://arxiv.org/abs/1607.06450>`__
@@ -779,6 +870,8 @@ LayerNorm1d
     :param norm_size: `float` - normalize size,equals to last dim
     :param epsilon: `float` - numerical stability constant, defaults to 1e-5
     :param affine: `bool` - whether to use the applied affine transformation, the default is True
+    :param dtype: The data type of the parameter, defaults: None, use the default data type kfloat32, which represents a 32-bit floating point number.
+    
     :param name: name of the output layer
 
     :return: a LayerNorm1d class
@@ -786,10 +879,11 @@ LayerNorm1d
     Example::
 
         import numpy as np
+        import pyvqnet
         from pyvqnet.tensor import QTensor
         from pyvqnet.nn.layer_norm import LayerNorm1d
         test_conv = LayerNorm1d(4)
-        x = QTensor(np.arange(1,17).reshape([4,4]),requires_grad=True)
+        x = QTensor(np.arange(1,17).reshape([4,4]),requires_grad=True,dtype=pyvqnet.kfloat32)
         y = test_conv.forward(x)
         print(y)
 
@@ -803,7 +897,7 @@ LayerNorm1d
 Linear
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. py:class:: pyvqnet.nn.Linear(input_channels, output_channels, weight_initializer=None, bias_initializer=None,use_bias=True, name: str = "")
+.. py:class:: pyvqnet.nn.Linear(input_channels, output_channels, weight_initializer=None, bias_initializer=None,use_bias=True, dtype=None, name: str = "")
 
     Linear module (fully-connected layer).
     :math:`y = Ax + b`
@@ -813,12 +907,15 @@ Linear
     :param weight_initializer: `callable` - defaults to normal
     :param bias_initializer: `callable` - defaults to zeros
     :param use_bias: `bool` - defaults to True
+    :param dtype: The data type of the parameter, defaults: None, use the default data type kfloat32, which represents a 32-bit floating point number.
     :param name: name of the output layer
+
     :return: a Linear class
 
     Example::
 
         import numpy as np
+        import pyvqnet
         from pyvqnet.tensor import QTensor
         from pyvqnet.nn import Linear
         c1 =2
@@ -826,7 +923,7 @@ Linear
         cin = 7
         cout = 5
         n = Linear(cin,cout)
-        input = QTensor(np.arange(1,c1*c2*cin+1).reshape((c1,c2,cin)),requires_grad=True)
+        input = QTensor(np.arange(1,c1*c2*cin+1).reshape((c1,c2,cin)),requires_grad=True,dtype=pyvqnet.kfloat32)
         y = n.forward(input)
         print(y)
 
@@ -866,14 +963,14 @@ Dropout
         print(y)
 
         # [
-        # [[[-16.0000000, -14.0000000],
-        #  [-0.0000000, -0.0000000]],
-        # [[-8.0000000, -6.0000000],
-        #  [-4.0000000, -2.0000000]]],
-        # [[[0.0000000, 2.0000000],
-        #  [4.0000000, 6.0000000]],
-        # [[8.0000000, 10.0000000],
-        #  [0.0000000, 14.0000000]]]
+        # [[[-16, -14],
+        #  [-0, -0]],
+        # [[-8, -6],
+        #  [-4, -2]]],
+        # [[[0, 2],
+        #  [4, 6]],
+        # [[8, 10],
+        #  [0, 14]]]
         # ]
 
 Pixel_Shuffle 
@@ -924,7 +1021,7 @@ Pixel_Unshuffle
 GRU
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. py:class:: pyvqnet.nn.gru.GRU(input_size, hidden_size, num_layers=1, nonlinearity='tanh', batch_first=True, use_bias=True, bidirectional=False)
+.. py:class:: pyvqnet.nn.gru.GRU(input_size, hidden_size, num_layers=1, nonlinearity='tanh', batch_first=True, use_bias=True, bidirectional=False, dtype=None, name: str = '')
 
 
     Gated Recurrent Unit (GRU) module. Support multi-layer stacking, bidirectional configuration.
@@ -945,6 +1042,9 @@ GRU
      if batch_first is False, the input shape should be [seq_len,batch_size,feature_dim],default: True.
     :param use_bias: If use_bias is False, this module will not contain bias. default: True.
     :param bidirectional: If bidirectional is True, the module will be bidirectional GRU. default: False.
+    :param dtype: The data type of the parameter, defaults: None, use the default data type kfloat32, which represents a 32-bit floating point number.
+    :param name: name of the output layer
+
     :return: A GRU module instance.
 
     Example::
@@ -995,7 +1095,7 @@ GRU
 RNN 
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. py:class:: pyvqnet.nn.rnn.RNN(input_size, hidden_size, num_layers=1, nonlinearity='tanh', batch_first=True, use_bias=True, bidirectional=False)
+.. py:class:: pyvqnet.nn.rnn.RNN(input_size, hidden_size, num_layers=1, nonlinearity='tanh', batch_first=True, use_bias=True, bidirectional=False, dtype=None, name: str = '')
 
 
     Recurrent Neural Network (RNN) Module, use :math:`\tanh` or :math:`\text{ReLU}` as activation function.
@@ -1015,6 +1115,9 @@ RNN
      if batch_first is False, the input shape should be [seq_len,batch_size,feature_dim],default: True.
     :param use_bias: If use_bias is False, this module will not contain bias. default: True.
     :param bidirectional: If bidirectional is True, the module will be bidirectional RNN. default: False.
+    :param dtype: The data type of the parameter, defaults: None, use the default data type kfloat32, which represents a 32-bit floating point number.
+    :param name: name of the output layer
+
     :return: A RNN module instance.
 
     Example::
@@ -1064,7 +1167,7 @@ RNN
 LSTM
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. py:class:: pyvqnet.nn.lstm.LSTM(input_size, hidden_size, num_layers=1, batch_first=True, use_bias=True, bidirectional=False)
+.. py:class:: pyvqnet.nn.lstm.LSTM(input_size, hidden_size, num_layers=1, batch_first=True, use_bias=True, bidirectional=False, dtype=None, name: str = '')
 
     Long Short-Term Memory (LSTM) module. Support bidirectional LSTM, stacked multi-layer LSTM and other configurations.
     The calculation formula of single-layer unidirectional LSTM is as follows:
@@ -1086,6 +1189,9 @@ LSTM
      if batch_first is False, the input shape should be [seq_len,batch_size,feature_dim],default: True.
     :param use_bias: If use_bias is False, this module will not contain bias. default: True.
     :param bidirectional: If bidirectional is True, the module will be bidirectional LSTM. default: False.
+    :param dtype: The data type of the parameter, defaults: None, use the default data type kfloat32, which represents a 32-bit floating point number.
+    :param name: name of the output layer
+
     :return: A LSTM module instance.
 
     Example::
@@ -1151,7 +1257,7 @@ LSTM
 Dynamic_GRU
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. py:class:: pyvqnet.nn.gru.Dynamic_GRU(input_size,hidden_size, num_layers=1, batch_first=True, use_bias=True, bidirectional=False)
+.. py:class:: pyvqnet.nn.gru.Dynamic_GRU(input_size,hidden_size, num_layers=1, batch_first=True, use_bias=True, bidirectional=False, dtype=None, name: str = '')
     
     Apply a multilayer gated recurrent unit (GRU) RNN to a dynamic-length input sequence.
 
@@ -1179,6 +1285,9 @@ Dynamic_GRU
     :param batch_first: If True, the input shape is provided as [batch size, sequence length, feature dimension]. If False, input shape is provided as [sequence length, batch size, feature dimension], default True.
     :param use_bias: If False, the layer does not use bias weights b_ih and b_hh. Default: true.
     :param bidirectional: If true, becomes a bidirectional GRU. Default: false.
+    :param dtype: The data type of the parameter, defaults: None, use the default data type kfloat32, which represents a 32-bit floating point number.
+    :param name: name of the output layer
+
     :return: A Dynamic_GRU class
 
     Example::
@@ -1223,21 +1332,21 @@ Dynamic_GRU
         #  [-0.3715909, 0.0307644, 0.9756137, 0.9705784],
         #  [-0.3917399, 0.0057521, 0.9507942, 0.9456232]],
         # [[-0.6348240, -0.0603764, 0.9014163, 0.8903066],
-        #  [0.0000000, 0.0000000, 0.0000000, 0.0000000],
+        #  [0, 0, 0, 0],
         #  [-0.6333261, -0.0592172, 0.9660671, 0.9580816]],
         # [[-0.4571511, 0.0210018, 0.9151242, 0.9011748],
-        #  [0.0000000, 0.0000000, 0.0000000, 0.0000000],
-        #  [0.0000000, 0.0000000, 0.0000000, 0.0000000]],
+        #  [0, 0, 0, 0],
+        #  [0, 0, 0, 0]],
         # [[-0.3585358, 0.0918219, 0.9496037, 0.9391552],
-        #  [0.0000000, 0.0000000, 0.0000000, 0.0000000],
-        #  [0.0000000, 0.0000000, 0.0000000, 0.0000000]]
+        #  [0, 0, 0, 0],
+        #  [0, 0, 0, 0]]
         # ]
         # [4 1 2]
 
 Dynamic_RNN 
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. py:class:: pyvqnet.nn.rnn.Dynamic_RNN(input_size, hidden_size, num_layers=1, nonlinearity='tanh', batch_first=True, use_bias=True, bidirectional=False)
+.. py:class:: pyvqnet.nn.rnn.Dynamic_RNN(input_size, hidden_size, num_layers=1, nonlinearity='tanh', batch_first=True, use_bias=True, bidirectional=False, dtype=None, name: str = '')
     
     Applies recurrent neural networks (RNNs) to dynamic-length input sequences.
 
@@ -1265,6 +1374,9 @@ Dynamic_RNN
       If False, the input shape is [sequence length, batch size, feature dimension], default True.
     :param use_bias: If False, the module does not apply bias items, default: True.
     :param bidirectional: If True, it becomes bidirectional RNN, default: False.
+    :param dtype: The data type of the parameter, defaults: None, use the default data type kfloat32, which represents a 32-bit floating point number.
+    :param name: name of the output layer
+
     :return: Dynamic_RNN instance
 
     Example::
@@ -1307,18 +1419,18 @@ Dynamic_RNN
         print(lens_unpacked)
 
         # [
-        # [[1.2980951, 0.0000000, 0.0000000, 0.0000000],
-        #  [1.5040692, 0.0000000, 0.0000000, 0.0000000],
-        #  [1.4927036, 0.0000000, 0.0000000, 0.1065927]],
-        # [[2.6561704, 0.0000000, 0.0000000, 0.2532321],
-        #  [0.0000000, 0.0000000, 0.0000000, 0.0000000],
-        #  [3.1472805, 0.0000000, 0.0000000, 0.0000000]],
-        # [[5.1231661, 0.0000000, 0.0000000, 0.7596353],
-        #  [0.0000000, 0.0000000, 0.0000000, 0.0000000],
-        #  [0.0000000, 0.0000000, 0.0000000, 0.0000000]],
-        # [[8.4954977, 0.0000000, 0.0000000, 0.8191229],
-        #  [0.0000000, 0.0000000, 0.0000000, 0.0000000],
-        #  [0.0000000, 0.0000000, 0.0000000, 0.0000000]]
+        # [[1.2980951, 0, 0, 0],
+        #  [1.5040692, 0, 0, 0],
+        #  [1.4927036, 0, 0, 0.1065927]],
+        # [[2.6561704, 0, 0, 0.2532321],
+        #  [0, 0, 0, 0],
+        #  [3.1472805, 0, 0, 0]],
+        # [[5.1231661, 0, 0, 0.7596353],
+        #  [0, 0, 0, 0],
+        #  [0, 0, 0, 0]],
+        # [[8.4954977, 0, 0, 0.8191229],
+        #  [0, 0, 0, 0],
+        #  [0, 0, 0, 0]]
         # ]
         # [4 1 2]
 
@@ -1327,7 +1439,7 @@ Dynamic_RNN
 Dynamic_LSTM
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. py:class:: pyvqnet.nn.lstm.Dynamic_LSTM(input_size, hidden_size, num_layers=1, batch_first=True, use_bias=True, bidirectional=False)
+.. py:class:: pyvqnet.nn.lstm.Dynamic_LSTM(input_size, hidden_size, num_layers=1, batch_first=True, use_bias=True, bidirectional=False, dtype=None, name: str = '')
     
     Apply Long Short-Term Memory (LSTM) RNNs to dynamic-length input sequences.
 
@@ -1359,6 +1471,9 @@ Dynamic_LSTM
       If False, the input shape is [sequence length, batch size, feature dimension], default True.
     :param use_bias: If False, the module does not apply bias items, default: True.
     :param bidirectional: If True, it becomes a bidirectional LSTM, default: False.
+    :param dtype: The data type of the parameter, defaults: None, use the default data type kfloat32, which represents a 32-bit floating point number.
+    :param name: name of the output layer
+
     :return: Dynamic_LSTM instance
 
     Example::
@@ -1410,18 +1525,22 @@ Dynamic_LSTM
         #  [0.2293468, 0.0681745, 0.2426863, 0.2572871]],
         # [[0.1398094, -0.0150359, 0.2513067, 0.0783743],
         #  [0.1328388, -0.0031956, 0.2324090, -0.1962151],
-        #  [0.0000000, 0.0000000, 0.0000000, 0.0000000]],
+        #  [0, 0, 0, 0]],
         # [[0.0898260, -0.0706460, 0.2396922, 0.2323916],
         #  [0.0817787, -0.0449937, 0.2388873, -0.0000469],
-        #  [0.0000000, 0.0000000, 0.0000000, 0.0000000]],
-        # [[0.0000000, 0.0000000, 0.0000000, 0.0000000],
+        #  [0, 0, 0, 0]],
+        # [[0, 0, 0, 0],
         #  [0.0532839, -0.0870574, 0.2397324, 0.2103822],
-        #  [0.0000000, 0.0000000, 0.0000000, 0.0000000]]
+        #  [0, 0, 0, 0]]
         # ]
         # [3 4 1]
 
 Loss Function Layer
 ----------------------------------
+
+.. note::
+
+        Please note that unlike pytorch and other frameworks, in the forward function of the following loss function, the first parameter is the label, and the second parameter is the predicted value.
 
 MeanSquaredError
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -1449,6 +1568,8 @@ MeanSquaredError
 
     The mean operation still operates over all the elements, and divides by :math:`n`.
 
+    :param name: name of the output layer
+
     :return: a MeanSquaredError class
 
     Parameters for loss forward function:
@@ -1459,12 +1580,16 @@ MeanSquaredError
 
     Example::
     
-        import numpy as np
-        from pyvqnet.tensor import QTensor
-        y = QTensor([[0, 0, 1, 0, 0, 0, 0, 0, 0, 0]], requires_grad=True)
-        x = QTensor([[0.1, 0.05, 0.7, 0, 0.05, 0.1, 0, 0, 0, 0]], requires_grad=True)
+        from pyvqnet.tensor import QTensor, kfloat64
+        from pyvqnet.nn import MeanSquaredError
+        y = QTensor([[0, 0, 1, 0, 0, 0, 0, 0, 0, 0]],
+                    requires_grad=False,
+                    dtype=kfloat64)
+        x = QTensor([[0.1, 0.05, 0.7, 0, 0.05, 0.1, 0, 0, 0, 0]],
+                    requires_grad=True,
+                    dtype=kfloat64)
 
-        loss_result = pyvqnet.nn.MeanSquaredError()
+        loss_result = MeanSquaredError()
         result = loss_result(y, x)
         print(result)
 
@@ -1502,7 +1627,7 @@ BinaryCrossEntropy
         import numpy as np
         from pyvqnet.tensor import QTensor
         x = QTensor([[0.3, 0.7, 0.2], [0.2, 0.3, 0.1]], requires_grad=True)
-        y = QTensor([[0, 1, 0], [0, 0, 1]], requires_grad=True)
+        y = QTensor([[0, 1.0, 0], [0, 0.0, 1]], requires_grad=True)
 
         loss_result = pyvqnet.nn.BinaryCrossEntropy()
         result = loss_result(y, x)
@@ -1530,16 +1655,16 @@ CategoricalCrossEntropy
 
         x: :math:`(N, *)` where :math:`*` means, any number of additional dimensions
 
-        y: :math:`(N, *)`, same shape as the input
+        y: :math:`(N, *)`, same shape as the input, should have data type of the 64-bit integer.
 
     Example::
 
-        from pyvqnet.tensor import QTensor
+        from pyvqnet.tensor import QTensor,kfloat32,kint64
         from pyvqnet.nn import CategoricalCrossEntropy
         x = QTensor([[1, 2, 3, 4, 5],
         [1, 2, 3, 4, 5],
-        [1, 2, 3, 4, 5]], requires_grad=True)
-        y = QTensor([[0, 1, 0, 0, 0], [0, 1, 0, 0, 0], [1, 0, 0, 0, 0]], requires_grad=True)
+        [1, 2, 3, 4, 5]], requires_grad=True,dtype=kfloat32)
+        y = QTensor([[0, 1, 0, 0, 0], [0, 1, 0, 0, 0], [1, 0, 0, 0, 0]], requires_grad=False,dtype=kint64)
         loss_result = CategoricalCrossEntropy()
         result = loss_result(y, x)
         print(result)
@@ -1565,16 +1690,18 @@ SoftmaxCrossEntropy
 
         x: :math:`(N, *)` where :math:`*` means, any number of additional dimensions
 
-        y: :math:`(N, *)`, same shape as the input
+        y: :math:`(N, *)`, same shape as the input, should have data type of the 64-bit integer.
 
     Example::
 
-        from pyvqnet.tensor import QTensor
+        from pyvqnet.tensor import QTensor, kfloat32, kint64
         from pyvqnet.nn import SoftmaxCrossEntropy
-        x = QTensor([[1, 2, 3, 4, 5],
-        [1, 2, 3, 4, 5],
-        [1, 2, 3, 4, 5]], requires_grad=True)
-        y = QTensor([[0, 1, 0, 0, 0], [0, 1, 0, 0, 0], [1, 0, 0, 0, 0]], requires_grad=True)
+        x = QTensor([[1, 2, 3, 4, 5], [1, 2, 3, 4, 5], [1, 2, 3, 4, 5]],
+                    requires_grad=True,
+                    dtype=kfloat32)
+        y = QTensor([[0, 1, 0, 0, 0], [0, 1, 0, 0, 0], [1, 0, 0, 0, 0]],
+                    requires_grad=False,
+                    dtype=kint64)
         loss_result = SoftmaxCrossEntropy()
         result = loss_result(y, x)
         result.backward()
@@ -1605,13 +1732,13 @@ NLL_Loss
 
         x: :math:`(N, *)`, the output of the loss function, which can be a multidimensional variable.
 
-        y: :math:`(N, *)`, the true value expected by the loss function.
+        y: :math:`(N, *)`, the true value expected by the loss function, should have data type of the 64-bit integer.
+
 
     Example::
 
-        import numpy as np
         from pyvqnet.nn import NLL_Loss
-        from pyvqnet.tensor import QTensor
+        from pyvqnet.tensor import QTensor, kint64
         x = QTensor([
             0.9476322568516703, 0.226547421131723, 0.5944201443911326,
             0.42830868492969476, 0.76414068655387, 0.00286059168094277,
@@ -1621,7 +1748,7 @@ NLL_Loss
         ])
         x.reshape_([1, 3, 1, 5])
         x.requires_grad = True
-        y = np.array([[[2, 1, 0, 0, 2]]])
+        y = QTensor([[[2, 1, 0, 0, 2]]], dtype=kint64)
 
         loss_result = NLL_Loss()
         result = loss_result(y, output)
@@ -1650,13 +1777,13 @@ CrossEntropyLoss
 
         x: :math:`(N, *)`, the output of the loss function, which can be a multidimensional variable.
 
-        y: :math:`(N, *)`, the true value expected by the loss function.
+        y: :math:`(N, *)`, the true value expected by the loss function, should have data type of the 64-bit integer.
+
 
     Example::
 
-        import numpy as np
         from pyvqnet.nn import CrossEntropyLoss
-        from pyvqnet.tensor import QTensor
+        from pyvqnet.tensor import QTensor,kint64
         x = QTensor([
             0.9476322568516703, 0.226547421131723, 0.5944201443911326, 0.42830868492969476, 0.76414068655387,
             0.00286059168094277, 0.3574236812873617, 0.9096948856639084, 0.4560809854582528, 0.9818027091583286,
@@ -1664,7 +1791,7 @@ CrossEntropyLoss
         ])
         x.reshape_([1, 3, 1, 5])
         x.requires_grad = True
-        y = np.array([[[2, 1, 0, 0, 2]]])
+        y = QTensor([[[2, 1, 0, 0, 2]]], dtype=kint64)
 
         loss_result = CrossEntropyLoss()
         result = loss_result(y, output)
@@ -1798,7 +1925,7 @@ HardSigmoid
         y = layer(QTensor([1.0, 2.0, 3.0, 4.0]))
         print(y)
 
-        # [0.6666667, 0.8333334, 1.0000000, 1.0000000]
+        # [0.6666667, 0.8333334, 1, 1]
 
 ReLu
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -1824,7 +1951,7 @@ ReLu
         y = layer(QTensor([-1, 2.0, -3, 4.0]))
         print(y)
 
-        # [0.0000000, 2.0000000, 0.0000000, 4.0000000]
+        # [0, 2, 0, 4]
 
 LeakyReLu
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -1852,7 +1979,7 @@ LeakyReLu
         y = layer(QTensor([-1, 2.0, -3, 4.0]))
         print(y)
 
-        # [-0.0100000, 2.0000000, -0.0300000, 4.0000000]
+        # [-0.0100000, 2, -0.0300000, 4]
 
 ELU
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -1878,7 +2005,7 @@ ELU
         y = layer(QTensor([-1, 2.0, -3, 4.0]))
         print(y)
 
-        # [-0.6321205, 2.0000000, -0.9502130, 4.0000000]
+        # [-0.6321205, 2, -0.9502130, 4]
 
 Tanh
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -1941,7 +2068,7 @@ adadelta
         from pyvqnet.tensor import QTensor
         w = np.arange(24).reshape(1,2,3,4).astype(np.float64)    
         param = QTensor(w)
-        param.grad = QTensor(np.arange(24).reshape(1,2,3,4))
+        param.grad = QTensor(np.arange(24).reshape(1, 2, 3, 4).astype(np.float64))
         params = [param]
         opti = adadelta.Adadelta(params)
 
@@ -1950,7 +2077,7 @@ adadelta
             print(param)
 
         # [
-        # [[[0.0000000, 0.9999900, 1.9999900, 2.9999900],    
+        # [[[0, 0.9999900, 1.9999900, 2.9999900],    
         #  [3.9999900, 4.9999900, 5.9999900, 6.9999900],     
         #  [7.9999900, 8.9999905, 9.9999905, 10.9999905]],   
         # [[11.9999905, 12.9999905, 13.9999905, 14.9999905], 
@@ -1959,7 +2086,7 @@ adadelta
         # ]
 
         # [
-        # [[[0.0000000, 0.9999800, 1.9999800, 2.9999800],    
+        # [[[0, 0.9999800, 1.9999800, 2.9999800],    
         #  [3.9999800, 4.9999800, 5.9999800, 6.9999800],     
         #  [7.9999800, 8.9999800, 9.9999800, 10.9999800]],   
         # [[11.9999800, 12.9999800, 13.9999800, 14.9999800], 
@@ -1991,7 +2118,7 @@ adagrad
         from pyvqnet.tensor import QTensor
         w = np.arange(24).reshape(1,2,3,4).astype(np.float64)    
         param = QTensor(w)
-        param.grad = QTensor(np.arange(24).reshape(1,2,3,4))
+        param.grad = QTensor(np.arange(24).reshape(1, 2, 3, 4).astype(np.float64))
         params = [param]
         opti = adagrad.Adagrad(params)
 
@@ -2000,7 +2127,7 @@ adagrad
             print(param)
 
         # [
-        # [[[0.0000000, 0.9900000, 1.9900000, 2.9900000],
+        # [[[0, 0.9900000, 1.9900000, 2.9900000],
         #  [3.9900000, 4.9899998, 5.9899998, 6.9899998],
         #  [7.9899998, 8.9899998, 9.9899998, 10.9899998]],
         # [[11.9899998, 12.9899998, 13.9899998, 14.9899998],
@@ -2009,7 +2136,7 @@ adagrad
         # ]
 
         # [
-        # [[[0.0000000, 0.9829289, 1.9829290, 2.9829290],
+        # [[[0, 0.9829289, 1.9829290, 2.9829290],
         #  [3.9829290, 4.9829288, 5.9829288, 6.9829288],
         #  [7.9829288, 8.9829283, 9.9829283, 10.9829283]],
         # [[11.9829283, 12.9829283, 13.9829283, 14.9829283],
@@ -2060,7 +2187,7 @@ adam
         from pyvqnet.tensor import QTensor
         w = np.arange(24).reshape(1,2,3,4).astype(np.float64)    
         param = QTensor(w)
-        param.grad = QTensor(np.arange(24).reshape(1,2,3,4))
+        param.grad = QTensor(np.arange(24).reshape(1, 2, 3, 4).astype(np.float64))
         params = [param]
         opti = adam.Adam(params)
         
@@ -2069,7 +2196,7 @@ adam
             print(param)
 
         # [
-        # [[[0.0000000, 0.9900000, 1.9900000, 2.9900000],
+        # [[[0, 0.9900000, 1.9900000, 2.9900000],
         #  [3.9900000, 4.9899998, 5.9899998, 6.9899998],
         #  [7.9899998, 8.9899998, 9.9899998, 10.9899998]],
         # [[11.9899998, 12.9899998, 13.9899998, 14.9899998],
@@ -2078,7 +2205,7 @@ adam
         # ]
 
         # [
-        # [[[0.0000000, 0.9800000, 1.9800000, 2.9800000],
+        # [[[0, 0.9800000, 1.9800000, 2.9800000],
         #  [3.9800000, 4.9799995, 5.9799995, 6.9799995],
         #  [7.9799995, 8.9799995, 9.9799995, 10.9799995]],
         # [[11.9799995, 12.9799995, 13.9799995, 14.9799995],
@@ -2117,7 +2244,7 @@ adamax
         from pyvqnet.tensor import QTensor
         w = np.arange(24).reshape(1,2,3,4).astype(np.float64)    
         param = QTensor(w)
-        param.grad = QTensor(np.arange(24).reshape(1,2,3,4))
+        param.grad = QTensor(np.arange(24).reshape(1,2,3,4).astype(np.float64))
         params = [param]
         opti = adamax.Adamax(params)
         
@@ -2126,7 +2253,7 @@ adamax
             print(param)
 
         # [
-        # [[[0.0000000, 0.9900000, 1.9900000, 2.9900000],
+        # [[[0, 0.9900000, 1.9900000, 2.9900000],
         #  [3.9900000, 4.9899998, 5.9899998, 6.9899998],
         #  [7.9899998, 8.9899998, 9.9899998, 10.9899998]],
         # [[11.9899998, 12.9899998, 13.9899998, 14.9899998],
@@ -2135,7 +2262,7 @@ adamax
         # ]
 
         # [
-        # [[[0.0000000, 0.9800000, 1.9800000, 2.9800000],
+        # [[[0, 0.9800000, 1.9800000, 2.9800000],
         #  [3.9800000, 4.9799995, 5.9799995, 6.9799995],
         #  [7.9799995, 8.9799995, 9.9799995, 10.9799995]],
         # [[11.9799995, 12.9799995, 13.9799995, 14.9799995],
@@ -2168,7 +2295,7 @@ rmsprop
         from pyvqnet.tensor import QTensor
         w = np.arange(24).reshape(1,2,3,4).astype(np.float64)    
         param = QTensor(w)
-        param.grad = QTensor(np.arange(24).reshape(1,2,3,4))
+        param.grad = QTensor(np.arange(24).reshape(1,2,3,4).astype(np.float64))
         params = [param]
         opti = rmsprop.RMSProp(params)
         
@@ -2177,7 +2304,7 @@ rmsprop
             print(param)
 
         # [
-        # [[[0.0000000, 0.9000000, 1.9000000, 2.8999999],
+        # [[[0, 0.9000000, 1.9000000, 2.8999999],
         #  [3.8999999, 4.9000001, 5.9000001, 6.9000001],
         #  [7.9000001, 8.8999996, 9.8999996, 10.8999996]],
         # [[11.8999996, 12.8999996, 13.8999996, 14.8999996],
@@ -2186,7 +2313,7 @@ rmsprop
         # ]
 
         # [
-        # [[[0.0000000, 0.8291118, 1.8291118, 2.8291118],
+        # [[[0, 0.8291118, 1.8291118, 2.8291118],
         #  [3.8291118, 4.8291121, 5.8291121, 6.8291121],
         #  [7.8291121, 8.8291111, 9.8291111, 10.8291111]],
         # [[11.8291111, 12.8291111, 13.8291111, 14.8291111],
@@ -2217,7 +2344,7 @@ sgd
         from pyvqnet.tensor import QTensor
         w = np.arange(24).reshape(1,2,3,4).astype(np.float64)    
         param = QTensor(w)
-        param.grad = QTensor(np.arange(24).reshape(1,2,3,4))
+        param.grad = QTensor(np.arange(24).reshape(1,2,3,4).astype(np.float64))
         params = [param]
         opti = sgd.SGD(params)
 
@@ -2226,7 +2353,7 @@ sgd
             print(param) 
 
         # [
-        # [[[0.0000000, 0.9900000, 1.9800000, 2.9700000],
+        # [[[0, 0.9900000, 1.9800000, 2.9700000],
         #  [3.9600000, 4.9499998, 5.9400001, 6.9299998],
         #  [7.9200001, 8.9099998, 9.8999996, 10.8900003]],
         # [[11.8800001, 12.8699999, 13.8599997, 14.8500004],
@@ -2235,7 +2362,7 @@ sgd
         # ]
 
         # [
-        # [[[0.0000000, 0.9800000, 1.9600000, 2.9400001],
+        # [[[0, 0.9800000, 1.9600000, 2.9400001],
         #  [3.9200001, 4.8999996, 5.8800001, 6.8599997],
         #  [7.8400002, 8.8199997, 9.7999992, 10.7800007]],
         # [[11.7600002, 12.7399998, 13.7199993, 14.7000008],
@@ -2262,20 +2389,23 @@ Rotosolve algorithm, which allows a direct jump to the optimal value of a single
 
         from pyvqnet.optim.rotosolve import Rotosolve
         import pyqpanda as pq
-        from pyvqnet.tensor import QTensor
+        from pyvqnet.tensor import QTensor,kfloat64
         from pyvqnet.qnn.measure import expval
         machine = pq.CPUQVM()
         machine.init_qvm()
         nqbits = machine.qAlloc_many(2)
 
-        def gen(param,generators,qbits,circuit):
+
+        def gen(param, generators, qbits, circuit):
             if generators == "X":
-                circuit.insert(pq.RX(qbits,param))
-            elif generators =="Y":
-                circuit.insert(pq.RY(qbits,param))
+                circuit.insert(pq.RX(qbits, param))
+            elif generators == "Y":
+                circuit.insert(pq.RY(qbits, param))
             else:
-                circuit.insert(pq.RZ(qbits,param))
-        def circuits(params,generators,circuit):
+                circuit.insert(pq.RZ(qbits, param))
+
+
+        def circuits(params, generators, circuit):
             gen(params[0], generators[0], nqbits[0], circuit)
             gen(params[1], generators[1], nqbits[1], circuit)
             circuit.insert(pq.CNOT(nqbits[0], nqbits[1]))
@@ -2283,27 +2413,32 @@ Rotosolve algorithm, which allows a direct jump to the optimal value of a single
             prog.insert(circuit)
             return prog
 
-        def ansatz1(params:QTensor,generators):
-            circuit = pq.QCircuit()
-            params = params.getdata()
-            prog = circuits(params,generators,circuit)
-            return expval(machine,prog,{"Z0":1},nqbits), expval(machine,prog,{"Y1":1},nqbits)
 
-        def ansatz2(params:QTensor,generators):
+        def ansatz1(params: QTensor, generators):
             circuit = pq.QCircuit()
             params = params.getdata()
             prog = circuits(params, generators, circuit)
-            return expval(machine,prog,{"X0":1},nqbits)
+            return expval(machine, prog, {"Z0": 1},
+                        nqbits), expval(machine, prog, {"Y1": 1}, nqbits)
+
+
+        def ansatz2(params: QTensor, generators):
+            circuit = pq.QCircuit()
+            params = params.getdata()
+            prog = circuits(params, generators, circuit)
+            return expval(machine, prog, {"X0": 1}, nqbits)
+
 
         def loss(params):
-            Z, Y = ansatz1(params,["X","Y"])
-            X = ansatz2(params,["X","Y"])
+            Z, Y = ansatz1(params, ["X", "Y"])
+            X = ansatz2(params, ["X", "Y"])
             return 0.5 * Y + 0.8 * Z - 0.2 * X
 
-        t = QTensor([0.3, 0.25])
+
+        t = QTensor([0.3, 0.25],dtype=kfloat64)
         opt = Rotosolve(max_iter=5)
 
-        costs_rotosolve = opt.minimize(t,loss)
+        costs_rotosolve = opt.minimize(t, loss)
         print(costs_rotosolve)
         # [0.7642691884821847, -0.799999999999997, -0.799999999999997, -0.799999999999997, -0.799999999999997]
 

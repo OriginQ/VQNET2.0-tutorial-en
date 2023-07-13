@@ -35,7 +35,6 @@ set_random_seed
         rn = tensor.randu([2, 3])
         print(rn)
 
-        print("########################################################")
         from pyvqnet.nn.parameter import Parameter
         from pyvqnet.utils.initializer import he_normal, he_uniform, xavier_normal, xavier_uniform, uniform, quantum_uniform, normal
         print(Parameter(shape=[2, 3], initializer=he_normal))
