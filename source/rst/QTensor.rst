@@ -2786,6 +2786,7 @@ logical_xor
 .. py:function:: pyvqnet.tensor.logical_xor(t1, t2)
 
     Compute the truth value of ``t1 xor t2`` element-wise.
+
     :param t1: input QTensor
     :param t2: input QTensor
 
@@ -3261,7 +3262,7 @@ masked_fill
         import numpy as np
         a = tensor.ones([2, 2, 2, 2])
         mask = np.random.randint(0, 2, size=4).reshape([2, 2])
-        b = tensor.QTensor(mask)
+        b = tensor.QTensor(mask==1)
         c = tensor.masked_fill(a, b, 13)
         print(c)
         # [
@@ -3611,22 +3612,45 @@ pad_packed_sequence
 
         seq_unpacked, lens_unpacked = tensor.pad_packed_sequence(data, batch_first=True)
         print(seq_unpacked)
-        # [
-        # [[1, 1],
-        #  [1, 1],
-        #  [1, 1]],
-        # [[1, 1],
-        #  [0, 0],
-        #  [1, 1]],
-        # [[1, 1],
-        #  [0, 0],
-        #  [0, 0]],
-        # [[1, 1],
-        #  [0, 0],
-        #  [0, 0]]
-        # ]
+        # [[[[1. 1. 1.]
+        #    [1. 1. 1.]]
+
+        #   [[1. 1. 1.]
+        #    [1. 1. 1.]]
+
+        #   [[1. 1. 1.]
+        #    [1. 1. 1.]]
+
+        #   [[1. 1. 1.]
+        #    [1. 1. 1.]]]
+
+
+        #  [[[1. 1. 1.]
+        #    [1. 1. 1.]]
+
+        #   [[1. 1. 1.]
+        #    [1. 1. 1.]]
+
+        #   [[0. 0. 0.]
+        #    [0. 0. 0.]]
+
+        #   [[0. 0. 0.]
+        #    [0. 0. 0.]]]
+
+
+        #  [[[1. 1. 1.]
+        #    [1. 1. 1.]]
+
+        #   [[0. 0. 0.]
+        #    [0. 0. 0.]]
+
+        #   [[0. 0. 0.]
+        #    [0. 0. 0.]]
+
+        #   [[0. 0. 0.]
+        #    [0. 0. 0.]]]]
         print(lens_unpacked)
-        # [4 1 2]
+        # [4, 2, 1]
 
 
 pack_pad_sequence
@@ -3652,8 +3676,8 @@ pack_pad_sequence
 
         from pyvqnet.tensor import tensor
         a = tensor.ones([4, 2,3])
-        b = tensor.ones([2, 2,3])
         c = tensor.ones([1, 2,3])
+        b = tensor.ones([2, 2,3])
         a.requires_grad = True
         b.requires_grad = True
         c.requires_grad = True
@@ -3662,28 +3686,29 @@ pack_pad_sequence
         data = tensor.pack_pad_sequence(y,
                                 seq_len,
                                 batch_first=True,
-                                enforce_sorted=True)
+                                enforce_sorted=False)
         print(data.data)
-        print(data.batch_sizes)
-        print(data.sort_indice)
-        print(data.unsorted_indice)
 
-        # [
-        # [[1, 1, 1],
-        #  [1, 1, 1]],
-        # [[1, 1, 1],
-        #  [1, 1, 1]],
-        # [[1, 1, 1],
-        #  [1, 1, 1]],
-        # [[1, 1, 1],
-        #  [1, 1, 1]],
-        # [[1, 1, 1],
-        #  [1, 1, 1]],
-        # [[1, 1, 1],
-        #  [1, 1, 1]],
-        # [[1, 1, 1],
-        #  [1, 1, 1]]
-        # ]
+        # [[[1. 1. 1.]
+        #   [1. 1. 1.]]
+
+        #  [[1. 1. 1.]
+        #   [1. 1. 1.]]
+
+        #  [[1. 1. 1.]
+        #   [1. 1. 1.]]
+
+        #  [[1. 1. 1.]
+        #   [1. 1. 1.]]
+
+        #  [[1. 1. 1.]
+        #   [1. 1. 1.]]
+
+        #  [[1. 1. 1.]
+        #   [1. 1. 1.]]
+
+        #  [[1. 1. 1.]
+        #   [1. 1. 1.]]]
+
+        print(data.batch_sizes)
         # [3, 2, 1, 1]
-        # [0, 2, 1]
-        # [0, 2, 1]

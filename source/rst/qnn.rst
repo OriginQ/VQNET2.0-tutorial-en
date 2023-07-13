@@ -68,6 +68,7 @@ It is theoretically possible to calculate the gradient of parameters about Hamil
             `m_machine`: simulator created by QuantumLayer
 
         Use the ``m_para`` attribute of QuantumLayer to get the training parameters of the variable quantum circuit. The parameter is a ``QTensor`` class, which can be converted into a numpy array using the ``to_numpy()`` interface.
+    
     Example::
 
         import pyqpanda as pq
@@ -270,6 +271,7 @@ If you are more familiar with pyQPanda syntax, please using QuantumLayerMultiPro
         from pyvqnet.qnn.quantumlayer import QuantumLayerMultiProcess
         import numpy as np
         from pyvqnet.tensor import QTensor
+
         def pqctest (input,param,nqubits,ncubits):
             machine = pq.CPUQVM()
             machine.init_qvm()
@@ -296,7 +298,6 @@ If you are more familiar with pyQPanda syntax, please using QuantumLayerMultiPro
             circuit.insert(pq.CNOT(qubits[2],qubits[3]))
             circuit.insert(pq.RZ(qubits[3],param[2]))
             circuit.insert(pq.CNOT(qubits[2],qubits[3]))
-            #print(circuit)
 
             prog = pq.QProg()
             prog.insert(circuit)
@@ -305,9 +306,9 @@ If you are more familiar with pyQPanda syntax, please using QuantumLayerMultiPro
             return rlt_prob
 
 
-        pqc = QuantumLayerMultiProcess(pqctest,3,"cpu",4,1)
+        pqc = QuantumLayerMultiProcess(pqctest,3,4,1)
         #classic data as input
-        input = QTensor([[1,2,3,4],[4,2,2,3],[3,3,2,2.0]] )
+        input = QTensor([[1.0,2,3,4],[4,2,2,3],[3,3,2,2]] )
         #forward circuits
         rlt = pqc(input)
         grad = QTensor(np.ones(rlt.data.shape)*1000)
@@ -320,7 +321,6 @@ If you are more familiar with pyQPanda syntax, please using QuantumLayerMultiPro
         # [0.2500000, 0.2500000, 0.2500000, 0.2500000],
         # [0.2500000, 0.2500000, 0.2500000, 0.2500000]
         # ]
-
 
 NoiseQuantumLayer
 ^^^^^^^^^^^^^^^^^^^
@@ -375,7 +375,9 @@ We can use ``NoiseQuantumLayer`` to define an automatic microclassification of q
         import numpy as np
         from pyqpanda import *
         from pyvqnet.tensor import QTensor
-        def circuit(weights,param,qubits,cbits,machine):
+
+
+        def circuit(weights, param, qubits, cbits, machine):
 
             circuit = pq.QCircuit()
 
@@ -396,45 +398,53 @@ We can use ``NoiseQuantumLayer`` to define an automatic microclassification of q
             expectation = np.sum(states * probabilities)
             return expectation
 
-        def default_noise_config(qvm,q):
+
+        def default_noise_config(qvm, q):
 
             p = 0.01
-            qvm.set_noise_model(NoiseModel.BITFLIP_KRAUS_OPERATOR, GateType.PAULI_X_GATE, p)
-            qvm.set_noise_model(NoiseModel.BITFLIP_KRAUS_OPERATOR, GateType.PAULI_Y_GATE, p)
-            qvm.set_noise_model(NoiseModel.BITFLIP_KRAUS_OPERATOR, GateType.PAULI_Z_GATE, p)
+            qvm.set_noise_model(NoiseModel.BITFLIP_KRAUS_OPERATOR,
+                                GateType.PAULI_X_GATE, p)
+            qvm.set_noise_model(NoiseModel.BITFLIP_KRAUS_OPERATOR,
+                                GateType.PAULI_Y_GATE, p)
+            qvm.set_noise_model(NoiseModel.BITFLIP_KRAUS_OPERATOR,
+                                GateType.PAULI_Z_GATE, p)
             qvm.set_noise_model(NoiseModel.BITFLIP_KRAUS_OPERATOR, GateType.RX_GATE, p)
             qvm.set_noise_model(NoiseModel.BITFLIP_KRAUS_OPERATOR, GateType.RY_GATE, p)
             qvm.set_noise_model(NoiseModel.BITFLIP_KRAUS_OPERATOR, GateType.RZ_GATE, p)
             qvm.set_noise_model(NoiseModel.BITFLIP_KRAUS_OPERATOR, GateType.RY_GATE, p)
-            qvm.set_noise_model(NoiseModel.BITFLIP_KRAUS_OPERATOR, GateType.HADAMARD_GATE, p)
-            qves =[]
-            for i in range(len(q)-1):
-                qves.append([q[i],q[i+1]])#
-            qves.append([q[len(q)-1],q[0]])
-            qvm.set_noise_model(NoiseModel.DAMPING_KRAUS_OPERATOR, GateType.CNOT_GATE, p, qves)
+            qvm.set_noise_model(NoiseModel.BITFLIP_KRAUS_OPERATOR,
+                                GateType.HADAMARD_GATE, p)
+            qves = []
+            for i in range(len(q) - 1):
+                qves.append([q[i], q[i + 1]])  #
+            qves.append([q[len(q) - 1], q[0]])
+            qvm.set_noise_model(NoiseModel.DAMPING_KRAUS_OPERATOR, GateType.CNOT_GATE,
+                                p, qves)
 
             return qvm
 
-        qvc = NoiseQuantumLayer(circuit,24,"noise",1,1,diff_method= "parameter_shift", delta=0.01,noise_set_config = default_noise_config)
-        input = QTensor([
-            [0, 1, 1, 1],
 
-            [0, 0, 1, 1],
-
-            [1, 0, 1, 1]
-            ] )
+        qvc = NoiseQuantumLayer(circuit,
+                                24,
+                                "noise",
+                                1,
+                                1,
+                                diff_method="parameter_shift",
+                                delta=0.01,
+                                noise_set_config=default_noise_config)
+        input = QTensor([[0., 1., 1., 1.], [0., 0., 1., 1.], [1., 0., 1., 1.]])
         rlt = qvc(input)
-        grad =  QTensor(np.ones(rlt.data.shape)*1000)
+        grad = QTensor(np.ones(rlt.data.shape) * 1000)
 
         rlt.backward(grad)
         print(qvc.m_para.grad)
 
-        #[1195, 105, 70, 0,
-        # 45, -45, 50, 15,
-        # -80, 50, 10, -30,
-        # 10, 60, 75, -110,
-        # 55, 45, 25, 5,
-        # 5, 50, -25, -15]
+        #[1195., 105., 70., 0.,
+        # 45., -45., 50., 15.,
+        # -80., 50., 10., -30.,
+        # 10., 60., 75., -110.,
+        # 55., 45., 25., 5.,
+        # 5., 50., -25., -15.]
 
 Here is an example of ``noise_set_config``, here we add the noise model BITFLIP_KRAUS_OPERATOR where the noise argument p=0.01 to the quantum gate ``RX`` , ``RY`` , ``RZ`` , ``X`` , ``Y`` , ``Z`` , ``H``, etc.
 
@@ -1731,9 +1741,9 @@ Quantum_Embedding
 
     Example::
 
-
         from pyvqnet.qnn import QuantumLayerV2,Quantum_Embedding
         from pyvqnet.tensor import tensor
+        import pyqpanda as pq
         depth_input = 2
         num_repetitions = 2
         num_repetitions_input = 2
@@ -1754,6 +1764,7 @@ Quantum_Embedding
 
         data_in.requires_grad = True
         y = qlayer.forward(data_in)
+        print(y)
         # [
         # [0.2302894],
         #  [0.2302894],

@@ -949,29 +949,28 @@ Dropout
 
     Example::
 
-
-        from pyvqnet._core import Tensor as CoreTensor
         from pyvqnet.nn.dropout import Dropout
         import numpy as np
         from pyvqnet.tensor import QTensor
         b = 2
         ic = 2
-        x = QTensor(CoreTensor.range(-1*ic*2*2,(b-1)*ic*2*2-1).reshape([b,ic,2,2]),requires_grad=True)
+        x = QTensor(np.arange(-1*ic*2*2,(b-1)*ic*2*2).reshape([b,ic,2,2]),requires_grad=True)
         droplayer = Dropout(0.5)
         droplayer.train()
         y = droplayer(x)
         print(y)
+        # [[[[-16. -14.]
+        #    [-12.   0.]]
 
-        # [
-        # [[[-16, -14],
-        #  [-0, -0]],
-        # [[-8, -6],
-        #  [-4, -2]]],
-        # [[[0, 2],
-        #  [4, 6]],
-        # [[8, 10],
-        #  [0, 14]]]
-        # ]
+        #   [[ -8.  -6.]
+        #    [ -4.  -2.]]]
+
+
+        #  [[[  0.   2.]
+        #    [  0.   6.]]
+
+        #   [[  0.   0.]
+        #    [  0.  14.]]]]
 
 Pixel_Shuffle 
 ^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -1624,7 +1623,7 @@ BinaryCrossEntropy
 
     Example::
 
-        import numpy as np
+        import pyvqnet
         from pyvqnet.tensor import QTensor
         x = QTensor([[0.3, 0.7, 0.2], [0.2, 0.3, 0.1]], requires_grad=True)
         y = QTensor([[0, 1.0, 0], [0, 0.0, 1]], requires_grad=True)
@@ -1737,8 +1736,9 @@ NLL_Loss
 
     Example::
 
-        from pyvqnet.nn import NLL_Loss
         from pyvqnet.tensor import QTensor, kint64
+        from pyvqnet.nn import NLL_Loss
+
         x = QTensor([
             0.9476322568516703, 0.226547421131723, 0.5944201443911326,
             0.42830868492969476, 0.76414068655387, 0.00286059168094277,
@@ -1751,7 +1751,7 @@ NLL_Loss
         y = QTensor([[[2, 1, 0, 0, 2]]], dtype=kint64)
 
         loss_result = NLL_Loss()
-        result = loss_result(y, output)
+        result = loss_result(y, x)
         print(result)
         #[-0.6187226]
 
@@ -1782,20 +1782,23 @@ CrossEntropyLoss
 
     Example::
 
+        from pyvqnet.tensor import QTensor, kint64
         from pyvqnet.nn import CrossEntropyLoss
-        from pyvqnet.tensor import QTensor,kint64
         x = QTensor([
-            0.9476322568516703, 0.226547421131723, 0.5944201443911326, 0.42830868492969476, 0.76414068655387,
-            0.00286059168094277, 0.3574236812873617, 0.9096948856639084, 0.4560809854582528, 0.9818027091583286,
-            0.8673569904602182, 0.9860275114020933, 0.9232667066664217, 0.303693313961628, 0.8461034903175555
+            0.9476322568516703, 0.226547421131723, 0.5944201443911326,
+            0.42830868492969476, 0.76414068655387, 0.00286059168094277,
+            0.3574236812873617, 0.9096948856639084, 0.4560809854582528,
+            0.9818027091583286, 0.8673569904602182, 0.9860275114020933,
+            0.9232667066664217, 0.303693313961628, 0.8461034903175555
         ])
         x.reshape_([1, 3, 1, 5])
         x.requires_grad = True
         y = QTensor([[[2, 1, 0, 0, 2]]], dtype=kint64)
 
         loss_result = CrossEntropyLoss()
-        result = loss_result(y, output)
+        result = loss_result(y, x)
         print(result)
+
         #[1.1508200]
 
 
