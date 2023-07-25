@@ -238,7 +238,7 @@ The training data used is generated above, and the test data is qvc_test_data an
     epoch:18, #### loss:0.1171633576353391 #####accuray:1.0
     epoch:19, #### loss:0.11482855677604675 #####accuray:1.0
     [0.3412148654]
-    test:--------------->loss:QTensor(None, requires_grad=True) #####accuray:1.0
+    test:--------------->loss:QTensor(0.3412148654, requires_grad=True) #####accuray:1.0
 
 The following picture illustrates the curve of model's accuracy:
 
@@ -1880,7 +1880,7 @@ The visualization curve of data loss function and accuracy on train and test dat
             break
         x = x.reshape(-1, 1, 28, 28)
         output = model(x)
-        pred = QTensor.argmax(output, [1])
+        pred = QTensor.argmax(output, [1],False)
         axes[count].imshow(x[0].squeeze(), cmap='gray')
         axes[count].set_xticks([])
         axes[count].set_yticks([])
@@ -2155,7 +2155,7 @@ Quantum partial circuit diagram are illustrated below:
                 break
             x = x.reshape(-1, 1, 28, 28)
             output = model(x)
-            pred = QTensor.argmax(output, [1])
+            pred = QTensor.argmax(output, [1],False)
             axes[count].imshow(x[0].squeeze(), cmap='gray')
             axes[count].set_xticks([])
             axes[count].set_yticks([])
@@ -2198,7 +2198,7 @@ Quantum partial circuit diagram are illustrated below:
                 break
             x = x.reshape(-1, 1, 28, 28)
             output = model(x)
-            pred = QTensor.argmax(output, [1])
+            pred = QTensor.argmax(output, [1],False)
             axes[count].imshow(x[0].squeeze(), cmap='gray')
             axes[count].set_xticks([])
             axes[count].set_yticks([])
@@ -2402,7 +2402,7 @@ Quantum partial circuit diagram are illustrated below:
                 break
             x = x.reshape(-1, 1, 28, 28)
             output = model_hybrid(x)
-            pred = QTensor.argmax(output, [1])
+            pred = QTensor.argmax(output, [1],False)
             axes[count].imshow(x[0].squeeze(), cmap='gray')
             axes[count].set_xticks([])
             axes[count].set_yticks([])
@@ -2561,7 +2561,7 @@ Quantum partial circuit diagram are illustrated below:
                 break
             x = x.reshape(-1, 1, 28, 28)
             output = model_hybrid(x)
-            pred = QTensor.argmax(output, [1])
+            pred = QTensor.argmax(output, [1],False)
             axes[count].imshow(x[0].squeeze(), cmap='gray')
             axes[count].set_xticks([])
             axes[count].set_yticks([])
@@ -2651,7 +2651,7 @@ Import necessary libraries and functions
     from pyvqnet.nn.batch_norm import BatchNorm2d
     from pyvqnet.nn.loss import BinaryCrossEntropy
     from pyvqnet.optim.adam import Adam
-
+    from pyvqnet.dtype import *
     from pyvqnet.tensor import tensor,kfloat32
     from pyvqnet.tensor.tensor import QTensor
     import pyqpanda as pq
@@ -5754,13 +5754,13 @@ observation. Here, the moving average moving_average() is used for calculation.
     
     for i in range(steps):
         opti_ana.zero_grad()
-        loss = qlayer_ana(QTensor([[1]]))
+        loss = qlayer_ana(QTensor([[1.0]]))
         loss.backward()
         cost_sgd.append(loss.item())
         opti_ana._step()
     for i in range(steps+50):
         opti_shots.zero_grad()
-        loss = qlayer_shots(QTensor([[1]]))
+        loss = qlayer_shots(QTensor([[1.0]]))
         loss.backward()
         cost_dsgd.append(loss.item())
         opti_shots._step()
@@ -6400,7 +6400,7 @@ Loss and accuracy results of the run:
 
 	start testing..............
 	[0.3132616580]
-	test:--------------->loss:QTensor(None, requires_grad=True) #####accuray:1.0
+	test:--------------->loss:QTensor(0.3132616580, requires_grad=True) #####accuray:1.0
 
 
 Model training using NoiseQuantumLayer in VQNet
@@ -6930,7 +6930,7 @@ Loss and accuracy results of the run:
     epoch:19, #### loss:0.10442055265108745 #####accuray:1.0
     start testing..............
     [0.3132616580]
-    test:--------------->loss:QTensor(None, requires_grad=True) #####accuray:1.0
+    test:--------------->loss:QTensor(0.3132616580, requires_grad=True) #####accuray:1.0
 
 
 
