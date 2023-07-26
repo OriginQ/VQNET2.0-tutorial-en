@@ -31,7 +31,7 @@ It is theoretically possible to calculate the gradient of parameters about Hamil
     \nabla O(\theta)=
     \frac{1}{2}\left[O\left(\theta+\frac{\pi}{2}\right)-O\left(\theta-\frac{\pi}{2}\right)\right]
 
-.. py:class:: pyvqnet.qnn.quantumlayer.QuantumLayer(qprog_with_measure,para_num,machine_type_or_cloud_token,num_of_qubits:int,num_of_cbits:int = 1,diff_method:str = "parameter_shift",delta:float = 0.01)
+.. py:class:: pyvqnet.qnn.quantumlayer.QuantumLayer(qprog_with_measure,para_num,machine_type_or_cloud_token,num_of_qubits:int,num_of_cbits:int = 1,diff_method:str = "parameter_shift",delta:float = 0.01, dtype=None, name='')
 
     Abstract calculation module for variational quantum circuits. It simulates a parameterized quantum circuit and gets the measurement result.
     QuantumLayer inherits from Module ,so that it can calculate gradients of circuits parameters,and train variational quantum circuits model or embed variational quantum circuits into hybird quantum and classic model.
@@ -45,6 +45,9 @@ It is theoretically possible to calculate the gradient of parameters about Hamil
     :param num_of_cbits: num of classic bits
     :param diff_method: 'parameter_shift' or 'finite_diff'
     :param delta:  delta for diff
+    :param dtype: The data type of the parameter, defaults: None, use the default data type kfloat32, which represents a 32-bit floating point number.
+    :param name: name of the output layer
+
     :return: a module can calculate quantum circuits .
 
     .. note::
@@ -64,6 +67,8 @@ It is theoretically possible to calculate the gradient of parameters about Hamil
 
             `m_machine`: simulator created by QuantumLayer
 
+        Use the ``m_para`` attribute of QuantumLayer to get the training parameters of the variable quantum circuit. The parameter is a ``QTensor`` class, which can be converted into a numpy array using the ``to_numpy()`` interface.
+    
     Example::
 
         import pyqpanda as pq
@@ -104,7 +109,7 @@ It is theoretically possible to calculate the gradient of parameters about Hamil
 
         pqc = QuantumLayer(pqctest,3,"cpu",4,1)
         #classic data as input
-        input = QTensor([[1,2,3,4],[40,22,2,3],[33,3,25,2]] )
+        input = QTensor([[1,2,3,4],[40,22,2,3],[33,3,25,2.0]] )
         #forward circuits
         rlt = pqc(input)
         grad =  QTensor(np.ones(rlt.data.shape)*1000)
@@ -122,7 +127,7 @@ QuantumLayerV2
 
 If you are more familiar with pyQPanda syntax, please using QuantumLayerV2 class, you can define the quantum circuits function by using ``qubits``, ``cbits`` and ``machine``, then take it as a argument ``qprog_with_measure`` of QuantumLayerV2.
 
-.. py:class:: pyvqnet.qnn.quantumlayer.QuantumLayerV2(qprog_with_measure, para_num, diff_method: str = 'parameter_shift', delta: float = 0.01)
+.. py:class:: pyvqnet.qnn.quantumlayer.QuantumLayerV2(qprog_with_measure, para_num, diff_method: str = 'parameter_shift', delta: float = 0.01, dtype=None, name='')
 
     Abstract calculation module for variational quantum circuits. It simulates a parameterized quantum circuit and gets the measurement result.
     QuantumLayer inherits from Module ,so that it can calculate gradients of circuits parameters,and train variational quantum circuits model or embed variational quantum circuits into hybird quantum and classic model.
@@ -133,6 +138,8 @@ If you are more familiar with pyQPanda syntax, please using QuantumLayerV2 class
     :param para_num: `int` - Number of parameter
     :param diff_method: 'parameter_shift' or 'finite_diff'
     :param delta:  delta for diff
+    :param dtype: The data type of the parameter, defaults: None, use the default data type kfloat32, which represents a 32-bit floating point number.
+    :param name: name of the output layer
     :return: a module can calculate quantum circuits .
 
     .. note::
@@ -199,7 +206,7 @@ If you are more familiar with pyQPanda syntax, please using QuantumLayerV2 class
         pqc = QuantumLayerV2(pqctest,3)
 
         #classic data as input
-        input = QTensor([[1,2,3,4],[4,2,2,3],[3,3,2,2]] )
+        input = QTensor([[1,2,3,4],[4,2,2,3],[3,3,2,2.0]] )
 
         #forward circuits
         rlt = pqc(input)
@@ -221,7 +228,7 @@ QuantumLayerMultiProcess
 
 If you are more familiar with pyQPanda syntax, please using QuantumLayerMultiProcess class, you can define the quantum circuits function by using ``qubits``, ``cbits`` and ``machine``, then take it as a argument ``qprog_with_measure`` of QuantumLayerMultiProcess.
 
-.. py:class:: pyvqnet.qnn.quantumlayer.QuantumLayerMultiProcess(qprog_with_measure, para_num, machine_type_or_cloud_token, num_of_qubits: int, num_of_cbits: int = 1, diff_method: str = 'parameter_shift', delta: float = 0.01)
+.. py:class:: pyvqnet.qnn.quantumlayer.QuantumLayerMultiProcess(qprog_with_measure, para_num, machine_type_or_cloud_token, num_of_qubits: int, num_of_cbits: int = 1, diff_method: str = 'parameter_shift', delta: float = 0.01,dtype=None, name='')
 
     Abstract calculation module for variational quantum circuits. This class uses multiprocess to accelerate quantum circuit simulation.
     
@@ -232,11 +239,13 @@ If you are more familiar with pyQPanda syntax, please using QuantumLayerMultiPro
 
     :param qprog_with_measure: callable quantum circuits functions ,cosntructed by qpanda.
     :param para_num: `int` - Number of parameter
-    :param machine_type_or_cloud_token: qpanda machine type or pyQPANDA QCLOUD token.
     :param num_of_qubits: num of qubits.
     :param num_of_cbits: num of classic bits.
     :param diff_method: 'parameter_shift' or 'finite_diff'.
     :param delta:  delta for diff.
+    :param dtype: The data type of the parameter, defaults: None, use the default data type kfloat32, which represents a 32-bit floating point number.
+    :param name: name of the output layer
+
     :return: a module can calculate quantum circuits .
 
     .. note::
@@ -262,6 +271,7 @@ If you are more familiar with pyQPanda syntax, please using QuantumLayerMultiPro
         from pyvqnet.qnn.quantumlayer import QuantumLayerMultiProcess
         import numpy as np
         from pyvqnet.tensor import QTensor
+
         def pqctest (input,param,nqubits,ncubits):
             machine = pq.CPUQVM()
             machine.init_qvm()
@@ -288,7 +298,6 @@ If you are more familiar with pyQPanda syntax, please using QuantumLayerMultiPro
             circuit.insert(pq.CNOT(qubits[2],qubits[3]))
             circuit.insert(pq.RZ(qubits[3],param[2]))
             circuit.insert(pq.CNOT(qubits[2],qubits[3]))
-            #print(circuit)
 
             prog = pq.QProg()
             prog.insert(circuit)
@@ -297,9 +306,9 @@ If you are more familiar with pyQPanda syntax, please using QuantumLayerMultiPro
             return rlt_prob
 
 
-        pqc = QuantumLayerMultiProcess(pqctest,3,"cpu",4,1)
+        pqc = QuantumLayerMultiProcess(pqctest,3,4,1)
         #classic data as input
-        input = QTensor([[1,2,3,4],[4,2,2,3],[3,3,2,2]] )
+        input = QTensor([[1.0,2,3,4],[4,2,2,3],[3,3,2,2]] )
         #forward circuits
         rlt = pqc(input)
         grad = QTensor(np.ones(rlt.data.shape)*1000)
@@ -313,7 +322,6 @@ If you are more familiar with pyQPanda syntax, please using QuantumLayerMultiPro
         # [0.2500000, 0.2500000, 0.2500000, 0.2500000]
         # ]
 
-
 NoiseQuantumLayer
 ^^^^^^^^^^^^^^^^^^^
 
@@ -322,7 +330,7 @@ The existing supported quantum noise model is defined in QPanda `NoiseQVM <https
 
 We can use ``NoiseQuantumLayer`` to define an automatic microclassification of quantum circuits. ``NoiseQuantumLayer`` supports QPanda quantum virtual machine with noise. You can define a function as an argument ``qprog_with_measure``. This function needs to contain the quantum circuit defined by pyQPanda, as also you need to pass in a argument ``noise_set_config``, by using the pyQPanda interface to set up the noise model.
 
-.. py:class:: pyvqnet.qnn.quantumlayer.NoiseQuantumLayer(qprog_with_measure, para_num, machine_type, num_of_qubits: int, num_of_cbits: int = 1, diff_method: str = 'parameter_shift', delta: float = 0.01, noise_set_config=None)
+.. py:class:: pyvqnet.qnn.quantumlayer.NoiseQuantumLayer(qprog_with_measure, para_num, machine_type, num_of_qubits: int, num_of_cbits: int = 1, diff_method: str = 'parameter_shift', delta: float = 0.01, noise_set_config=None, dtype=None, name='')
 
     Abstract calculation module for variational quantum circuits. It simulates a parameterized quantum circuit and gets the measurement result.
     QuantumLayer inherits from Module ,so that it can calculate gradients of circuits parameters,and train variational quantum circuits model or embed variational quantum circuits into hybird quantum and classic model.
@@ -337,6 +345,9 @@ We can use ``NoiseQuantumLayer`` to define an automatic microclassification of q
     :param diff_method: 'parameter_shift' or 'finite_diff'
     :param delta:  delta for diff
     :param noise_set_config: noise set function
+    :param dtype: The data type of the parameter, defaults: None, use the default data type kfloat32, which represents a 32-bit floating point number.
+    :param name: name of the output layer
+    
     :return: a module can calculate quantum circuits with noise model.
 
     .. note::
@@ -346,15 +357,15 @@ We can use ``NoiseQuantumLayer`` to define an automatic microclassification of q
 
         qprog_with_measure (input,param,qubits,cbits,m_machine)
 
-            `input`: array_like input 1-dim classic data
+        `input`: array_like input 1-dim classic data
 
-            `param`: array_like input 1-dim quantum circuit's parameters
+        `param`: array_like input 1-dim quantum circuit's parameters
 
-            `qubits`: qubits allocated by NoiseQuantumLayer
+        `qubits`: qubits allocated by NoiseQuantumLayer
 
-            `cbits`: cbits allocated by NoiseQuantumLayer.if your circuits does not use cbits,you should also reserve this parameter.
+        `cbits`: cbits allocated by NoiseQuantumLayer.if your circuits does not use cbits,you should also reserve this parameter.
 
-            `m_machine`: simulator created by NoiseQuantumLayer
+        `m_machine`: simulator created by NoiseQuantumLayer
 
     Example::
 
@@ -364,7 +375,9 @@ We can use ``NoiseQuantumLayer`` to define an automatic microclassification of q
         import numpy as np
         from pyqpanda import *
         from pyvqnet.tensor import QTensor
-        def circuit(weights,param,qubits,cbits,machine):
+
+
+        def circuit(weights, param, qubits, cbits, machine):
 
             circuit = pq.QCircuit()
 
@@ -385,45 +398,53 @@ We can use ``NoiseQuantumLayer`` to define an automatic microclassification of q
             expectation = np.sum(states * probabilities)
             return expectation
 
-        def default_noise_config(qvm,q):
+
+        def default_noise_config(qvm, q):
 
             p = 0.01
-            qvm.set_noise_model(NoiseModel.BITFLIP_KRAUS_OPERATOR, GateType.PAULI_X_GATE, p)
-            qvm.set_noise_model(NoiseModel.BITFLIP_KRAUS_OPERATOR, GateType.PAULI_Y_GATE, p)
-            qvm.set_noise_model(NoiseModel.BITFLIP_KRAUS_OPERATOR, GateType.PAULI_Z_GATE, p)
+            qvm.set_noise_model(NoiseModel.BITFLIP_KRAUS_OPERATOR,
+                                GateType.PAULI_X_GATE, p)
+            qvm.set_noise_model(NoiseModel.BITFLIP_KRAUS_OPERATOR,
+                                GateType.PAULI_Y_GATE, p)
+            qvm.set_noise_model(NoiseModel.BITFLIP_KRAUS_OPERATOR,
+                                GateType.PAULI_Z_GATE, p)
             qvm.set_noise_model(NoiseModel.BITFLIP_KRAUS_OPERATOR, GateType.RX_GATE, p)
             qvm.set_noise_model(NoiseModel.BITFLIP_KRAUS_OPERATOR, GateType.RY_GATE, p)
             qvm.set_noise_model(NoiseModel.BITFLIP_KRAUS_OPERATOR, GateType.RZ_GATE, p)
             qvm.set_noise_model(NoiseModel.BITFLIP_KRAUS_OPERATOR, GateType.RY_GATE, p)
-            qvm.set_noise_model(NoiseModel.BITFLIP_KRAUS_OPERATOR, GateType.HADAMARD_GATE, p)
-            qves =[]
-            for i in range(len(q)-1):
-                qves.append([q[i],q[i+1]])#
-            qves.append([q[len(q)-1],q[0]])
-            qvm.set_noise_model(NoiseModel.DAMPING_KRAUS_OPERATOR, GateType.CNOT_GATE, p, qves)
+            qvm.set_noise_model(NoiseModel.BITFLIP_KRAUS_OPERATOR,
+                                GateType.HADAMARD_GATE, p)
+            qves = []
+            for i in range(len(q) - 1):
+                qves.append([q[i], q[i + 1]])  #
+            qves.append([q[len(q) - 1], q[0]])
+            qvm.set_noise_model(NoiseModel.DAMPING_KRAUS_OPERATOR, GateType.CNOT_GATE,
+                                p, qves)
 
             return qvm
 
-        qvc = NoiseQuantumLayer(circuit,24,"noise",1,1,diff_method= "parameter_shift", delta=0.01,noise_set_config = default_noise_config)
-        input = QTensor([
-            [0.0000000, 1.0000000, 1.0000000, 1.0000000],
 
-            [0.0000000, 0.0000000, 1.0000000, 1.0000000],
-
-            [1.0000000, 0.0000000, 1.0000000, 1.0000000]
-            ] )
+        qvc = NoiseQuantumLayer(circuit,
+                                24,
+                                "noise",
+                                1,
+                                1,
+                                diff_method="parameter_shift",
+                                delta=0.01,
+                                noise_set_config=default_noise_config)
+        input = QTensor([[0., 1., 1., 1.], [0., 0., 1., 1.], [1., 0., 1., 1.]])
         rlt = qvc(input)
-        grad =  QTensor(np.ones(rlt.data.shape)*1000)
+        grad = QTensor(np.ones(rlt.data.shape) * 1000)
 
         rlt.backward(grad)
         print(qvc.m_para.grad)
 
-        #[1195.0000000, 105.0000000, 70.0000000, 0.0000000,
-        # 45.0000000, -45.0000000, 50.0000000, 15.0000000,
-        # -80.0000000, 50.0000000, 10.0000000, -30.0000000,
-        # 10.0000000, 60.0000000, 75.0000000, -110.0000000,
-        # 55.0000000, 45.0000000, 25.0000000, 5.0000000,
-        # 5.0000000, 50.0000000, -25.0000000, -15.0000000]
+        #[1195., 105., 70., 0.,
+        # 45., -45., 50., 15.,
+        # -80., 50., 10., -30.,
+        # 10., 60., 75., -110.,
+        # 55., 45., 25., 5.,
+        # 5., 50., -25., -15.]
 
 Here is an example of ``noise_set_config``, here we add the noise model BITFLIP_KRAUS_OPERATOR where the noise argument p=0.01 to the quantum gate ``RX`` , ``RY`` , ``RZ`` , ``X`` , ``Y`` , ``Z`` , ``H``, etc.
 
@@ -526,7 +547,7 @@ use the ``run`` function to define the circuit operations and measurement.
 
 Send the instantiated object ``VQC_wrapper`` as a parameter to ``VQCLayer``
 
-.. py:class:: pyvqnet.qnn.quantumlayer.VQCLayer(vqc_wrapper, para_num, machine_type_or_cloud_token, num_of_qubits: int, num_of_cbits: int = 1, diff_method: str = 'parameter_shift', delta: float = 0.01)
+.. py:class:: pyvqnet.qnn.quantumlayer.VQCLayer(vqc_wrapper, para_num, machine_type_or_cloud_token, num_of_qubits: int, num_of_cbits: int = 1, diff_method: str = 'parameter_shift', delta: float = 0.01, dtype=None, name='')
 
     Abstract Calculation module for Variational Quantum Circuits in pyQPanda.Please reference to :https://pyqpanda-toturial.readthedocs.io/zh/latest/VQG.html.
 
@@ -536,7 +557,10 @@ Send the instantiated object ``VQC_wrapper`` as a parameter to ``VQCLayer``
     :param num_of_qubits: num of qubits
     :param num_of_cbits: num of cbits
     :param diff_method: 'parameter_shift' or 'finite_diff'
-    :param delta:  delta for diff
+    :param delta:  delta for gradient calculation.
+    :param dtype: The data type of the parameter, defaults: None, use the default data type kfloat32, which represents a 32-bit floating point number.
+    :param name: name of the output layer
+
     :return: a module can calculate VQC quantum circuits
 
     Example::
@@ -627,7 +651,7 @@ The sample is as follows:
 
 .. image:: ./images/qcnn_cir.png
 
-.. py:class:: pyvqnet.qnn.qcnn.qconv.QConv(input_channels,output_channels,quantum_number,stride=(1, 1),padding=(0, 0),kernel_initializer=normal,machine:str = "cpu")
+.. py:class:: pyvqnet.qnn.qcnn.qconv.QConv(input_channels,output_channels,quantum_number,stride=(1, 1),padding=(0, 0),kernel_initializer=normal,machine:str = "cpu", dtype=None, name='')
 
     Quantum Convolution module. Replace Conv2D kernal with quantum circuits.Inputs to the conv module are of shape (batch_size, input_channels, height, width) reference `Samuel et al. (2020) <https://arxiv.org/abs/2012.12177>`_.
 
@@ -637,7 +661,10 @@ The sample is as follows:
     :param stride: `tuple` - Stride, defaults to (1, 1)
     :param padding: `tuple` - Padding, defaults to (0, 0)
     :param kernel_initializer: `callable` - Defaults to normal
-    :param machine: `str` - cpu simulation
+    :param machine: `str` - cpu simulation.
+    :param dtype: The data type of the parameter, defaults: None, use the default data type kfloat32, which represents a 32-bit floating point number.
+    :param name: name of the output layer
+
     :return: a quantum cnn class
 
     Example::
@@ -666,7 +693,7 @@ and then the final fully connected result is obtained through the derivation ope
 
 .. py:class:: pyvqnet.qnn.qlinear.QLinear(input_channels, output_channels, machine: str = 'cpu')
 
-    Quantum Linear module. Inputs to the linear module are of shape (input_channels, output_channels)
+    Quantum Linear module. Inputs to the linear module are of shape (input_channels, output_channels).This layer takes no variational quantum parameters.
 
     :param input_channels: `int` - Number of input channels
     :param output_channels: `int` - Number of output channels
@@ -698,7 +725,7 @@ and then the final fully connected result is obtained through the derivation ope
 
 grad
 ^^^^^^^^^^
-.. py:function:: pyvqnet.qnn.quantumlayer.grad(quantum_prog_func,params)
+.. py:function:: pyvqnet.qnn.quantumlayer.grad(quantum_prog_func,params *args)
 
     The grad function provides an interface to compute the gradient of a user-designed subcircuit with parametric parameters.
     Users can use pyqpanda to design the line running function ``quantum_prog_func`` according to the following example, and send it as a parameter to the grad function.
@@ -707,6 +734,7 @@ grad
 
     :param quantum_prog_func: The quantum circuit operation function designed by pyqpanda.
     :param params: The coordinates of the parameters whose gradient is to be obtained.
+    :param \*args: additional arguments to the quantum_prog_func function. 
     :return:
             gradient of parameters
 
@@ -740,163 +768,6 @@ grad
         # [[-0.04673668  0.04673668]
         # [-0.09442394  0.09442394]
         # [-0.14409127  0.14409127]]
-
-
-MNIST_Dataset
-^^^^^^^^^^^^^^^^^
-
-.. py:class:: pyvqnet.data.MNIST_Dataset(mode: str,encoding: str,num_qubits: int,classes: list,data_num=-1,target_dimension=-1,need_cropping=True,need_relabel=True,seed=0,tmp_data_dir="./tmp")
-
-    The MNIST data is encoded using the quantum encoding method, and use quantum state data to build a dataset.
-
-    :param mode: Data mode including ``train`` and ``test``.
-    :param encoding: which support encoding methods: ``angle_encoding_rx`` , ``angle_encoding_ry`` , ``angle_encoding_rz`` , ``amplitude_encoding`` , ``strongly_entangling_encoding`` , ``basic_entangler_encoding_rx`` , ``basic_entangler_encoding_ry`` , ``basic_entangler_encoding_rz`` , ``IQP_encoding`` .
-    :param num_qubits: Qubit number.
-    :param classes: Classes needed to classify, categories are indicated by numeric labels.
-    :param data_num: select specific data number from dataset,default:-1.
-    :param target_dimension:  The dimension after downscaling, which is not allowed to surpass the figure size. Defaults to ``-1``.
-    :param need_cropping: Whether needed to crop, If ``True``, ``image[0:27][0:27]`` will be cropped to ``image[4:24][4:24]``. Defaults to ``True``.
-    :param need_relabel: Whether we need to relabel the labels to 0,1,2… for binary classification.For example [1,2] will be relabeled to [0,1] Defaults to ``True``.
-    :param seed: Select random seed. Defaults to ``0``.
-    :param tmp_data_dir: download data files directory. default: "./tmp".
-
-    Examples::
-
-        from pyvqnet.data import MNIST_Dataset
-        # encoding methods
-        RX_ANGLE_ENCODING = "angle_encoding_rx"
-        RY_ANGLE_ENCODING = "angle_encoding_ry"
-        RZ_ANGLE_ENCODING = "angle_encoding_rz"
-        AMPLITUDE_ENCODING = "amplitude_encoding"
-        StronglyEntanglingEncoding = "strongly_entangling_encoding"
-        RX_BasicEntanglerEncoding = "basic_entangler_encoding_rx"
-        RY_BasicEntanglerEncoding = "basic_entangler_encoding_ry"
-        RZ_BasicEntanglerEncoding = "basic_entangler_encoding_rz"
-        IQP_ENCODING = "IQP_encoding"
-
-        for m in ("TRAIN", "TEST"):
-            for encoding in [
-                    IQP_ENCODING, StronglyEntanglingEncoding,
-                    RX_BasicEntanglerEncoding, RY_BasicEntanglerEncoding,
-                    RZ_BasicEntanglerEncoding
-            ]:
-                nqubits =3
-                dim = 4 #resize ->2*2
-
-                print(
-                    f"nqubits {nqubits} dim {dim} encoding {encoding}")
-                qd = MNIST_Dataset(m, encoding, nqubits, [2, 4], 5,
-                                    dim)
-
-                print(len(qd.quantum_data))
-                print(qd.quantum_data[0].shape)
-        #nqubits 3 dim 4 encoding IQP_encoding
-        # 5
-        # (8,)
-        # nqubits 3 dim 4 encoding strongly_entangling_encoding
-        # 5
-        # (8,)
-        # nqubits 3 dim 4 encoding basic_entangler_encoding_rx
-        # 5
-        # (8,)
-        # nqubits 3 dim 4 encoding basic_entangler_encoding_ry
-        # 5
-        # (8,)
-        # nqubits 3 dim 4 encoding basic_entangler_encoding_rz
-        # 5
-        # (8,)
-        # nqubits 3 dim 4 encoding IQP_encoding
-        # 5
-        # (8,)
-        # nqubits 3 dim 4 encoding strongly_entangling_encoding
-        # 5
-        # (8,)
-        # nqubits 3 dim 4 encoding basic_entangler_encoding_rx
-        # 5
-        # (8,)
-        # nqubits 3 dim 4 encoding basic_entangler_encoding_ry
-        # 5
-        # (8,)
-        # nqubits 3 dim 4 encoding basic_entangler_encoding_rz
-        # 5
-        # (8,)
-
-CIFAR10_Dataset
-^^^^^^^^^^^^^^^^^
-
-.. py:class:: pyvqnet.data.CIFAR10_Dataset(mode: str,encoding: str,num_qubits: int,classes: list,data_num=-1,target_dimension=-1,need_relabel=True,seed=0,tmp_data_dir="./tmp")
-
-    Build `CIFAR10 <https://www.cs.toronto.edu/~kriz/cifar.html>`_ quantum Dataset.
-
-    :param mode: Data mode including ``train`` and ``test``.
-    :param encoding: which support encoding methods: ``angle_encoding_rx`` , ``angle_encoding_ry`` , ``angle_encoding_rz`` , ``amplitude_encoding`` , ``strongly_entangling_encoding`` , ``basic_entangler_encoding_rx`` , ``basic_entangler_encoding_ry`` , ``basic_entangler_encoding_rz`` , ``IQP_encoding`` .
-    :param num_qubits: Qubit number.
-    :param classes: Classes needed to classify, categories are indicated by numeric labels.
-    :param data_num: select specific data number from dataset,default:-1.
-    :param target_dimension:  The dimension after downscaling, which is not allowed to surpass the figure size. Defaults to ``-1``.
-    :param need_relabel: Whether we need to relabel the labels to 0,1,2… for binary classification.For example [1,2] will be relabeled to [0,1] Defaults to ``True``.
-    :param seed: Select random seed. Defaults to ``0``.
-    :param tmp_data_dir: download data files directory. default: "./tmp".
-
-    Examples::
-
-        from pyvqnet.data import MNIST_Dataset,CIFAR10_Dataset
-        # encoding methods
-        RX_ANGLE_ENCODING = "angle_encoding_rx"
-        RY_ANGLE_ENCODING = "angle_encoding_ry"
-        RZ_ANGLE_ENCODING = "angle_encoding_rz"
-        AMPLITUDE_ENCODING = "amplitude_encoding"
-        StronglyEntanglingEncoding = "strongly_entangling_encoding"
-        RX_BasicEntanglerEncoding = "basic_entangler_encoding_rx"
-        RY_BasicEntanglerEncoding = "basic_entangler_encoding_ry"
-        RZ_BasicEntanglerEncoding = "basic_entangler_encoding_rz"
-        IQP_ENCODING = "IQP_encoding"
-
-        for m in ("TRAIN", "TEST"):
-            for encoding in [
-                    IQP_ENCODING, StronglyEntanglingEncoding,
-                    RX_BasicEntanglerEncoding, RY_BasicEntanglerEncoding,
-                    RZ_BasicEntanglerEncoding
-            ]:
-                nqubits =3
-                dim = 4 #resize ->2*2
-
-                print(
-                    f"nqubits {nqubits} dim {dim} encoding {encoding}")
-                qd = CIFAR10_Dataset(m, encoding, nqubits, [2, 4], 5, dim)
-
-                print(len(qd.quantum_data))
-                print(qd.quantum_data[0].shape)
-        # nqubits 3 dim 4 encoding IQP_encoding
-        # 5
-        # (8,)
-        # nqubits 3 dim 4 encoding strongly_entangling_encoding
-        # 5
-        # (8,)
-        # nqubits 3 dim 4 encoding basic_entangler_encoding_rx
-        # 5
-        # (8,)
-        # nqubits 3 dim 4 encoding basic_entangler_encoding_ry
-        # 5
-        # (8,)
-        # nqubits 3 dim 4 encoding basic_entangler_encoding_rz
-        # 5
-        # (8,)
-        # nqubits 3 dim 4 encoding IQP_encoding
-        # 5
-        # (8,)
-        # nqubits 3 dim 4 encoding strongly_entangling_encoding
-        # 5
-        # (8,)
-        # nqubits 3 dim 4 encoding basic_entangler_encoding_rx
-        # 5
-        # (8,)
-        # nqubits 3 dim 4 encoding basic_entangler_encoding_ry
-        # 5
-        # (8,)
-        # nqubits 3 dim 4 encoding basic_entangler_encoding_rz
-        # 5
-        # (8,)
 
 Quantum gate
 ----------------------------------
@@ -1271,6 +1142,90 @@ CCZ
         # q_2:  |0>─┤CNOT├ ┤T.dag├ ┤CNOT├ ┤T├ ┤CNOT├ ┤T.dag├ ┤CNOT├ ┤T├─── ┤H├──── ┤H├───
         #           └────┘ └─────┘ └────┘ └─┘ └────┘ └─────┘ └────┘ └─┘    └─┘     └─┘
 
+
+BlockEncode
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. py:function:: pyvqnet.qnn.template.BlockEncode(A,qlists)
+
+    Construct a single pyqpanda circuit :math:`U(A)` such that an arbitrary matrix :math:`A` is encoded in the top left block.
+
+    :param A: The input matrix encoded in the circuit.
+    :param qlists: List of qubits to encode.
+    :return: A pyqpanda QCircuit.
+
+    Example::
+
+        from pyvqnet.tensor import QTensor
+        import pyvqnet
+        import pyqpanda as pq
+        from pyvqnet.qnn import BlockEncode
+        A = QTensor([[0.1, 0.2], [0.3, 0.4]], dtype=pyvqnet.kfloat32)
+        machine = pq.CPUQVM()
+        machine.init_qvm()
+        qlist = machine.qAlloc_many(2)
+        cbits = machine.cAlloc_many(2)
+
+        cir = BlockEncode(A, qlist)
+
+        prog = pq.QProg()
+        prog.insert(cir)
+        result = machine.directly_run(prog)
+        print(cir)
+
+        #           ┌───────────┐
+        # q_0:  |0>─┤0          ├
+        #           │  Unitary  │
+        # q_1:  |0>─┤1          ├
+        #           └───────────┘
+
+Random_Init_Quantum_State
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. py:function:: pyvqnet.qnn.template.Random_Init_Quantum_State(qlists)
+
+    Use amplitude encoding to generate arbitrary quantum initial states and encode them onto the wire. Note that the depth of the line can vary greatly due to amplitude encoding.
+
+    :param qlists: Qubits requested by pyqpanda.
+
+    :return: pyqpanda QCircuit.
+
+    Example::
+
+        import pyqpanda as pq
+        from pyvqnet.qnn.template import Random_Init_Quantum_State
+        cir = pq. QCircuit()
+
+        m_machine = pq.init_quantum_machine(pq.QMachineType.CPU)
+
+        m_qlist = m_machine.qAlloc_many(3)
+        c = Random_Init_Quantum_State(m_qlist)
+        print(c)
+
+        import pyqpanda as pq
+        from pyvqnet.qnn.template import Random_Init_Quantum_State
+        cir = pq.QCircuit()
+
+        m_machine = pq.init_quantum_machine(pq.QMachineType.CPU)
+
+        m_qlist = m_machine.qAlloc_many(3)
+        c = Random_Init_Quantum_State(m_qlist)
+        print(c)
+
+        # q_0:  |0>─────────────── ─── ────────────── ─── ┤RY(0.583047)├ ─── ┤RY(0.176308)├ ─── ────────────── >
+        #                              ┌────────────┐ ┌─┐ └──────┬─────┘ ┌─┐ └──────┬─────┘     ┌────────────┐ >
+        # q_1:  |0>─────────────── ─── ┤RY(1.062034)├ ┤X├ ───────■────── ┤X├ ───────■────── ─── ┤RY(1.724022)├ >
+        #           ┌────────────┐ ┌─┐ └──────┬─────┘ └┬┘        │       └┬┘        │       ┌─┐ └──────┬─────┘ >
+        # q_2:  |0>─┤RY(1.951150)├ ┤X├ ───────■────── ─■─ ───────■────── ─■─ ───────■────── ┤X├ ───────■────── >
+        #           └────────────┘ └─┘                                                      └─┘                >
+
+        #              ┌────────────┐     ┌────────────┐
+        # q_0:  |0>─── ┤RY(1.251911)├ ─── ┤RY(1.389063)├
+        #          ┌─┐ └──────┬─────┘ ┌─┐ └──────┬─────┘
+        # q_1:  |0>┤X├ ───────■────── ┤X├ ───────■──────
+        #          └┬┘        │       └┬┘        │
+        # q_2:  |0>─■─ ───────■────── ─■─ ───────■──────
+
 FermionicSingleExcitation
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -1304,7 +1259,7 @@ FermionicSingleExcitation
         pauli_dict = {'Z0': 1}
         exp2 = expval(machine, prog, pauli_dict, qlists)
         print(f"vqnet {exp2}")
-        #vqnet 1.0000000000000013
+        #vqnet 1000000013
 
 
 FermionicDoubleExcitation
@@ -1357,7 +1312,7 @@ FermionicDoubleExcitation
         pauli_dict = {'Z0': 1}
         exp2 = expval(machine, prog, pauli_dict, qlists)
         print(f"vqnet {exp2}")
-        #vqnet 1.0000000000000058
+        #vqnet 1000000058
 
 UCCSD
 ^^^^^^^^^^^^^
@@ -1415,7 +1370,7 @@ UCCSD
         pauli_dict = {'Z0': 1}
         exp2 = expval(machine, prog, pauli_dict, qlists)
         print(f"vqnet {exp2}")
-        #vqnet -1.0000000000000004
+        #vqnet -1000000004
 
 
 QuantumPoolingCircuit
@@ -1629,6 +1584,143 @@ StronglyEntanglingTemplate
         #          └────────────┘ └────────────┘ └────┘
         #[0.6881335561525671, 0.31186644384743273]
 
+ComplexEntangelingTemplate
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. py:class:: pyvqnet.qnn.ComplexEntangelingTemplate(weights,num_qubits,depth)
+
+
+    A strongly entangled layer consisting of U3 gates and CNOT gates.
+    This circuit template is from the following paper: https://arxiv.org/abs/1804.00633.
+
+    :param weights: parameter, shape of [depth,num_qubits,3]
+    :param num_qubits: Number of qubits.
+    :param depth: The depth of the subcircuit.
+
+    Example::
+
+        from pyvqnet.qnn import ComplexEntangelingTemplate
+        import pyqpanda as pq
+        from pyvqnet. tensor import *
+        depth=3
+        num_qubits = 8
+        shape = [depth, num_qubits, 3]
+        weights = tensor.randn(shape)
+
+        machine = pq.CPUQVM()
+        machine.init_qvm()
+        qubits = machine.qAlloc_many(num_qubits)
+
+        circuit = ComplexEntangelingTemplate(weights, num_qubits=num_qubits,depth=depth)
+        result = circuit. create_circuit(qubits)
+        circuit. print_circuit(qubits)
+
+
+        # q_0:  |0>─┤U3(1.115555,-0.025096,1.326895)├── ───■── ────── ───────────────────────────────── ────────────────────────────────── >
+        #           ├───────────────────────────────┴─┐ ┌──┴─┐        ┌───────────────────────────────┐                                    >
+        # q_1:  |0>─┤U3(-0.884622,-0.239700,-0.701955)├ ┤CNOT├ ───■── ┤U3(0.811768,0.537290,-0.433107)├ ────────────────────────────────── >
+        #           ├────────────────────────────────┬┘ └────┘ ┌──┴─┐ └───────────────────────────────┘ ┌────────────────────────────────┐ >
+        # q_2:  |0>─┤U3(-0.387148,-0.322480,0.238582)├─ ────── ┤CNOT├ ───■───────────────────────────── ┤U3(-0.188015,-1.828407,0.070222)├ >
+        #           ├────────────────────────────────┤         └────┘ ┌──┴─┐                            └────────────────────────────────┘ >
+        # q_3:  |0>─┤U3(-0.679633,1.638090,-1.341497)├─ ────── ────── ┤CNOT├─────────────────────────── ───■────────────────────────────── >
+        #           ├──────────────────────────────┬─┘                └────┘                            ┌──┴─┐                             >
+        # q_4:  |0>─┤U3(2.073888,1.251795,0.238305)├─── ────── ────── ───────────────────────────────── ┤CNOT├──────────────────────────── >
+        #           ├──────────────────────────────┤                                                    └────┘                             >
+        # q_5:  |0>─┤U3(0.247473,2.772012,1.864166)├─── ────── ────── ───────────────────────────────── ────────────────────────────────── >
+        #           ├──────────────────────────────┴─┐                                                                                     >
+        # q_6:  |0>─┤U3(-1.421337,-0.866551,0.739282)├─ ────── ────── ───────────────────────────────── ────────────────────────────────── >
+        #           ├────────────────────────────────┤                                                                                     >
+        # q_7:  |0>─┤U3(-3.707045,0.690364,-0.979904)├─ ────── ────── ───────────────────────────────── ────────────────────────────────── >
+        #           └────────────────────────────────┘                                                                                     >
+
+        #                                                                                                                 >
+        # q_0:  |0>────────────────────────────────── ────────────────────────────────── ──────────────────────────────── >
+        #                                                                                                                 >
+        # q_1:  |0>────────────────────────────────── ────────────────────────────────── ──────────────────────────────── >
+        #                                                                                                                 >
+        # q_2:  |0>────────────────────────────────── ────────────────────────────────── ──────────────────────────────── >
+        #          ┌────────────────────────────────┐                                                                     >
+        # q_3:  |0>┤U3(0.516395,-0.823623,-0.804430)├ ────────────────────────────────── ──────────────────────────────── >
+        #          └────────────────────────────────┘ ┌────────────────────────────────┐                                  >
+        # q_4:  |0>───■────────────────────────────── ┤U3(-1.420068,1.063462,-0.107385)├ ──────────────────────────────── >
+        #          ┌──┴─┐                             └────────────────────────────────┘ ┌──────────────────────────────┐ >
+        # q_5:  |0>┤CNOT├──────────────────────────── ───■────────────────────────────── ┤U3(0.377809,0.204278,0.386830)├ >
+        #          └────┘                             ┌──┴─┐                             └──────────────────────────────┘ >
+        # q_6:  |0>────────────────────────────────── ┤CNOT├──────────────────────────── ───■──────────────────────────── >
+        #                                             └────┘                             ┌──┴─┐                           >
+        # q_7:  |0>────────────────────────────────── ────────────────────────────────── ┤CNOT├────────────────────────── >
+        #                                                                                └────┘                           >
+
+        #          ┌────┐                                 ┌────────────────────────────────┐                                                  >
+        # q_0:  |0>┤CNOT├──────────────────────────────── ┤U3(-0.460444,-1.150054,0.318044)├ ───■── ────── ────────────────────────────────── >
+        #          └──┬─┘                                 └────────────────────────────────┘ ┌──┴─┐        ┌────────────────────────────────┐ >
+        # q_1:  |0>───┼────────────────────────────────── ────────────────────────────────── ┤CNOT├ ───■── ┤U3(-1.255487,0.589956,-0.378491)├ >
+        #             │                                                                      └────┘ ┌──┴─┐ └────────────────────────────────┘ >
+        # q_2:  |0>───┼────────────────────────────────── ────────────────────────────────── ────── ┤CNOT├ ───■────────────────────────────── >
+        #             │                                                                             └────┘ ┌──┴─┐                             >
+        # q_3:  |0>───┼────────────────────────────────── ────────────────────────────────── ────── ────── ┤CNOT├──────────────────────────── >
+        #             │                                                                                    └────┘                             >
+        # q_4:  |0>───┼────────────────────────────────── ────────────────────────────────── ────── ────── ────────────────────────────────── >
+        #             │                                                                                                                       >
+        # q_5:  |0>───┼────────────────────────────────── ────────────────────────────────── ────── ────── ────────────────────────────────── >
+        #             │┌────────────────────────────────┐                                                                                     >
+        # q_6:  |0>───┼┤U3(-0.760777,-0.867848,0.016680)├ ────────────────────────────────── ────── ────── ────────────────────────────────── >
+        #             │└────────────────────────────────┘ ┌────────────────────────────────┐                                                  >
+        # q_7:  |0>───■────────────────────────────────── ┤U3(-1.462434,-0.173843,1.211081)├ ────── ────── ────────────────────────────────── >
+        #                                                 └────────────────────────────────┘                                                  >
+
+        #                                                                                                               >
+        # q_0:  |0>───────────────────────────────── ───────────────────────────────── ──────────────────────────────── >
+        #                                                                                                               >
+        # q_1:  |0>───────────────────────────────── ───────────────────────────────── ──────────────────────────────── >
+        #          ┌───────────────────────────────┐                                                                    >
+        # q_2:  |0>┤U3(0.558638,0.218889,-0.241834)├ ───────────────────────────────── ──────────────────────────────── >
+        #          └───────────────────────────────┘ ┌───────────────────────────────┐                                  >
+        # q_3:  |0>───■───────────────────────────── ┤U3(0.740361,-0.336978,0.171089)├ ──────────────────────────────── >
+        #          ┌──┴─┐                            └───────────────────────────────┘ ┌──────────────────────────────┐ >
+        # q_4:  |0>┤CNOT├─────────────────────────── ───■───────────────────────────── ┤U3(0.585393,0.204842,0.682543)├ >
+        #          └────┘                            ┌──┴─┐                            └──────────────────────────────┘ >
+        # q_5:  |0>───────────────────────────────── ┤CNOT├─────────────────────────── ───■──────────────────────────── >
+        #                                            └────┘                            ┌──┴─┐                           >
+        # q_6:  |0>───────────────────────────────── ───────────────────────────────── ┤CNOT├────────────────────────── >
+        #                                                                              └────┘                           >
+        # q_7:  |0>───────────────────────────────── ───────────────────────────────── ──────────────────────────────── >
+        #                                                                                                               >
+
+        #                                              ┌────┐                               ┌───────────────────────────────┐ >
+        # q_0:  |0>─────────────────────────────────── ┤CNOT├────────────────────────────── ┤U3(0.657827,1.434924,-0.328996)├ >
+        #                                              └──┬─┘                               └───────────────────────────────┘ >
+        # q_1:  |0>─────────────────────────────────── ───┼──────────────────────────────── ───────────────────────────────── >
+        #                                                 │                                                                   >
+        # q_2:  |0>─────────────────────────────────── ───┼──────────────────────────────── ───────────────────────────────── >
+        #                                                 │                                                                   >
+        # q_3:  |0>─────────────────────────────────── ───┼──────────────────────────────── ───────────────────────────────── >
+        #                                                 │                                                                   >
+        # q_4:  |0>─────────────────────────────────── ───┼──────────────────────────────── ───────────────────────────────── >
+        #          ┌─────────────────────────────────┐    │                                                                   >
+        # q_5:  |0>┤U3(-2.134247,-0.783461,-0.200094)├ ───┼──────────────────────────────── ───────────────────────────────── >
+        #          └─────────────────────────────────┘    │┌──────────────────────────────┐                                   >
+        # q_6:  |0>───■─────────────────────────────── ───┼┤U3(1.816030,0.572931,1.683584)├ ───────────────────────────────── >
+        #          ┌──┴─┐                                 │└──────────────────────────────┘ ┌───────────────────────────────┐ >
+        # q_7:  |0>┤CNOT├───────────────────────────── ───■──────────────────────────────── ┤U3(0.661537,0.214565,-0.325014)├ >
+        #          └────┘                                                                   └───────────────────────────────┘ >
+
+        #                                                           ┌────┐
+        # q_0:  |0>───■── ────── ────── ────── ────── ────── ────── ┤CNOT├
+        #          ┌──┴─┐                                           └──┬─┘
+        # q_1:  |0>┤CNOT├ ───■── ────── ────── ────── ────── ────── ───┼──
+        #          └────┘ ┌──┴─┐                                       │
+        # q_2:  |0>────── ┤CNOT├ ───■── ────── ────── ────── ────── ───┼──
+        #                 └────┘ ┌──┴─┐                                │
+        # q_3:  |0>────── ────── ┤CNOT├ ───■── ────── ────── ────── ───┼──
+        #                        └────┘ ┌──┴─┐                         │
+        # q_4:  |0>────── ────── ────── ┤CNOT├ ───■── ────── ────── ───┼──
+        #                               └────┘ ┌──┴─┐                  │
+        # q_5:  |0>────── ────── ────── ────── ┤CNOT├ ───■── ────── ───┼──
+        #                                      └────┘ ┌──┴─┐           │
+        # q_6:  |0>────── ────── ────── ────── ────── ┤CNOT├ ───■── ───┼──
+        #                                             └────┘ ┌──┴─┐    │
+        # q_7:  |0>────── ────── ────── ────── ────── ────── ┤CNOT├ ───■──
 
 Quantum_Embedding
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -1649,9 +1741,9 @@ Quantum_Embedding
 
     Example::
 
-
         from pyvqnet.qnn import QuantumLayerV2,Quantum_Embedding
         from pyvqnet.tensor import tensor
+        import pyqpanda as pq
         depth_input = 2
         num_repetitions = 2
         num_repetitions_input = 2
@@ -1672,6 +1764,7 @@ Quantum_Embedding
 
         data_in.requires_grad = True
         y = qlayer.forward(data_in)
+        print(y)
         # [
         # [0.2302894],
         #  [0.2302894],
