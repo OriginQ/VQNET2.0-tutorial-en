@@ -864,6 +864,130 @@ __setitem__
         # [1001, 2001],
         #  [1, 3001]
         # ]
+        
+GPU
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. py:function:: QTensor.GPU(device: int = DEV_GPU_0)
+
+    Clone QTensor to specified GPU device
+
+    device specifies the device whose internal data is stored. When device >= DEV_GPU_0, the data is stored on the GPU.
+     If your computer has multiple GPUs, you can designate different devices to store data on. 
+     For example, device = DEV_GPU_1, DEV_GPU_2, DEV_GPU_3, ... indicates storage on GPUs with different serial numbers.
+    .. note::
+        QTensor cannot perform calculations on different GPUs.
+        A Cuda error will be raised if you try to create a QTensor on a GPU whose ID exceeds the maximum number of verified GPUs.
+
+    :param device: The device currently saving QTensor, default=DEV_GPU_0,
+      device = pyvqnet.DEV_GPU_0, stored in the first GPU, devcie = DEV_GPU_1,
+      stored in the second GPU, and so on.
+
+    :return: Clone QTensor to GPU device.
+
+    Examples::
+
+        from pyvqnet.tensor import QTensor
+        a = QTensor([2])
+        b = a.GPU()
+        print(b.device)
+        #1000
+
+CPU
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. py:function:: QTensor.CPU()
+
+    Clone QTensor to specific CPU device
+
+    :return: Clone QTensor to CPU device.
+
+    Examples::
+
+        from pyvqnet.tensor import QTensor
+        a = QTensor([2])
+        b = a.CPU()
+        print(b.device)
+        # 0
+
+toGPU
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. py:function:: QTensor.toGPU(device: int = DEV_GPU_0)
+
+    Move QTensor to specified GPU device
+
+    device specifies the device whose internal data is stored. When device >= DEV_GPU, the data is stored on the GPU.
+      If your computer has multiple GPUs, you can designate different devices to store data on.
+      For example, device = DEV_GPU_1, DEV_GPU_2, DEV_GPU_3, ... indicates storage on GPUs with different serial numbers.
+
+    .. note::
+        QTensor cannot perform calculations on different GPUs.
+         A Cuda error will be raised if you try to create a QTensor on a GPU whose ID exceeds the maximum number of verified GPUs.
+
+    :param device: The device currently saving QTensor, default=DEV_GPU_0. device = pyvqnet.DEV_GPU_0, stored in the first GPU, devcie = DEV_GPU_1, stored in the second GPU, and so on.
+    :return: QTensor moved to GPU device.
+
+    Examples::
+
+        from pyvqnet.tensor import QTensor
+        a = QTensor([2])
+        a = a.toGPU()
+        print(a.device)
+        #1000
+
+
+toCPU
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. py:function:: QTensor.toCPU()
+
+    Move QTensor to specific GPU device
+
+    :return: QTensor moved to CPU device.
+
+    Examples::
+
+        from pyvqnet.tensor import QTensor
+        a = QTensor([2])
+        b = a.toCPU()
+        print(b.device)
+        # 0
+
+
+isGPU
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. py:function:: QTensor.isGPU()
+
+    Whether this QTensor's data is stored on GPU host memory.
+
+    :return: Whether this QTensor's data is stored on GPU host memory.
+
+    Examples::
+    
+        from pyvqnet.tensor import QTensor
+        a = QTensor([2])
+        a = a.isGPU()
+        print(a)
+        # False
+
+isCPU
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. py:function:: QTensor.isCPU()
+
+    Whether this QTensor's data is stored in CPU host memory.
+
+    :return: Whether this QTensor's data is stored in CPU host memory.
+
+    Examples::
+    
+        from pyvqnet.tensor import QTensor
+        a = QTensor([2])
+        a = a.isCPU()
+        print(a)
+        # True
 
 
 Create Functions
