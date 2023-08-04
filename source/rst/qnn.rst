@@ -769,7 +769,7 @@ grad
         # [-0.09442394  0.09442394]
         # [-0.14409127  0.14409127]]
 
-Quantum gate
+Quantum Gates
 ----------------------------------
 
 The way to deal with qubits is called quantum gates. Using quantum gates, we consciously evolve quantum states. Quantum gates are the basis of quantum algorithms.
@@ -3765,12 +3765,9 @@ VQC_FermionicDoubleExcitation
         \hat{U}_{pqrs}(\theta) = \mathrm{exp} \{ \theta (\hat{c}_p^\dagger \hat{c}_q^\dagger
         \hat{c}_r \hat{c}_s - \mathrm{H.c.}) \},
 
-    where :math:`\hat{c}` and :math:`\hat{c}^\dagger` are the fermion annihilation and
-     Create operators and indices :math:`r, s` and :math:`p, q` in the occupied and
-     are empty molecular orbitals, respectively. Use the `Jordan-Wigner transformation
-     <https://arxiv.org/abs/1208.5986>`_ The fermion operator defined above can be written as
-     According to the Pauli matrix (for more details, see
-     `arXiv:1805.04340 <https://arxiv.org/abs/1805.04340>`_)
+    where :math:`\hat{c}` and :math:`\hat{c}^\dagger` are the fermion annihilation and Create operators and indices :math:`r, s` and :math:`p, q` in the occupied and
+    are empty molecular orbitals, respectively. Use the `Jordan-Wigner transformation <https://arxiv.org/abs/1208.5986>`_ The fermion operator defined above can be written as
+    According to the Pauli matrix (for more details, see `arXiv:1805.04340 <https://arxiv.org/abs/1805.04340>`_)
 
     .. math::
 
@@ -3823,9 +3820,8 @@ VQC_UCCSD
         (\hat{c}_p^\dagger \hat{c}_q^\dagger \hat{c}_r \hat{c}_s-\mathrm{H.c.}) \Big\}
 
     where :math:`\hat{c}` and :math:`\hat{c}^\dagger` are the fermion annihilation and
-     Create operators and indices :math:`r, s` and :math:`p, q` in the occupied and
-     are empty molecular orbitals, respectively. (For more details see
-     `arXiv:1805.04340 <https://arxiv.org/abs/1805.04340>`_):
+    Create operators and indices :math:`r, s` and :math:`p, q` in the occupied and
+    are empty molecular orbitals, respectively. (For more details see `arXiv:1805.04340 <https://arxiv.org/abs/1805.04340>`_):
 
 
     :param weights: A ``(len(s_wires)+ len(d_wires))`` tensor containing the parameters
@@ -3834,8 +3830,8 @@ VQC_UCCSD
     :param wires: Qubit indexing of template effects
     :param s_wires: A sequence of lists ``[r,...,p]`` containing qubit indices
          produced by a single excitation
-        :math:`\vert r, p \rangle = \hat{c}_p^\dagger \hat{c}_r \vert \mathrm{HF} \rangle`,
-        where :math:`\vert \mathrm{HF} \rangle` represents the Hartree-Fock reference state.
+         :math:`\vert r, p \rangle = \hat{c}_p^\dagger \hat{c}_r \vert \mathrm{HF} \rangle`,
+         where :math:`\vert \mathrm{HF} \rangle` represents the Hartree-Fock reference state.
     :param d_wires: sequence of lists, each list containing two lists
          specify indices ``[s, ...,r]`` and ``[q,...,p]``
          Define double excitation: math:`\vert s, r, q, p \rangle = \hat{c}_p^\dagger \hat{c}_q^\dagger \hat{c}_r\hat{c}_s \ vert \mathrm{HF} \rangle`.
@@ -4128,8 +4124,8 @@ VQC_Purity
         \gamma = \text{Tr}(\rho^2)
 
     where :math:`\rho` is a density matrix. The purity of a normalized quantum state satisfies :math:`\frac{1}{d} \leq \gamma \leq 1` ,
-     where :math:`d` is the dimension of the Hilbert space.
-     The purity of the pure state is 1.
+    where :math:`d` is the dimension of the Hilbert space.
+    The purity of the pure state is 1.
 
     :param state: Quantum state obtained from pyqpanda get_qstate()
     :param qubits_idx: Qubit index for which to calculate purity
@@ -4263,8 +4259,10 @@ MeasureAll
 
 .. py:class:: pyvqnet.qnn.vqc.MeasureAll(obs)
 
-    Calculate the measurement results of quantum circuits, and support input obs as multiple or single Pauli operators or Hamiltonian quantities.
-     For example:
+    Calculate the measurement results of quantum circuits,
+    and support input obs as multiple or single Pauli operators or Hamiltonian quantities.
+    
+    For example:
 
     {\'wires\': [0,  1], \'observables\': [\'x\', \'i\'],\'coefficient\':[0.23,-3.5]}
     or：

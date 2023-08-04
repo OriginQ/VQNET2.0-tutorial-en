@@ -870,11 +870,12 @@ GPU
 
 .. py:function:: QTensor.GPU(device: int = DEV_GPU_0)
 
-    Clone QTensor to specified GPU device
+    Clone QTensor to specified GPU device.
 
     device specifies the device whose internal data is stored. When device >= DEV_GPU_0, the data is stored on the GPU.
-     If your computer has multiple GPUs, you can designate different devices to store data on. 
-     For example, device = DEV_GPU_1, DEV_GPU_2, DEV_GPU_3, ... indicates storage on GPUs with different serial numbers.
+    If your computer has multiple GPUs, you can designate different devices to store data on. 
+    For example, device = DEV_GPU_1, DEV_GPU_2, DEV_GPU_3, ... indicates storage on GPUs with different serial numbers.
+    
     .. note::
         QTensor cannot perform calculations on different GPUs.
         A Cuda error will be raised if you try to create a QTensor on a GPU whose ID exceeds the maximum number of verified GPUs.
@@ -915,11 +916,11 @@ toGPU
 
 .. py:function:: QTensor.toGPU(device: int = DEV_GPU_0)
 
-    Move QTensor to specified GPU device
+    Move QTensor to specified GPU device.
 
     device specifies the device whose internal data is stored. When device >= DEV_GPU, the data is stored on the GPU.
-      If your computer has multiple GPUs, you can designate different devices to store data on.
-      For example, device = DEV_GPU_1, DEV_GPU_2, DEV_GPU_3, ... indicates storage on GPUs with different serial numbers.
+    If your computer has multiple GPUs, you can designate different devices to store data on.
+    For example, device = DEV_GPU_1, DEV_GPU_2, DEV_GPU_3, ... indicates storage on GPUs with different serial numbers.
 
     .. note::
         QTensor cannot perform calculations on different GPUs.
