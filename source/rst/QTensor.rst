@@ -2622,7 +2622,7 @@ min
     :param t: input QTensor
     :param axis: axis used for min, defaults to None
     :param keepdims:  whether the output tensor has dim retained or not. - defaults to False
-    :return: output QTensor or float
+    :return: output QTensor
 
     Example::
 
@@ -2648,7 +2648,7 @@ max
     :param t: input QTensor
     :param axis: axis used for max, defaults to None
     :param keepdims:  whether the output tensor has dim retained or not. - defaults to False
-    :return: output QTensor or float
+    :return: output QTensor
 
     Example::
 
@@ -3033,7 +3033,6 @@ equal
 
     Return the truth value of ``t1 == t2`` element-wise.
 
-
     :param t1: input QTensor
     :param t2: input QTensor
     :return: Output QTensor, which returns True when the corresponding position element meets the condition, otherwise returns False.
@@ -3108,6 +3107,57 @@ select
         # [[1, 2, 3, 4]],
         # [[13, 14, 15, 16]]
         # ]
+
+
+broadcast
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. py:function:: pyvqnet.tensor.broadcast(t1: pyvqnet.tensor.QTensor, t2: pyvqnet.tensor.QTensor)
+
+    Subject to certain restrictions, smaller arrays are placed throughout larger arrays so that they have compatible shapes. This interface can perform automatic differentiation on input parameter tensors.
+
+    Reference https://numpy.org/doc/stable/user/basics.broadcasting.html
+
+    :param t1: input QTensor 1
+    :param t2: input QTensor 2
+
+    :return t11: with new broadcast shape t1.
+    :return t22: t2 with new broadcast shape.
+
+    Example::
+
+        from pyvqnet.tensor import tensor
+        t1 = tensor.ones([5, 4])
+        t2 = tensor.ones([4])
+
+        t11, t22 = tensor.broadcast(t1, t2)
+
+        print(t11.shape)
+        print(t22.shape)
+
+        t1 = tensor.ones([5, 4])
+        t2 = tensor.ones([1])
+
+        t11, t22 = tensor.broadcast(t1, t2)
+
+        print(t11.shape)
+        print(t22.shape)
+
+        t1 = tensor.ones([5, 4])
+        t2 = tensor.ones([2, 1, 4])
+
+        t11, t22 = tensor.broadcast(t1, t2)
+
+        print(t11.shape)
+        print(t22.shape)
+
+
+        # [5, 4]
+        # [5, 4]
+        # [5, 4]
+        # [5, 4]
+        # [2, 5, 4]
+        # [2, 5, 4]
 
 concatenate
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
