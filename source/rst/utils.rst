@@ -418,7 +418,7 @@ Import related libraries
     from pyvqnet.distributed import *  # 分布式计算模块
     import argparse 
 
-Data loading
+Data load
 
 .. code-block::
 
