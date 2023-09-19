@@ -1,6 +1,14 @@
 VQNet Changelog
 =================
 
+[v2.0.9] - 2023-09-08
+----------------------
+
+Added
+^^^^^^^^^^^
+- The xtensor interface definition has been added to support automatic operator parallelism and multiple CPU/GPU backends. It includes more than 150 interfaces for commonly used mathematics, logic, and matrix calculations for multi-dimensional arrays, as well as common classic neural network layers and optimizers.
+- The distributed computing interface definition is added to support single-node multi-process and multi-node multi-process model training on the CPU, including initialization, communication, and data segmentation interfaces.
+
 [v2.0.8] - 2023-07-26
 ----------------------
 
