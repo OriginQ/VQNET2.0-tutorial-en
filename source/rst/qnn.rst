@@ -2494,7 +2494,7 @@ i
     :param wires: qubit idx.
     :param params: parameter matrix, defaults to None.
     :param num_wires: the number of qubits, defaults to None.
-    :param num_wires: whether to conjugate transpose, the default is False.
+    :param use_dagger: whether to conjugate transpose, the default is False.
     :return: Output QTensor。
 
     Example::
@@ -2527,7 +2527,7 @@ hadamard
     :param wires: qubit idx.
     :param params: parameter matrix, defaults to None.
     :param num_wires: the number of qubits, defaults to None.
-    :param num_wires: whether to conjugate transpose, the default is False.
+    :param use_dagger: whether to conjugate transpose, the default is False.
     :return: Output QTensor。
 
     Example::
@@ -2561,7 +2561,7 @@ t
     :param wires: qubit idx.
     :param params: parameter matrix, defaults to None.
     :param num_wires: the number of qubits, defaults to None.
-    :param num_wires: whether to conjugate transpose, the default is False.
+    :param use_dagger: whether to conjugate transpose, the default is False.
     :return: Output QTensor。
 
     Example::
@@ -2595,7 +2595,7 @@ s
     :param wires: qubit idx.
     :param params: parameter matrix, defaults to None.
     :param num_wires: the number of qubits, defaults to None.
-    :param num_wires: whether to conjugate transpose, the default is False.
+    :param use_dagger: whether to conjugate transpose, the default is False.
     :return: Output QTensor。
 
     Example::
@@ -2629,7 +2629,7 @@ paulix
     :param wires: qubit idx.
     :param params: parameter matrix, defaults to None.
     :param num_wires: the number of qubits, defaults to None.
-    :param num_wires: whether to conjugate transpose, the default is False.
+    :param use_dagger: whether to conjugate transpose, the default is False.
     :return: Output QTensor。
 
     Example::
@@ -2663,7 +2663,7 @@ pauliy
     :param wires: qubit idx.
     :param params: parameter matrix, defaults to None.
     :param num_wires: the number of qubits, defaults to None.
-    :param num_wires: whether to conjugate transpose, the default is False.
+    :param use_dagger: whether to conjugate transpose, the default is False.
     :return: Output QTensor。
 
     Example::
@@ -2696,7 +2696,7 @@ pauliz
     :param wires: qubit idx.
     :param params: parameter matrix, defaults to None.
     :param num_wires: the number of qubits, defaults to None.
-    :param num_wires: whether to conjugate transpose, the default is False.
+    :param use_dagger: whether to conjugate transpose, the default is False.
     :return: Output QTensor。
 
     Example::
@@ -2729,7 +2729,7 @@ x1
     :param wires: qubit idx.
     :param params: parameter matrix, defaults to None.
     :param num_wires: the number of qubits, defaults to None.
-    :param num_wires: whether to conjugate transpose, the default is False.
+    :param use_dagger: whether to conjugate transpose, the default is False.
     :return: Output QTensor。
 
     Example::
@@ -2762,7 +2762,7 @@ y1
     :param wires: qubit idx.
     :param params: parameter matrix, defaults to None.
     :param num_wires: the number of qubits, defaults to None.
-    :param num_wires: whether to conjugate transpose, the default is False.
+    :param use_dagger: whether to conjugate transpose, the default is False.
     :return: Output QTensor。
 
 
@@ -2797,7 +2797,7 @@ z1
     :param wires: qubit idx.
     :param params: parameter matrix, defaults to None.
     :param num_wires: the number of qubits, defaults to None.
-    :param num_wires: whether to conjugate transpose, the default is False.
+    :param use_dagger: whether to conjugate transpose, the default is False.
     :return: Output QTensor。
 
     Example::
@@ -2830,7 +2830,7 @@ rx
     :param wires: qubit idx.
     :param params: parameter matrix, defaults to None.
     :param num_wires: the number of qubits, defaults to None.
-    :param num_wires: whether to conjugate transpose, the default is False.
+    :param use_dagger: whether to conjugate transpose, the default is False.
     :return: Output QTensor。
 
     Example::
@@ -2865,7 +2865,7 @@ ry
     :param wires: qubit idx.
     :param params: parameter matrix, defaults to None.
     :param num_wires: the number of qubits, defaults to None.
-    :param num_wires: whether to conjugate transpose, the default is False.
+    :param use_dagger: whether to conjugate transpose, the default is False.
     :return: Output QTensor。
 
     Example::
@@ -2900,7 +2900,7 @@ rz
     :param wires: qubit idx.
     :param params: parameter matrix, defaults to None.
     :param num_wires: the number of qubits, defaults to None.
-    :param num_wires: whether to conjugate transpose, the default is False.
+    :param use_dagger: whether to conjugate transpose, the default is False.
     :return: Output QTensor。
 
     Example::
@@ -2935,7 +2935,7 @@ p
     :param wires: qubit idx.
     :param params: parameter matrix, defaults to None.
     :param num_wires: the number of qubits, defaults to None.
-    :param num_wires: whether to conjugate transpose, the default is False.
+    :param use_dagger: whether to conjugate transpose, the default is False.
     :return: Output QTensor。
 
     Example::
@@ -2969,7 +2969,7 @@ u1
     :param wires: qubit idx.
     :param params: parameter matrix, defaults to None.
     :param num_wires: the number of qubits, defaults to None.
-    :param num_wires: whether to conjugate transpose, the default is False.
+    :param use_dagger: whether to conjugate transpose, the default is False.
     :return: Output QTensor。
 
     Example::
@@ -3004,7 +3004,7 @@ u2
     :param wires: qubit idx.
     :param params: parameter matrix, defaults to None.
     :param num_wires: the number of qubits, defaults to None.
-    :param num_wires: whether to conjugate transpose, the default is False.
+    :param use_dagger: whether to conjugate transpose, the default is False.
     :return: Output QTensor。
 
     Example::
@@ -3038,7 +3038,7 @@ u3
     :param wires: qubit idx.
     :param params: parameter matrix, defaults to None.
     :param num_wires: the number of qubits, defaults to None.
-    :param num_wires: whether to conjugate transpose, the default is False.
+    :param use_dagger: whether to conjugate transpose, the default is False.
     :return: Output QTensor。
 
     Example::
@@ -3072,7 +3072,7 @@ cnot
     :param wires: qubit idx.
     :param params: parameter matrix, defaults to None.
     :param num_wires: the number of qubits, defaults to None.
-    :param num_wires: whether to conjugate transpose, the default is False.
+    :param use_dagger: whether to conjugate transpose, the default is False.
     :return: Output QTensor。
 
     Example::
@@ -3105,7 +3105,7 @@ cr
     :param wires: qubit idx.
     :param params: parameter matrix, defaults to None.
     :param num_wires: the number of qubits, defaults to None.
-    :param num_wires: whether to conjugate transpose, the default is False.
+    :param use_dagger: whether to conjugate transpose, the default is False.
     :return: Output QTensor。
 
     Example::
@@ -3140,7 +3140,7 @@ iswap
     :param wires: qubit idx.
     :param params: parameter matrix, defaults to None.
     :param num_wires: the number of qubits, defaults to None.
-    :param num_wires: whether to conjugate transpose, the default is False.
+    :param use_dagger: whether to conjugate transpose, the default is False.
     :return: Output QTensor。
 
     Example::
@@ -3174,7 +3174,7 @@ swap
     :param wires: qubit idx.
     :param params: parameter matrix, defaults to None.
     :param num_wires: the number of qubits, defaults to None.
-    :param num_wires: whether to conjugate transpose, the default is False.
+    :param use_dagger: whether to conjugate transpose, the default is False.
     :return: Output QTensor。
 
     Example::
@@ -3208,7 +3208,7 @@ cz
     :param wires: qubit idx.
     :param params: parameter matrix, defaults to None.
     :param num_wires: the number of qubits, defaults to None.
-    :param num_wires: whether to conjugate transpose, the default is False.
+    :param use_dagger: whether to conjugate transpose, the default is False.
     :return: Output QTensor。
 
     Example::
@@ -3242,7 +3242,7 @@ rxx
     :param wires: qubit idx.
     :param params: parameter matrix, defaults to None.
     :param num_wires: the number of qubits, defaults to None.
-    :param num_wires: whether to conjugate transpose, the default is False.
+    :param use_dagger: whether to conjugate transpose, the default is False.
     :return: Output QTensor。
 
     Example::
@@ -3277,7 +3277,7 @@ ryy
     :param wires: qubit idx.
     :param params: parameter matrix, defaults to None.
     :param num_wires: the number of qubits, defaults to None.
-    :param num_wires: whether to conjugate transpose, the default is False.
+    :param use_dagger: whether to conjugate transpose, the default is False.
     :return: Output QTensor。
 
     Example::
@@ -3312,7 +3312,7 @@ rzz
     :param wires: qubit idx.
     :param params: parameter matrix, defaults to None.
     :param num_wires: the number of qubits, defaults to None.
-    :param num_wires: whether to conjugate transpose, the default is False.
+    :param use_dagger: whether to conjugate transpose, the default is False.
     :return: Output QTensor。
 
     Example::
@@ -3346,7 +3346,7 @@ rzx
     :param wires: qubit idx.
     :param params: parameter matrix, defaults to None.
     :param num_wires: the number of qubits, defaults to None.
-    :param num_wires: whether to conjugate transpose, the default is False.
+    :param use_dagger: whether to conjugate transpose, the default is False.
     :return: Output QTensor。
 
     Example::
@@ -3381,7 +3381,7 @@ toffoli
     :param wires: qubit idx.
     :param params: parameter matrix, defaults to None.
     :param num_wires: the number of qubits, defaults to None.
-    :param num_wires: whether to conjugate transpose, the default is False.
+    :param use_dagger: whether to conjugate transpose, the default is False.
     :return: Output QTensor。
 
     Example::

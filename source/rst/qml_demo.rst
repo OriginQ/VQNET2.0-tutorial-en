@@ -1691,7 +1691,7 @@ An automatic differentiation Model of convolution, quantum encoding, and measure
             self.input = input
             expectation_z = circuit(np.array(input.data))
             result = [[expectation_z]]
-            requires_grad = input.requires_grad and not QTensor.NO_GRAD
+            requires_grad = input.requires_grad
             def _backward(g, input):
                 """ Backward pass computation """
                 input_list = np.array(input.data)
