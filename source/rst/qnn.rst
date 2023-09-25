@@ -1441,7 +1441,7 @@ HardwareEfficientAnsatz
 
 .. py:class:: pyvqnet.qnn.ansatz.HardwareEfficientAnsatz(n_qubits,single_rot_gate_list,qubits,entangle_gate="CNOT",entangle_rules='linear',depth=1)
 
-    The implementation of Hardware Efficient Ansatz introduced in the paper: `Hardware-efficient Variational Quantum Eigensolver for Small Molecules <https://arxiv.org/pdf/1704.05018.pdf>`__ 。
+    The implementation of Hardware Efficient Ansatz introduced in the paper: `Hardware-efficient Variational Quantum Eigensolver for Small Molecules <https://arxiv.org/pdf/1704.05018.pdf>`__.
 
     :param n_qubits: Number of qubits.
     :param single_rot_gate_list: A single qubit rotation gate list is constructed by one or several rotation gate that act on every qubit.Currently support Rx, Ry, Rz.
@@ -3900,7 +3900,7 @@ VQC_HardwareEfficientAnsatz
 
 .. py:class:: pyvqnet.qnn.vqc.VQC_HardwareEfficientAnsatz(n_qubits,single_rot_gate_list,entangle_gate="CNOT",entangle_rules='linear',depth=1)
 
-    The implementation of Hardware Efficient Ansatz introduced in the paper:`Hardware-efficient Variational Quantum Eigensolver for Small Molecules <https://arxiv.org/pdf/1704.05018.pdf>`__ 。
+    The implementation of Hardware Efficient Ansatz introduced in the paper:`Hardware-efficient Variational Quantum Eigensolver for Small Molecules <https://arxiv.org/pdf/1704.05018.pdf>`__.
 
     :param n_qubits: number of qubits.
     :param single_rot_gate_list: A single-qubit turnstile list consists of one or more turnstiles that act on each qubit. Rx, Ry, Rz are currently supported.

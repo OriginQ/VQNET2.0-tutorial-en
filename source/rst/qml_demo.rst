@@ -3951,7 +3951,7 @@ Loss situation on the training set.
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 We introduce and analyze a proposed quantum reinforcement learning network (QDRL), whose features reshape classical deep reinforcement learning algorithms such as experience replay and target networks into representations of variational quantum circuits.
-Furthermore, we use a quantum information encoding scheme to reduce the number of model parameters compared to classical neural networks. `QDRL: Variational Quantum Circuits for Deep Reinforcement Learning <https://arxiv.org/pdf/1907.00397.pdf>`_ 。
+Furthermore, we use a quantum information encoding scheme to reduce the number of model parameters compared to classical neural networks. `QDRL: Variational Quantum Circuits for Deep Reinforcement Learning <https://arxiv.org/pdf/1907.00397.pdf>`_.
 We will write a simple example of integrating `pyQPanda <https://pyqpanda-toturial.readthedocs.io/zh/latest/>`_ with `VQNet`.
 
 

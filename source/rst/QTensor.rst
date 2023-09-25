@@ -3485,7 +3485,7 @@ reshape
     :param t: input QTensor.
     :param new_shape: new shape
 
-    :return: a new shape QTensor 。
+    :return: a new shape QTensor.
 
     Example::
 
@@ -3511,10 +3511,10 @@ flip
     
     Reverses the QTensor along the specified axis, returning a new tensor.
 
-    :param t: Input QTensor 。
+    :param t: Input QTensor.
     :param flip_dims: The axis or list of axes to flip.
 
-    :return: Output QTensor 。
+    :return: Output QTensor.
 
     Example::
 

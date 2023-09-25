@@ -1075,6 +1075,7 @@ zeros
     :param dtype: The data type of the parameter, defaults None, use the default data type: kfloat32, which represents a 32-bit floating point number.
     
     :return: output XTensor
+
     Example::
 
         
@@ -1573,6 +1574,7 @@ topK
     :param if_descent: sort order,defaults to True
 
     :return: A new XTensor
+
     Examples::
 
         import pyvqnet.xtensor as tensor
@@ -1878,8 +1880,8 @@ var
     :param keepdims:  whether the output XTensor has dim retained or not, defaults to False.
     :param unbiased:  whether to use Bessel’s correction,default true.
 
-
     :return: Obtain the variance in the XTensor.
+
     Example::
 
         from pyvqnet.xtensor import XTensor
@@ -2271,9 +2273,9 @@ tan
 
     Applies tangent function to all the elements of the input XTensor.
 
-
     :param t: input XTensor
     :return:  output XTensor
+
     Example::
 
         from pyvqnet.xtensor import XTensor
@@ -3421,7 +3423,7 @@ reshape
     :param t: input XTensor.
     :param new_shape: new shape
 
-    :return: a new shape XTensor 。
+    :return: a new shape XTensor.
 
 
     Example::
@@ -3448,10 +3450,11 @@ flip
 
     Reverses the XTensor along the specified axis, returning a new tensor.
 
-    :param t: Input XTensor 。
+    :param t: Input XTensor.
     :param flip_dims: The axis or list of axes to flip.
 
-    :return: Output XTensor 。
+    :return: Output XTensor.
+
     Example::
 
         from pyvqnet.xtensor import XTensor
