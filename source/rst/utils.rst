@@ -226,7 +226,7 @@ Model definition
 
             return output
 
-测试代码
+test code
 
 .. code-block::
 
@@ -287,13 +287,152 @@ VQNet distributed computing module
 VQNet distributed computing module supports the quantum machine learning model through the corresponding interface of the distributed computing module to achieve data segmentation, 
 communication of model parameters between multiple processes, and update of model parameters. The model is accelerated based on the distributed computing module.
 
-Environment dependency: mpich, mpi4py
+init_process
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Use ``init_process`` to initialize distributed computing parameters.
+
+.. py:function:: pyvqnet.distributed.init_process(size, path, hostpath=None, train_size=None, test_size=None, shuffle=False)
+
+    Set distributed computing parameters.
+
+    :param size: Number of processes.
+    :param path: The absolute path of the current running file.
+    :param hostpath: Absolute path to the multi-node configuration file.
+    :param train_size: Training set size.
+    :param test_size: Test set size.
+    :param shuffle: Whether to randomly sample.
+
+    Example::
+
+        import argparse
+        import os
+        from pyvqnet.distributed import *
+
+        parser = argparse.ArgumentParser(description='parser example')
+        parser.add_argument('--init', default=False, type=bool, help='whether to use multiprocessing')
+        parser.add_argument('--np', default=1, type=int, help='number of processes')
+        parser.add_argument('--hostpath', default=None, type=str, help='multi node configuration files')
+        parser.add_argument('--shuffle', default=False, type=bool, help='shuffle')
+        parser.add_argument('--train_size', default=120, type=int, help='train_size')
+        parser.add_argument('--test_size', default=50, type=int, help='test_size')
+        args = parser.parse_args()
+
+        if(args.init):
+            init_process(args.np, os.path.realpath(__file__))
+        else:
+            ...
+
+split_data
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+In multiple processes, use ``split_data`` to split the data according to the number of processes and return the data on the corresponding process.
+
+.. py:function:: pyvqnet.distributed.split_data(x_train, y_train, shuffle=False)
+
+    :param x_train: `np.array` - training data.
+    :param y_train: `np.array` -  training data labels.
+    :param shuffle: `bool` - Whether to shuffle before segmenting, the default value is False.
+
+    :return: Split training data and labels.
+
+    Example::
+
+        from pyvqnet.distributed import split_data
+        import numpy as np
+
+        x_train = np.random.randint(255, size = (100, 5))
+        y_train = np.random.randint(2, size = (100, 1))
+
+        x_train, y_train= split_data(x_train, y_train)
+
+        return x_train, y_train
+
+model_allreduce
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Use ``model_allreduce`` to pass and update model parameters in different processes in the allreduce manner.
+
+.. py:function:: pyvqnet.distributed.model_allreduce(model)
+
+    :param model: `Module` - the trained model.
+    
+    :return: Model after updated parameters.
+
+    Example::
+
+        from pyvqnet.distributed import parallel_model
+        import numpy as np
+        from pyvqnet.nn.module import Module
+        from pyvqnet.nn.linear import Linear
+        from pyvqnet.nn import activation as F
+        from pyvqnet.distributed import *
+
+        class Net(Module):
+            def __init__(self):
+                super(Net, self).__init__()
+                self.fc = Linear(input_channels=5, output_channels=1)
+
+            def forward(self, x):
+                x = F.ReLu()(self.fc(x))
+                return x
+
+        model = Net()
+        print(f"rank {get_rank()} parameters is {model.parameters()}")
+        model = parallel_model(model)
+
+        if get_rank() == 0:
+            print(model.parameters())
+        
+        # mpirun -n 2 python run.py
+
+model_reduce
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Use ``model_reduce`` to pass and update model parameters in different processes in the form of reduce.
+
+.. py:function:: pyvqnet.distributed.model_reduce(x_train, y_train, shuffle=False)
+
+    :param model: `Module` - the trained model.
+
+    :return: Model after updated parameters.
+
+    Example::
+
+        from pyvqnet.distributed import model_reduce
+        import numpy as np
+        from pyvqnet.nn.module import Module
+        from pyvqnet.nn.linear import Linear
+        from pyvqnet.nn import activation as F
+        from pyvqnet.distributed import *
+
+        class Net(Module):
+            def __init__(self):
+                super(Net, self).__init__()
+                self.fc = Linear(input_channels=5, output_channels=1)
+
+            def forward(self, x):
+                x = F.ReLu()(self.fc(x))
+                return x
+
+
+        model = Net()
+        print(f"rank {get_rank()} parameters is {model.parameters()}")
+        model = model_reduce(model)
+
+        if get_rank() == 0:
+            print(model.parameters())
+
+        # mpirun -n 2 python run.py
+        
+Environment dependency: mpich, mpi4py,gcc,gfortran
 
 .. note::
 
     Currently, only CPU-based distributed computing is supported, and distributed computing using gloo and nccl as communication libraries is not supported.
 
-**Distributed computing single node environment deployment**
+Distributed computing single node environment deployment
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
     Complete the compilation and installation of the mpich communication library, 
     and check whether the gcc and gfortran compilers are installed before compilation.
@@ -335,7 +474,8 @@ Environment dependency: mpich, mpi4py
     
     After, use which to check whether the configured environment variables are correct. If its path is displayed, the installation was successfully completed.
 
-**Distributed computing multi-node environment deployment**
+Distributed computing multi-node environment deployment
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
     To implement distributed computing on multiple nodes, you first need to ensure that the mpich environment and python environment on multiple nodes are consistent. 
     Secondly, you need to set up secret-free communication between nodes.
@@ -388,8 +528,12 @@ Environment dependency: mpich, mpi4py
         mount node2:/data/mpi/ /data/mpi
 
 
+Example
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
 This block introduces how to use the VQNet distributed computing interface to implement data parallel training models on the CPU hardware platform. 
 The use case is the test_mdis.py file in the example directory.
+
 Import related libraries
 
 .. code-block::
@@ -772,20 +916,7 @@ Enter code at the command line
     0
     1 loss is : 0.8230862300
     Eval Accuracy: 0.5
-    2 loss is : 0.6979023616
-    Eval Accuracy: 0.5
-    3 loss is : 0.5718536377
-    Eval Accuracy: 0.47
-    4 loss is : 0.5429712931
-    Eval Accuracy: 0.51
-    5 loss is : 0.5333395640
-    Eval Accuracy: 0.52
-    6 loss is : 0.5185367266
-    Eval Accuracy: 0.65
-    7 loss is : 0.5187034607
-    Eval Accuracy: 0.6
-    8 loss is : 0.5176532110
-    Eval Accuracy: 0.43
+            ...
     9 loss is : 0.5660219193
     Eval Accuracy: 0.46
     time: {} 15.132369756698608
@@ -796,39 +927,14 @@ Enter code at the command line
     1
     1 loss is : 0.0316730281
     Eval Accuracy: 0.5
-    2 loss is : 0.0082226296
-    Eval Accuracy: 0.5
-    3 loss is : 0.0041910132
-    Eval Accuracy: 0.5
-    4 loss is : 0.0026126946
-    Eval Accuracy: 0.5
-    5 loss is : 0.0018102199
-    Eval Accuracy: 0.5
-    6 loss is : 0.0013386756
-    Eval Accuracy: 0.5
-    7 loss is : 0.0010348094
-    Eval Accuracy: 0.5
-    8 loss is : 0.0008260541
-    Eval Accuracy: 0.5
+            ...
     9 loss is : 0.0006756162
     Eval Accuracy: 0.5
+
     0
     1 loss is : 0.0072183679
     Eval Accuracy: 0.85
-    2 loss is : 0.0014325128
-    Eval Accuracy: 0.84
-    3 loss is : 0.0009416074
-    Eval Accuracy: 0.86
-    4 loss is : 0.0006576005
-    Eval Accuracy: 0.84
-    5 loss is : 0.0004843485
-    Eval Accuracy: 0.82
-    6 loss is : 0.0003716738
-    Eval Accuracy: 0.82
-    7 loss is : 0.0002943836
-    Eval Accuracy: 0.82
-    8 loss is : 0.0002390019
-    Eval Accuracy: 0.82
+            ...
     9 loss is : 0.0001979264
     Eval Accuracy: 0.82
     time: {} 9.132536888122559
@@ -844,80 +950,29 @@ To train on multiple nodes, the command is as follows
     0
     1 loss is : 0.8609524409
     Eval Accuracy: 0.5
-    2 loss is : 0.7399766286
-    Eval Accuracy: 0.5
-    3 loss is : 0.6829307556
-    Eval Accuracy: 0.5
-    4 loss is : 0.6301216125
-    Eval Accuracy: 0.49
-    5 loss is : 0.5815347036
-    Eval Accuracy: 0.38
-    6 loss is : 0.5370124817
-    Eval Accuracy: 0.24
-    7 loss is : 0.4962680499
-    Eval Accuracy: 0.06
-    8 loss is : 0.4590748787
-    Eval Accuracy: 0.44
+            ...
     9 loss is : 0.4251357079
     Eval Accuracy: 0.5
     time: {} 6.5950517654418945
-    Can not use matplot TkAgg
+    
     3
     1 loss is : 0.0034498004
     Eval Accuracy: 0.5
-    2 loss is : 0.0007666681
-    Eval Accuracy: 0.5
-    3 loss is : 0.0005568531
-    Eval Accuracy: 0.5
-    4 loss is : 0.0004169762
-    Eval Accuracy: 0.5
-    5 loss is : 0.0003228062
-    Eval Accuracy: 0.5
-    6 loss is : 0.0002573317
-    Eval Accuracy: 0.5
-    7 loss is : 0.0002102273
-    Eval Accuracy: 0.5
-    8 loss is : 0.0001751528
-    Eval Accuracy: 0.5
+            ...
     9 loss is : 0.0001483827
     Eval Accuracy: 0.5
-    Can not use matplot TkAgg
+    
     1
     1 loss is : 0.0990966797
     Eval Accuracy: 0.5
-    2 loss is : 0.0346243183
-    Eval Accuracy: 0.5
-    3 loss is : 0.0194720447
-    Eval Accuracy: 0.5
-    4 loss is : 0.0128109713
-    Eval Accuracy: 0.5
-    5 loss is : 0.0092022886
-    Eval Accuracy: 0.5
-    6 loss is : 0.0069948425
-    Eval Accuracy: 0.5
-    7 loss is : 0.0055302560
-    Eval Accuracy: 0.5
-    8 loss is : 0.0045029074
-    Eval Accuracy: 0.5
+            ...
     9 loss is : 0.0037492002
     Eval Accuracy: 0.5
-    Can not use matplot TkAgg
+    
     2
     1 loss is : 0.8468652089
     Eval Accuracy: 0.5
-    2 loss is : 0.7299760183
-    Eval Accuracy: 0.5
-    3 loss is : 0.6732901891
-    Eval Accuracy: 0.5
-    4 loss is : 0.6209689458
-    Eval Accuracy: 0.5
-    5 loss is : 0.5729962667
-    Eval Accuracy: 0.5
-    6 loss is : 0.5289377848
-    Eval Accuracy: 0.5
-    7 loss is : 0.4887968381
-    Eval Accuracy: 0.5
-    8 loss is : 0.4520395279
+            ...
     Eval Accuracy: 0.53
     9 loss is : 0.4186156909
     Eval Accuracy: 0.52
