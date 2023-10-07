@@ -795,7 +795,7 @@ Model design
 
 
 None of the above uses the distributed computing interface, 
-but only needs to reference DataSplit, parallel_model, and init_p during training to achieve data parallel distributed computing.
+but only needs to reference split_data, model_allreduce, and init_process during training to achieve data parallel distributed computing.
 
 as follows
 
@@ -807,8 +807,7 @@ as follows
         """
         x_train, y_train, x_test, y_test = data_select(args.train_size, args.test_size)
 
-        Data = DataSplit(args.shuffle)  # Distributed module interface splits data
-        x_train, y_train= Data.split_data(x_train, y_train) # Distributed module interface splits data
+        x_train, y_train = split_data(x_train, y_train) # Distributed module interface splits data
         print(get_rank())
         model = Net()
         optimizer = Adam(model.parameters(), lr=0.001)
@@ -849,7 +848,7 @@ as follows
                 optimizer._step()
 
                 total_loss.append(loss_np)
-            model = parallel_model(model) # Allreduce communication for model parameter gradients of different ranks
+            model = model_allreduce(model) # Allreduce communication for model parameter gradients of different ranks
 
 
             train_loss_list.append(np.sum(total_loss) / len(total_loss))
@@ -888,7 +887,7 @@ as follows
         # p_path = os.path.realpath (__file__)
 
         if(args.init):
-            init_p(args.np, os.path.realpath(__file__), args.hostpath, args.train_size,args.test_size, args.shuffle)
+            init_process(args.np, os.path.realpath(__file__), args.hostpath, args.train_size,args.test_size, args.shuffle)
         else:
             a = time.time()
             run(args)
