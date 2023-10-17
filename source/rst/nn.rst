@@ -145,6 +145,50 @@ state_dict
         print(test_conv.state_dict().keys())
         #odict_keys(['weights', 'bias'])
 
+
+toGPU
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. py:function:: pyvqnet.nn.module.Module.toGPU(device: int = DEV_GPU_0)
+
+    Move the parameters and buffer data of a module and its submodules to the specified GPU device.
+
+    device specifies the device whose internal data is stored. When device >= DEV_GPU_0, the data is stored on the GPU. If your computer has multiple GPUs,
+    You can specify different devices to store data. For example, device = DEV_GPU_1 , DEV_GPU_2, DEV_GPU_3, ... means it is stored on GPUs with different serial numbers.
+    
+    .. note::
+        Module cannot be calculated on different GPUs. A Cuda error will be raised if you try to create a QTensor on a GPU whose ID exceeds the maximum number of verified GPUs.
+
+    :param device: The device currently saving QTensor, default=DEV_GPU_0. device = pyvqnet.DEV_GPU_0, stored in the first GPU, devcie = DEV_GPU_1, stored in the second GPU, and so on.
+    :return: Module moved to GPU device.
+
+    Examples::
+
+        from pyvqnet.nn.conv import ConvT2D 
+        test_conv = ConvT2D(3, 2, [4,4], [2, 2], "same")
+        test_conv = test_conv.toGPU()
+        print(test_conv.backend)
+        #1000
+
+
+toCPU
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. py:function:: pyvqnet.nn.module.Module.toCPU()
+
+    Moves the parameters and buffer data of a module and its submodules to a specific CPU device.
+
+    :return: Module moved to CPU device.
+
+    Examples::
+
+        from pyvqnet.nn.conv import ConvT2D 
+        test_conv = ConvT2D(3, 2, [4,4], [2, 2], "same")
+        test_conv = test_conv.toCPU()
+        print(test_conv.backend)
+        #0
+
+
 save_parameters
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 

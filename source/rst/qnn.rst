@@ -769,7 +769,7 @@ grad
         # [-0.09442394  0.09442394]
         # [-0.14409127  0.14409127]]
 
-Quantum gate
+Quantum Gates
 ----------------------------------
 
 The way to deal with qubits is called quantum gates. Using quantum gates, we consciously evolve quantum states. Quantum gates are the basis of quantum algorithms.
@@ -2445,6 +2445,1909 @@ Simultaneous Perturbation Stochastic Approximation optimizers
         print(y)
 
 
+Quantum method based on VQC
+----------------------------------
+
+    VQNet is based on the construction of automatic differential operators and some commonly used quantum logic gates, quantum circuits and measurement methods. Automatic differentiation can be used to calculate gradients instead of the quantum circuit parameter-shift method.
+    We can use VQC operators to form complex neural networks like other `Modules`. The virtual machine `QMachine` needs to be defined in `Module`, and the `states` in the machine need to be reset_states based on the input batchsize. Please see the following example for details:
+
+    Example::
+
+            from pyvqnet.nn import Module,Linear,ModuleList
+            from pyvqnet.qnn.vqc.qcircuit import VQC_HardwareEfficientAnsatz,RZZ,RZ
+            from pyvqnet.qnn.vqc import Probability,QMachine
+            from pyvqnet import tensor
+
+            class QM(Module):
+                def __init__(self, name=""):
+                    super().__init__(name)
+                    self.linearx = Linear(4,2)
+                    self.ansatz = VQC_HardwareEfficientAnsatz(4, ["rx", "RY", "rz"],
+                                                entangle_gate="cnot",
+                                                entangle_rules="linear",
+                                                depth=2)
+                    #VQC based RZ on 0 bits
+                    self.encode1 = RZ(wires=0)
+                    #VQC based RZ on 1 bit
+                    self.encode2 = RZ(wires=1)
+                    #VQC-based probability measurement on 0, 2 bits
+                    self.measure = Probability(wires=[0,2])
+                    #Quantum device QMachine, uses 4 bits.
+                    self.device = QMachine(4)
+                def forward(self, x, *args, **kwargs):
+                    #States must be reset to the same batchsize as the input.
+                    self.device.reset_states(x.shape[0])
+                    y = self.linearx(x)
+                    #Encode the input to the RZ gate. Note that the input must be of shape [batchsize,1]
+                    self.encode1(params = y[:, [0]],q_machine = self.device,)
+                    #Encode the input to the RZ gate. Note that the input must be of shape [batchsize,1]
+                    self.encode2(params = y[:, [1]],q_machine = self.device,)
+                    self.ansatz(q_machine =self.device)
+                    return self.measure(q_machine =self.device)
+
+            bz=3
+            inputx = tensor.arange(1.0,bz*4+1).reshape([bz,4])
+            inputx.requires_grad= True
+            #Define like other Modules
+            qlayer = QM()
+            #Prequel
+            y = qlayer(inputx)
+            #reversepass
+            y.backward()
+            print(y)
+
+
+QMachine
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. py:class:: pyvqnet.qnn.vqc.QMachine(num_wires, dtype=pyvqnet.kcomplex64)
+
+    A simulator class for variable quantum computing, including statevectors whose states attribute is a quantum circuit.
+
+    :param num_wires: number of qubits。
+    :param dtype: the data type of the calculated data, the default is pyvqnet.kcomplex64, and the corresponding parameter precision is pyvqnet.kfloat32
+
+    :return: Output QMachine。
+
+    Example::
+        
+        from pyvqnet.qnn.vqc import QMachine
+        qm  = QMachine(4)
+
+        print(qm.states)
+
+        # [[[[[1.+0.j 0.+0.j]
+        #     [0.+0.j 0.+0.j]]
+
+        #    [[0.+0.j 0.+0.j]
+        #     [0.+0.j 0.+0.j]]]
+
+
+        #   [[[0.+0.j 0.+0.j]
+        #     [0.+0.j 0.+0.j]]
+
+        #    [[0.+0.j 0.+0.j]
+        #     [0.+0.j 0.+0.j]]]]]
+
+i
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. py:function:: pyvqnet.qnn.vqc.i(q_machine, wires, params=None, num_wires=None, use_dagger=False)
+
+    Acting quantum logic gates on state vectors in q_machine I。
+
+    :param q_machine: quantum virtual machine device.
+    :param wires: qubit idx.
+    :param params: parameter matrix, defaults to None.
+    :param num_wires: the number of qubits, defaults to None.
+    :param use_dagger: whether to conjugate transpose, the default is False.
+    :return: Output QTensor。
+
+    Example::
+        
+        from pyvqnet.qnn.vqc import i,QMachine
+        qm  = QMachine(4)
+        i(q_machine=qm, wires=1,num_wires=4)
+        print(qm.states)
+        # [[[[[1.+0.j 0.+0.j]
+        #     [0.+0.j 0.+0.j]]
+
+        #    [[0.+0.j 0.+0.j]
+        #     [0.+0.j 0.+0.j]]]
+
+
+        #   [[[0.+0.j 0.+0.j]
+        #     [0.+0.j 0.+0.j]]
+
+        #    [[0.+0.j 0.+0.j]
+        #     [0.+0.j 0.+0.j]]]]]
+
+hadamard
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. py:function:: pyvqnet.qnn.vqc.hadamard(q_machine, wires, params=None, num_wires=None, use_dagger=False)
+    
+    Acting quantum logic gates on state vectors in q_machine hadamard.
+
+    :param q_machine: quantum virtual machine device.
+    :param wires: qubit idx.
+    :param params: parameter matrix, defaults to None.
+    :param num_wires: the number of qubits, defaults to None.
+    :param use_dagger: whether to conjugate transpose, the default is False.
+    :return: Output QTensor。
+
+    Example::
+        
+        from pyvqnet.qnn.vqc import hadamard,QMachine
+        qm  = QMachine(4)
+        hadamard(q_machine=qm, wires=1,num_wires=4)
+        print(qm.states)
+        # [[[[[0.7071068+0.j 0.       +0.j]
+        #     [0.       +0.j 0.       +0.j]]
+        # 
+        #    [[0.7071068+0.j 0.       +0.j]
+        #     [0.       +0.j 0.       +0.j]]]
+        # 
+        # 
+        #   [[[0.       +0.j 0.       +0.j]
+        #     [0.       +0.j 0.       +0.j]]
+        # 
+        #    [[0.       +0.j 0.       +0.j]
+        #     [0.       +0.j 0.       +0.j]]]]]
+
+
+t
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. py:function:: pyvqnet.qnn.vqc.t(q_machine, wires, params=None, num_wires=None, use_dagger=False)
+    
+    Acting quantum logic gates on state vectors in q_machine t.
+
+    :param q_machine: quantum virtual machine device.
+    :param wires: qubit idx.
+    :param params: parameter matrix, defaults to None.
+    :param num_wires: the number of qubits, defaults to None.
+    :param use_dagger: whether to conjugate transpose, the default is False.
+    :return: Output QTensor。
+
+    Example::
+        
+        from pyvqnet.qnn.vqc import t,QMachine
+        qm  = QMachine(4)
+        t(q_machine=qm, wires=1,num_wires=4)
+        print(qm.states)
+        # [[[[[1.+0.j 0.+0.j]
+        #     [0.+0.j 0.+0.j]]
+        # 
+        #    [[0.+0.j 0.+0.j]
+        #     [0.+0.j 0.+0.j]]]
+        # 
+        # 
+        #   [[[0.+0.j 0.+0.j]
+        #     [0.+0.j 0.+0.j]]
+        # 
+        #    [[0.+0.j 0.+0.j]
+        #     [0.+0.j 0.+0.j]]]]]
+
+
+s
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. py:function:: pyvqnet.qnn.vqc.s(q_machine, wires, params=None, num_wires=None, use_dagger=False)
+    
+    Acting quantum logic gates on state vectors in q_machine s.
+
+    :param q_machine: quantum virtual machine device.
+    :param wires: qubit idx.
+    :param params: parameter matrix, defaults to None.
+    :param num_wires: the number of qubits, defaults to None.
+    :param use_dagger: whether to conjugate transpose, the default is False.
+    :return: Output QTensor。
+
+    Example::
+        
+        from pyvqnet.qnn.vqc import s,QMachine
+        qm  = QMachine(4)
+        s(q_machine=qm, wires=1,num_wires=4)
+        print(qm.states)
+        # [[[[[1.+0.j 0.+0.j]       
+        #     [0.+0.j 0.+0.j]]
+        # 
+        #    [[0.+0.j 0.+0.j]
+        #     [0.+0.j 0.+0.j]]]
+        # 
+        # 
+        #   [[[0.+0.j 0.+0.j]
+        #     [0.+0.j 0.+0.j]]
+        # 
+        #    [[0.+0.j 0.+0.j]
+        #     [0.+0.j 0.+0.j]]]]]
+
+
+paulix
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. py:function:: pyvqnet.qnn.vqc.paulix(q_machine, wires, params=None, num_wires=None, use_dagger=False)
+    
+    Acting quantum logic gates on state vectors in q_machine paulix.
+
+    :param q_machine: quantum virtual machine device.
+    :param wires: qubit idx.
+    :param params: parameter matrix, defaults to None.
+    :param num_wires: the number of qubits, defaults to None.
+    :param use_dagger: whether to conjugate transpose, the default is False.
+    :return: Output QTensor。
+
+    Example::
+        
+        from pyvqnet.qnn.vqc import paulix,QMachine
+        qm  = QMachine(4)
+        paulix(q_machine=qm, wires=1,num_wires=4)
+        print(qm.states)
+        # [[[[[0.+0.j 0.+0.j]
+        #     [0.+0.j 0.+0.j]]
+        # 
+        #    [[1.+0.j 0.+0.j]
+        #     [0.+0.j 0.+0.j]]]
+        # 
+        # 
+        #   [[[0.+0.j 0.+0.j]
+        #     [0.+0.j 0.+0.j]]
+        # 
+        #    [[0.+0.j 0.+0.j]
+        #     [0.+0.j 0.+0.j]]]]]
+
+
+pauliy
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. py:function:: pyvqnet.qnn.vqc.pauliy(q_machine, wires, params=None, num_wires=None, use_dagger=False)
+    
+    Acting quantum logic gates on state vectors in q_machine pauliy.
+
+    :param q_machine: quantum virtual machine device.
+    :param wires: qubit idx.
+    :param params: parameter matrix, defaults to None.
+    :param num_wires: the number of qubits, defaults to None.
+    :param use_dagger: whether to conjugate transpose, the default is False.
+    :return: Output QTensor。
+
+    Example::
+        
+        from pyvqnet.qnn.vqc import pauliy,QMachine
+        qm  = QMachine(4)
+        pauliy(q_machine=qm, wires=1,num_wires=4)
+        print(qm.states)
+        # [[[[[0.+0.j 0.+0.j]
+        #     [0.+0.j 0.+0.j]]
+        # 
+        #    [[0.+1.j 0.+0.j]
+        #     [0.+0.j 0.+0.j]]]
+        # 
+        # 
+        #   [[[0.+0.j 0.+0.j]
+        #     [0.+0.j 0.+0.j]]
+        # 
+        #    [[0.+0.j 0.+0.j]
+        #     [0.+0.j 0.+0.j]]]]]
+
+pauliz
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. py:function:: pyvqnet.qnn.vqc.pauliz(q_machine, wires, params=None, num_wires=None, use_dagger=False)
+    
+    Acting quantum logic gates on state vectors in q_machine pauliz.
+
+    :param q_machine: quantum virtual machine device.
+    :param wires: qubit idx.
+    :param params: parameter matrix, defaults to None.
+    :param num_wires: the number of qubits, defaults to None.
+    :param use_dagger: whether to conjugate transpose, the default is False.
+    :return: Output QTensor。
+
+    Example::
+        
+        from pyvqnet.qnn.vqc import pauliz,QMachine
+        qm  = QMachine(4)
+        pauliz(q_machine=qm, wires=1,num_wires=4)
+        print(qm.states)
+        # [[[[[1.+0.j 0.+0.j]
+        #     [0.+0.j 0.+0.j]]
+        # 
+        #    [[0.+0.j 0.+0.j]
+        #     [0.+0.j 0.+0.j]]]
+        # 
+        # 
+        #   [[[0.+0.j 0.+0.j]
+        #     [0.+0.j 0.+0.j]]
+        # 
+        #    [[0.+0.j 0.+0.j]
+        #     [0.+0.j 0.+0.j]]]]]
+
+x1
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. py:function:: pyvqnet.qnn.vqc.x1(q_machine, wires, params=None, num_wires=None, use_dagger=False)
+    
+    Acting quantum logic gates on state vectors in q_machine x1.
+
+    :param q_machine: quantum virtual machine device.
+    :param wires: qubit idx.
+    :param params: parameter matrix, defaults to None.
+    :param num_wires: the number of qubits, defaults to None.
+    :param use_dagger: whether to conjugate transpose, the default is False.
+    :return: Output QTensor。
+
+    Example::
+        
+        from pyvqnet.qnn.vqc import x1,QMachine
+        qm  = QMachine(4)
+        x1(q_machine=qm, wires=1,num_wires=4)
+        print(qm.states)
+        # [[[[[0.7071068+0.j        0.       +0.j       ]
+        #     [0.       +0.j        0.       +0.j       ]]
+        # 
+        #    [[0.       -0.7071068j 0.       +0.j       ]
+        #     [0.       +0.j        0.       +0.j       ]]]
+        # 
+        # 
+        #   [[[0.       +0.j        0.       +0.j       ]
+        #     [0.       +0.j        0.       +0.j       ]]
+        # 
+        #    [[0.       +0.j        0.       +0.j       ]
+        #     [0.       +0.j        0.       +0.j       ]]]]]
+
+y1
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. py:function:: pyvqnet.qnn.vqc.y1(q_machine, wires, params=None, num_wires=None, use_dagger=False)
+    
+    Acting quantum logic gates on state vectors in q_machine y1.
+
+    :param q_machine: quantum virtual machine device.
+    :param wires: qubit idx.
+    :param params: parameter matrix, defaults to None.
+    :param num_wires: the number of qubits, defaults to None.
+    :param use_dagger: whether to conjugate transpose, the default is False.
+    :return: Output QTensor。
+
+
+    Example::
+        
+        from pyvqnet.qnn.vqc import y1,QMachine
+        qm  = QMachine(4)
+        y1(q_machine=qm, wires=1,num_wires=4)
+        print(qm.states)
+        # [[[[[0.7071068+0.j 0.       +0.j]
+        #     [0.       +0.j 0.       +0.j]]
+        # 
+        #    [[0.7071068+0.j 0.       +0.j]
+        #     [0.       +0.j 0.       +0.j]]]
+        # 
+        # 
+        #   [[[0.       +0.j 0.       +0.j]
+        #     [0.       +0.j 0.       +0.j]]
+        # 
+        #    [[0.       +0.j 0.       +0.j]
+        #     [0.       +0.j 0.       +0.j]]]]]
+
+
+z1
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. py:function:: pyvqnet.qnn.vqc.z1(q_machine, wires, params=None, num_wires=None, use_dagger=False)
+    
+    Acting quantum logic gates on state vectors in q_machine z1.
+
+    :param q_machine: quantum virtual machine device.
+    :param wires: qubit idx.
+    :param params: parameter matrix, defaults to None.
+    :param num_wires: the number of qubits, defaults to None.
+    :param use_dagger: whether to conjugate transpose, the default is False.
+    :return: Output QTensor。
+
+    Example::
+        
+        from pyvqnet.qnn.vqc import z1,QMachine
+        qm  = QMachine(4)
+        z1(q_machine=qm, wires=1,num_wires=4)
+        print(qm.states)
+        # [[[[[0.7071068-0.7071068j 0.       +0.j       ]
+        #     [0.       +0.j        0.       +0.j       ]]
+        # 
+        #    [[0.       +0.j        0.       +0.j       ]
+        #     [0.       +0.j        0.       +0.j       ]]]
+        # 
+        # 
+        #   [[[0.       +0.j        0.       +0.j       ]
+        #     [0.       +0.j        0.       +0.j       ]]
+        # 
+        #    [[0.       +0.j        0.       +0.j       ]
+        #     [0.       +0.j        0.       +0.j       ]]]]]
+
+rx
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. py:function:: pyvqnet.qnn.vqc.rx(q_machine, wires, params=None, num_wires=None, use_dagger=False)
+    
+    Acting quantum logic gates on state vectors in q_machine rx.
+
+    :param q_machine: quantum virtual machine device.
+    :param wires: qubit idx.
+    :param params: parameter matrix, defaults to None.
+    :param num_wires: the number of qubits, defaults to None.
+    :param use_dagger: whether to conjugate transpose, the default is False.
+    :return: Output QTensor。
+
+    Example::
+        
+        from pyvqnet.qnn.vqc import rx,QMachine
+        from pyvqnet.tensor import QTensor
+        qm  = QMachine(4)
+        rx(q_machine=qm, wires=1,params=QTenor([0.5]),num_wires=4)
+        print(qm.states)
+        # [[[[[0.9689124+0.j       0.       +0.j      ]
+        #     [0.       +0.j       0.       +0.j      ]]
+        # 
+        #    [[0.       -0.247404j 0.       +0.j      ]
+        #     [0.       +0.j       0.       +0.j      ]]]
+        # 
+        # 
+        #   [[[0.       +0.j       0.       +0.j      ]
+        #     [0.       +0.j       0.       +0.j      ]]
+        # 
+        #    [[0.       +0.j       0.       +0.j      ]
+        #     [0.       +0.j       0.       +0.j      ]]]]]
+
+
+ry
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. py:function:: pyvqnet.qnn.vqc.ry(q_machine, wires, params=None, num_wires=None, use_dagger=False)
+    
+    Acting quantum logic gates on state vectors in q_machine ry.
+
+    :param q_machine: quantum virtual machine device.
+    :param wires: qubit idx.
+    :param params: parameter matrix, defaults to None.
+    :param num_wires: the number of qubits, defaults to None.
+    :param use_dagger: whether to conjugate transpose, the default is False.
+    :return: Output QTensor。
+
+    Example::
+        
+        from pyvqnet.qnn.vqc import ry,QMachine
+        from pyvqnet.tensor import QTensor
+        qm  = QMachine(4)
+        ry(q_machine=qm, wires=1,params=QTensor([0.5]),num_wires=4)
+        print(qm.states)
+        # [[[[[0.9689124+0.j 0.       +0.j]
+        #     [0.       +0.j 0.       +0.j]]
+        # 
+        #    [[0.247404 +0.j 0.       +0.j]
+        #     [0.       +0.j 0.       +0.j]]]
+        # 
+        # 
+        #   [[[0.       +0.j 0.       +0.j]
+        #     [0.       +0.j 0.       +0.j]]
+        # 
+        #    [[0.       +0.j 0.       +0.j]
+        #     [0.       +0.j 0.       +0.j]]]]]
+
+
+rz
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. py:function:: pyvqnet.qnn.vqc.rz(q_machine, wires, params=None, num_wires=None, use_dagger=False)
+    
+    Acting quantum logic gates on state vectors in q_machine rz.
+
+    :param q_machine: quantum virtual machine device.
+    :param wires: qubit idx.
+    :param params: parameter matrix, defaults to None.
+    :param num_wires: the number of qubits, defaults to None.
+    :param use_dagger: whether to conjugate transpose, the default is False.
+    :return: Output QTensor。
+
+    Example::
+        
+        from pyvqnet.qnn.vqc import rz,QMachine
+        from pyvqnet.tensor import QTensor
+        qm  = QMachine(4)
+        rz(q_machine=qm, wires=1,params=QTensor([0.5]),num_wires=4)
+        print(qm.states)
+        # [[[[[0.9689124-0.247404j 0.       +0.j      ]
+        #     [0.       +0.j       0.       +0.j      ]]
+        # 
+        #    [[0.       +0.j       0.       +0.j      ]
+        #     [0.       +0.j       0.       +0.j      ]]]
+        # 
+        # 
+        #   [[[0.       +0.j       0.       +0.j      ]
+        #     [0.       +0.j       0.       +0.j      ]]
+        # 
+        #    [[0.       +0.j       0.       +0.j      ]
+        #     [0.       +0.j       0.       +0.j      ]]]]]
+
+
+p
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. py:function:: pyvqnet.qnn.vqc.p(q_machine, wires, params=None, num_wires=None, use_dagger=False)
+    
+    Acting quantum logic gates on state vectors in q_machine p.
+
+    :param q_machine: quantum virtual machine device.
+    :param wires: qubit idx.
+    :param params: parameter matrix, defaults to None.
+    :param num_wires: the number of qubits, defaults to None.
+    :param use_dagger: whether to conjugate transpose, the default is False.
+    :return: Output QTensor。
+
+    Example::
+        
+        from pyvqnet.qnn.vqc import p,QMachine
+        from pyvqnet.tensor import QTensor
+        qm  = QMachine(4)
+        p(q_machine=qm, wires=[1,0],params=QTensor([24.0]),num_wires=4)
+        print(qm.states)
+        # [[[[[1.+0.j 0.+0.j]
+        #     [0.+0.j 0.+0.j]]
+        # 
+        #    [[0.+0.j 0.+0.j]
+        #     [0.+0.j 0.+0.j]]]
+        # 
+        # 
+        #   [[[0.+0.j 0.+0.j]
+        #     [0.+0.j 0.+0.j]]
+        # 
+        #    [[0.+0.j 0.+0.j]
+        #     [0.+0.j 0.+0.j]]]]]
+
+u1
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. py:function:: pyvqnet.qnn.vqc.u1(q_machine, wires, params=None, num_wires=None, use_dagger=False)
+    
+    Acting quantum logic gates on state vectors in q_machine u1.
+
+    :param q_machine: quantum virtual machine device.
+    :param wires: qubit idx.
+    :param params: parameter matrix, defaults to None.
+    :param num_wires: the number of qubits, defaults to None.
+    :param use_dagger: whether to conjugate transpose, the default is False.
+    :return: Output QTensor。
+
+    Example::
+        
+        from pyvqnet.qnn.vqc import u1,QMachine
+        from pyvqnet.tensor import QTensor
+        qm  = QMachine(4)
+        u1(q_machine=qm, wires=1,params=QTensor([24.0]),num_wires=4)
+        print(qm.states)
+        # [[[[1.+0.j 0.+0.j]
+        #     [0.+0.j 0.+0.j]]
+        # 
+        #    [[0.+0.j 0.+0.j]
+        #     [0.+0.j 0.+0.j]]]
+        # 
+        # 
+        #   [[[0.+0.j 0.+0.j]
+        #     [0.+0.j 0.+0.j]]
+        # 
+        #    [[0.+0.j 0.+0.j]
+        #     [0.+0.j 0.+0.j]]]]]
+
+
+u2
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. py:function:: pyvqnet.qnn.vqc.u2(q_machine, wires, params=None, num_wires=None, use_dagger=False)
+    
+    Acting quantum logic gates on state vectors in q_machine u2.
+
+    :param q_machine: quantum virtual machine device.
+    :param wires: qubit idx.
+    :param params: parameter matrix, defaults to None.
+    :param num_wires: the number of qubits, defaults to None.
+    :param use_dagger: whether to conjugate transpose, the default is False.
+    :return: Output QTensor。
+
+    Example::
+        
+        from pyvqnet.qnn.vqc import u2,QMachine
+        from pyvqnet.tensor import QTensor
+        qm  = QMachine(4)
+        u2(q_machine=qm, wires=1,params=QTensor([[24.0,-3]]),num_wires=4)
+        print(qm.states)
+        # [[[[[0.7071068+0.j        0.       +0.j       ]
+        #     [0.       +0.j        0.       +0.j       ]]
+        # 
+        #    [[0.2999398-0.6403406j 0.       +0.j       ]
+        #     [0.       +0.j        0.       +0.j       ]]]
+        # 
+        # 
+        #   [[[0.       +0.j        0.       +0.j       ]
+        #     [0.       +0.j        0.       +0.j       ]]
+        # 
+        #    [[0.       +0.j        0.       +0.j       ]
+        #     [0.       +0.j        0.       +0.j       ]]]]]
+
+u3
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. py:function:: pyvqnet.qnn.vqc.u3(q_machine, wires, params=None, num_wires=None, use_dagger=False)
+    
+    Acting quantum logic gates on state vectors in q_machine u3.
+
+    :param q_machine: quantum virtual machine device.
+    :param wires: qubit idx.
+    :param params: parameter matrix, defaults to None.
+    :param num_wires: the number of qubits, defaults to None.
+    :param use_dagger: whether to conjugate transpose, the default is False.
+    :return: Output QTensor。
+
+    Example::
+        
+        from pyvqnet.qnn.vqc import u3,QMachine
+        from pyvqnet.tensor import QTensor
+        qm  = QMachine(4)
+        u3(q_machine=qm, wires=1,params=QTensor([[24.0,-3,1]]),num_wires=4)
+        print(qm.states)
+        # [[[[[0.843854 +0.j        0.       +0.j       ]
+        #     [0.       +0.j        0.       +0.j       ]]
+        # 
+        #    [[0.5312032+0.0757212j 0.       +0.j       ]
+        #     [0.       +0.j        0.       +0.j       ]]]
+        # 
+        # 
+        #   [[[0.       +0.j        0.       +0.j       ]
+        #     [0.       +0.j        0.       +0.j       ]]
+        # 
+        #    [[0.       +0.j        0.       +0.j       ]
+        #     [0.       +0.j        0.       +0.j       ]]]]]
+
+cnot
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. py:function:: pyvqnet.qnn.vqc.cnot(q_machine, wires, params=None, num_wires=None, use_dagger=False)
+    
+    Acting quantum logic gates on state vectors in q_machine cnot.
+
+    :param q_machine: quantum virtual machine device.
+    :param wires: qubit idx.
+    :param params: parameter matrix, defaults to None.
+    :param num_wires: the number of qubits, defaults to None.
+    :param use_dagger: whether to conjugate transpose, the default is False.
+    :return: Output QTensor。
+
+    Example::
+        
+        from pyvqnet.qnn.vqc import cnot,QMachine
+        qm  = QMachine(4)
+        cnot(q_machine=qm,wires=[1,0],num_wires=4)
+        print(qm.states)
+        # [[[[[1.+0.j 0.+0.j]
+        #     [0.+0.j 0.+0.j]]
+        # 
+        #    [[0.+0.j 0.+0.j]
+        #     [0.+0.j 0.+0.j]]]
+        # 
+        # 
+        #   [[[0.+0.j 0.+0.j]
+        #     [0.+0.j 0.+0.j]]
+        # 
+        #    [[0.+0.j 0.+0.j]
+        #     [0.+0.j 0.+0.j]]]]]
+
+cr
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. py:function:: pyvqnet.qnn.vqc.cr(q_machine, wires, params=None, num_wires=None, use_dagger=False)
+    
+    Acting quantum logic gates on state vectors in q_machine cr.
+
+    :param q_machine: quantum virtual machine device.
+    :param wires: qubit idx.
+    :param params: parameter matrix, defaults to None.
+    :param num_wires: the number of qubits, defaults to None.
+    :param use_dagger: whether to conjugate transpose, the default is False.
+    :return: Output QTensor。
+
+    Example::
+        
+        from pyvqnet.qnn.vqc import cr,QMachine
+        from pyvqnet.tensor import QTensor
+        qm  = QMachine(4)
+        cr(q_machine=qm,wires=[1,0],params=QTensor([0.5]),num_wires=4)
+        print(qm.states)
+        # [[[[[1.+0.j 0.+0.j]
+        #     [0.+0.j 0.+0.j]]
+        # 
+        #    [[0.+0.j 0.+0.j]
+        #     [0.+0.j 0.+0.j]]]
+        # 
+        # 
+        #   [[[0.+0.j 0.+0.j]
+        #     [0.+0.j 0.+0.j]]
+        # 
+        #    [[0.+0.j 0.+0.j]
+        #     [0.+0.j 0.+0.j]]]]]
+
+
+iswap
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. py:function:: pyvqnet.qnn.vqc.iswap(q_machine, wires, params=None, num_wires=None, use_dagger=False)
+    
+    Acting quantum logic gates on state vectors in q_machine iswap.
+
+    :param q_machine: quantum virtual machine device.
+    :param wires: qubit idx.
+    :param params: parameter matrix, defaults to None.
+    :param num_wires: the number of qubits, defaults to None.
+    :param use_dagger: whether to conjugate transpose, the default is False.
+    :return: Output QTensor。
+
+    Example::
+        
+        from pyvqnet.qnn.vqc import iswap,QMachine
+        from pyvqnet.tensor import QTensor
+        qm  = QMachine(4)
+        iswap(q_machine=qm,wires=[1,0],params=QTensor([0.5]),num_wires=4)
+        print(qm.states)
+        # [[[[[1.+0.j 0.+0.j]
+        #     [0.+0.j 0.+0.j]]
+        # 
+        #    [[0.+0.j 0.+0.j]
+        #     [0.+0.j 0.+0.j]]]
+        # 
+        # 
+        #   [[[0.+0.j 0.+0.j]
+        #     [0.+0.j 0.+0.j]]
+        # 
+        #    [[0.+0.j 0.+0.j]
+        #     [0.+0.j 0.+0.j]]]]]
+
+swap
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. py:function:: pyvqnet.qnn.vqc.swap(q_machine, wires, params=None, num_wires=None, use_dagger=False)
+    
+    Acting quantum logic gates on state vectors in q_machine swap.
+
+    :param q_machine: quantum virtual machine device.
+    :param wires: qubit idx.
+    :param params: parameter matrix, defaults to None.
+    :param num_wires: the number of qubits, defaults to None.
+    :param use_dagger: whether to conjugate transpose, the default is False.
+    :return: Output QTensor。
+
+    Example::
+        
+        from pyvqnet.qnn.vqc import swap,QMachine
+        qm  = QMachine(4)
+        swap(q_machine=qm,wires=[1,0],num_wires=4)
+        print(qm.states)
+        # [[[[[1.+0.j 0.+0.j]
+        #     [0.+0.j 0.+0.j]]
+        # 
+        #    [[0.+0.j 0.+0.j]
+        #     [0.+0.j 0.+0.j]]]
+        # 
+        # 
+        #   [[[0.+0.j 0.+0.j]
+        #     [0.+0.j 0.+0.j]]
+        # 
+        #    [[0.+0.j 0.+0.j]
+        #     [0.+0.j 0.+0.j]]]]]
+
+
+cz
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. py:function:: pyvqnet.qnn.vqc.cz(q_machine, wires, params=None, num_wires=None, use_dagger=False)
+    
+    Acting quantum logic gates on state vectors in q_machine cz.
+
+    :param q_machine: quantum virtual machine device.
+    :param wires: qubit idx.
+    :param params: parameter matrix, defaults to None.
+    :param num_wires: the number of qubits, defaults to None.
+    :param use_dagger: whether to conjugate transpose, the default is False.
+    :return: Output QTensor。
+
+    Example::
+        
+        from pyvqnet.qnn.vqc import cz,QMachine
+        qm  = QMachine(4)
+        cz(q_machine=qm,wires=[1,0],num_wires=4)
+        print(qm.states)
+        # [[[[[1.+0.j 0.+0.j]
+        #     [0.+0.j 0.+0.j]]
+        # 
+        #    [[0.+0.j 0.+0.j]
+        #     [0.+0.j 0.+0.j]]]
+        # 
+        # 
+        #   [[[0.+0.j 0.+0.j]
+        #     [0.+0.j 0.+0.j]]
+        # 
+        #    [[0.+0.j 0.+0.j]
+        #     [0.+0.j 0.+0.j]]]]]
+
+
+rxx
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. py:function:: pyvqnet.qnn.vqc.rxx(q_machine, wires, params=None, num_wires=None, use_dagger=False)
+    
+    Acting quantum logic gates on state vectors in q_machine rxx.
+
+    :param q_machine: quantum virtual machine device.
+    :param wires: qubit idx.
+    :param params: parameter matrix, defaults to None.
+    :param num_wires: the number of qubits, defaults to None.
+    :param use_dagger: whether to conjugate transpose, the default is False.
+    :return: Output QTensor。
+
+    Example::
+        
+        from pyvqnet.qnn.vqc import rxx,QMachine
+        from pyvqnet.tensor import QTensor
+        qm  = QMachine(4)
+        rxx(q_machine=qm,wires=[1,0],params=QTensor([0.2]),num_wires=4)
+        print(qm.states)
+        # [[[[[0.9950042+0.j        0.       +0.j       ]
+        #     [0.       +0.j        0.       +0.j       ]]
+        # 
+        #    [[0.       +0.j        0.       +0.j       ]
+        #     [0.       +0.j        0.       +0.j       ]]]
+        # 
+        # 
+        #   [[[0.       +0.j        0.       +0.j       ]
+        #     [0.       +0.j        0.       +0.j       ]]
+        # 
+        #    [[0.       -0.0998334j 0.       +0.j       ]
+        #     [0.       +0.j        0.       +0.j       ]]]]]
+
+
+ryy
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. py:function:: pyvqnet.qnn.vqc.ryy(q_machine, wires, params=None, num_wires=None, use_dagger=False)
+    
+    Acting quantum logic gates on state vectors in q_machine ryy.
+
+    :param q_machine: quantum virtual machine device.
+    :param wires: qubit idx.
+    :param params: parameter matrix, defaults to None.
+    :param num_wires: the number of qubits, defaults to None.
+    :param use_dagger: whether to conjugate transpose, the default is False.
+    :return: Output QTensor。
+
+    Example::
+        
+        from pyvqnet.qnn.vqc import ryy,QMachine
+        from pyvqnet.tensor import QTensor
+        qm  = QMachine(4)
+        ryy(q_machine=qm,wires=[1,0],params=QTensor([0.2]),num_wires=4)
+        print(qm.states)
+        # [[[[[0.9950042+0.j        0.       +0.j       ]
+        #     [0.       +0.j        0.       +0.j       ]]
+        # 
+        #    [[0.       +0.j        0.       +0.j       ]
+        #     [0.       +0.j        0.       +0.j       ]]]
+        # 
+        # 
+        #   [[[0.       +0.j        0.       +0.j       ]
+        #     [0.       +0.j        0.       +0.j       ]]
+        # 
+        #    [[0.       +0.0998334j 0.       +0.j       ]
+        #     [0.       +0.j        0.       +0.j       ]]]]]
+
+
+rzz
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. py:function:: pyvqnet.qnn.vqc.rzz(q_machine, wires, params=None, num_wires=None, use_dagger=False)
+    
+    Acting quantum logic gates on state vectors in q_machine rzz.
+
+    :param q_machine: quantum virtual machine device.
+    :param wires: qubit idx.
+    :param params: parameter matrix, defaults to None.
+    :param num_wires: the number of qubits, defaults to None.
+    :param use_dagger: whether to conjugate transpose, the default is False.
+    :return: Output QTensor。
+
+    Example::
+        
+        from pyvqnet.qnn.vqc import rzz,QMachine
+        from pyvqnet.tensor import QTensor
+        qm  = QMachine(4)
+        rzz(q_machine=qm,wires=[1,0],params=QTensor([0.2]),num_wires=4)
+        print(qm.states)
+        # [[[[[0.9950042-0.0998334j 0.       +0.j       ]
+        #     [0.       +0.j        0.       +0.j       ]]
+        # 
+        #    [[0.       +0.j        0.       +0.j       ]
+        #     [0.       +0.j        0.       +0.j       ]]]
+        # 
+        # 
+        #   [[[0.       +0.j        0.       +0.j       ]
+        #     [0.       +0.j        0.       +0.j       ]]
+        # 
+        #    [[0.       +0.j        0.       +0.j       ]
+        #     [0.       +0.j        0.       +0.j       ]]]]]
+
+rzx
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. py:function:: pyvqnet.qnn.vqc.rzx(q_machine, wires, params=None, num_wires=None, use_dagger=False)
+    
+    Acting quantum logic gates on state vectors in q_machine rzx.
+
+    :param q_machine: quantum virtual machine device.
+    :param wires: qubit idx.
+    :param params: parameter matrix, defaults to None.
+    :param num_wires: the number of qubits, defaults to None.
+    :param use_dagger: whether to conjugate transpose, the default is False.
+    :return: Output QTensor。
+
+    Example::
+        
+        from pyvqnet.qnn.vqc import rzx,QMachine
+        from pyvqnet.tensor import QTensor
+        qm  = QMachine(4)
+        rzx(q_machine=qm,wires=[1,0],params=QTensor([0.2]),num_wires=4)
+        print(qm.states)
+        # [[[[[0.9950042+0.j        0.       +0.j       ]
+        #     [0.       +0.j        0.       +0.j       ]]
+        # 
+        #    [[0.       +0.j        0.       +0.j       ]
+        #     [0.       +0.j        0.       +0.j       ]]]
+        # 
+        # 
+        #   [[[0.       -0.0998334j 0.       +0.j       ]
+        #     [0.       +0.j        0.       +0.j       ]]
+        # 
+        #    [[0.       +0.j        0.       +0.j       ]
+        #     [0.       +0.j        0.       +0.j       ]]]]]
+
+
+toffoli
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. py:function:: pyvqnet.qnn.vqc.toffoli(q_machine, wires, params=None, num_wires=None, use_dagger=False)
+    
+    Acting quantum logic gates on state vectors in q_machine toffoli.
+
+    :param q_machine: quantum virtual machine device.
+    :param wires: qubit idx.
+    :param params: parameter matrix, defaults to None.
+    :param num_wires: the number of qubits, defaults to None.
+    :param use_dagger: whether to conjugate transpose, the default is False.
+    :return: Output QTensor。
+
+    Example::
+        
+        from pyvqnet.qnn.vqc import toffoli,QMachine
+        qm  = QMachine(4)
+        toffoli(q_machine=qm,wires=[0,1,2],num_wires=4)
+        print(qm.states)
+        # [[[[[1.+0.j 0.+0.j]
+        #     [0.+0.j 0.+0.j]]
+        # 
+        #    [[0.+0.j 0.+0.j]
+        #     [0.+0.j 0.+0.j]]]
+        # 
+        # 
+        #   [[[0.+0.j 0.+0.j]
+        #     [0.+0.j 0.+0.j]]
+        # 
+        #    [[0.+0.j 0.+0.j]
+        #     [0.+0.j 0.+0.j]]]]]
+
+
+VQC_BasisEmbedding
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. py:function:: pyvqnet.qnn.vqc.VQC_BasisEmbedding(basis_state,q_machine)
+
+    Encode n binary features into the ground state of n qubits.
+
+    For example, for ``basis_state=([0, 1, 1])``, the ground state of the quantum system is :math:`|011 \rangle`.
+
+    :param basis_state: binary input of size ``(n)``.
+    :param q_machine: quantum virtual machine device。
+    :return: output QTensor。
+
+    Example::
+        
+        from pyvqnet.qnn.vqc import VQC_BasisEmbedding,QMachine
+        qm  = QMachine(3)
+        VQC_BasisEmbedding(basis_state=[1,1,0],q_machine=qm)
+        print(qm.states)
+        # [[[[0.+0.j 0.+0.j]
+        #    [0.+0.j 0.+0.j]]
+        # 
+        #   [[0.+0.j 0.+0.j]
+        #    [1.+0.j 0.+0.j]]]]
+
+
+VQC_AngleEmbedding
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. py:function:: pyvqnet.qnn.vqc.VQC_AngleEmbedding(input_feat, wires, q_machine: QMachine, rotation: str = "X")
+
+    Encodes the :math:`N` feature into the rotation angle of the :math:`n` qubit, where :math:`N \leq n`.
+
+    Rotation can be selected as: 'X' , 'Y' , 'Z', such as the parameter definition of ``rotation`` is:
+
+    * ``rotation='X'`` Use feature as angle for RX rotation.
+
+    * ``rotation='Y'`` Use feature as angle for RY rotation.
+
+    * ``rotation='Z'`` Use feature as angle for RZ rotation.
+
+     ``wires`` denote the idx of rotation gates on the qubits.
+
+    :param input_feat: numpy array representing the parameters.
+    :param wires: qubit idx.
+    :param q_machine: Quantum virtual machine device.
+    :param rotation: Rotation gate，default is "X".
+    :return: Output QTensor。
+
+    Example::
+
+        from pyvqnet.qnn.vqc import VQC_AngleEmbedding, QMachine
+        from pyvqnet.tensor import QTensor
+        qm  = QMachine(2)
+        VQC_AngleEmbedding([2.2, 1], [0, 1], q_machine=qm, rotation='X')
+        
+        print(qm.states)
+        # [[[ 0.398068 +0.j         0.       -0.2174655j]
+        #   [ 0.       -0.7821081j -0.4272676+0.j       ]]]
+
+        VQC_AngleEmbedding([2.2, 1], [0, 1], q_machine=qm, rotation='Y')
+
+        print(qm.states)
+        # [[[-0.0240995+0.6589843j  0.4207355+0.2476033j]
+        #   [ 0.4042482-0.2184162j  0.       -0.3401631j]]]
+
+        VQC_AngleEmbedding([2.2, 1], [0, 1], q_machine=qm, rotation='Z')
+
+        print(qm.states)
+
+        # [[[0.659407 +0.0048471j 0.4870554-0.0332093j]
+        #   [0.4569675+0.047989j  0.340018 +0.0099326j]]]
+
+VQC_AmplitudeEmbedding
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. py:function:: pyvqnet.qnn.vqc.VQC_AmplitudeEmbeddingCircuit(input_feature, q_machine)
+
+    Encode a :math:`2^n` feature into an amplitude vector of :math:`n` qubits.
+
+    :param input_feature: A numpy array representing the parameters.
+    :param q_machine: Quantum virtual machine device.
+    :return: Output QTensor。
+
+    Example::
+
+        from pyvqnet.qnn.vqc import VQC_AmplitudeEmbedding, QMachine
+        from pyvqnet.tensor import QTensor
+        qm  = QMachine(3)
+        VQC_AmplitudeEmbedding(QTensor([3.2,-2,-2,0.3,12,0.1,2,-1]), q_machine=qm)
+        print(qm.states)
+
+        # [[[[ 0.2473717+0.j -0.1546073+0.j]
+        #    [-0.1546073+0.j  0.0231911+0.j]]
+        # 
+        #   [[ 0.9276441+0.j  0.0077304+0.j]
+        #    [ 0.1546073+0.j -0.0773037+0.j]]]]
+
+VQC_IQPEmbedding
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. py:function:: pyvqnet.qnn.vqc.VQC_IQPEmbedding(input_feat, q_machine: QMachine, rep: int = 1)
+
+    Diagonal gates using IQP lines encode :math:`n` features into :math:`n` qubits.
+
+    The encoding was proposed by `Havlicek et al. (2018) <https://arxiv.org/pdf/1804.11326.pdf>`_.
+
+    By specifying ``rep``, basic IQP lines can be repeated.
+
+    :param input_feat: A numpy array representing the parameters.
+    :param q_machine: Quantum virtual machine device.
+    :param rep: The number of times to repeat the quantum circuit block, the default number is 1.
+    :return: Output QTensor。
+
+    Example::
+
+        from pyvqnet.qnn.vqc import VQC_IQPEmbedding, QMachine
+        from pyvqnet.tensor import QTensor
+        qm  = QMachine(3)
+        VQC_IQPEmbedding(QTensor([3.2,-2,-2]), q_machine=qm)
+        print(qm.states)        
+        
+        # [[[[ 0.0309356-0.3521973j  0.3256442+0.1376801j]
+        #    [ 0.3256442+0.1376801j  0.2983474+0.1897071j]]
+        # 
+        #   [[ 0.0309356+0.3521973j -0.3170519-0.1564546j]
+        #    [-0.3170519-0.1564546j -0.2310978-0.2675701j]]]]
+
+
+VQC_RotCircuit
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. py:function:: pyvqnet.qnn.vqc.VQC_RotCircuit(q_machine, wire, params)
+
+    Arbitrary single-qubit rotations.
+
+    .. math::
+
+        R(\phi,\theta,\omega) = RZ(\omega)RY(\theta)RZ(\phi)= \begin{bmatrix}
+        e^{-i(\phi+\omega)/2}\cos(\theta/2) & -e^{i(\phi-\omega)/2}\sin(\theta/2) \\
+        e^{-i(\phi-\omega)/2}\sin(\theta/2) & e^{i(\phi+\omega)/2}\cos(\theta/2)
+        \end{bmatrix}.
+
+
+    :param q_machine: Quantum virtual machine device.
+    :param wire: Qubit idx。
+    :param params: Parameters :math:`[\phi, \theta, \omega]`.
+    :return: Output QTensor.
+
+    Example::
+
+        from pyvqnet.qnn.vqc import VQC_RotCircuit, QMachine
+        from pyvqnet.tensor import QTensor
+        qm  = QMachine(3)
+        VQC_RotCircuit(q_machine=qm, wire=[1,0],params=QTensor([2.0,1.5,2.1]))
+        print(qm.states)
+
+        # [[[[-0.3373617-0.6492732j  0.       +0.j       ]
+        #    [ 0.6807868-0.0340677j  0.       +0.j       ]]
+        # 
+        #   [[ 0.       +0.j         0.       +0.j       ]
+        #    [ 0.       +0.j         0.       +0.j       ]]]]
+
+VQC_CRotCircuit
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. py:function:: pyvqnet.qnn.vqc.VQC_CRotCircuit(para,control_qubits,rot_wire,q_machine)
+
+	Controlled Rot circuit.
+
+    .. math:: CR(\phi, \theta, \omega) = \begin{bmatrix}
+            1 & 0 & 0 & 0 \\
+            0 & 1 & 0 & 0\\
+            0 & 0 & e^{-i(\phi+\omega)/2}\cos(\theta/2) & -e^{i(\phi-\omega)/2}\sin(\theta/2)\\
+            0 & 0 & e^{-i(\phi-\omega)/2}\sin(\theta/2) & e^{i(\phi+\omega)/2}\cos(\theta/2)
+        \end{bmatrix}.
+    
+    :param para: numpy array representing the parameters.
+    :param control_qubits: Idx of control bits.
+    :param rot_wire: Idx of rot bits.
+    :param q_machine: Quantum virtual machine device.
+    :return: Output QTensor.
+
+    Example::
+
+        from pyvqnet.tensor import QTensor
+        from pyvqnet.qnn.vqc.qcircuit import VQC_CRotCircuit
+        from pyvqnet.qnn.vqc import QMachine, MeasureAll
+        p = QTensor([2, 3, 4.0])
+        qm = QMachine(2)
+        VQC_CRotCircuit(p, 0, 1, qm)
+        m = MeasureAll({"Z0": 1})
+        exp = m(q_machine=qm)
+        print(exp)
+
+        # [[0.9999999]]
+
+
+VQC_CSWAPcircuit
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. py:function:: pyvqnet.qnn.vqc.VQC_CSWAPcircuit(wires, q_machine)
+
+    Controlled SWAP circuit.
+
+    .. math:: CSWAP = \begin{bmatrix}
+            1 & 0 & 0 & 0 & 0 & 0 & 0 & 0 \\
+            0 & 1 & 0 & 0 & 0 & 0 & 0 & 0 \\
+            0 & 0 & 1 & 0 & 0 & 0 & 0 & 0 \\
+            0 & 0 & 0 & 1 & 0 & 0 & 0 & 0 \\
+            0 & 0 & 0 & 0 & 1 & 0 & 0 & 0 \\
+            0 & 0 & 0 & 0 & 0 & 0 & 1 & 0 \\
+            0 & 0 & 0 & 0 & 0 & 1 & 0 & 0 \\
+            0 & 0 & 0 & 0 & 0 & 0 & 0 & 1
+        \end{bmatrix}.
+
+    .. note:: The first qubit provided corresponds to **control qubit** .
+
+    :param wires: idx of qubits。
+    :param q_machine: Quantum virtual machine device.
+    :return: Output QTensor.
+
+    Example::
+
+        from pyvqnet.tensor import QTensor
+        from pyvqnet.qnn.vqc.qcircuit import VQC_CSWAPcircuit
+        from pyvqnet.qnn.vqc import QMachine, MeasureAll
+        p = QTensor([0.2, 3, 4.0])
+        qm = QMachine(3)
+        VQC_CSWAPcircuit([1, 0, 2], qm)
+        m = MeasureAll({"Z0": 1})
+        exp = m(q_machine=qm)
+        print(exp)
+
+        # [[1.]]
+
+VQC_Controlled_Hadamard
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. py:function:: pyvqnet.qnn.vqc.VQC_Controlled_Hadamard(wires, q_machine)
+
+    Controlled Hadamard logic.
+
+    .. math:: CH = \begin{bmatrix}
+            1 & 0 & 0 & 0 \\
+            0 & 1 & 0 & 0 \\
+            0 & 0 & \frac{1}{\sqrt{2}} & \frac{1}{\sqrt{2}} \\
+            0 & 0 & \frac{1}{\sqrt{2}} & -\frac{1}{\sqrt{2}}
+        \end{bmatrix}.
+
+    :param wires: Qubit idx, the first is the control bit, and the list length is 2.
+    :param q_machine: Quantum virtual machine device.
+
+    Examples::
+
+        from pyvqnet.tensor import QTensor
+        from pyvqnet.qnn.vqc.qcircuit import VQC_Controlled_Hadamard
+        from pyvqnet.qnn.vqc import QMachine, MeasureAll
+        p = QTensor([0.2, 3, 4.0])
+
+        qm = QMachine(3)
+
+        VQC_Controlled_Hadamard([1, 0], qm)
+        m = MeasureAll({"Z0": 1})
+        exp = m(q_machine=qm)
+        print(exp)
+
+        # [[1.]]
+
+VQC_CCZ
+^^^^^^^^^^^^^^^^
+
+.. py:function:: pyvqnet.qnn.vqc.VQC_CCZ(wires, q_machine)
+
+    Controlled-controlled-Z logic。
+
+    .. math::
+
+        CCZ =
+        \begin{pmatrix}
+        1 & 0 & 0 & 0 & 0 & 0 & 0 & 0\\
+        0 & 1 & 0 & 0 & 0 & 0 & 0 & 0\\
+        0 & 0 & 1 & 0 & 0 & 0 & 0 & 0\\
+        0 & 0 & 0 & 1 & 0 & 0 & 0 & 0\\
+        0 & 0 & 0 & 0 & 1 & 0 & 0 & 0\\
+        0 & 0 & 0 & 0 & 0 & 1 & 0 & 0\\
+        0 & 0 & 0 & 0 & 0 & 0 & 1 & 0\\
+        0 & 0 & 0 & 0 & 0 & 0 & 0 & -1
+        \end{pmatrix}
+    
+    :param wires: List of qubit subscripts, the first bit is the control bit. The list length is 3.
+    :param q_machine: Quantum virtual machine device.
+
+    :return:
+            pyqpanda QCircuit 
+
+    Example::
+
+        from pyvqnet.tensor import QTensor
+        from pyvqnet.qnn.vqc.qcircuit import VQC_CCZ
+        from pyvqnet.qnn.vqc import QMachine, MeasureAll
+        p = QTensor([0.2, 3, 4.0])
+
+        qm = QMachine(3)
+
+        VQC_CCZ([1, 0, 2], qm)
+        m = MeasureAll({"Z0": 1})
+        exp = m(q_machine=qm)
+        print(exp)
+
+        # [[0.9999999]]
+
+
+VQC_FermionicSingleExcitation
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. py:function:: pyvqnet.qnn.vqc.VQC_FermionicSingleExcitation(weight, wires, q_machine)
+
+    A coupled cluster single-excitation operator for exponentiating the tensor product of a Pauli matrix. The matrix form is given by:
+
+    .. math::
+
+        \hat{U}_{pr}(\theta) = \mathrm{exp} \{ \theta_{pr} (\hat{c}_p^\dagger \hat{c}_r
+        -\mathrm{H.c.}) \},
+
+    :param weight:  The parameter on qubit p has only one element.
+    :param wires: Denotes a subset of qubit indices in the interval [r, p]. Minimum length must be 2. The first index value is interpreted as r and the last index value as p.
+                 The intermediate index is acted on by the CNOT gate to calculate the parity of the qubit set.
+    :param q_machine: Quantum virtual machine device.
+
+    :return:
+            pyqpanda QCircuit
+
+    Examples::
+
+        from pyvqnet.tensor import QTensor
+        from pyvqnet.qnn.vqc.qcircuit import VQC_FermionicSingleExcitation
+        from pyvqnet.qnn.vqc import QMachine, MeasureAll
+        qm = QMachine(3)
+        p0 = QTensor([0.5])
+
+        VQC_FermionicSingleExcitation(p0, [1, 0, 2], qm)
+        m = MeasureAll({"Z0": 1})
+        exp = m(q_machine=qm)
+        print(exp)
+
+        # [[0.9999998]]
+
+
+VQC_FermionicDoubleExcitation
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. py:function:: pyvqnet.qnn.vqc.VQC_FermionicDoubleExcitation(weight, wires1, wires2, q_machine)
+
+    The coupled clustering dual excitation operator that exponentiates the tensor product of the Pauli matrix, the matrix form is given by:
+
+    .. math::
+
+        \hat{U}_{pqrs}(\theta) = \mathrm{exp} \{ \theta (\hat{c}_p^\dagger \hat{c}_q^\dagger
+        \hat{c}_r \hat{c}_s - \mathrm{H.c.}) \},
+
+    where :math:`\hat{c}` and :math:`\hat{c}^\dagger` are the fermion annihilation and Create operators and indices :math:`r, s` and :math:`p, q` in the occupied and
+    are empty molecular orbitals, respectively. Use the `Jordan-Wigner transformation <https://arxiv.org/abs/1208.5986>`_ The fermion operator defined above can be written as
+    According to the Pauli matrix (for more details, see `arXiv:1805.04340 <https://arxiv.org/abs/1805.04340>`_)
+
+    .. math::
+
+        \hat{U}_{pqrs}(\theta) = \mathrm{exp} \Big\{
+        \frac{i\theta}{8} \bigotimes_{b=s+1}^{r-1} \hat{Z}_b \bigotimes_{a=q+1}^{p-1}
+        \hat{Z}_a (\hat{X}_s \hat{X}_r \hat{Y}_q \hat{X}_p +
+        \hat{Y}_s \hat{X}_r \hat{Y}_q \hat{Y}_p +\\ \hat{X}_s \hat{Y}_r \hat{Y}_q \hat{Y}_p +
+        \hat{X}_s \hat{X}_r \hat{X}_q \hat{Y}_p - \mathrm{H.c.}  ) \Big\}
+
+    :param weight: Variable parameter.
+    :param wires1: The index list of qubits representing the subset of qubits occupied in the interval [s, r]. The first index is interpreted as s, the last as r.
+     CNOT gates operate on intermediate indices to compute the parity of a set of qubits.
+    :param wires2: The index list of qubits representing the subset of qubits occupied in the interval [q, p]. The first index is interpreted as q, the last as p. 
+     CNOT gates operate on intermediate indices to compute the parity of a set of qubits.
+    :param q_machine: Quantum virtual machine device.
+
+    :return:
+        pyqpanda QCircuit
+
+    Examples::
+
+        from pyvqnet.tensor import QTensor
+        from pyvqnet.qnn.vqc.qcircuit import VQC_FermionicDoubleExcitation
+        from pyvqnet.qnn.vqc import QMachine, MeasureAll
+        qm = QMachine(5)
+        p0 = QTensor([0.5])
+
+        VQC_FermionicDoubleExcitation(p0, [0, 1], [2, 3], qm)
+        m = MeasureAll({"Z0": 1})
+        exp = m(q_machine=qm)
+        print(exp)
+        
+        # [[0.9999998]]
+
+VQC_UCCSD
+^^^^^^^^^^^^^
+
+.. py:function:: pyvqnet.qnn.vqc.VQC_UCCSD(weights, wires, s_wires, d_wires, init_state, q_machine)
+
+    Realize the unitary coupled cluster single-excitation and double-excitation design (UCCSD). UCCSD is the proposed VQE design, commonly used to run quantum chemistry simulations.
+
+    Within the first-order Trotter approximation, the UCCSD unitary function is given by:
+
+    .. math::
+
+        \hat{U}(\vec{\theta}) =
+        \prod_{p > r} \mathrm{exp} \Big\{\theta_{pr}
+        (\hat{c}_p^\dagger \hat{c}_r-\mathrm{H.c.}) \Big\}
+        \prod_{p > q > r > s} \mathrm{exp} \Big\{\theta_{pqrs}
+        (\hat{c}_p^\dagger \hat{c}_q^\dagger \hat{c}_r \hat{c}_s-\mathrm{H.c.}) \Big\}
+
+    where :math:`\hat{c}` and :math:`\hat{c}^\dagger` are the fermion annihilation and
+    Create operators and indices :math:`r, s` and :math:`p, q` in the occupied and
+    are empty molecular orbitals, respectively. (For more details see `arXiv:1805.04340 <https://arxiv.org/abs/1805.04340>`_):
+
+
+    :param weights: A ``(len(s_wires)+ len(d_wires))`` tensor containing the parameters
+         :math:`\theta_{pr}` and :math:`\theta_{pqrs}` input Z rotation
+         ``FermionicSingleExcitation`` and ``FermionicDoubleExcitation``.
+    :param wires: Qubit indexing of template effects
+    :param s_wires: A sequence of lists ``[r,...,p]`` containing qubit indices
+         produced by a single excitation
+         :math:`\vert r, p \rangle = \hat{c}_p^\dagger \hat{c}_r \vert \mathrm{HF} \rangle`,
+         where :math:`\vert \mathrm{HF} \rangle` represents the Hartree-Fock reference state.
+    :param d_wires: sequence of lists, each list containing two lists
+         specify indices ``[s, ...,r]`` and ``[q,...,p]``
+         Define double excitation: math:`\vert s, r, q, p \rangle = \hat{c}_p^\dagger \hat{c}_q^\dagger \hat{c}_r\hat{c}_s \ vert \mathrm{HF} \rangle`.
+    :param init_state: length ``len(wires)`` occupation-number vector representation
+         high frequency state. ``init_state`` is the qubit initialization state.
+    :param q_machine: Quantum virtual machine device.
+
+    Examples::
+
+        from pyvqnet.qnn.vqc import VQC_UCCSD, QMachine, MeasureAll
+        from pyvqnet.tensor import QTensor
+        p0 = QTensor([2, 0.5, -0.2, 0.3, -2, 1, 3, 0])
+        s_wires = [[0, 1, 2], [0, 1, 2, 3, 4], [1, 2, 3], [1, 2, 3, 4, 5]]
+        d_wires = [[[0, 1], [2, 3]], [[0, 1], [2, 3, 4, 5]], [[0, 1], [3, 4]],
+                [[0, 1], [4, 5]]]
+        qm = QMachine(6)
+
+        VQC_UCCSD(p0, range(6), s_wires, d_wires, QTensor([1.0, 1, 0, 0, 0, 0]), qm)
+        m = MeasureAll({"Z1": 1})
+        exp = m(q_machine=qm)
+        print(exp)
+
+        # [[0.963802]]
+
+
+VQC_QuantumPoolingCircuit
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. py:function:: pyvqnet.qnn.vqc.VQC_QuantumPoolingCircuit(ignored_wires, sinks_wires, params, q_machine)
+
+    A quantum circuit that downsamples data.
+
+    To reduce the number of qubits in a circuit, pairs of qubits are first created in the system. After initially pairing all qubits, a generalized 2-qubit unitary is applied to each pair of qubits. 
+    And after applying the two-qubit unitary, one qubit in each pair of qubits is ignored in the rest of the neural network.
+    :param sources_wires: The source qubit index that will be ignored.
+    :param sinks_wires: The target qubit index to keep.
+    :param params: Input parameters.
+    :param q_machine: Quantum virtual machine device.
+
+    :return:
+        pyqpanda QCircuit
+
+    Examples:: 
+
+        from pyvqnet.qnn.vqc import VQC_QuantumPoolingCircuit, QMachine
+        import pyqpanda as pq
+        from pyvqnet import tensor
+        machine = pq.CPUQVM()
+        machine.init_qvm()
+        qlists = machine.qAlloc_many(4)
+        p = tensor.full([6], 0.35)
+        qm = QMachine(4)
+        VQC_QuantumPoolingCircuit(q_machine=qm,
+                                ignored_wires=[0, 1],
+                                sinks_wires=[2, 3],
+                                params=p)
+        m = MeasureAll({"Z1": 1})
+        exp = m(q_machine=qm)
+        print(exp)
+
+        # 
+
+
+VQC_HardwareEfficientAnsatz
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. py:class:: pyvqnet.qnn.vqc.VQC_HardwareEfficientAnsatz(n_qubits,single_rot_gate_list,entangle_gate="CNOT",entangle_rules='linear',depth=1)
+
+    The implementation of Hardware Efficient Ansatz introduced in the paper:`Hardware-efficient Variational Quantum Eigensolver for Small Molecules <https://arxiv.org/pdf/1704.05018.pdf>`__ 。
+
+    :param n_qubits: number of qubits.
+    :param single_rot_gate_list: A single-qubit turnstile list consists of one or more turnstiles that act on each qubit. Rx, Ry, Rz are currently supported.
+    :param entangle_gate: Nonparametric entanglement gates. Support CNOT, CZ. Default: CNOT.
+    :param entangle_rules: How to use entanglement gates in circuits. ``linear`` means that the entanglement gate will act on every adjacent qubit. 
+        ``all`` means that the entanglement gate will act on any two qbuits. Default: ``linear``.
+    :param depth: Ansatz depth, default: 1.
+
+    Example::
+
+        from pyvqnet.nn import Module,Linear,ModuleList
+        from pyvqnet.qnn.vqc.qcircuit import VQC_HardwareEfficientAnsatz,RZZ,RZ
+        from pyvqnet.qnn.vqc import Probability,QMachine
+        from pyvqnet import tensor
+
+        class QM(Module):
+            def __init__(self, name=""):
+                super().__init__(name)
+                self.linearx = Linear(4,2)
+                self.ansatz = VQC_HardwareEfficientAnsatz(4, ["rx", "RY", "rz"],
+                                            entangle_gate="cnot",
+                                            entangle_rules="linear",
+                                            depth=2)
+                self.encode1 = RZ(wires=0)
+                self.encode2 = RZ(wires=1)
+                self.measure = Probability(wires=[0,2])
+                self.device = QMachine(4)
+            def forward(self, x, *args, **kwargs):
+                self.device.reset_states(x.shape[0])
+                y = self.linearx(x)
+                self.encode1(params = y[:, [0]],q_machine = self.device,)
+                self.encode2(params = y[:, [1]],q_machine = self.device,)
+                self.ansatz(q_machine =self.device)
+                return self.measure(q_machine =self.device)
+
+        bz =3
+        inputx = tensor.arange(1.0,bz*4+1).reshape([bz,4])
+        inputx.requires_grad= True
+        qlayer = QM()
+        y = qlayer(inputx)
+        y.backward()
+        print(y)
+        # [[0.3075959 0.2315064 0.2491432 0.2117545]
+        #  [0.3075958 0.2315062 0.2491433 0.2117546]
+        #  [0.3075958 0.2315062 0.2491432 0.2117545]]
+
+VQC_BasicEntanglerTemplate
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. py:class:: pyvqnet.qnn.vqc.VQC_BasicEntanglerTemplate(num_layer=1, num_qubits=1, rotation="RX", initial=None, dtype=None)
+
+    A layer consisting of a single-parameter single-qubit rotation on each qubit, followed by a closed chain or ring combination of multiple CNOT gates.
+
+    A CNOT gate ring connects each qubit to its neighbors, with the last qubit considered to be a neighbor of the first qubit.
+
+    :param num_layer: The number of qubit circuit layers.
+    :param num_qubits: The number of qubits, defaults to 1.
+    :param rotation: With single-parameter single-qubit gates, ``RX`` is used as the default.
+
+    Example::
+
+        from pyvqnet.nn import Module, Linear, ModuleList
+        from pyvqnet.qnn.vqc.qcircuit import VQC_BasicEntanglerTemplate, RZZ, RZ
+        from pyvqnet.qnn.vqc import Probability, QMachine
+        from pyvqnet import tensor
+
+
+        class QM(Module):
+            def __init__(self, name=""):
+                super().__init__(name)
+
+                self.ansatz = VQC_BasicEntanglerTemplate(2,
+                                                    4,
+                                                    "rz",
+                                                    initial=tensor.ones([1, 1]))
+
+                self.measure = Probability(wires=[0, 2])
+                self.device = QMachine(4)
+
+            def forward(self,x, *args, **kwargs):
+
+                self.ansatz(q_machine=self.device)
+                return self.measure(q_machine=self.device)
+
+        bz = 1
+        inputx = tensor.arange(1.0, bz * 4 + 1).reshape([bz, 4])
+        qlayer = QM()
+        y = qlayer(inputx)
+        y.backward()
+        print(y)
+
+        # [[1.0000002 0.        0.        0.       ]]
+
+
+VQC_StronglyEntanglingTemplate
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. py:class:: pyvqnet.qnn.vqc.VQC_StronglyEntanglingTemplate(weights=None, num_qubits=1, ranges=None)
+
+    A layer consisting of a single qubit rotation and an entangler, see `circuit-centric classifier design <https://arxiv.org/abs/1804.00633>`__.
+
+    The parameter ``weights`` contains the weights for each layer. Thus it follows that the number of layers :math:`L` is equal to the first dimension of ``weights``.
+
+    It consists of 2-qubit CNOT gates acting on :math: `M` qubits, :math:`i = 1,...,M`. The second qubit label for each gate is given by the formula :math:`(i+r)\mod M`, where :math:`r` is a hyperparameter called ``range``, and :math: `0 < r < M`.
+
+    :param weights: Weight tensor of shape ``(L, M, 3)``, default: None, use a random tensor of shape ``(1,1,3)``.
+    :param num_qubits: The number of qubits, default: 1.
+    :param ranges: Sequence of hyperparameters that determine the ranges of each subsequent layer; default: None, use :math:`r=l \ mod M` as the value of ranges.
+
+    Example::
+
+        from pyvqnet.nn import Module
+        from pyvqnet.qnn.vqc.qcircuit import VQC_StronglyEntanglingTemplate
+        from pyvqnet.qnn.vqc import Probability, QMachine
+        from pyvqnet import tensor
+
+
+        class QM(Module):
+            def __init__(self, name=""):
+                super().__init__(name)
+
+                self.ansatz = VQC_StronglyEntanglingTemplate(2,
+                                                    4,
+                                                    None,
+                                                    initial=tensor.ones([1, 1]))
+
+                self.measure = Probability(wires=[0, 1])
+                self.device = QMachine(4)
+
+            def forward(self,x, *args, **kwargs):
+
+                self.ansatz(q_machine=self.device)
+                return self.measure(q_machine=self.device)
+
+        bz = 1
+        inputx = tensor.arange(1.0, bz * 4 + 1).reshape([bz, 4])
+        qlayer = QM()
+        y = qlayer(inputx)
+        y.backward()
+        print(y)
+
+        # [[0.3745951 0.154298  0.059156  0.4119509]]
+
+
+VQC_QuantumEmbedding
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. py:class:: pyvqnet.qnn.VQC_QuantumEmbedding(qubits, machine, num_repetitions_input, depth_input, num_unitary_layers, num_repetitions)
+
+    Use RZ,RY,RZ to create variational quantum circuits that encode classical data into quantum states.
+    Reference `Quantum embeddings for machine learning <https://arxiv.org/abs/2001.03622>`_.
+    After the class is initialized, its member function ``compute_circuit`` is a running function, which can be input as a parameter. 
+    The ``QuantumLayerV2`` class constitutes a layer of the quantum machine learning model.
+
+    :param qubits: Qubits requested using pyqpanda.
+    :param machine: Quantum virtual machine requested by pyqpanda.
+    :param num_repetitions_input: Number of repetitions to encode input in submodules.
+    :param depth_input: The feature dimension of the input data.
+    :param num_unitary_layers: The number of repetitions of the variable quantum gates in each submodule.
+    :param num_repetitions: The number of repetitions for the submodule.
+
+    Example::
+
+        from pyvqnet.nn import Module
+        from pyvqnet.qnn.vqc.qcircuit import VQC_QuantumEmbedding
+        from pyvqnet.qnn.vqc import  QMachine,MeasureAll
+        from pyvqnet import tensor
+        import pyvqnet
+        depth_input = 2
+        num_repetitions = 2
+        num_repetitions_input = 2
+        num_unitary_layers = 2
+        nq = depth_input * num_repetitions_input
+        bz = 12
+
+        class QM(Module):
+            def __init__(self, name=""):
+                super().__init__(name)
+
+                self.ansatz = VQC_QuantumEmbedding(num_repetitions_input, depth_input,
+                                                num_unitary_layers,
+                                                num_repetitions, pyvqnet.kfloat64,
+                                                initial=tensor.full([1],12.0))
+
+                self.measure = MeasureAll({f"Z{nq-1}":1})
+                self.device = QMachine(nq,dtype=pyvqnet.kcomplex128)
+
+            def forward(self, x, *args, **kwargs):
+                self.device.reset_states(x.shape[0])
+                self.ansatz(x,q_machine=self.device)
+                return self.measure(q_machine=self.device)
+
+        inputx = tensor.arange(1.0, bz * depth_input + 1,
+                                dtype=pyvqnet.kfloat64).reshape([bz, depth_input])
+        qlayer = QM()
+        y = qlayer(inputx)
+        y.backward()
+        print(y)
+        # [[-0.2539548]
+        #  [-0.1604787]
+        #  [ 0.1492931]
+        #  [-0.1711956]
+        #  [-0.1577133]
+        #  [ 0.1396999]
+        #  [ 0.016864 ]
+        #  [-0.0893069]
+        #  [ 0.1897014]
+        #  [ 0.0941301]
+        #  [ 0.0550722]
+        #  [ 0.2408579]]
+
+
+VQC_Purity
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. py:class:: pyvqnet.qnn.vqc.VQC_Purity(state, qubits_idx, num_wires)
+
+    Calculate the purity on a particular qubit from the state vector.
+
+    .. math::
+        \gamma = \text{Tr}(\rho^2)
+
+    where :math:`\rho` is a density matrix. The purity of a normalized quantum state satisfies :math:`\frac{1}{d} \leq \gamma \leq 1` ,
+    where :math:`d` is the dimension of the Hilbert space.
+    The purity of the pure state is 1.
+
+    :param state: Quantum state obtained from pyqpanda get_qstate()
+    :param qubits_idx: Qubit index for which to calculate purity
+    :param num_wires: Qubit idx
+
+    :return:
+            purity
+
+    Example::
+
+        from pyvqnet.qnn.vqc import VQC_Purity, rx, ry, cnot, QMachine
+        from pyvqnet.tensor import kfloat64, QTensor
+        x = QTensor([[0.7, 0.4], [1.7, 2.4]], requires_grad=True)
+        qm = QMachine(3)
+        qm.reset_states(2)
+        rx(q_machine=qm, wires=0, params=x[:, [0]])
+        ry(q_machine=qm, wires=1, params=x[:, [1]])
+        ry(q_machine=qm, wires=2, params=x[:, [1]])
+        cnot(q_machine=qm, wires=[0, 1])
+        cnot(q_machine=qm, wires=[2, 1])
+        y = VQC_Purity(qm.states, [0, 1], num_wires=3)
+        y.backward()
+        print(y)
+
+        # [0.9356751 0.875957]
+
+VQC_VarMeasure
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. py:class:: pyvqnet.qnn.vqc.VQC_VarMeasure(q_machine, obs)
+
+    The variance of the provided observable.
+
+    :param q_machine: Quantum state obtained from pyqpanda get_qstate()
+    :param obs: constructed quantum circuit
+
+    :return: variance value
+
+    Example::
+
+        from pyvqnet.tensor import QTensor
+        from pyvqnet.qnn.vqc import VQC_VarMeasure, rx, cnot, hadamard, QMachine,PauliY
+        x = QTensor([[0.5]], requires_grad=True)
+        qm = QMachine(3)
+        rx(q_machine=qm, wires=0, params=x)
+        var_result = VQC_VarMeasure(q_machine= qm, obs=PauliY(wires=0))
+        var_result.backward()
+        print(var_result)
+
+        # [[0.7701511]]
+
+VQC_DensityMatrixFromQstate
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. py:class:: pyvqnet.qnn.vqc.VQC_DensityMatrixFromQstate(state, indices)
+
+    Computes the density matrix of quantum states over a specific set of qubits.
+
+    :param state: A 1D list of state vectors. The size of this list should be ``(2**N,)`` For the number of qubits ``N``, qstate should start from 000 -> 111.
+    :param indices: A list of qubit indices in the considered subsystem.
+
+    :return: A density matrix of size "(2**len(indices), 2**len(indices))".
+
+    Example::
+
+        from pyvqnet.qnn.vqc import VQC_DensityMatrixFromQstate,rx,ry,cnot,QMachine
+        from pyvqnet.tensor import kfloat64, QTensor
+        x = QTensor([[0.7,0.4],[1.7,2.4]],requires_grad=True)
+
+        qm = QMachine(3)
+        qm.reset_states(2)
+        rx(q_machine=qm,wires=0,params=x[:,[0]])
+        ry(q_machine=qm,wires=1,params=x[:,[1]])
+        ry(q_machine=qm,wires=2,params=x[:,[1]])
+        cnot(q_machine=qm,wires=[0,1])
+        cnot(q_machine=qm,wires=[2, 1])
+        y = VQC_DensityMatrixFromQstate(qm.states,[0,1])
+        print(y)
+
+        # [[[0.8155131+0.j        0.1718155+0.j        0.       +0.0627175j
+        #   0.       +0.2976855j]
+        #  [0.1718155+0.j        0.0669081+0.j        0.       +0.0244234j
+        #   0.       +0.0627175j]
+        #  [0.       -0.0627175j 0.       -0.0244234j 0.0089152+0.j
+        #   0.0228937+0.j       ]
+        #  [0.       -0.2976855j 0.       -0.0627175j 0.0228937+0.j
+        #   0.1086637+0.j       ]]
+        # 
+        # [[0.3362115+0.j        0.1471083+0.j        0.       +0.1674582j
+        #   0.       +0.3827205j]
+        #  [0.1471083+0.j        0.0993662+0.j        0.       +0.1131119j
+        #   0.       +0.1674582j]
+        #  [0.       -0.1674582j 0.       -0.1131119j 0.1287589+0.j
+        #   0.1906232+0.j       ]
+        #  [0.       -0.3827205j 0.       -0.1674582j 0.1906232+0.j
+        #   0.4356633+0.j       ]]]   
+
+
+Probability
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. py:class:: pyvqnet.qnn.vqc.Probability(wires)
+
+    Computes the line probability measure.
+
+    :param wires: Measure qubit idx.
+
+    :return: output Tensor.
+
+    Example::
+
+        from pyvqnet.qnn.vqc import Probability,rx,ry,cnot,QMachine,rz
+        from pyvqnet.tensor import kfloat64, QTensor
+        x = QTensor([[0.56, 0.1],[0.56, 0.1]],requires_grad=True)
+        qm = QMachine(4)
+        qm.reset_states(2)
+        rz(q_machine=qm,wires=0,params=x[:,[0]])
+        rz(q_machine=qm,wires=1,params=x[:,[0]])
+        cnot(q_machine=qm,wires=[0,1])
+        ry(q_machine=qm,wires=2,params=x[:,[1]])
+        cnot(q_machine=qm,wires=[0,2])
+        rz(q_machine=qm,wires=3,params=x[:,[1]])
+        ma = Probability(1)
+        y =ma(q_machine=qm)
+
+        # [[1.0000002 0.       ]
+        #  [1.0000002 0.       ]]        
+
+MeasureAll
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. py:class:: pyvqnet.qnn.vqc.MeasureAll(obs)
+
+    Calculate the measurement results of quantum circuits,
+    and support input obs as multiple or single Pauli operators or Hamiltonian quantities.
+    
+    For example:
+
+    {\'wires\': [0,  1], \'observables\': [\'x\', \'i\'],\'coefficient\':[0.23,-3.5]}
+    or：
+    {\'X0\': 0.23}
+    or：
+    [{\'wires\': [0, 2, 3],\'observables\': [\'X\', \'Y\', \'Z\'],\'coefficient\': [1, 0.5, 0.4]}, {\'wires\': [0, 1, 2],\'observables\': [\'X\', \'Y\', \'Z\'],\'coefficient\': [1, 0.5, 0.4]}]
+
+    :param obs: observable。
+
+    :return: output Tensor.
+
+    Example::
+
+        from pyvqnet.qnn.vqc import MeasureAll,rx,ry,cnot,QMachine,rz
+        from pyvqnet.tensor import kfloat64, QTensor
+        x = QTensor([[0.56, 0.1],[0.56, 0.1]],requires_grad=True)
+        qm = QMachine(4)
+        qm.reset_states(2)
+        rz(q_machine=qm,wires=0,params=x[:,[0]])
+        rz(q_machine=qm,wires=1,params=x[:,[0]])
+        cnot(q_machine=qm,wires=[0,1])
+        ry(q_machine=qm,wires=2,params=x[:,[1]])
+        cnot(q_machine=qm,wires=[0,2])
+        rz(q_machine=qm,wires=3,params=x[:,[1]])
+        obs_list = [{
+            'wires': [0, 2, 3],
+            'observables': ['X', 'Y', 'Z'],
+            'coefficient': [1, 0.5, 0.4]
+        }, {
+            'wires': [0, 1, 2],
+            'observables': ['X', 'Y', 'Z'],
+            'coefficient': [1, 0.5, 0.4]
+        }]
+        ma = MeasureAll(obs_list)
+        y =ma(q_machine=qm)
+        print(y)
+
+        # [[0.4000001 0.3980018]
+        #  [0.4000001 0.3980018]]
 
 
 
