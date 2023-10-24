@@ -1,11 +1,12 @@
 Other Utility Functions
-=========================
+##################################
 
 Seeds for Random Distributions
-----------------------------------
+*******************************************
+
 
 set_random_seed
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+==============================
 
 .. py:function:: pyvqnet.utils.set_random_seed(seed)
     
@@ -91,7 +92,7 @@ set_random_seed
         # ]
 
 get_random_seed
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+==============================
 
 .. py:function:: pyvqnet.utils.get_random_seed()
     
@@ -107,7 +108,7 @@ get_random_seed
         #256
 
 VQNet2ONNX module
--------------------
+*******************************************
 
 The VQNet2ONNX module supports converting VQNet models and parameters to ONNX model format. The deployment of the VQNet model to a variety of inference engines can be completed through ONNX, including TensorRT/OpenVINO/MNN/TNN/NCNN, and other inference engines or hardware that support the ONNX open source format.
 
@@ -282,13 +283,13 @@ The following are the supported VQNet modules
 
 
 VQNet distributed computing module
-----------------------------------
+*******************************************
 
 VQNet distributed computing module supports the quantum machine learning model through the corresponding interface of the distributed computing module to achieve data segmentation, 
 communication of model parameters between multiple processes, and update of model parameters. The model is accelerated based on the distributed computing module.
 
 init_process
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+=====================
 
 Use ``init_process`` to initialize distributed computing parameters.
 
@@ -324,7 +325,7 @@ Use ``init_process`` to initialize distributed computing parameters.
             ...
 
 split_data
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+===============
 
 In multiple processes, use ``split_data`` to split the data according to the number of processes and return the data on the corresponding process.
 
@@ -349,7 +350,7 @@ In multiple processes, use ``split_data`` to split the data according to the num
         return x_train, y_train
 
 model_allreduce
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+========================
 
 Use ``model_allreduce`` to pass and update model parameters in different processes in the allreduce manner.
 
@@ -387,7 +388,7 @@ Use ``model_allreduce`` to pass and update model parameters in different process
         # mpirun -n 2 python run.py
 
 model_reduce
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+========================
 
 Use ``model_reduce`` to pass and update model parameters in different processes in the form of reduce.
 
@@ -432,7 +433,7 @@ Environment dependency: mpich, mpi4py,gcc,gfortran
     Currently, only CPU-based distributed computing is supported, and distributed computing using gloo and nccl as communication libraries is not supported.
 
 Distributed computing single node environment deployment
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+=========================================================================
 
     Complete the compilation and installation of the mpich communication library, 
     and check whether the gcc and gfortran compilers are installed before compilation.
@@ -475,7 +476,7 @@ Distributed computing single node environment deployment
     After, use which to check whether the configured environment variables are correct. If its path is displayed, the installation was successfully completed.
 
 Distributed computing multi-node environment deployment
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+==============================================================
 
     To implement distributed computing on multiple nodes, you first need to ensure that the mpich environment and python environment on multiple nodes are consistent. 
     Secondly, you need to set up secret-free communication between nodes.
@@ -529,7 +530,7 @@ Distributed computing multi-node environment deployment
 
 
 Example
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+=======================
 
 This block introduces how to use the VQNet distributed computing interface to implement data parallel training models on the CPU hardware platform. 
 The use case is the test_mdis.py file in the example directory.

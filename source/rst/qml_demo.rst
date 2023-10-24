@@ -1,13 +1,13 @@
 Quantum Machine Learning Demos
-==================================
+#################################
 
 The following are some examples of quantum machine learning algorithms.  
 
 Application of Parameterized Quantum Circuit in Classification Task
-----------------------------------------------------------------------
+*****************************************************************************************************
 
 1. QVC demo
-^^^^^^^^^^^^^^^^^^
+========================================
 
 This example uses VQNet to implement the algorithm in the thesis: `Circuit-centric quantum classifiers <https://arxiv.org/pdf/1804.00633.pdf>`_  .
 This example is used to determine whether a binary number is odd or even. By encoding the binary number onto the qubit and optimizing the variable parameters in the circuit, 
@@ -249,7 +249,7 @@ The following picture illustrates the curve of model's accuracy:
 |
 
 2. data re-uploading algorithm
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+=======================================
 In a neural network, each neuron receives information from all neurons in the upper layer (Figure a). 
 In contrast, the single-bit quantum classifier accepts the previous information processing unit and input (Figure b).
 For traditional quantum circuits, when the data is uploaded, the result can be obtained directly through several unitary 
@@ -405,7 +405,7 @@ The following picture illustrates the curve of model's accuracy：
 |
 
 3. VSQL: Variational Shadow Quantum Learning for Classification Model
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+================================================================================================================================================================
 Using variable quantum circuits to construct a two-class classification model, 
 comparing the classification accuracy with a neural network with similar parameter accuracy, 
 the accuracy of the two is similar. The quantity of parameters of quantum circuits is much smaller than that of classical neural networks.
@@ -764,7 +764,7 @@ The following shows the curve of model's accuacy and loss：
 |
 
 4.Quanvolution for image classification
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+=======================================================================================================================
 
 In this example, we implement a Quantum Convolutional Neural Network, a type originally introduced in the paper `Quanvolutional Neural Networks: Powering Image Recognition with Quantum Circuits <https://arxiv.org/abs/1904.04767>`_ method.
 
@@ -1045,10 +1045,10 @@ Training set, verification set loss, training set, verification set classificati
 
 
 Quantum AutoEncoder Demo
-----------------------------------
+*******************************
 
 1.Quantum AutoEncoder
-^^^^^^^^^^^^^^^^^^^^^^^
+=======================================
 
 The classic autoencoder is a neural network that can learn high-efficiency low-dimensional representations of data in a high-dimensional space. 
 The task of the autoencoder is to map x to a low-dimensional point y given an input x, so that x can be recovered from y.
@@ -1297,10 +1297,10 @@ The QAE error value obtained by running the above code, the loss is 1/fidelity, 
 |
 
 Quantum Circuits Structure Learning Demo
--------------------------------------------
+********************************************
 
 1.Quantum circuits structure learning
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+===============================================================================
 
 In the quantum circuit structure, the most frequently used quantum gates with parameters are `RZ` ,  `RY` , and  `RX`  gates, but which gate to use under what circumstances is a question worth studying. One method is random selection, but in this case It is very likely that the best results will not be achieved.
 The core goal of Quantum circuit structure learning task is to find the optimal combination of quantum gates with parameters.
@@ -1449,10 +1449,10 @@ And with the parameters in the quantum gate :math:`\theta_1`, :math:`\theta_2` c
 |
 
 Hybird Quantum Classic Nerual Network Demo
---------------------------------------------------
+********************************************
 
 1.Hybrid Quantum Classic Neural Network Model
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+==============================================================================
 
 Machine learning (ML) has become a successful interdisciplinary field that aims to extract generalizable information from data mathematically. 
 Quantum machine learning seeks to use the principles of quantum mechanics to enhance machine learning, and vice versa.
@@ -1895,7 +1895,7 @@ The visualization curve of data loss function and accuracy on train and test dat
 |
 
 2.Hybrid quantum classical transfer learning model
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+=======================================================================================================================
 We apply a machine learning method called transfer learning to image classifier based on hybrid classical quantum
 network. We will write a simple example of integrating PyQPanda with VQNet.Transfer learning is based on general intuition,
 that is, if the pre-trained network is good at solving a given problem, it can also be used to solve a different
@@ -2598,7 +2598,7 @@ Run classification on test set
 |
 
 3. Hybrid quantum classical Unet network model
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+==============================================================================
 
 Image segmentation Image segmentation is a classical problem in the research of computer vision and has become a hot
 spot in the field of image understanding. Image segmentation an important part of image understanding, and one of the most difficult problems in image processing.
@@ -3151,7 +3151,7 @@ Run classification on test set
 
 
 4.Hybrid quantum-classical QCNN network model
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+===============================================================================
 
 We introduce and analyze a novel quantum machine learning model powered by convolutional neural networks.
 `Quantum Convolutional Neural Networks <https://arxiv.org/pdf/1810.03787.pdf>`_ is an algorithm for solving classical image classification.
@@ -3581,7 +3581,7 @@ Visualize the operation
 
 
 5.Hybrid quantum-classical QMLP network model
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+===============================================================================
 
 We introduce and analyze a proposed quantum multilayer perceptron (QMLP) architecture featuring fault-tolerant input embeddings, rich nonlinearities, and enhanced variational circuit simulations with parameterized two-qubit entanglement gates.
 `QMLP: An Error-Tolerant Nonlinear Quantum MLP Architecture using Parameterized Two-Qubit Gates <https://arxiv.org/pdf/2206.01345.pdf>`_ .
@@ -3948,7 +3948,7 @@ Loss situation on the training set.
 
 
 6.Hybrid quantum-classical QDRL network model
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+===============================================================================
 
 We introduce and analyze a proposed quantum reinforcement learning network (QDRL), whose features reshape classical deep reinforcement learning algorithms such as experience replay and target networks into representations of variational quantum circuits.
 Furthermore, we use a quantum information encoding scheme to reduce the number of model parameters compared to classical neural networks. `QDRL: Variational Quantum Circuits for Deep Reinforcement Learning <https://arxiv.org/pdf/1907.00397.pdf>`_.
@@ -4173,13 +4173,13 @@ The training results are shown in the figure below. It can be seen that the fina
 
 
 Unsupervised learning
--------------------------
+****************************
 
 1 Quantum Kmeans
-^^^^^^^^^^^^^^^^^^^^^^^^^^
+=======================================
 
 1.1 Introduction
-""""""""""""""""""""
+-----------------------
 
 Clustering algorithm is a typical unsupervised learning algorithm, which is mainly used to automatically classify similar samples into one class. In the clustering algorithm, samples are divided into different categories according to the similarity between samples. For different similarity calculation methods, different clustering results will be obtained. The common similarity calculation method is Euclidean distance method. What we want to show is the quantum k-means algorithm. K-means algorithm is a distance based clustering algorithm. It takes distance as the evaluation index of similarity, that is, the closer the distance between two objects, the greater the similarity. The algorithm considers that clusters are composed of objects close to each other, so compact and independent clusters are the ultimate goal.
 
@@ -4187,7 +4187,7 @@ Quantum kmeans quantum machine learning model can also be developed in VQNet. An
 
 
 1.2 Introduction to algorithm principle
-"""""""""""""""""""""""""""""""""""""""""""""""
+------------------------------------------------
 
 The implementation of quantum k-means algorithm mainly uses swap test to compare the distance between input data points. Randomly select k points from N data points as centroids, measure the distance from each point to each centroid, assign it to the nearest centroid class, recalculate the centroid of each class, and iterate 2 to 3 steps until the new centroid is equal to or less than the specified threshold. In our example, we select 100 data points and 2 centroids, and use cswap circuit to calculate the distance.
 Finally, we obtained two data point clusters. :math:`|0\rangle` is an auxiliary bit, through the H logic gate, the qubit will become :math:`\frac{1}{\sqrt{2}}(|0\rangle + |1\rangle)`. Under the control of  :math:`|1\rangle` qubit,
@@ -4218,16 +4218,16 @@ Visible measurement qubit :math:`|1\rangle` ​ is positively correlated with Eu
 |
 
 1.3 VQNet  implementation
-"""""""""""""""""""""""""""
+---------------------------------
 
 1.3.1 Environmental preparation
-***********************************
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 The environment adopts Python 3 8. It is recommended to use CONDA for environment configuration. It comes with numpy, SciPy, Matplotlib, sklearn and other toolkits for easy use. If the python environment is adopted, relevant packages need to be installed, and the following environment pyvqnet needs to be prepared
 
 
 1.3.2 Data preparation
-**************************
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 The data is randomly generated by make_blobs under SciPy, and the function is defined to generate Gaussian distribution data.
 
@@ -4261,7 +4261,7 @@ The data is randomly generated by make_blobs under SciPy, and the function is de
         return points, centers
 
 1.3.3 Quantum circuit
-*************************
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Constructing quantum circuits using VQNet
 
@@ -4315,7 +4315,7 @@ Constructing quantum circuits using VQNet
             return data['001'] / 1024.0
 
 1.3.4 Data visualization
-********************************
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Visual calculation of relevant clustering data
 
@@ -4334,7 +4334,7 @@ Visual calculation of relevant clustering data
         plt.show()
 
 1.3.5 Cluster calculation
-*****************************
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Calculate the cluster center of relevant cluster data
 
@@ -4422,7 +4422,7 @@ Calculate the cluster center of relevant cluster data
 
 
 1.3.6 Data distribution before clustering
-**************************************************
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. figure:: ./images/ep_1.png
    :width: 600 px
@@ -4431,7 +4431,7 @@ Calculate the cluster center of relevant cluster data
 |
 
 1.3.7 Data distribution after clustering
-**************************************************
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. figure:: ./images/ep_9.png
    :width: 600 px
@@ -4440,10 +4440,10 @@ Calculate the cluster center of relevant cluster data
 |
 
 Quantum Machine Learning Research
--------------------------------------
+*********************************************
 
 Quantum models as Fourier series
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+================================================================================
 
 Quantum computers can be used for supervised learning by treating parametrised quantum circuits as models that map data
 inputs to predictions. While a lot of work has been done to investigate practical implications of this approach, many important
@@ -5065,7 +5065,7 @@ The network training loss is:
     epoch:4, #### loss:2.1258629738507562e-10
 
 Expressive power of quantum circuits
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+===============================================================================
 
 In the paper `Expressibility and entangling capability of parameterized quantum circuits for hybrid quantum-classical algorithms <https://arxiv.org/abs/1905.10876>`_,
 The authors propose a method for expressiveness quantification based on the fidelity probability distribution between neural network output states.
@@ -5211,7 +5211,7 @@ The following uses VQNet to demonstrate the quantum circuit expression capabilit
 
 
 Quantum Perceptron
-^^^^^^^^^^^^^^^^^^^^^
+=======================================
 
 Artificial neural networks are the heart of machine learning algorithms and artificial intelligence protocols. Historically, the simplest implementation of an artificial neuron traces back to the classical Rosenblatt's `perceptron`, but its long term practical applications may be hindered by the fast scaling up of computational complexity, especially relevant for the training of multilayered perceptron networks.
 Here we refer to the paper `An Artificial Neuron Implemented on an Actual Quantum Processor <https://arxiv.org/abs/1811.02266>`__ introduce a quantum information-based algorithm implementing the quantum computer version of a perceptron, which shows exponential advantage in encoding resources over alternative realizations.
@@ -5285,7 +5285,7 @@ On the test data, the accuracy results on the test data can be obtained
 
 
 Quantum Nature Gradient
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+===============================================================================
 Quantum machine learning models generally use the gradient descent method to optimize parameters in variable quantum logic circuits. The formula of the classic gradient descent method is as follows:
 
 .. math:: \theta_{t+1} = \theta_t -\eta \nabla \mathcal{L}(\theta),
@@ -5491,7 +5491,7 @@ it can be seen that the loss function declines faster using the quantum natural 
 |
 
 Stochastic parameter shift algorithm
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+===============================================================================
 
 In the quantum variational circuit, it is a common method to use the parameter shift method `parameter-shift` to calculate the gradient of the quantum parameter.
 The parameter shift method is not universally applicable to all quantum parametric logic gates.
@@ -5616,7 +5616,7 @@ Meets :math:`-2\sin(2\theta_1)` , which is exactly the differential of :math:`\c
 |
 
 Doubly Stochastic Gradient Descent
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+===============================================================================
 
 In variational quantum algorithms, parameterized quantum circuits are optimized by 
 classical gradient descent to minimize the expected function value.
@@ -5791,7 +5791,7 @@ observation. Here, the moving average moving_average() is used for calculation.
 
 
 Barren plateaus
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+===============================================================================
 
 
 In the training of classical neural networks, gradient-based optimization methods not only encounter the problem of local minima,
@@ -5943,7 +5943,7 @@ It can be foreseen that the quantum circuit built by any parametric logic gate w
 
 
 Gradient based pruning
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+===============================================================================
 
 The following example implements the algorithm in the paper `Towards Efficient On-Chip Training of Quantum Neural Networks <https://openreview.net/forum?id=vKefw-zKOft>`_.
 By carefully studying the process of parameters in the quantum variational circuit, the researchers observed that small gradients often have large relative changes or even wrong directions under quantum noise.
@@ -6200,7 +6200,7 @@ Run the ``step`` function of ``Gradient_Prune_Instance``.
 
 
 Quantum Singular Value Decomposition
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+===============================================================================
 
 The following example implements the algorithm in the paper  `Variational Quantum Singular Value Decomposition <https://arxiv.org/abs/2006.02336>`_. 
 
@@ -6444,12 +6444,12 @@ loss and singular value results:
 
 
 Model training using quantum computing layer in VQNet
-----------------------------------------------------------
+*******************************************************************
 
 The following are some examples of using VQNet inrerface for quantum machine learning ``QuantumLayer`` ，``NoiseQuantumLayer`` ，``VQCLayer``.
 
 Model training using quantumlayer in VQNet
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+===============================================================================
 
 .. code-block::
 
@@ -6646,7 +6646,7 @@ Loss and accuracy results of the run:
 
 
 Model training using NoiseQuantumLayer in VQNet
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+==============================================================================
 
 Using ``NoiseQuantumLayer`` to build and train noisy quantum circuits using QPanda's noise virtual machine.
 
@@ -6964,7 +6964,7 @@ the loss change log and acc change log are as follows:
 |
 
 Model training using VQCLayer in VQNet
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+===============================================================================
 
 In the Origin Quantum's qpanda provides `VariationalQuantumCircuit <https://qpanda-tutorial.readthedocs.io/zh/latest/VQC.html#id1>`_ .
 In the circuit, only the doors with variable parameters and constant structure can be composed of ``VariationalQuantumGate``.

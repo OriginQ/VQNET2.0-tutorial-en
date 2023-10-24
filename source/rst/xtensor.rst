@@ -1743,7 +1743,7 @@ sums
 
         from pyvqnet.xtensor import XTensor
         import pyvqnet.xtensor as tensor
-        t = XTensor(([1, 2, 3], [4, 5, 6]))
+        t = XTensor([[1, 2, 3], [4, 5, 6]])
         x = tensor.sums(t)
         print(x)
 

@@ -1,5 +1,5 @@
 XTensor classic neural network modules
-=================================================
+###############################################
 
 The following classic neural network modules all support automatic backward propagation computation in XTensor. After running the forward function,
 you need to define the forward computation within the scope of ``with pyvqnet.xtensor.autograd.tape():``. This will include operators that need automatic differentiation into the computational graph.
@@ -59,13 +59,13 @@ A simple example of a convolution layer is as follows:
 
 
 Module
--------------------------------
+************************************************
 
 Abstract calculation module
 
 
 Module
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+===========================================================
 
 .. py:class:: pyvqnet.xtensor.module.Module
 
@@ -86,7 +86,7 @@ Module
 
 
 forward
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+===========================================================
 
 .. py:function:: pyvqnet.xtensor.module.Module.forward(x, *args, **kwargs)
 
@@ -130,7 +130,7 @@ forward
 
         
 state_dict 
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+===========================================================
 
 .. py:function:: pyvqnet.xtensor.module.Module.state_dict(destination=None, prefix='')
 
@@ -149,7 +149,7 @@ state_dict
 
 
 toGPU
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+===========================================================
 
 .. py:function:: pyvqnet.xtensor.module.Module.toGPU(device: int = DEV_GPU_0)
 
@@ -176,7 +176,7 @@ toGPU
 
 
 toCPU
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+===========================================================
 
 .. py:function:: pyvqnet.xtensor.module.Module.toCPU()
 
@@ -194,12 +194,12 @@ toCPU
 
 
 Save and load model parameters
-----------------------------------
+***********************************************
 
 The following interface can save model parameters to a file, or read parameter files from a file. However, please note that the model structure is not saved in the file, and the user needs to manually build the model structure.
 
 save_parameters
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+===========================================================
 
 .. py:function:: pyvqnet.xtensor.storage.save_parameters(obj, f)
 
@@ -226,7 +226,7 @@ save_parameters
         save_parameters(model.state_dict(),"tmp.model")
 
 load_parameters
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+===========================================================
 
 .. py:function:: pyvqnet.xtensor.storage.load_parameters(f)
 
@@ -259,7 +259,7 @@ load_parameters
         model1.load_state_dict(model_para)
 
 ModuleList
---------------------------------------------------------------------------------
+***********************************************************************************************
 
 .. py:class:: pyvqnet.xtensor.module.ModuleList([pyvqnet.xtensor.module.Module])
 
@@ -302,13 +302,13 @@ ModuleList
 
 
 Classical Neural Network Layers
-----------------------------------
+***********************************************
 
 The following implements some classic neural network layers: convolution, transposed convolution, pooling, normalization, recurrent neural network, etc.
 
 
 Conv1D
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+===========================================================
 
 .. py:class:: pyvqnet.xtensor.Conv1D(input_channels:int,output_channels:int,kernel_size:int ,stride:int= 1,padding = "valid",use_bias:bool = True,kernel_initializer = None,bias_initializer =None, dilation_rate: int = 1, group: int = 1, dtype = None, name = "")
 
@@ -360,7 +360,7 @@ Conv1D
         """
 
 Conv2D
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+===========================================================
 
 .. py:class:: pyvqnet.xtensor.Conv2D(input_channels:int,output_channels:int,kernel_size:tuple,stride:tuple=(1, 1),padding="valid",use_bias = True,kernel_initializer=None,bias_initializer=None, dilation_rate: int = 1, group: int = 1, dtype = None, name = "")
 
@@ -420,7 +420,7 @@ Conv2D
         """
 
 ConvT2D
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+===========================================================
 
 .. py:class:: pyvqnet.xtensor.ConvT2D(input_channels,output_channels,kernel_size,stride=[1, 1],padding="valid",use_bias="True", kernel_initializer=None,bias_initializer=None, dilation_rate: int = 1, group: int = 1, dtype = None, name = "")
 
@@ -493,7 +493,7 @@ ConvT2D
 
 
 AvgPool1D
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+===========================================================
 
 .. py:class:: pyvqnet.xtensor.AvgPool1D(kernel, stride, padding="valid", name = "")
 
@@ -536,7 +536,7 @@ AvgPool1D
         
 
 MaxPool1D
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+===========================================================
 
 .. py:class:: pyvqnet.xtensor.MaxPool1D(kernel, stride, padding="valid",name="")
 
@@ -576,7 +576,7 @@ MaxPool1D
         #   [1. 5. 7.]]]
 
 AvgPool2D
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+===========================================================
 
 .. py:class:: pyvqnet.xtensor.AvgPool2D(kernel, stride, padding='valid', name='')
 
@@ -612,7 +612,7 @@ AvgPool2D
         
 
 MaxPool2D
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+===========================================================
 
 .. py:class:: pyvqnet.xtensor.MaxPool2D(kernel, stride, padding='valid', name='')
 
@@ -650,7 +650,7 @@ MaxPool2D
         
 
 Embedding
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+===========================================================
 
 .. py:class:: pyvqnet.xtensor.Embedding(num_embeddings, embedding_dim, weight_initializer=<function xavier_normal>,dtype=None, name: str = '')
 
@@ -707,7 +707,7 @@ Embedding
 
 
 BatchNorm2d
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+===========================================================
 
 .. py:class:: pyvqnet.xtensor.BatchNorm2d(channel_num:int, momentum:float=0.1, epsilon:float = 1e-5,beta_initializer=zeros, gamma_initializer=ones, dtype=None, name="")
 
@@ -775,7 +775,7 @@ BatchNorm2d
         
 
 BatchNorm1d
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+===========================================================
 
 .. py:class:: pyvqnet.xtensor.BatchNorm1d(channel_num:int, momentum:float=0.1, epsilon:float = 1e-5, beta_initializer=zeros, gamma_initializer=ones, dtype=None, name="")
 
@@ -827,7 +827,7 @@ BatchNorm1d
         # ]
 
 LayerNormNd
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+===========================================================
 
 .. py:class:: pyvqnet.xtensor.LayerNormNd(normalized_shape: list, epsilon: float = 1e-5, affine: bool = True, dtype=None, name="")
 
@@ -871,7 +871,7 @@ LayerNormNd
         # ]
 
 LayerNorm2d
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+===========================================================
 
 .. py:class:: pyvqnet.xtensor.LayerNorm2d(norm_size:int, epsilon:float = 1e-5,  affine: bool = True, dtype=None, name="")
 
@@ -926,7 +926,7 @@ LayerNorm2d
         
 
 LayerNorm1d
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+===========================================================
 
 .. py:class:: pyvqnet.xtensor.LayerNorm1d(norm_size:int, epsilon:float = 1e-5, affine: bool = True, dtype=None, name="")
     
@@ -968,7 +968,7 @@ LayerNorm1d
         
 
 Linear
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+===========================================================
 
 .. py:class:: pyvqnet.xtensor.Linear(input_channels, output_channels, weight_initializer=None, bias_initializer=None,use_bias=True, dtype=None, name: str = "")
 
@@ -1012,7 +1012,7 @@ Linear
 
 
 Dropout
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+===========================================================
 
 .. py:class:: pyvqnet.xtensor.Dropout(dropout_rate = 0.5)
 
@@ -1060,7 +1060,8 @@ Dropout
         """
 
 Pixel_Shuffle 
-^^^^^^^^^^^^^^^^^^^^^^^^^
+=====================
+
 .. py:class:: pyvqnet.xtensor.Pixel_Shuffle(upscale_factors)
 
     Rearrange tensors of shape: (*, C * r^2, H, W) to a tensor of shape (*, C, H * r, W * r) where r is the scaling factor.
@@ -1082,7 +1083,8 @@ Pixel_Shuffle
         #[5, 2, 3, 2, 12, 12]
 
 Pixel_Unshuffle 
-^^^^^^^^^^^^^^^^^^^^^^^^^
+========================
+
 .. py:class:: pyvqnet.xtensor.Pixel_Unshuffle(downscale_factors)
 
     Reverses the Pixel_Shuffle operation by rearranging the elements. Shuffles a Tensor of shape (*, C, H * r, W * r) to (*, C * r^2, H, W) , where r is the shrink factor.
@@ -1105,7 +1107,7 @@ Pixel_Unshuffle
 
 
 GRU
-^^^^^^^^^^^^^^^^^^^^^^^^^
+==========================
 
 .. py:class:: pyvqnet.xtensor.GRU(input_size, hidden_size, num_layers=1, nonlinearity='tanh', batch_first=True, use_bias=True, bidirectional=False, dtype=None, name: str = "")
 
@@ -1200,7 +1202,7 @@ GRU
         # <XTensor 4x3x6 cpu(0) kfloat32>
 
 RNN 
-^^^^^^^^^^^^^^^^^^^^^^^^^
+====================
 
 .. py:class:: pyvqnet.xtensor.RNN(input_size, hidden_size, num_layers=1, nonlinearity='tanh', batch_first=True, use_bias=True, bidirectional=False, dtype=None, name: str = "")
 
@@ -1294,7 +1296,7 @@ RNN
         # <XTensor 4x3x6 cpu(0) kfloat32>
 
 LSTM
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+===========================================================
 
 .. py:class:: pyvqnet.xtensor.LSTM(input_size, hidden_size, num_layers=1, batch_first=True, use_bias=True, bidirectional=False, dtype=None, name: str = "")
 
@@ -1413,7 +1415,7 @@ LSTM
 
 
 Dynamic_GRU
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+===========================================================
 
 .. py:class:: pyvqnet.xtensor.Dynamic_GRU(input_size,hidden_size, num_layers=1, batch_first=True, use_bias=True, bidirectional=False, dtype=None, name: str = "")
 
@@ -1505,7 +1507,7 @@ Dynamic_GRU
         # [4 1 2]
 
 Dynamic_RNN 
-^^^^^^^^^^^^^^^^^^^^^^^^^
+=======================
 
 .. py:class:: pyvqnet.xtensor.Dynamic_RNN(input_size, hidden_size, num_layers=1, nonlinearity='tanh', batch_first=True, use_bias=True, bidirectional=False, dtype=None, name: str = "")
 
@@ -1601,7 +1603,7 @@ Dynamic_RNN
         """
 
 Dynamic_LSTM
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+===========================================================
 
 .. py:class:: pyvqnet.xtensor.Dynamic_LSTM(input_size, hidden_size, num_layers=1, batch_first=True, use_bias=True, bidirectional=False, dtype=None, name: str = "")
 
@@ -1704,7 +1706,7 @@ Dynamic_LSTM
         """
 
 Loss Function Layer
-----------------------------------
+***********************************************
 
 .. note::
 
@@ -1712,7 +1714,7 @@ Loss Function Layer
 
 
 MeanSquaredError
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+===========================================================
 
 .. py:class:: pyvqnet.xtensor.MeanSquaredError(name="")
 
@@ -1765,7 +1767,7 @@ MeanSquaredError
 
 
 BinaryCrossEntropy
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+===========================================================
 
 .. py:class:: pyvqnet.xtensor.BinaryCrossEntropy(name="")
 
@@ -1804,7 +1806,7 @@ BinaryCrossEntropy
         
 
 CategoricalCrossEntropy
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+===========================================================
 
 .. py:class:: pyvqnet.xtensor.CategoricalCrossEntropy(name="")
 
@@ -1839,7 +1841,7 @@ CategoricalCrossEntropy
         # [3.7852428]
 
 SoftmaxCrossEntropy
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+===========================================================
 
 .. py:class:: pyvqnet.xtensor.SoftmaxCrossEntropy(name="")
 
@@ -1874,7 +1876,7 @@ SoftmaxCrossEntropy
         # [3.7852478]
 
 NLL_Loss
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+===========================================================
 
 .. py:class:: pyvqnet.xtensor.NLL_Loss(name="")
 
@@ -1919,7 +1921,7 @@ NLL_Loss
         #[-0.6187226]
 
 CrossEntropyLoss
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+===========================================================
 
 .. py:class:: pyvqnet.xtensor.CrossEntropyLoss(name="")
 
@@ -1966,11 +1968,11 @@ CrossEntropyLoss
 
 
 Activation Function
-----------------------------------
+***********************************************
 
 
 sigmoid
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+===========================================================
 .. py:function:: pyvqnet.xtensor.sigmoid(x)
 
     Applies a sigmoid activation function to the given input.
@@ -1993,7 +1995,7 @@ sigmoid
 
 
 softplus
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+===========================================================
 .. py:class:: pyvqnet.xtensor.softplus(x)
 
     Applies a softplus activation function to the given input.
@@ -2015,7 +2017,7 @@ softplus
         
 
 softsign
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+===========================================================
 .. py:class:: pyvqnet.xtensor.softsign(x)
 
     Applies a softsign activation function to the given input.
@@ -2040,7 +2042,7 @@ softsign
 
 
 softmax
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+===========================================================
 .. py:class:: pyvqnet.xtensor.softmax(x,axis:int = -1)
 
     Applies a softmax activation function to the given input.
@@ -2066,7 +2068,7 @@ softmax
         
 
 hard_sigmoid
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+===========================================================
 .. py:class:: pyvqnet.xtensor.hard_sigmoid(x)
 
     Applies a hardsigmoid activation function to the given input.
@@ -2093,7 +2095,7 @@ hard_sigmoid
         
 
 relu
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+===========================================================
 .. py:class:: pyvqnet.xtensor.relu(x)
 
     Applies a relu activation function to the given input.
@@ -2119,7 +2121,7 @@ relu
 
 
 leaky_relu
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+===========================================================
 .. py:class:: pyvqnet.xtensor.leaky_relu(x, alpha:float=0.01)
 
     Applies a leakyrelu function to the given input.
@@ -2148,7 +2150,7 @@ leaky_relu
 
 
 elu
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+===========================================================
 .. py:class:: pyvqnet.xtensor.elu(x, alpha:float=1)
 
     Applies an elu function to the given input.
@@ -2176,7 +2178,7 @@ elu
         
          
 tanh
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+===========================================================
 .. py:class:: pyvqnet.xtensor.tanh(x)
 
     Applies an tanh function to the given input.
@@ -2199,11 +2201,11 @@ tanh
         
 
 Optimizer module
-----------------------------------
+***********************************************
 
 
 Optimizer
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+==========================================================
 .. py:class:: pyvqnet.xtensor.optimizer.Optimizer( params, lr=0.01)
 
     Base class for all optimizers.
@@ -2212,13 +2214,13 @@ Optimizer
     :param lr: Learning rate, default value: 0.01.
 
 step
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+==========================================================
 .. py:method:: pyvqnet.xtensor.optimizer.Optimizer.step()
 
     Use the update method of the corresponding optimizer to update parameters.
 
 Adadelta
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+===========================================================
 .. py:class:: pyvqnet.xtensor.optimizer.Adadelta( params, lr=0.01, beta=0.99, epsilon=1e-8)
 
     ADADELTA: An Adaptive Learning Rate Method. reference: (https://arxiv.org/abs/1212.5701)
@@ -2275,7 +2277,7 @@ Adadelta
         """
 
 Adagrad
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+===========================================================
 .. py:class:: pyvqnet.xtensor.optimizer.Adagrad( params, lr=0.01, epsilon=1e-8)
 
     Implements Adagrad algorithm. reference: (https://databricks.com/glossary/adagrad)
@@ -2330,7 +2332,7 @@ Adagrad
 
 
 Adam
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+===========================================================
 .. py:class:: pyvqnet.xtensor.optimizer.Adam( params, lr=0.01, beta1=0.9, beta2=0.999, epsilon=1e-8,amsgrad: bool = False)
 
     Adam: A Method for Stochastic Optimization reference: (https://arxiv.org/abs/1412.6980),it can dynamically adjusts the learning rate of each parameter using the 1st moment estimates and the 2nd moment estimates of the gradient.
@@ -2403,7 +2405,7 @@ Adam
         """
 
 Adamax
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+===========================================================
 .. py:class:: pyvqnet.xtensor.optimizer.Adamax(params, lr=0.01, beta1=0.9, beta2=0.999, epsilon=1e-8)
 
     Implements Adamax algorithm (a variant of Adam based on infinity norm).reference: (https://arxiv.org/abs/1412.6980)
@@ -2465,7 +2467,7 @@ Adamax
         """
         
 RMSProp
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+===========================================================
 .. py:class:: pyvqnet.xtensor.optimizer.RMSProp( params, lr=0.01, beta=0.99, epsilon=1e-8)
     
     Implements RMSprop algorithm. reference: (https://arxiv.org/pdf/1308.0850v5.pdf)
@@ -2521,7 +2523,7 @@ RMSProp
         """
 
 SGD
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+===========================================================
 .. py:class:: pyvqnet.xtensor.optimizer.SGD(params, lr=0.01,momentum=0, nesterov=False)
 
     Implements SGD algorithm. reference: (https://en.wikipedia.org/wiki/Stochastic_gradient_descent)
