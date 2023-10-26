@@ -349,12 +349,13 @@ In multiple processes, use ``split_data`` to split the data according to the num
 
         return x_train, y_train
 
-model_allreduce
-========================
 
-Use ``model_allreduce`` to pass and update model parameters in different processes in the allreduce manner.
+average_parameters_allreduce
+=========================================================================
 
-.. py:function:: pyvqnet.distributed.model_allreduce(model)
+Use ``average_parameters_allreduce`` to pass model parameters on different processes in allreduce mode and update them with the average value.
+
+.. py:function:: pyvqnet.distributed.average_parameters_allreduce(model)
 
     :param model: `Module` - the trained model.
     
@@ -362,7 +363,7 @@ Use ``model_allreduce`` to pass and update model parameters in different process
 
     Example::
 
-        from pyvqnet.distributed import parallel_model
+        from pyvqnet.distributed import average_parameters_allreduce
         import numpy as np
         from pyvqnet.nn.module import Module
         from pyvqnet.nn.linear import Linear
@@ -380,27 +381,87 @@ Use ``model_allreduce`` to pass and update model parameters in different process
 
         model = Net()
         print(f"rank {get_rank()} parameters is {model.parameters()}")
-        model = parallel_model(model)
+        model = average_parameters_allreduce(model)
 
         if get_rank() == 0:
             print(model.parameters())
         
         # mpirun -n 2 python run.py
 
-model_reduce
-========================
 
-Use ``model_reduce`` to pass and update model parameters in different processes in the form of reduce.
+average_grad_allreduce
+=========================================================================
 
-.. py:function:: pyvqnet.distributed.model_reduce(x_train, y_train, shuffle=False)
+Use ``average_grad_allreduce`` to pass the model parameter gradients on different processes in allreduce and update them with the average.
 
-    :param model: `Module` - the trained model.
+.. py:function:: pyvqnet.distributed.average_grad_allreduce(optimizer)
+
+    Set distributed computing parameters.
+
+    :param optimizer: optimizer.
+    
+    :return: Optimizer after gradient update.
+
+    Example::
+
+        from pyvqnet.distributed import average_grad_allreduce
+        import numpy as np
+        from pyvqnet.nn.module import Module
+        from pyvqnet.nn.linear import Linear
+        from pyvqnet.nn import activation as F
+        from pyvqnet.distributed import *
+        from pyvqnet.nn.loss import MeanSquaredError
+        from pyvqnet.optim import Adam
+        
+        class Net(Module):
+            def __init__(self):
+                super(Net, self).__init__()
+                self.fc = Linear(input_channels=5, output_channels=1)
+
+            def forward(self, x):
+                x = F.ReLu()(self.fc(x))
+                return x
+        model = Net()
+        opti = Adam(model.parameters(), lr=0.01)
+        actual = tensor.QTensor([1,1,1,1,1,0,0,0,0,0],dtype=6).reshape((10,1))
+                
+        x = tensor.randn((10, 5))
+        for i in range(10):
+            opti.zero_grad()
+            model.train()
+            
+            result = model(x)
+            loss = MeanSquaredError()(actual, result)
+            loss.backward()
+            
+            print(f"rank {get_rank()} grad is {model.parameters()[0].grad}")
+            opti = average_grad_allreduce(opti)
+            # if get_rank() == 0 :
+            print(f"rank {get_rank()} grad is {model.parameters()[0].grad}")
+            opti.step()
+            
+            return 
+        
+        # mpirun -n 2 python run.py
+
+
+average_parameters_reduce
+=========================================================================
+
+Use ``average_parameters_reduce`` to pass the model parameters on the process in reduce mode, and update the parameters on the specified process.
+
+.. py:function:: pyvqnet.distributed.average_parameters_reduce(model, root = 0)
+
+    Set distributed computing parameters.
+
+    :param model: `Module` - trained model.
+    :param root: The specified process number.
 
     :return: Model after updated parameters.
 
     Example::
 
-        from pyvqnet.distributed import model_reduce
+        from pyvqnet.distributed import average_parameters_reduce
         import numpy as np
         from pyvqnet.nn.module import Module
         from pyvqnet.nn.linear import Linear
@@ -419,13 +480,70 @@ Use ``model_reduce`` to pass and update model parameters in different processes 
 
         model = Net()
         print(f"rank {get_rank()} parameters is {model.parameters()}")
-        model = model_reduce(model)
+        model = average_parameters_reduce(model)
 
         if get_rank() == 0:
             print(model.parameters())
 
         # mpirun -n 2 python run.py
+
+average_grad_reduce
+=========================================================================
+
+Use ``average_grad_reduce`` to pass the gradient of parameters on the process in reduce mode, and update the gradient of parameters on the specified process.
+
+.. py:function:: pyvqnet.distributed.average_grad_reduce(optimizer, root = 0)
+
+    Set distributed computing parameters.
+
+    :param optimizer: optimizer.
+    :param root: The specified process number.
+
+    :return: Optimizer after gradient update.
+
+    Example::
+
+        from pyvqnet.distributed import average_grad_reduce
+        import numpy as np
+        from pyvqnet.nn.module import Module
+        from pyvqnet.nn.linear import Linear
+        from pyvqnet.nn import activation as F
+        from pyvqnet.distributed import *
+        from pyvqnet.nn.loss import MeanSquaredError
+        from pyvqnet.optim import Adam
         
+        class Net(Module):
+            def __init__(self):
+                super(Net, self).__init__()
+                self.fc = Linear(input_channels=5, output_channels=1)
+
+            def forward(self, x):
+                x = F.ReLu()(self.fc(x))
+                return x
+        model = Net()
+        opti = Adam(model.parameters(), lr=0.01)
+        actual = tensor.QTensor([1,1,1,1,1,0,0,0,0,0],dtype=6).reshape((10,1))
+                
+        x = tensor.randn((10, 5))
+        for i in range(10):
+            opti.zero_grad()
+            model.train()
+            
+            result = model(x)
+            loss = MeanSquaredError()(actual, result)
+            loss.backward()
+            
+            print(f"rank {get_rank()} grad is {model.parameters()[0].grad}")
+            opti = average_grad_reduce(opti)
+            # if get_rank() == 0 :
+            print(f"rank {get_rank()} grad is {model.parameters()[0].grad}")
+            opti.step()
+            
+            return 
+        
+        # mpirun -n 2 python run.py
+
+
 Environment dependency: mpich, mpi4py,gcc,gfortran
 
 .. note::
@@ -795,8 +913,7 @@ Model design
             return x
 
 
-None of the above uses the distributed computing interface, 
-but only needs to reference split_data, model_allreduce, and init_process during training to achieve data parallel distributed computing.
+During training, split_data, average_parameters_allreduce, and init_process are referenced to implement distributed computing based on data parallelism.
 
 as follows
 
@@ -846,10 +963,11 @@ as follows
                 n_train += batch_size
 
                 loss.backward()
+                # optimizer = average_grad_allreduce(optimizer) 
                 optimizer._step()
 
                 total_loss.append(loss_np)
-            model = model_allreduce(model) # Allreduce communication for model parameter gradients of different ranks
+            model = average_parameters_allreduce(model)
 
 
             train_loss_list.append(np.sum(total_loss) / len(total_loss))
