@@ -313,6 +313,72 @@ ModuleList
         #odict_keys(['pqc2.0.m_para', 'pqc2.1.weights', 'pqc2.1.bias'])
 
 
+
+ParameterList
+*********************************************************
+.. py:class:: pyvqnet.nn.module.ParameterList([pyvqnet.nn.module.Module])
+
+
+    To store parameters in a list, a ParameterList can be indexed like a normal Python list, and the internal parameters of the Parameter it contains can be stored.
+
+    :param modules: nn.Parameter list.
+
+    :return: a Parameter list.
+
+    Example::
+
+        from pyvqnet import nn
+        class MyModule(nn.Module):
+            def __init__(self):
+                super().__init__()
+                self.params = nn.ParameterList([nn.Parameter((10, 10)) for i in range(10)])
+            def forward(self, x):
+
+                # ParameterList can act as an iterable, or be indexed using ints
+                for i, p in enumerate(self.params):
+                    x = self.params[i // 2] * x + p * x
+                return x
+
+        model = MyModule()
+        print(model.state_dict().keys())
+
+
+Sequential
+*********************************************************
+.. py:class:: pyvqnet.nn.module.Sequential([pyvqnet.nn.module.Module])
+
+    Modules will be added in the order they are passed in. Alternatively, a ``OrderedDict`` of modules can be passed in. The ``forward()`` method of ``Sequential`` takes any input and forwards it to its first module.
+    It then ``Sequential`` the output to the input of each subsequent module in turn, and finally returns the output of the last module.
+
+    :param modules: module to append.
+
+    :return: Sequential.
+
+    Example::
+        
+        from pyvqnet import nn
+        from collections import OrderedDict
+
+        # Using Sequential to create a small model.
+        model = nn.Sequential(
+                  nn.Conv2D(1,20,(5, 5)),
+                  nn.ReLu(),
+                  nn.Conv2D(20,64,(5, 5)),
+                  nn.ReLu()
+                )
+        print(model.state_dict().keys())
+
+        # Using Sequential with OrderedDict. This is functionally the same as the above code
+                
+        model = nn.Sequential(OrderedDict([
+                  ('conv1', nn.Conv2D(1,20,(5, 5))),
+                  ('relu1', nn.ReLu()),
+                  ('conv2', nn.Conv2D(20,64,(5, 5))),
+                  ('relu2', nn.ReLu())
+                ]))
+        print(model.state_dict().keys())
+
+
 Classical Neural Network Layer
 ********************************************************
 
