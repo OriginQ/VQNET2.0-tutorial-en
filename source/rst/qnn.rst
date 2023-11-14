@@ -4463,7 +4463,7 @@ VQC_ZFeatureMap
 
     :param input_feat: An array representing the input parameters.
     :param q_machine: Quantum machine.
-    :param data_map_func: Parameter mapping matrix.
+    :param data_map_func: Parameter mapping matrix, design as ``data_map = lambda x: x``.
     :param rep: Number of module repetitions.
     
     Example::
@@ -4501,7 +4501,13 @@ VQC_ZZFeatureMap
         ┤ H ├┤ U1(2.0*φ(x[2])) ├──────────────────────────────────┤ X ├┤ U1(2.0*φ(x[1],x[2])) ├┤ X ├
         └───┘└─────────────────┘                                  └───┘└──────────────────────┘└───┘
     
-    where ``φ`` is the classical nonlinear function that defaults to ``φ(x) = x`` if and ``φ(x,y) = (pi - x)(pi - y)``.
+    where ``φ`` is the classical nonlinear function that defaults to ``φ(x) = x`` if and ``φ(x,y) = (pi - x)(pi - y)``, design as:
+    
+    .. code-block::
+        
+        def data_map_func(x):
+            coeff = x if x.shape[-1] == 1 else ft.reduce(lambda x, y: (np.pi - x) * (np.pi - y), x)
+            return coeff
 
     :param input_feat: An array representing the input parameters.
     :param q_machine: Quantum machine.
