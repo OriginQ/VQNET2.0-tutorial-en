@@ -3,6 +3,11 @@ XTensor module
 
 XTensor is an interface for VQNet to accelerate tensor calculations using automatic operator parallelization. The interface supports classic calculations under CPU/GPU, and the API definition is basically the same as the original XTensor.
 
+.. warning::
+
+    XTensor related functions are in the development stage. Currently, they only support classic neural network calculations and cannot be mixed with the QTenor-based interface introduced above.
+    If you need to train a quantum machine learning model, please use the relevant interfaces under QTensor.
+    
 For example, in the following example, reshape is used to perform cyclic calculations on a. Since there is no dependency between these reshape calculations, parallel calculations can be performed naturally. Therefore, the 100 reshape calculations in this example are automatically and asynchronously calculated to achieve the purpose of acceleration.
 
      Example::

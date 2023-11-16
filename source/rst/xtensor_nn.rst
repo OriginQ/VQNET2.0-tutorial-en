@@ -4,6 +4,12 @@ XTensor classic neural network modules
 The following classic neural network modules all support automatic backward propagation computation in XTensor. After running the forward function,
 you need to define the forward computation within the scope of ``with pyvqnet.xtensor.autograd.tape():``. This will include operators that need automatic differentiation into the computational graph.
 Then executing the backward function will get the computed gradients of XTensor s with ``requires_grad == True``.
+
+.. warning::
+
+    XTensor related functions are in the development stage. Currently, they only support classic neural network calculations and cannot be mixed with the QTenor-based interface introduced above.
+    If you need to train a quantum machine learning model, please use the relevant interfaces under QTensor.
+    
 A simple example of a convolution layer is as follows:  
 
 .. code-block::

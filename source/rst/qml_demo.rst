@@ -14,7 +14,7 @@ This example is used to determine whether a binary number is odd or even. By enc
 the z-direction observation of the circuit can indicate whether the input is odd or even.
 
 Quantum circuit
-""""""""""""""""""
+-------------------------------
 The variable component sub-circuit usually defines a sub-circuit, which is a basic circuit architecture, and complex variational circuits can be constructed by repeating layers.
 Our circuit layer consists of multiple rotating quantum logic gates and ``CNOT`` quantum logic gates that entangle each qubit with its neighboring qubits.
 We also need a circuit to encode classical data into a quantum state, so that the output of the circuit measurement is related to the input.
@@ -84,7 +84,7 @@ In this example, we encode the binary input onto the qubits in the corresponding
             return prob
 
 Model building
-""""""""""""""""
+-----------------------
 We have defined variable quantum circuits ``qvc_circuits`` . 
 We hope to use it in our VQNet's automatic differentiation framework, 
 to take advantage of VQNet's optimization fucntions for model training. 
@@ -116,7 +116,7 @@ In the ``forward()`` function, the user defines the logic of the model to run fo
 
 
 Model training and testing
-""""""""""""""""""""""""""""
+------------------------------------
 We use pre-generated random binary numbers and their odd and even labels.
 The data as follows.
 
@@ -1467,7 +1467,7 @@ The purpose of this example is to demonstrate the simplicity of VQNet and encour
 
 
 Data Preparation
-""""""""""""""""""
+-----------------------
 
 We will use `MNIST datasets <http://yann.lecun.com/exdb/mnist/>`_, the most basic neural network handwritten digit database as the classification data.
 We first load MNIST and filter data samples containing 0 and 1.
@@ -1626,7 +1626,7 @@ These samples are divided into training data training_data and testing data test
 |
 
 Construct Quantum Circuits
-""""""""""""""""""""""""""""""
+---------------------------------
 
 In this example, we use the `pyQPanda <https://pyqpanda-tutorial-en.readthedocs.io/en/latest/chapter2/index.html#quantum-circuit>`__ , A simple quantum circuit of 1 qubit is defined. The circuit takes the output of the classical neural network layer as input,encodes quantum data through ``H`` , ``RY``  quantum logic gates, and calculates the expected value of Hamiltonian in the z direction as output.
 
@@ -1670,7 +1670,7 @@ In this example, we use the `pyQPanda <https://pyqpanda-tutorial-en.readthedocs.
 |
 
 Create Hybird Model
-""""""""""""""""""""
+--------------------------
 
 Since quantum circuits can perform automatic differentiation calculations together with classical neural networks,
 Therefore, we can use VQNet's convolutional layer ``Conv2D`` , pooling layer ``MaxPool2D`` , fully connected layer ``Linear`` and
@@ -1745,7 +1745,7 @@ An automatic differentiation Model of convolution, quantum encoding, and measure
 |
 
 Training and testing
-""""""""""""""""""""""
+-----------------------
 
 For the hybrid neural network model as shown in the figure below, we calculate the loss function by feeding data into the model iteratively, 
 and VQNet will  calculate the gradient of each parameter in the backward calculation automatically, 
@@ -1826,7 +1826,7 @@ and use the optimizer to optimize the parameters until the number of iterations 
         val_acc_list.append(np.sum(correct) / n_eval)
 
 Visualization
-"""""""""""""""
+---------------------
 
 The visualization curve of data loss function and accuracy on train and test data.
 
@@ -2615,7 +2615,7 @@ Qunet is mainly used to solve the technology of image segmentation.
 
 
 Data preparation
-"""""""""""""""""""""
+-------------------------
 
 We will use the data of `VOC2012 <http://host.robots.ox.ac.uk/pascal/VOC/voc2012/#devkit>`_  official library as image segmentation data. These samples are divided
 into training data training_data and test data testing_data.
@@ -2627,7 +2627,7 @@ into training data training_data and test data testing_data.
 |
 
 Constructing quantum circuits
-""""""""""""""""""""""""""""""""
+-------------------------------------------
 In this example, we define a quantum circuit using pyqpanda of the source quantum. The input 3-channel color
 image data is compressed into a single channel gray image and stored, and then the feature of the data is
 extracted and dimensionality reduced by quantum convolution operation.
@@ -2777,7 +2777,7 @@ Preprocessing data
         return quantum_images
 
 Constructing hybrid classical quantum neural network
-"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+----------------------------------------------------------
 
 According to the Unet network framework, we use the `VQNet` framework to build the classic network part.
 The down-sampling neural network layer is used to reduce the dimension and extract features;
@@ -2923,7 +2923,7 @@ are connected through concatenate for feature fusion.
             return out
 
 Training and model saving
-""""""""""""""""""""""""""""""
+-------------------------------
 
 Similar to the training of classical neural network model,
 we also need to instantiate the model, define the loss function and optimizer, and define the whole training and
@@ -3073,7 +3073,7 @@ iterations meets the preset value.If ``PREPROCESS`` is False，the code will ski
 
 
 Data visualization
-""""""""""""""""""""""""""
+-----------------------
 
 The loss function curve of training data is displayed and saved, and the test data results are saved.
 
@@ -3159,7 +3159,7 @@ We will write a simple example of integrating `pyQPanda <https://pyqpanda-toturi
 
 
 Building Hybrid Classical-Quantum Neural Networks
-""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+-----------------------------------------------------------
 
 .. code-block::
 
@@ -3559,7 +3559,7 @@ Building Hybrid Classical-Quantum Neural Networks
 
 
 data result
-"""""""""""""""
+---------------------
 
 The loss function curve of the training data is displayed and saved, and the results of the test data are saved.
 Loss situation on the training set.
@@ -3589,7 +3589,7 @@ We will write a simple example of integrating `pyQPanda <https://pyqpanda-toturi
 
 
 Building Hybrid Classical-Quantum Neural Networks
-"""""""""""""""""""""""""""""""""""""""""""""""""""""
+----------------------------------------------------------
 
 .. code-block::
 
@@ -3935,7 +3935,7 @@ Building Hybrid Classical-Quantum Neural Networks
 
 
 data result
-"""""""""""""""
+--------------------
 
 The loss function curve of the training data is displayed and saved, and the results of the test data are saved.
 Loss situation on the training set.
@@ -3957,7 +3957,7 @@ We will write a simple example of integrating `pyQPanda <https://pyqpanda-toturi
 
 
 Building Hybrid Classical-Quantum Neural Networks
-""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+----------------------------------------------------------
 
 Requires ``gym`` == 0.23.0 , ``pygame`` == 2.1.2 .
 
@@ -4160,7 +4160,7 @@ Requires ``gym`` == 0.23.0 , ``pygame`` == 2.1.2 .
 
 
 data result
-"""""""""""""""
+------------------------
 
 The training results are shown in the figure below. It can be seen that the final position is reached after certain steps.
 
@@ -4455,7 +4455,7 @@ The paper  `The effect of data encoding on the expressive power of variational q
 
 
 1.1Fitting Fourier series with serial Pauli-rotation encoding
-""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+----------------------------------------------------------------
 
 First we show how quantum models that use Pauli rotations as data-encoding gates can only fit Fourier series up to a certain degree.  For simplicity we will only look at single-qubit circuits:
 
@@ -4739,7 +4739,7 @@ The network training loss is:
 
 
 1.2Fitting Fourier series with parallel Pauli-rotation encoding
-"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+-------------------------------------------------------------------
 
 As shown in the paper, we expect similar results to the serial model: a Fourier series of order r can only be fitted if the encoded gate has at least r repetitions in the quantum model. Quantum circuit:
 

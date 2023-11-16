@@ -1,13 +1,29 @@
 VQNet Changelog
 ###############################
 
-[v2.0.9] - 2023-09-08
+[v2.10.0] - 2023-12-30
+***************************
+
+Added
+===========
+- Added new interfaces under pyvqnet.qnn.vqc: IsingXX, IsingXY, IsingYY, IsingZZ, SDG, TDG, PhaseShift, MutliRZ, MultiCnot, MultixCnot, ControlledPhaseShift, SingleExcitation, DoubleExcitation, VQC_AllSinglesDoubles, ExpressiveEntanglingAnsatz, etc.;
+- pyvqnet.qnn.vqc.QuantumLayerAdjoint interface that supports adjoint gradient calculation;
+- Support the mutual conversion function between originIR and VQC;
+- Support classical and quantum module information in statistical VQC models;
+- Added two cases under the quantum classical neural network hybrid model: quantum convolutional neural network model based on small samples, and quantum kernel function model for handwritten digit recognition.
+
+
+[v2.9.0] - 2023-09-08
 ***************************
 
 Added
 ===================
 - The xtensor interface definition has been added to support automatic operator parallelism and multiple CPU/GPU backends. It includes more than 150 interfaces for commonly used mathematics, logic, and matrix calculations for multi-dimensional arrays, as well as common classic neural network layers and optimizers.
 - The distributed computing interface definition is added to support single-node multi-process and multi-node multi-process model training on the CPU, including initialization, communication, and data segmentation interfaces.
+
+Changed
+===================
+- version from v2.0.8 bumps to v2.9.0.
 
 [v2.0.8] - 2023-07-26
 ***************************
@@ -19,9 +35,6 @@ Added
 - Combined quantum circuit based on vqc: VQC_HardwareEfficientAnsatz、VQC_BasicEntanglerTemplate、VQC_StronglyEntanglingTemplate、VQC_QuantumEmbedding、VQC_RotCircuit、VQC_CRotCircuit、VQC_CSWAPcircuit、VQC_Controlled_Hadamard、VQC_CCZ、VQC_FermionicSingleExcitation、VQC_FermionicDoubleExcitation、VQC_UCCSD、VQC_QuantumPoolingCircuit、VQC_BasisEmbedding、VQC_AngleEmbedding、VQC_AmplitudeEmbedding、VQC_IQPEmbedding。
 - Measurement methods based on vqc: VQC_Purity, VQC_VarMeasure, VQC_DensityMatrixFromQstate, Probability, MeasureAll。
 
-Changed
-===================
-- 
 
 [v2.0.7] - 2023-07-03
 ***************************
