@@ -22,7 +22,7 @@ In this example, we encode the binary input onto the qubits in the corresponding
 
 .. math::
 
-    x = 1101 \rightarrow|\psi\rangle=|1101\rangle
+    x = 0101 \rightarrow|\psi\rangle=|0101\rangle
 
 .. figure:: ./images/qvc_circuit.png
    :width: 600 px
