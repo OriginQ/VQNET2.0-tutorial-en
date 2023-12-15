@@ -3101,7 +3101,7 @@ rx
         from pyvqnet.qnn.vqc import rx,QMachine
         from pyvqnet.tensor import QTensor
         qm  = QMachine(4)
-        rx(q_machine=qm, wires=1,params=QTenor([0.5]),num_wires=4)
+        rx(q_machine=qm, wires=1,params=QTensor([0.5]),num_wires=4)
         print(qm.states)
         # [[[[[0.9689124+0.j       0.       +0.j      ]
         #     [0.       +0.j       0.       +0.j      ]]
@@ -5071,7 +5071,7 @@ VQC_AngleEmbedding
 
      ``wires`` denote the idx of rotation gates on the qubits.
 
-    :param input_feat: numpy array representing the parameters.
+    :param input_feat: array representing the parameters.
     :param wires: qubit idx.
     :param q_machine: Quantum virtual machine device.
     :param rotation: Rotation gate，default is "X".
@@ -5082,19 +5082,18 @@ VQC_AngleEmbedding
         from pyvqnet.qnn.vqc import VQC_AngleEmbedding, QMachine
         from pyvqnet.tensor import QTensor
         qm  = QMachine(2)
-        VQC_AngleEmbedding([2.2, 1], [0, 1], q_machine=qm, rotation='X')
-        
+        VQC_AngleEmbedding(QTensor([2.2, 1]), [0, 1], q_machine=qm, rotation='X')
         print(qm.states)
         # [[[ 0.398068 +0.j         0.       -0.2174655j]
         #   [ 0.       -0.7821081j -0.4272676+0.j       ]]]
 
-        VQC_AngleEmbedding([2.2, 1], [0, 1], q_machine=qm, rotation='Y')
+        VQC_AngleEmbedding(QTensor([2.2, 1]), [0, 1], q_machine=qm, rotation='Y')
 
         print(qm.states)
         # [[[-0.0240995+0.6589843j  0.4207355+0.2476033j]
         #   [ 0.4042482-0.2184162j  0.       -0.3401631j]]]
 
-        VQC_AngleEmbedding([2.2, 1], [0, 1], q_machine=qm, rotation='Z')
+        VQC_AngleEmbedding(QTensor([2.2, 1]), [0, 1], q_machine=qm, rotation='Z')
 
         print(qm.states)
 
@@ -5508,7 +5507,7 @@ VQC_ZFeatureMap
     
     Example::
 
-        from pyvqnet.qnn.vqc import VQC_ZFeatureMap, QMachine
+        from pyvqnet.qnn.vqc import VQC_ZFeatureMap, QMachine, hadamard
         from pyvqnet.tensor import QTensor
         qm = QMachine(3)
         for i in range(3):
@@ -5598,6 +5597,7 @@ VQC_AllSinglesDoubles
 
         from pyvqnet.qnn.vqc import VQC_AllSinglesDoubles, QMachine
         from pyvqnet.tensor import QTensor
+        qubits = 4
         qm = QMachine(qubits)
 
         VQC_AllSinglesDoubles(q_machine=qm, weights=QTensor([0.55, 0.11, 0.53]), 
@@ -5636,6 +5636,7 @@ VQC_BasisRotation
 
         from pyvqnet.qnn.vqc import VQC_BasisRotation, QMachine, hadamard, isingzz
         from pyvqnet.tensor import QTensor
+        import numpy as np
         V = np.array([[0.73678+0.27511j, -0.5095 +0.10704j, -0.06847+0.32515j],
                       [0.73678+0.27511j, -0.5095 +0.10704j, -0.06847+0.32515j],
                       [-0.21271+0.34938j, -0.38853+0.36497j,  0.61467-0.41317j]])
@@ -5678,7 +5679,7 @@ VQC_QuantumPoolingCircuit
 
     Examples:: 
 
-        from pyvqnet.qnn.vqc import VQC_QuantumPoolingCircuit, QMachine
+        from pyvqnet.qnn.vqc import VQC_QuantumPoolingCircuit, QMachine, MeasureAll
         import pyqpanda as pq
         from pyvqnet import tensor
         machine = pq.CPUQVM()
@@ -6131,7 +6132,7 @@ QuantumLayerAdjoint
 
         from pyvqnet import tensor
         from pyvqnet.qnn.vqc import QuantumLayerAdjoint, QMachine, RX, RY, CNOT, PauliX, qmatrix, PauliZ, T, MeasureAll, RZ, VQC_RotCircuit, VQC_HardwareEfficientAnsatz
-        importpyvqnet
+        import pyvqnet
 
 
         class QModel(pyvqnet.nn.Module):
