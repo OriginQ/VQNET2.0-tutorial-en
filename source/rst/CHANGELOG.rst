@@ -7,9 +7,9 @@ VQNet Changelog
 Added
 ===========
 - Added new interfaces under pyvqnet.qnn.vqc: IsingXX, IsingXY, IsingYY, IsingZZ, SDG, TDG, PhaseShift, MutliRZ, MultiCnot, MultixCnot, ControlledPhaseShift, SingleExcitation, DoubleExcitation, VQC_AllSinglesDoubles, ExpressiveEntanglingAnsatz, etc.;
-- pyvqnet.qnn.vqc.QuantumLayerAdjoint interface that supports adjoint gradient calculation;
-- Support the mutual conversion function between originIR and VQC;
-- Support classical and quantum module information in statistical VQC models;
+- Added pyvqnet.qnn.vqc.QuantumLayerAdjoint interface that supports adjoint gradient calculation;
+- Supported the mutual conversion function between originIR and VQC;
+- Supported classical and quantum module information in statistical VQC models;
 - Added two cases under the quantum classical neural network hybrid model: quantum convolutional neural network model based on small samples, and quantum kernel function model for handwritten digit recognition.
 
 
@@ -19,11 +19,12 @@ Added
 Added
 ===================
 - The xtensor interface definition has been added to support automatic operator parallelism and multiple CPU/GPU backends. It includes more than 150 interfaces for commonly used mathematics, logic, and matrix calculations for multi-dimensional arrays, as well as common classic neural network layers and optimizers.
-- The distributed computing interface definition is added to support single-node multi-process and multi-node multi-process model training on the CPU, including initialization, communication, and data segmentation interfaces.
 
 Changed
 ===================
 - version from v2.0.8 bumps to v2.9.0.
+- packages are uploaded in https://pypi.originqc.com.cn, use ``pip install pyvqnet --index-url https://pypi.originqc.com.cn`` .
+
 
 [v2.0.8] - 2023-07-26
 ***************************
