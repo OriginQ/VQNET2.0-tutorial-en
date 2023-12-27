@@ -1,11 +1,12 @@
 Other Utility Functions
-=========================
+##################################
 
 Seeds for Random Distributions
-----------------------------------
+*******************************************
+
 
 set_random_seed
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+==============================
 
 .. py:function:: pyvqnet.utils.set_random_seed(seed)
     
@@ -91,7 +92,7 @@ set_random_seed
         # ]
 
 get_random_seed
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+==============================
 
 .. py:function:: pyvqnet.utils.get_random_seed()
     
@@ -107,7 +108,7 @@ get_random_seed
         #256
 
 VQNet2ONNX module
--------------------
+*******************************************
 
 The VQNet2ONNX module supports converting VQNet models and parameters to ONNX model format. The deployment of the VQNet model to a variety of inference engines can be completed through ONNX, including TensorRT/OpenVINO/MNN/TNN/NCNN, and other inference engines or hardware that support the ONNX open source format.
 
@@ -226,7 +227,7 @@ Model definition
 
             return output
 
-测试代码
+test code
 
 .. code-block::
 
@@ -279,4 +280,5 @@ The following are the supported VQNet modules
 
 .. csv-table:: Supoorted VQNet modules
    :file: ./images/onnxsupport.csv
+
 

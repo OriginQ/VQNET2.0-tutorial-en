@@ -1,5 +1,5 @@
 Classical Neural Network Module
-==================================
+#########################################
 
 The following classical neural network modules support automatic back propagation computation.After running the forward function, you can calculate the gradient by executing the reverse function.A simple example of the convolution layer is as follows:
 
@@ -51,13 +51,13 @@ The following classical neural network modules support automatic back propagatio
 
 
 Module Class
--------------------------------
+********************************************************
 
 abstract calculation module
 
 
 Module
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+=================================
 
 .. py:class:: pyvqnet.nn.module.Module
 
@@ -80,7 +80,7 @@ Module
     Submodules assigned in this way will be registered
 
 forward
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+=================================
 
 .. py:method:: pyvqnet.nn.module.Module.forward(x, *args, **kwargs)
 
@@ -123,7 +123,7 @@ forward
         # ]
 
 state_dict 
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+=================================
 
 .. py:method:: pyvqnet.nn.module.Module.state_dict(destination=None, prefix='')
 
@@ -147,7 +147,7 @@ state_dict
 
 
 toGPU
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+=================================
 
 .. py:function:: pyvqnet.nn.module.Module.toGPU(device: int = DEV_GPU_0)
 
@@ -172,7 +172,7 @@ toGPU
 
 
 toCPU
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+=================================
 
 .. py:function:: pyvqnet.nn.module.Module.toCPU()
 
@@ -190,7 +190,7 @@ toCPU
 
 
 save_parameters
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+=================================
 
 .. py:function:: pyvqnet.utils.storage.save_parameters(obj, f)
 
@@ -216,7 +216,7 @@ save_parameters
         pyvqnet.utils.storage.save_parameters(model.state_dict(),"tmp.model")
 
 load_parameters
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+=================================
 
 .. py:function:: pyvqnet.utils.storage.load_parameters(f)
 
@@ -249,7 +249,7 @@ load_parameters
 
 
 ModuleList
---------------------------------------------------------------------------------
+**************************************************************************************************************************************************************************
 
 .. py:class:: pyvqnet.nn.module.ModuleList([pyvqnet.nn.module.Module])
 
@@ -313,11 +313,77 @@ ModuleList
         #odict_keys(['pqc2.0.m_para', 'pqc2.1.weights', 'pqc2.1.bias'])
 
 
+
+ParameterList
+*********************************************************
+.. py:class:: pyvqnet.nn.module.ParameterList([pyvqnet.nn.module.Module])
+
+
+    To store parameters in a list, a ParameterList can be indexed like a normal Python list, and the internal parameters of the Parameter it contains can be stored.
+
+    :param modules: nn.Parameter list.
+
+    :return: a Parameter list.
+
+    Example::
+
+        from pyvqnet import nn
+        class MyModule(nn.Module):
+            def __init__(self):
+                super().__init__()
+                self.params = nn.ParameterList([nn.Parameter((10, 10)) for i in range(10)])
+            def forward(self, x):
+
+                # ParameterList can act as an iterable, or be indexed using ints
+                for i, p in enumerate(self.params):
+                    x = self.params[i // 2] * x + p * x
+                return x
+
+        model = MyModule()
+        print(model.state_dict().keys())
+
+
+Sequential
+*********************************************************
+.. py:class:: pyvqnet.nn.module.Sequential([pyvqnet.nn.module.Module])
+
+    Modules will be added in the order they are passed in. Alternatively, a ``OrderedDict`` of modules can be passed in. The ``forward()`` method of ``Sequential`` takes any input and forwards it to its first module.
+    It then ``Sequential`` the output to the input of each subsequent module in turn, and finally returns the output of the last module.
+
+    :param modules: module to append.
+
+    :return: Sequential.
+
+    Example::
+        
+        from pyvqnet import nn
+        from collections import OrderedDict
+
+        # Using Sequential to create a small model.
+        model = nn.Sequential(
+                  nn.Conv2D(1,20,(5, 5)),
+                  nn.ReLu(),
+                  nn.Conv2D(20,64,(5, 5)),
+                  nn.ReLu()
+                )
+        print(model.state_dict().keys())
+
+        # Using Sequential with OrderedDict. This is functionally the same as the above code
+                
+        model = nn.Sequential(OrderedDict([
+                  ('conv1', nn.Conv2D(1,20,(5, 5))),
+                  ('relu1', nn.ReLu()),
+                  ('conv2', nn.Conv2D(20,64,(5, 5))),
+                  ('relu2', nn.ReLu())
+                ]))
+        print(model.state_dict().keys())
+
+
 Classical Neural Network Layer
--------------------------------
+********************************************************
 
 Conv1D
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+=================================
 
 .. py:class:: pyvqnet.nn.Conv1D(input_channels:int,output_channels:int,kernel_size:int ,stride:int= 1,padding = "valid",use_bias:str = True,kernel_initializer = None,bias_initializer =None, dilation_rate: int = 1, group: int = 1, dtype=None, name='')
 
@@ -364,7 +430,7 @@ Conv1D
         # ]
 
 Conv2D
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+=================================
 
 .. py:class:: pyvqnet.nn.Conv2D(input_channels:int,output_channels:int,kernel_size:tuple,stride:tuple=(1, 1),padding="valid",use_bias = True,kernel_initializer=None,bias_initializer=None, dilation_rate: int = 1, group: int = 1, dtype = None, name = "")
 
@@ -420,7 +486,7 @@ Conv2D
         # ]
 
 ConvT2D
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+=================================
 
 .. py:class:: pyvqnet.nn.ConvT2D(input_channels,output_channels,kernel_size,stride=[1, 1],padding="valid",use_bias="True", kernel_initializer=None,bias_initializer=None, dilation_rate: int = 1, group: int = 1, dtype=None, name='')
 
@@ -476,7 +542,7 @@ ConvT2D
         # ]
 
 AvgPool1D
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+=================================
 
 .. py:class:: pyvqnet.nn.AvgPool1D(kernel, stride, padding='valid', name='')
 
@@ -519,7 +585,7 @@ AvgPool1D
         # ]
 
 MaxPool1D
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+=================================
 
 .. py:class:: pyvqnet.nn.MaxPool1D(kernel, stride, padding='valid', dtype=None, name='')
 
@@ -560,7 +626,7 @@ MaxPool1D
         #   [1. 5. 7.]]]
 
 AvgPool2D
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+=================================
 
 .. py:class:: pyvqnet.nn.AvgPool2D(kernel, stride, padding='valid', name='')
 
@@ -596,7 +662,7 @@ AvgPool2D
         #    [3.75 3.  ]]]]
 
 MaxPool2D
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+=================================
 
 .. py:class:: pyvqnet.nn.MaxPool2D(kernel, stride, padding='valid', name='')
 
@@ -632,7 +698,7 @@ MaxPool2D
         #    [5. 6.]]]]
 
 Embedding
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+=================================
 
 .. py:class:: pyvqnet.nn.embedding.Embedding(num_embeddings, embedding_dim, weight_initializer=<function xavier_normal>,dtype=None, name: str = '')
 
@@ -688,7 +754,7 @@ Embedding
 
 
 BatchNorm2d
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+=================================
 
 .. py:class:: pyvqnet.nn.BatchNorm2d(channel_num:int, momentum:float=0.1, epsilon:float = 1e-5,beta_initializer=zeros, gamma_initializer=ones, dtype=None, name="")
 
@@ -750,7 +816,7 @@ BatchNorm2d
 
 
 BatchNorm1d
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+=================================
 
 .. py:class:: pyvqnet.nn.BatchNorm1d(channel_num:int, momentum:float=0.1, epsilon:float = 1e-5, beta_initializer=zeros, gamma_initializer=ones, dtype=None, name="")
 
@@ -801,7 +867,7 @@ BatchNorm1d
 
 
 LayerNormNd
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+=================================
 
 .. py:class:: pyvqnet.nn.layer_norm.LayerNormNd(normalized_shape: list, epsilon: float = 1e-5, affine: bool = True, dtype=None,name="")
 
@@ -844,7 +910,7 @@ LayerNormNd
 
 
 LayerNorm2d
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+=================================
 
 .. py:class:: pyvqnet.nn.layer_norm.LayerNorm2d(norm_size:int, epsilon:float = 1e-5, affine: bool = True, dtype=None, name="")
 
@@ -898,7 +964,7 @@ LayerNorm2d
         # ]
 
 LayerNorm1d
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+=================================
 
 .. py:class:: pyvqnet.nn.layer_norm.LayerNorm1d(norm_size:int, epsilon:float = 1e-5, affine: bool = True, dtype=None,name="")
 
@@ -939,7 +1005,7 @@ LayerNorm1d
         # ]
 
 Linear
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+=================================
 
 .. py:class:: pyvqnet.nn.Linear(input_channels, output_channels, weight_initializer=None, bias_initializer=None,use_bias=True, dtype=None, name: str = "")
 
@@ -982,7 +1048,7 @@ Linear
 
 
 Dropout
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+=================================
 
 .. py:class:: pyvqnet.nn.dropout.Dropout(dropout_rate = 0.5)
 
@@ -1017,7 +1083,8 @@ Dropout
         #    [  0.  14.]]]]
 
 Pixel_Shuffle 
-^^^^^^^^^^^^^^^^^^^^^^^^^
+=================================
+
 .. py:class:: pyvqnet.nn.pixel_shuffle.Pixel_Shuffle(upscale_factors)
 
     Rearrange tensors of shape: (*, C * r^2, H, W) to a tensor of shape (*, C, H * r, W * r) where r is the scaling factor.
@@ -1039,7 +1106,8 @@ Pixel_Shuffle
         #[5, 2, 3, 2, 12, 12]
 
 Pixel_Unshuffle 
-^^^^^^^^^^^^^^^^^^^^^^^^^
+=================================
+
 .. py:class:: pyvqnet.nn.pixel_shuffle.Pixel_Unshuffle(downscale_factors)
 
     Reverses the Pixel_Shuffle operation by rearranging the elements. Shuffles a Tensor of shape (*, C, H * r, W * r) to (*, C * r^2, H, W) , where r is the shrink factor.
@@ -1062,7 +1130,7 @@ Pixel_Unshuffle
 
 
 GRU
-^^^^^^^^^^^^^^^^^^^^^^^^^
+=================================
 
 .. py:class:: pyvqnet.nn.gru.GRU(input_size, hidden_size, num_layers=1, nonlinearity='tanh', batch_first=True, use_bias=True, bidirectional=False, dtype=None, name: str = '')
 
@@ -1136,7 +1204,7 @@ GRU
         # ]
 
 RNN 
-^^^^^^^^^^^^^^^^^^^^^^^^^
+=================================
 
 .. py:class:: pyvqnet.nn.rnn.RNN(input_size, hidden_size, num_layers=1, nonlinearity='tanh', batch_first=True, use_bias=True, bidirectional=False, dtype=None, name: str = '')
 
@@ -1208,7 +1276,7 @@ RNN
 
 
 LSTM
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+=================================
 
 .. py:class:: pyvqnet.nn.lstm.LSTM(input_size, hidden_size, num_layers=1, batch_first=True, use_bias=True, bidirectional=False, dtype=None, name: str = '')
 
@@ -1298,7 +1366,7 @@ LSTM
         # ]
 
 Dynamic_GRU
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+=================================
 
 .. py:class:: pyvqnet.nn.gru.Dynamic_GRU(input_size,hidden_size, num_layers=1, batch_first=True, use_bias=True, bidirectional=False, dtype=None, name: str = '')
     
@@ -1387,7 +1455,7 @@ Dynamic_GRU
         # [4 1 2]
 
 Dynamic_RNN 
-^^^^^^^^^^^^^^^^^^^^^^^^^
+=================================
 
 .. py:class:: pyvqnet.nn.rnn.Dynamic_RNN(input_size, hidden_size, num_layers=1, nonlinearity='tanh', batch_first=True, use_bias=True, bidirectional=False, dtype=None, name: str = '')
     
@@ -1480,7 +1548,7 @@ Dynamic_RNN
 
 
 Dynamic_LSTM
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+=================================
 
 .. py:class:: pyvqnet.nn.lstm.Dynamic_LSTM(input_size, hidden_size, num_layers=1, batch_first=True, use_bias=True, bidirectional=False, dtype=None, name: str = '')
     
@@ -1579,14 +1647,14 @@ Dynamic_LSTM
         # [3 4 1]
 
 Loss Function Layer
-----------------------------------
+********************************************************
 
 .. note::
 
         Please note that unlike pytorch and other frameworks, in the forward function of the following loss function, the first parameter is the label, and the second parameter is the predicted value.
 
 MeanSquaredError
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+=================================
 
 .. py:class:: pyvqnet.nn.MeanSquaredError
 
@@ -1640,7 +1708,7 @@ MeanSquaredError
         
 
 BinaryCrossEntropy
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+=================================
 
 .. py:class:: pyvqnet.nn.BinaryCrossEntropy
 
@@ -1680,7 +1748,7 @@ BinaryCrossEntropy
         # [0.6364825]
 
 CategoricalCrossEntropy
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+=================================
 
 .. py:class:: pyvqnet.nn.CategoricalCrossEntropy
 
@@ -1715,7 +1783,7 @@ CategoricalCrossEntropy
         # [3.7852428]
 
 SoftmaxCrossEntropy
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+=================================
 
 .. py:class:: pyvqnet.nn.SoftmaxCrossEntropy
 
@@ -1754,7 +1822,7 @@ SoftmaxCrossEntropy
 
 
 NLL_Loss
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+=================================
 
 .. py:class:: pyvqnet.nn.NLL_Loss()
 
@@ -1800,7 +1868,7 @@ NLL_Loss
         #[-0.6187226]
 
 CrossEntropyLoss
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+=================================
 
 .. py:class:: pyvqnet.nn.CrossEntropyLoss()
 
@@ -1848,17 +1916,17 @@ CrossEntropyLoss
 
 
 Activation Function
-----------------------------------
+********************************************************
 
 
 Activation
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+=================================
 .. py:class:: pyvqnet.nn.activation.Activation
 
     Base class of activation. Specific activation functions inherit  this functions.
 
 Sigmoid
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+=================================
 .. py:class:: pyvqnet.nn.Sigmoid(name: str = '')
 
         Applies a sigmoid activation function to the given layer.
@@ -1880,7 +1948,7 @@ Sigmoid
             # [0.7310586, 0.8807970, 0.9525741, 0.9820138]
 
 Softplus
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+=================================
 .. py:class:: pyvqnet.nn.Softplus(name: str = '')
 
         Applies the softplus activation function to the given layer.
@@ -1902,7 +1970,7 @@ Softplus
         # [1.3132616, 2.1269281, 3.0485873, 4.0181499]
 
 Softsign
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+=================================
 .. py:class:: pyvqnet.nn.Softsign(name: str = '')
 
         Applies the softsign activation function to the given layer.
@@ -1924,7 +1992,7 @@ Softsign
             # [0.5000000, 0.6666667, 0.7500000, 0.8000000]
 
 Softmax
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+=================================
 .. py:class:: pyvqnet.nn.Softmax(axis: int = - 1, name: str = '')
 
     Applies a softmax activation function to the given layer.
@@ -1949,7 +2017,7 @@ Softmax
 
 
 HardSigmoid
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+=================================
 .. py:class:: pyvqnet.nn.HardSigmoid(name: str = '')
 
     Applies a hard sigmoid activation function to the given layer.
@@ -1975,7 +2043,7 @@ HardSigmoid
         # [0.6666667, 0.8333334, 1, 1]
 
 ReLu
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+=================================
 .. py:class:: pyvqnet.nn.ReLu(name: str = '')
 
     Applies a rectified linear unit activation function to the given layer.
@@ -2001,7 +2069,7 @@ ReLu
         # [0, 2, 0, 4]
 
 LeakyReLu
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+=================================
 .. py:class:: pyvqnet.nn.LeakyReLu(alpha: float = 0.01, name: str = '')
 
     Applies the leaky version of a rectified linear unit activation
@@ -2029,7 +2097,7 @@ LeakyReLu
         # [-0.0100000, 2, -0.0300000, 4]
 
 ELU
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+=================================
 .. py:class:: pyvqnet.nn.ELU(alpha: float = 1.0, name: str = '')
 
     Applies the exponential linear unit activation function to the given layer.
@@ -2055,7 +2123,7 @@ ELU
         # [-0.6321205, 2, -0.9502130, 4]
 
 Tanh
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+=================================
 .. py:class:: pyvqnet.nn.Tanh(name: str = '')
 
     Applies the hyperbolic tangent activation function to the given layer.
@@ -2077,11 +2145,11 @@ Tanh
         # [-0.7615942, 0.9640276, -0.9950548, 0.9993293]
 
 Optimizer Module
-----------------------------------
+********************************************************
 
 
 Optimizer
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+=================================
 .. py:class:: pyvqnet.optim.optimizer.Optimizer(params, lr=0.01)
 
     Base class for all optimizers.
@@ -2090,7 +2158,7 @@ Optimizer
     :param lr: learning_rate of model (default: 0.01)
 
 adadelta
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+=================================
 .. py:class:: pyvqnet.optim.adadelta.Adadelta(params, lr=0.01, beta=0.99, epsilon=1e-8)
 
     ADADELTA: An Adaptive Learning Rate Method. reference: (https://arxiv.org/abs/1212.5701)
@@ -2142,7 +2210,7 @@ adadelta
         # ]
 
 adagrad
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+=================================
 .. py:class:: pyvqnet.optim.adagrad.Adagrad(params, lr=0.01, epsilon=1e-8)
 
     Implements Adagrad algorithm. reference: (https://databricks.com/glossary/adagrad)
@@ -2192,7 +2260,7 @@ adagrad
         # ]
 
 adam
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+=================================
 .. py:class:: pyvqnet.optim.adam.Adam(params, lr=0.01, beta1=0.9, beta2=0.999, epsilon=1e-8,amsgrad: bool = False)
 
     Adam: A Method for Stochastic Optimization reference: (https://arxiv.org/abs/1412.6980),it can dynamically adjusts the learning rate of each parameter using the 1st moment estimates and the 2nd moment estimates of the gradient.
@@ -2261,7 +2329,7 @@ adam
         # ]
 
 adamax
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+=================================
 .. py:class:: pyvqnet.optim.adamax.Adamax(params, lr=0.01, beta1=0.9, beta2=0.999, epsilon=1e-8)
 
     Implements Adamax algorithm (a variant of Adam based on infinity norm).reference: (https://arxiv.org/abs/1412.6980)
@@ -2318,7 +2386,7 @@ adamax
         # ]
 
 rmsprop
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+=================================
 .. py:class:: pyvqnet.optim.rmsprop.RMSProp(params, lr=0.01, beta=0.99, epsilon=1e-8)
 
     Implements RMSprop algorithm. reference: (https://arxiv.org/pdf/1308.0850v5.pdf)
@@ -2369,7 +2437,7 @@ rmsprop
         # ]
 
 sgd
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+=================================
 .. py:class:: pyvqnet.optim.sgd.SGD(params, lr=0.01, momentum=0, nesterov=False)
 
     Implements SGD algorithm. reference: (https://en.wikipedia.org/wiki/Stochastic_gradient_descent)
@@ -2418,7 +2486,7 @@ sgd
         # ]
 
 rotosolve
-^^^^^^^^^^^^^^
+=================================
 
 Rotosolve algorithm, which allows a direct jump to the optimal value of a single parameter relative to the fixed value of other parameters, can directly find the optimal parameters of the quantum circuit optimization algorithm.
 
@@ -2493,11 +2561,11 @@ Rotosolve algorithm, which allows a direct jump to the optimal value of a single
 .. figure:: ./images/rotosolve.png
 
 Metrics
-----------------------------------
+********************************************************
 
 
 MSE
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+=================================
 
 .. py:class:: pyvqnet.utils.metrics.MSE(y_true_Qtensor, y_pred_Qtensor)
 
@@ -2529,7 +2597,7 @@ MSE
 
 
 RMSE
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+=================================
 
 .. py:class:: pyvqnet.utils.metrics.RMSE(y_true_Qtensor, y_pred_Qtensor)
 
@@ -2562,7 +2630,7 @@ RMSE
 
 
 MAE
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+=================================
 
 .. py:class:: pyvqnet.utils.metrics.MAE(y_true_Qtensor, y_pred_Qtensor)
 
@@ -2594,7 +2662,7 @@ MAE
 
 
 R_Square
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+=================================
 
 .. py:class:: pyvqnet.utils.metrics.R_Square(y_true_Qtensor, y_pred_Qtensor, sample_weight=None)
 
@@ -2631,7 +2699,7 @@ R_Square
 
 
 precision_recall_f1_2_score
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+=================================
 
 .. py:class:: pyvqnet.utils.metrics.precision_recall_f1_2_score(y_true_Qtensor, y_pred_Qtensor)
 
@@ -2663,7 +2731,7 @@ precision_recall_f1_2_score
 
 
 precision_recall_f1_N_score
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+=================================
 
 .. py:class:: pyvqnet.utils.metrics.precision_recall_f1_N_score(y_true_Qtensor, y_pred_Qtensor, N, average)
 
@@ -2717,7 +2785,7 @@ precision_recall_f1_N_score
 
 
 precision_recall_f1_Multi_score
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+=================================^^^^^^^
 
 .. py:class:: pyvqnet.utils.metrics.precision_recall_f1_Multi_score(y_true_Qtensor, y_pred_Qtensor, N, average)
 
@@ -2791,7 +2859,7 @@ precision_recall_f1_Multi_score
 
 
 auc_calculate
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+=================================
 
 .. py:class:: pyvqnet.utils.metrics.auc_calculate(y_true_Qtensor, y_pred_Qtensor, pos_label=None, sample_weight=None, drop_intermediate=True)
 
