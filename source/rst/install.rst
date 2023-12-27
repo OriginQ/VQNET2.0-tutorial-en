@@ -4,13 +4,14 @@ Steps of VQNet Installation
 VQNet python package Installation
 ----------------------------------
 
-We provide different pre-compiled packages based on python with Linux, Windows, MacOS, 
-which **Python ==3.8, 3,9 or 3.10** , numpy>=1.18.5 and pyqpanda>=3.7.8 will required. 
+We provide precompiled Python packages for installation on Linux, Windows, x86_64 OSX >=10.12, arm64 OSX >=13.0, supporting python3.8, 3.9, or 3.10.
+
+For Linux systems, pyvqnet offers accelerated computation for classic neural networks based on Nvidia GPU. If your computer's GPU is GTX10 series or later, you can build models with pyvqnet's GPU functionality by installing cuda11.7 following the official CUDA website.
 
 
 .. code-block::
 
-    pip install pyvqnet
+    pip install pyvqnet --index-url https://pypi.originqc.com.cn
 
 Validate VQNet's installation 
 ----------------------------------

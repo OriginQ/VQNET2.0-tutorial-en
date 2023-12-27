@@ -52,15 +52,25 @@ It can promote in a variety of applications such as the design of quantum algori
     rst/qml_demo.rst
 
 .. toctree::
-    :caption: The API
+    :caption: The QTensor API
     :maxdepth: 2
 
     rst/QTensor.rst
     rst/nn.rst
     rst/qnn.rst
     rst/utils.rst
+
+
+
+.. toctree::
+    :caption: Others
+    :maxdepth: 2
+
+    rst/xtensor.rst
+    rst/xtensor_nn.rst
     rst/FAQ.rst
     rst/CHANGELOG.rst
+
 
 
 
