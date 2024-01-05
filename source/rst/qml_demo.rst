@@ -5307,11 +5307,10 @@ The formula for the quantum natural gradient is as follows:
 
 where :math:`g^{+}` is the pseudo-inverse.
 
-The following is an example of quantum natural gradient optimization of a quantum variational circuit parameter based on VQNet. It can be seen that the use of quantum natural gradient (Quantum Nature Gradient) makes some loss functions decline faster.
+Below we implement an example of quantum natural gradient optimization of a quantum variational line parameter based on VQNet, where `wrapper_calculate_qng` is the decorator of the forward function that needs to be added to the model to be calculated for the quantum natural gradient.
+Through the quantum natural gradient optimizer of `pyvqnet.qnn.vqc.QNG`, the `Parameter` type parameters registered by the model can be optimized.
 
-Our goal is to minimize the expectation of the following quantum variational circuit. It can be seen that there are two layers of 3 quantum parametric logic gates in total. The first layer is composed of RZ and RY logic gates on bits 0 and 1, 
-and the second layer is composed of RX logic gate on 2 bits constitutes.
-
+Our goal is to minimize the expectation of the following quantum variational circuit. It can be seen that it contains two layers of three quantum parameter-containing logic gates. The first layer is composed of RZ, RY logic gates on 0 and 1 bits, and the second layer is composed of It is composed of RX logic gate on 2 bits.
 .. image:: ./images/qng_all_cir.png
    :width: 600 px
    :align: center
@@ -5320,169 +5319,134 @@ and the second layer is composed of RX logic gate on 2 bits constitutes.
 
 .. code-block::
 
-    import pyqpanda as pq
+
+    import sys
+    sys.path.insert(0, "../")
     import numpy as np
+    import pyvqnet
+    from pyvqnet.qnn import vqc
+    from pyvqnet.qnn.vqc import wrapper_calculate_qng
     from pyvqnet.tensor import QTensor
-    from pyvqnet.qnn.measure import expval, ProbsMeasure
-    from pyvqnet.qnn import insert_pauli_for_mt, get_metric_tensor, QNG,QuantumLayer
     import matplotlib.pyplot as plt
-    from pyvqnet.optim import SGD
-    from pyvqnet import _core
-    ###################################################
-    # Quantum Nature Gradients Examples
-    ###################################################
-    class pyqpanda_config_wrapper:
-        """
-        A wrapper for pyqpanda config,including QVM machine, allocated qubits, classic bits.
-        """
-        def __init__(self, qubits_num) -> None:
-            self._machine = pq.CPUQVM()
-            self._machine.init_qvm()
-            self._qubits = self._machine.qAlloc_many(qubits_num)
-            self._cubits = self._machine.cAlloc_many(qubits_num)
-            self._qcir = pq.QCircuit()
-        def __del__(self):
-            self._machine.finalize()
-    # use quantum nature gradient optimzer to optimize circuit quantum_net
-    steps = 200
-    def quantum_net(
-            q_input_features,
-            params,
-            qubits,
-            cubits,
-            machine):
-        qcir = pq.QCircuit()
-        qcir.insert(pq.RY(qubits[0], np.pi / 4))
-        qcir.insert(pq.RY(qubits[1], np.pi / 3))
-        qcir.insert(pq.RY(qubits[2], np.pi / 7))
-        qcir.insert(pq.RZ(qubits[0], params[0]))
-        qcir.insert(pq.RY(qubits[1], params[1]))
-        qcir.insert(pq.CNOT(qubits[0], qubits[1]))
-        qcir.insert(pq.CNOT(qubits[1], qubits[2]))
-        qcir.insert(pq.RX(qubits[2], params[2]))
-        qcir.insert(pq.CNOT(qubits[0], qubits[1]))
-        qcir.insert(pq.CNOT(qubits[1], qubits[2]))
-        m_prog = pq.QProg()
-        m_prog.insert(qcir)
-        return expval(machine, m_prog, {'Y0': 1}, qubits)
 
-To use the quantum natural gradient algorithm, we first need to compute the metric tensor.
-According to the definition of the algorithm, we manually defined the following two sub-circuits to calculate the Fubini-Study tensor of the two-layer circuit with parameters.
-The first parameter layer calculates the sub-circuit of the metric tensor as follows:
 
-.. image:: ./images/qng_subcir1.png
-   :width: 600 px
-   :align: center
 
-|
+    class Hmodel(vqc.Module):
+        def __init__(self, num_wires, dtype,init_t):
+            super(Hmodel, self).__init__()
+            self._num_wires = num_wires
+            self._dtype = dtype
+            self.qm = vqc.QMachine(num_wires, dtype=dtype)
 
-.. code-block::
+            self.p = pyvqnet.nn.Parameter([4], dtype=pyvqnet.kfloat64)
+            self.p.init_from_tensor(init_t)
+            self.ma = vqc.MeasureAll(obs={"Y0":1})
 
-    def layer0_subcircuit(config: pyqpanda_config_wrapper, params):
-        qcir = pq.QCircuit()
-        qcir.insert(pq.RY(config._qubits[0], np.pi / 4))
-        qcir.insert(pq.RY(config._qubits[1], np.pi / 3))
-        return qcir
-    def get_p01_diagonal_(config, params, target_gate_type, target_gate_bits,
-                            wires):
-        qcir = layer0_subcircuit(config, params)
-        qcir2 = insert_pauli_for_mt(config._qubits, target_gate_type,
-                                    target_gate_bits)
-        qcir3 = pq.QCircuit()
-        qcir3.insert(qcir)
-        qcir3.insert(qcir2)
-        m_prog = pq.QProg()
-        m_prog.insert(qcir3)
-        return ProbsMeasure(wires, m_prog, config._machine, config._qubits)
+        @wrapper_calculate_qng
+        def forward(self, x, *args, **kwargs):
+            self.qm.reset_states(1)
+            vqc.ry(q_machine=self.qm, wires=0, params=np.pi / 4)
+            vqc.ry(q_machine=self.qm, wires=1, params=np.pi / 3)
+            vqc.ry(q_machine=self.qm, wires=2, params=np.pi / 7)
 
-The sub-circuit for computing the metric tensor in the second parameter layer is as follows:
+            # V0(theta0, theta1): Parametrized layer 0
+            vqc.rz(q_machine=self.qm, wires=0, params=self.p[0])
+            vqc.rz(q_machine=self.qm, wires=1, params=self.p[1])
 
-.. image:: ./images/qng_subcir2.png
-   :width: 600 px
-   :align: center
+            # W1: non-parametrized gates
+            vqc.cnot(q_machine=self.qm, wires=[0, 1])
+            vqc.cnot(q_machine=self.qm, wires=[1, 2])
 
-|
+            # V_1(theta2, theta3): Parametrized layer 1
+            vqc.ry(q_machine=self.qm, params=self.p[2], wires=1)
+            vqc.rx(q_machine=self.qm, params=self.p[3], wires=2)
 
-.. code-block::
+            # W2: non-parametrized gates
+            vqc.cnot(q_machine=self.qm, wires=[0, 1])
+            vqc.cnot(q_machine=self.qm, wires=[1, 2])
 
-    def layer1_subcircuit(config: pyqpanda_config_wrapper, params):
-        qcir = pq.QCircuit()
-        qcir.insert(pq.RY(config._qubits[0], np.pi / 4))
-        qcir.insert(pq.RY(config._qubits[1], np.pi / 3))
-        qcir.insert(pq.RY(config._qubits[2], np.pi / 7))
-        qcir.insert(pq.RZ(config._qubits[0], params[0]))
-        qcir.insert(pq.RY(config._qubits[1], params[1]))
-        qcir.insert(pq.CNOT(config._qubits[0], config._qubits[1]))
-        qcir.insert(pq.CNOT(config._qubits[1], config._qubits[2]))
-        return qcir
-    def get_p1_diagonal_(config, params, target_gate_type, target_gate_bits,
-                            wires):
-        qcir = layer1_subcircuit(config, params)
-        qcir2 = insert_pauli_for_mt(config._qubits, target_gate_type,
-                                    target_gate_bits)
-        qcir3 = pq.QCircuit()
-        qcir3.insert(qcir)
-        qcir3.insert(qcir2)
-        m_prog = pq.QProg()
-        m_prog.insert(qcir3)
-        
-        return ProbsMeasure(wires, m_prog, config._machine, config._qubits)
+            return self.ma(q_machine=self.qm)
 
-Use the quantum natural gradient class defined by the `QNG` class, where [['RZ', 'RY'], ['RX']] are 3 gate types with parameter logic gates,
-[[0, 1], [2]] is the active bit, qcir is the circuit function list of the calculation tensor, and [0,1,2] is the qubit index of the entire circuit.
 
-.. code-block::
 
-    config = pyqpanda_config_wrapper(3)
-    qcir = []
-    qcir.append(get_p01_diagonal_)
-    qcir.append(get_p1_diagonal_)
-    # define QNG optimzer
-    opt = QNG(config, quantum_net, 0.02, [['RZ', 'RY'], ['RX']], [[0, 1], [2]],
-                qcir, [0, 1, 2])
+    class Hmodel2(vqc.Module):
+        def __init__(self, num_wires, dtype,init_t):
+            super(Hmodel2, self).__init__()
+            self._num_wires = num_wires
+            self._dtype = dtype
+            self.qm = vqc.QMachine(num_wires, dtype=dtype)
 
-For iterative optimization, use the `opt` function for single-step optimization, where the first input parameter is the input data,
-There is no input in the line here, so it is None, and the second input parameter is the parameter to be optimized theta.
+            self.p = pyvqnet.nn.Parameter([4], dtype=pyvqnet.kfloat64)
+            self.p.init_from_tensor(init_t)
+            self.ma = vqc.MeasureAll(obs={"Y0":1})
 
-.. code-block::
+        def forward(self, x, *args, **kwargs):
+            self.qm.reset_states(1)
+            vqc.ry(q_machine=self.qm, wires=0, params=np.pi / 4)
+            vqc.ry(q_machine=self.qm, wires=1, params=np.pi / 3)
+            vqc.ry(q_machine=self.qm, wires=2, params=np.pi / 7)
 
-    qng_cost = []
-    theta2 = QTensor([0.432, 0.543, 0.233])
-    # iteration
-    for _ in range(steps):
-        theta2 = opt.step(None, theta2)
-        qng_cost.append(
-            quantum_net(None, theta2, config._qubits, config._cubits,
-                        config._machine))
+            # V0(theta0, theta1): Parametrized layer 0
+            vqc.rz(q_machine=self.qm, wires=0, params=self.p[0])
+            vqc.rz(q_machine=self.qm, wires=1, params=self.p[1])
+
+            # W1: non-parametrized gates
+            vqc.cnot(q_machine=self.qm, wires=[0, 1])
+            vqc.cnot(q_machine=self.qm, wires=[1, 2])
+
+            # V_1(theta2, theta3): Parametrized layer 1
+            vqc.ry(q_machine=self.qm, params=self.p[2], wires=1)
+            vqc.rx(q_machine=self.qm, params=self.p[3], wires=2)
+
+            # W2: non-parametrized gates
+            vqc.cnot(q_machine=self.qm, wires=[0, 1])
+            vqc.cnot(q_machine=self.qm, wires=[1, 2])
+
+            return self.ma(q_machine=self.qm)
 
 Using the SGD classic gradient descent method as a baseline to compare the changes in the loss value of the two under the same number of iterations,
 it can be seen that the loss function declines faster using the quantum natural gradient.
 
 .. code-block::
 
-    # use gradient descent as the baseline
+    steps = range(200)
+
+    x = QTensor([0.432, -0.123, 0.543, 0.233],
+                dtype=pyvqnet.kfloat64)
+    qng_model = Hmodel(3, pyvqnet.kcomplex128,x)
+    qng = pyvqnet.qnn.vqc.QNG(qng_model, 0.01)
+    qng_cost = []
+    for s in steps:
+        qng.zero_grad()
+        qng.step(None)
+        yy = qng_model(None).to_numpy().reshape([1])
+        qng_cost.append(yy)
+
+    x = QTensor([0.432, -0.123, 0.543, 0.233],
+                requires_grad=True,
+                dtype=pyvqnet.kfloat64)
+    qng_model = Hmodel2(3, pyvqnet.kcomplex128,x)
+    sgd = pyvqnet.optim.SGD(qng_model.parameters(), lr=0.01)
     sgd_cost = []
-    qlayer = QuantumLayer(quantum_net, 3, 'cpu', 3)
-    temp = _core.Tensor([0.432, 0.543, 0.233])
-    _core.vqnet.copyTensor(temp, qlayer.m_para.data)
-    opti = SGD(qlayer.parameters())
-    for i in range(steps):
-        opti.zero_grad()
-        loss = qlayer(QTensor([[1.0]]))
-        print(f'step {i}')
-        print(f'q param before {qlayer.m_para}')
-        loss.backward()
-        sgd_cost.append(loss.item())
-        opti._step()
-        print(f'q param after{qlayer.m_para}')
+    for s in steps:
         
+        sgd.zero_grad()
+        y = qng_model(None)
+        y.backward()
+        sgd.step()
+
+        sgd_cost.append(y.to_numpy().reshape([1]))
+
+
     plt.style.use("seaborn")
     plt.plot(qng_cost, "b", label="Quantum natural gradient descent")
     plt.plot(sgd_cost, "g", label="Vanilla gradient descent")
+
     plt.ylabel("Cost function value")
     plt.xlabel("Optimization steps")
     plt.legend()
-    plt.show()
+    plt.savefig('qng_new_compare.png')
+
 
 .. image:: ./images/qng_vs_sgd.png
    :width: 600 px
@@ -6443,6 +6407,210 @@ loss and singular value results:
     [[[54.829308]], [[19.001402]], [[14.423045]], [[12.262444]], [[10.100731]], [[7.5507345]], [[5.6469355]], [[-0.4976197]]]
 
 
+Optimization of variational quantum circuits
+===================================
+
+VQNet currently provides 4 ways to optimize quantum logic gates in user-defined variational quantum circuits: fusion of revolving gates (commute_controlled_right, commute_controlled_left), controlled gate exchange (commute_controlled), and single-bit logic gate fusion (single_qubit_ops_fuse).
+
+Here, the `wrapper_compile` decorator is used to decorate the model forward function defined by `QModule`, and the three rules of `commute_controlled_right`, `merge_rotations`, and `single_qubit_ops_fuse` will be called continuously by default for line optimization.
+Finally, through the `op_history_summary` interface, the `op_history` information generated after running the `QModule` forward function is compared.
+
+
+.. code-block::
+
+    from functools import partial
+
+    from pyvqnet.qnn.vqc import op_history_summary
+    from pyvqnet.qnn.vqc import QModule
+    from pyvqnet import tensor
+    from pyvqnet.qnn.vqc import QMachine, wrapper_compile
+
+    from pyvqnet.qnn.vqc import pauliy
+
+    from pyvqnet.qnn.vqc import QMachine, ry,rz, ControlledPhaseShift, \
+        rx, S, rot, isingxy,CSWAP, PauliX, T, MeasureAll, RZ, CZ, PhaseShift, u3, cnot, cry, toffoli, cy
+    from pyvqnet.tensor import QTensor, tensor
+    import pyvqnet
+
+    class QModel_before(QModule):
+        def __init__(self, num_wires, dtype):
+            super(QModel_before, self).__init__()
+
+            self._num_wires = num_wires
+            self._dtype = dtype
+            self.qm = QMachine(num_wires, dtype=dtype)
+            self.qm.set_save_op_history_flag(True)
+            self.cswap = CSWAP(wires=(0, 2, 1))
+            self.cz = CZ(wires=[0, 2])
+
+            self.paulix = PauliX(wires=2)
+
+            self.s = S(wires=0)
+
+            self.ps = PhaseShift(has_params=True,
+                                    trainable=True,
+                                    wires=0,
+                                    dtype=dtype)
+
+            self.cps = ControlledPhaseShift(has_params=True,
+                                            trainable=True,
+                                            wires=(1, 0),
+                                            dtype=dtype)
+            self.t = T(wires=0)
+            self.rz = RZ(has_params=True, wires=1, dtype=dtype)
+
+            self.measure = MeasureAll(obs={
+                'wires': [0],
+                'observables': ['z'],
+                'coefficient': [1]
+            })
+
+        def forward(self, x, *args, **kwargs):
+            self.qm.reset_states(x.shape[0])
+            self.cz(q_machine=self.qm)
+            self.paulix(q_machine=self.qm)
+            rx(q_machine=self.qm,wires=1,params = x[:,[0]])
+            ry(q_machine=self.qm,wires=1,params = x[:,[1]])
+            rz(q_machine=self.qm,wires=1,params = x[:,[2]])
+            rot(q_machine=self.qm, params=x[:, 0:3], wires=(1, ), use_dagger=True)
+            rot(q_machine=self.qm, params=x[:, 1:4], wires=(1, ), use_dagger=True)
+            isingxy(q_machine=self.qm, params=x[:, [2]], wires=(0, 1))
+            u3(q_machine=self.qm, params=x[:, 0:3], wires=1)
+            self.s(q_machine=self.qm)
+            self.cswap(q_machine=self.qm)
+            cnot(q_machine=self.qm, wires=[0, 1])
+            ry(q_machine=self.qm,wires=2,params = x[:,[1]])
+            pauliy(q_machine=self.qm, wires=1)
+            cry(q_machine=self.qm, params=1 / 2, wires=[0, 1])
+            self.ps(q_machine=self.qm)
+            self.cps(q_machine=self.qm)
+            ry(q_machine=self.qm,wires=2,params = x[:,[1]])
+            rz(q_machine=self.qm,wires=2,params = x[:,[2]])
+            toffoli(q_machine=self.qm, wires=[0, 1, 2])
+            self.t(q_machine=self.qm)
+
+            cy(q_machine=self.qm, wires=(2, 1))
+            ry(q_machine=self.qm,wires=1,params = x[:,[1]])
+            self.rz(q_machine=self.qm)
+
+            rlt = self.measure(q_machine=self.qm)
+
+            return rlt
+    class QModel(QModule):
+        def __init__(self, num_wires, dtype):
+            super(QModel, self).__init__()
+
+            self._num_wires = num_wires
+            self._dtype = dtype
+            self.qm = QMachine(num_wires, dtype=dtype)
+
+            self.cswap = CSWAP(wires=(0, 2, 1))
+            self.cz = CZ(wires=[0, 2])
+
+            self.paulix = PauliX(wires=2)
+
+            self.s = S(wires=0)
+
+            self.ps = PhaseShift(has_params=True,
+                                    trainable=True,
+                                    wires=0,
+                                    dtype=dtype)
+
+            self.cps = ControlledPhaseShift(has_params=True,
+                                            trainable=True,
+                                            wires=(1, 0),
+                                            dtype=dtype)
+            self.t = T(wires=0)
+            self.rz = RZ(has_params=True, wires=1, dtype=dtype)
+
+            self.measure = MeasureAll(obs={
+                'wires': [0],
+                'observables': ['z'],
+                'coefficient': [1]
+            })
+
+        @partial(wrapper_compile)
+        def forward(self, x, *args, **kwargs):
+            self.qm.reset_states(x.shape[0])
+            self.cz(q_machine=self.qm)
+            self.paulix(q_machine=self.qm)
+            rx(q_machine=self.qm,wires=1,params = x[:,[0]])
+            ry(q_machine=self.qm,wires=1,params = x[:,[1]])
+            rz(q_machine=self.qm,wires=1,params = x[:,[2]])
+            rot(q_machine=self.qm, params=x[:, 0:3], wires=(1, ), use_dagger=True)
+            rot(q_machine=self.qm, params=x[:, 1:4], wires=(1, ), use_dagger=True)
+            isingxy(q_machine=self.qm, params=x[:, [2]], wires=(0, 1))
+            u3(q_machine=self.qm, params=x[:, 0:3], wires=1)
+            self.s(q_machine=self.qm)
+            self.cswap(q_machine=self.qm)
+            cnot(q_machine=self.qm, wires=[0, 1])
+            ry(q_machine=self.qm,wires=2,params = x[:,[1]])
+            pauliy(q_machine=self.qm, wires=1)
+            cry(q_machine=self.qm, params=1 / 2, wires=[0, 1])
+            self.ps(q_machine=self.qm)
+            self.cps(q_machine=self.qm)
+            ry(q_machine=self.qm,wires=2,params = x[:,[1]])
+            rz(q_machine=self.qm,wires=2,params = x[:,[2]])
+            toffoli(q_machine=self.qm, wires=[0, 1, 2])
+            self.t(q_machine=self.qm)
+
+            cy(q_machine=self.qm, wires=(2, 1))
+            ry(q_machine=self.qm,wires=1,params = x[:,[1]])
+            self.rz(q_machine=self.qm)
+
+            rlt = self.measure(q_machine=self.qm)
+
+            return rlt
+
+    import pyvqnet
+    import pyvqnet.tensor as tensor
+    input_x = tensor.QTensor([[0.1, 0.2, 0.3, 0.4], [0.1, 0.2, 0.3, 0.4]],
+                                dtype=pyvqnet.kfloat64)
+
+    input_x.requires_grad = True
+    num_wires = 3
+    qunatum_model = QModel(num_wires=num_wires, dtype=pyvqnet.kcomplex128)
+    qunatum_model_before = QModel_before(num_wires=num_wires, dtype=pyvqnet.kcomplex128)
+
+    batch_y = qunatum_model(input_x)
+    batch_y = qunatum_model_before(input_x)
+
+    flatten_oph_names = []
+
+    print("before")
+
+    print(op_history_summary(qunatum_model_before.qm.op_history))
+    flatten_oph_names = []
+    for d in qunatum_model.compiled_op_historys:
+            if "compile" in d.keys():
+                oph = d["op_history"]
+                for i in oph:
+                    n = i["name"]
+                    w = i["wires"]
+                    p = i["params"]
+                    flatten_oph_names.append({"name":n,"wires":w, "params": p})
+    print("after")
+    print(op_history_summary(qunatum_model.qm.op_history))
+
+
+    # ###################Summary#######################
+    # qubits num: 3
+    # gates: {'cz': 1, 'paulix': 1, 'rx': 1, 'ry': 4, 'rz': 3, 'rot': 2, 'isingxy': 1, 'u3': 1, 's': 1, 'cswap': 1, 'cnot': 1, 'pauliy': 1, 'cry': 1, 'phaseshift': 1, 'controlledphaseshift': 1, 'toffoli': 1, 't': 1, 'cy': 1}
+    # total gates: 24
+    # total parameter gates: 15
+    # total parameters: 21
+    # #################################################
+        
+    # after
+
+
+    # ###################Summary#######################
+    # qubits num: 3
+    # gates: {'cz': 1, 'rot': 7, 'isingxy': 1, 'u3': 1, 'cswap': 1, 'cnot': 1, 'cry': 1, 'controlledphaseshift': 1, 'toffoli': 1, 'cy': 1}
+    # total gates: 16
+    # total parameter gates: 11
+    # total parameters: 27
+    # #################################################
 Quantum convolutional neural network model based on small samples
 =========================================================================
 
