@@ -5311,6 +5311,7 @@ Below we implement an example of quantum natural gradient optimization of a quan
 Through the quantum natural gradient optimizer of `pyvqnet.qnn.vqc.QNG`, the `Parameter` type parameters registered by the model can be optimized.
 
 Our goal is to minimize the expectation of the following quantum variational circuit. It can be seen that it contains two layers of three quantum parameter-containing logic gates. The first layer is composed of RZ, RY logic gates on 0 and 1 bits, and the second layer is composed of It is composed of RX logic gate on 2 bits.
+
 .. image:: ./images/qng_all_cir.png
    :width: 600 px
    :align: center
@@ -6285,17 +6286,17 @@ The following is the specific QSVD implementation code:
         num = 0
         for _ in range(20):
             for i in range(3):
-                ry(q_machine=qm, params=para[num], wires=i, num_wires=3)
+                ry(q_machine=qm, params=para[num], wires=i)
                 num += 1 
 
             for i in range(3):
-                rz(q_machine=qm, params=para[num], wires=i, num_wires=3)
+                rz(q_machine=qm, params=para[num], wires=i)
                 num += 1
 
             for i in range(2):
-                cnot(q_machine=qm, wires=[i, i+1], num_wires=3)
+                cnot(q_machine=qm, wires=[i, i+1])
 
-            cnot(q_machine=qm, wires=[2, 0], num_wires=3)
+            cnot(q_machine=qm, wires=[2, 0])
 
         return qm.states
 
@@ -6408,7 +6409,7 @@ loss and singular value results:
 
 
 Optimization of variational quantum circuits
-===================================
+====================================================
 
 VQNet currently provides 4 ways to optimize quantum logic gates in user-defined variational quantum circuits: fusion of revolving gates (commute_controlled_right, commute_controlled_left), controlled gate exchange (commute_controlled), and single-bit logic gate fusion (single_qubit_ops_fuse).
 
@@ -6611,6 +6612,8 @@ Finally, through the `op_history_summary` interface, the `op_history` informatio
     # total parameter gates: 11
     # total parameters: 27
     # #################################################
+
+
 Quantum convolutional neural network model based on small samples
 =========================================================================
 

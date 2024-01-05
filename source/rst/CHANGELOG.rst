@@ -1,6 +1,30 @@
 VQNet Changelog
 ###############################
 
+[v2.11.0] - 2023-02-28
+***************************
+
+
+Added
+===================
+
+- Add new QNG(quantum nature gradient) api and demo.
+- Add qunatum circuit optimization such as `wrapper_single_qubit_op_fuse` api and demo.
+- Add CY api, SparseHamiltonian, HermitianExpval.
+- Add is_csr, is_dense, dense_to_csr, csr_to_dense.
+
+Changed
+===================
+
+- Refactor VQC_CSWAPcircuit to CSWAP.
+- Remove old QNG doc.
+- Remove useless `num_wires` for functions and classes from `pyvqnet.qnn.vqc`.
+- Refactor MeasureAll,Probability api.
+
+fixed
+===================
+
+
 [v2.10.0] - 2023-12-30
 ***************************
 
