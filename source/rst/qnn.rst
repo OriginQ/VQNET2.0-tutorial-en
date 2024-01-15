@@ -160,7 +160,6 @@ If you are more familiar with pyQPanda syntax, please using QuantumLayerV2 class
 
     Example::
 
-
         import pyqpanda as pq
         from pyvqnet.qnn.measure import ProbsMeasure
         from pyvqnet.qnn.quantumlayer import QuantumLayerV2
@@ -221,6 +220,132 @@ If you are more familiar with pyQPanda syntax, please using QuantumLayerV2 class
         # [0.2500000, 0.2500000, 0.2500000, 0.2500000],
         # [0.2500000, 0.2500000, 0.2500000, 0.2500000]
         # ]
+
+
+QuantumBatchAsyncQcloudLayer
+=================================
+
+When you install the latest version of pyqpanda, you can use this interface to define a variational circuit and submit it to originqc for running on the real chip.
+
+.. py:class:: pyvqnet.qnn.quantumlayer.QuantumBatchAsyncQcloudLayer(origin_qprog_func, qcloud_token, para_num, num_qubits, num_cubits, pauli_str_dict=None, shots = 1000, initializer=None, dtype=None, name="", diff_method="parameter_shift ", submit_kwargs={}, query_kwargs={})
+    
+    Abstract computing module for originqc real chips using pyqpanda QCLOUD starting with version 3.8.2.2. It submits parameterized quantum circuits to real chips and obtains measurement results.
+
+    .. note::
+
+        qcloud_token is the API token you applied for at https://qcloud.originqc.com.cn/.
+        origin_qprog_func needs to return data of type pypqanda.QProg. If pauli_str_dict is not set, you need to ensure that measure has been inserted into the QProg.
+        The form of origin_qprog_func must be as follows:
+
+        origin_qprog_func(input,param,qubits,cbits,machine)
+
+            `input`: Input 1~2-dimensional classic data. In the case of two-dimensional data, the first dimension is the batch size.
+
+            `param`: Enter the parameters to be trained for the one-dimensional variational quantum circuit.
+
+            `machine`: The simulator QCloud created by QuantumBatchAsyncQcloudLayer does not require users to define it in additional functions.
+
+            `qubits`: Qubits created by the simulator QCloud created by QuantumBatchAsyncQcloudLayer, the number is `num_qubits`, the type is pyQpanda.Qubits, no need for the user to define it in the function.
+
+            `cbits`: Classic bits allocated by QuantumBatchAsyncQcloudLayer, the number is `num_cubits`, the type is pyQpanda.ClassicalCondition, no need for the user to define it in the function. .
+
+
+    :param origin_qprog_func: The variational quantum circuit function built by QPanda must return QProg.
+    :param qcloud_token: `str` - The type of quantum machine or cloud token used for execution.
+    :param para_num: `int` - Number of parameters, the parameter is a QTensor of size [para_num].
+    :param num_qubits: `int` - Number of qubits in the quantum circuit.
+    :param num_cubits: `int` - The number of classical bits used for measurement in quantum circuits.
+    :param pauli_str_dict: `dict|list` - A dictionary or list of dictionaries representing Pauli operators in quantum circuits. The default is "none", and the measurement operation is performed. If a dictionary of Pauli operators is entered, a single expectation or multiple expectations will be calculated.
+    :param shot: `int` - Number of measurements. The default value is 1000.
+    :param initializer: Initializer for parameter values. The default is "None", using 0~2*pi normal distribution.
+    :param dtype: The data type of the parameter. The default value is None, which uses the default data type pyvqnet.kfloat32.
+    :param name: The name of the module. Defaults to empty string.
+    :param diff_method: Differential method for gradient calculation. The default is "parameter_shift", other differential methods are not currently supported.
+    :param Submit_kwargs: Additional keyword parameters used to submit quantum circuits, reserved parameters, currently have no effect.
+    :param query_kwargs: Additional keyword parameters used to query quantum results, reserved parameters, currently have no effect.
+    :return: A module that can calculate quantum circuits.
+
+    Example::
+
+        import numpy as np
+        import pyqpanda as pq
+        import pyvqnet
+        from pyvqnet.qnn import QuantumLayer,QuantumBatchAsyncQcloudLayer,set_test_qcloud_fake
+        from pyvqnet.qnn import expval_qcloud
+
+        #set_test_qcloud_fake(False) #uncomments this code to use realchip
+
+
+        def qfun(input,param, m_machine, m_qlist,cubits):
+            measure_qubits = [0,2]
+            m_prog = pq.QProg()
+            cir = pq.QCircuit()
+            cir.insert(pq.RZ(m_qlist[0],input[0]))
+            cir.insert(pq.CNOT(m_qlist[0],m_qlist[1]))
+            cir.insert(pq.RY(m_qlist[1],param[0]))
+            cir.insert(pq.CNOT(m_qlist[0],m_qlist[2]))
+            cir.insert(pq.RZ(m_qlist[1],input[1]))
+            cir.insert(pq.RY(m_qlist[2],param[1]))
+            cir.insert(pq.H(m_qlist[2]))
+            m_prog.insert(cir)
+
+            for idx, ele in enumerate(measure_qubits):
+                m_prog << pq.Measure(m_qlist[ele], cubits[idx])  # pylint: disable=expression-not-assigned
+            return m_prog
+
+        l = QuantumBatchAsyncQcloudLayer(qfun,
+                        "3047DE8A59764BEDAC9C3282093B16AF1",
+                        2,
+                        6,
+                        6,
+                        pauli_str_dict=None,
+                        shots = 1000,
+                        initializer=None,
+                        dtype=None,
+                        name="",
+                        diff_method="parameter_shift",
+                        submit_kwargs={},
+                        query_kwargs={})
+        x = pyvqnet.tensor.QTensor([[0.56,1.2],[0.56,1.2],[0.56,1.2],[0.56,1.2],[0.56,1.2]],requires_grad= True)
+        y = l(x)
+        print(y)
+        y.backward()
+        print(l.m_para.grad)
+        print(x.grad)
+
+        def qfun2(input,param, m_machine, m_qlist,cubits):
+            measure_qubits = [0,2]
+            m_prog = pq.QProg()
+            cir = pq.QCircuit()
+            cir.insert(pq.RZ(m_qlist[0],input[0]))
+            cir.insert(pq.CNOT(m_qlist[0],m_qlist[1]))
+            cir.insert(pq.RY(m_qlist[1],param[0]))
+            cir.insert(pq.CNOT(m_qlist[0],m_qlist[2]))
+            cir.insert(pq.RZ(m_qlist[1],input[1]))
+            cir.insert(pq.RY(m_qlist[2],param[1]))
+            cir.insert(pq.H(m_qlist[2]))
+            m_prog.insert(cir)
+
+            return m_prog
+        l = QuantumBatchAsyncQcloudLayer(qfun2,
+                    "3047DE8A59764BEDAC9C3282093B16AF",
+                    2,
+                    6,
+                    6,
+                    pauli_str_dict={'Z0 X1':10,'':-0.5,'Y2':-0.543},
+                    shots = 1000,
+                    initializer=None,
+                    dtype=None,
+                    name="",
+                    diff_method="parameter_shift",
+                    submit_kwargs={},
+                    query_kwargs={})
+        x = pyvqnet.tensor.QTensor([[0.56,1.2],[0.56,1.2],[0.56,1.2],[0.56,1.2]],requires_grad= True)
+        y = l(x)
+        print(y)
+        y.backward()
+        print(l.m_para.grad)
+        print(x.grad)
 
 
 QuantumLayerMultiProcess
@@ -1784,6 +1909,51 @@ Quantum_Embedding
 Measure the quantum circuit
 ***********************************
 
+expval_qcloud
+=================================
+
+.. py:function:: pyvqnet.qnn.measure.expval_qcloud(machine, prog, pauli_str_dict, qlists,clists,shots=1000,qtype = pq.real_chip_type.origin_72)
+
+    Expectation value of the supplied Hamiltonian observables of QCloud.
+
+    if the observables are :math:`0.7Z\otimes X\otimes I+0.2I\otimes Z\otimes I`,
+    then ``Hamiltonian`` ``dict`` would be ``{{'Z0, X1':0.7} ,{'Z1':0.2}}`` .
+
+    :param machine: machine created by qpanda
+    :param prog: quantum program created by qpanda
+    :param pauli_str_dict: Hamiltonian observables
+    :param qlists: qubit allocated by pyQPanda
+    :param clists: cbit allocated by pyQPanda
+    :param shots: measure times, default:1000.
+    :param qtype: Set the type of qmachine measurement, the default is "" indicating non-qcloud. Set `pq.real_chip_type.origin_72` for real chips.
+    :return: expectation
+
+
+    Example::
+
+        from pyqpanda import *
+        input = [0.56, 0.1]
+
+        m_machine = QCloud()
+
+        m_machine.init_qvm("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx")
+
+        m_prog = pq.QProg()
+        m_qlist = m_machine.qAlloc_many(4)
+        m_clist = m_machine.cAlloc_many(4)
+        cir = pq.QCircuit()
+        cir.insert(pq.RZ(m_qlist[0],input[0]))
+        cir.insert(pq.CNOT(m_qlist[0],m_qlist[1]))
+        cir.insert(pq.CNOT(m_qlist[0],m_qlist[3]))
+        cir.insert(pq.RY(m_qlist[1],input[1]))
+        cir.insert(pq.CNOT(m_qlist[0],m_qlist[2]))
+        m_prog.insert(cir)
+        pauli_dict  = {'Z0 X1':10,'Y2':-0.543}
+
+        from pyvqnet.qnn import expval_qcloud
+        exp2 = expval_qcloud(m_machine,m_prog,pauli_dict,m_qlist,m_clist,shots=100)
+        print(exp2)
+
 expval
 =================================
 
@@ -1826,7 +1996,7 @@ expval
 QuantumMeasure
 =================================
 
-.. py:function:: pyvqnet.qnn.measure.QuantumMeasure(measure_qubits:list,prog,machine,qubits,slots:int = 1000)
+.. py:function:: pyvqnet.qnn.measure.QuantumMeasure(measure_qubits:list,prog,machine,qubits,shots:int = 1000, qtype="")
 
     Calculates circuits quantum measurement. Return the normalized result of the measurements obtained by the Monte Carlo method.
     
@@ -1838,7 +2008,8 @@ QuantumMeasure
     :param prog: quantum program from qpanda
     :param machine: quantum virtual machine allocated by pyQPanda
     :param qubits: qubit allocated by pyQPanda
-    :param slots: measure time,default 1000
+    :param shots: measure time,default 1000
+    :param qtype: Set the type of qmachine measurement, the default is "" indicating non-qcloud. Set `pq.real_chip_type.origin_72` for real chips.
     :return: returns the normalized result of the measurements obtained by the Monte Carlo method.
 
     Example::
