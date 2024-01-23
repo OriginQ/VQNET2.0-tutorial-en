@@ -6641,9 +6641,7 @@ QuantumLayerES
 
 .. py:class:: pyvqnet.qnn.vqc.QuantumLayerES(general_module: nn.Module, q_machine: QMachine, name="", sigma = np.pi / 24)
 
-
-   Automatically Differentiable QuantumLayer Layer for Gradient Calculation According to Evolutionary Strategies, Ref
-     `Learning to learn with an evolutionary strategy Learning to learn with an evolutionary strategy <https://arxiv.org/abs/2310.17402>`_ 。
+   Automatically Differentiable QuantumLayer Layer for Gradient Calculation According to Evolutionary Strategies, refer to `Learning to learn with an evolutionary strategy Learning to learn with an evolutionary strategy <https://arxiv.org/abs/2310.17402>`_ .
 
     :param general_module: An instance of `pyvqnet.nn.QModule` built using only the quantum line interface under `pyvqnet.qnn.vqc`.
     :param q_machine: The QMachine from the general_module definition.
