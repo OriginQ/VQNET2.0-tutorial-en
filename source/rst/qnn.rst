@@ -6642,18 +6642,20 @@ QuantumLayerES
 .. py:class:: pyvqnet.qnn.vqc.QuantumLayerES(general_module: nn.Module, q_machine: QMachine, name="", sigma = np.pi / 24)
 
 
-    根据进化策略进行梯度计算的可自动微分的QuantumLayer层,参考  `Learning to learn with an evolutionary strategy Learning to learn with an evolutionary strategy <https://arxiv.org/abs/2310.17402>`_ 。
+   Automatically Differentiable QuantumLayer Layer for Gradient Calculation According to Evolutionary Strategies, Ref
+     `Learning to learn with an evolutionary strategy Learning to learn with an evolutionary strategy <https://arxiv.org/abs/2310.17402>`_ 。
 
-    :param general_module: 一个仅使用 `pyvqnet.qnn.vqc` 下量子线路接口搭建的 `pyvqnet.nn.QModule` 实例。
-    :param q_machine: 来自general_module中定义的QMachine。
-    :param name: 该层名字,默认为""。
-    :param sigma: 多元正太分布的采样方差.
+    :param general_module: An instance of `pyvqnet.nn.QModule` built using only the quantum line interface under `pyvqnet.qnn.vqc`.
+    :param q_machine: The QMachine from the general_module definition.
+    :param name: The name of the layer, defaults to "".
+    :param sigma: The sampling variance of the multivariate sigma distribution.
 
     .. note::
 
-        general_module 的 QMachine 应设置 grad_method = "ES".
+        The QMachine for general_module should have grad_method = "ES".
 
-        当前支持由如下含参逻辑门 `RX`, `RY`, `RZ`, `PhaseShift`, `RXX`, `RYY`, `RZZ`, `RZX`, `U1`, `U2`, `U3` 以及其他不含参逻辑门构成的变分线路。
+        Variable division lines consisting of the following parametric logic gates `RX`, `RY`, `RZ`, `PhaseShift`, `RXX`, `RYY`, `RZZ`, `RZX`, `U1`, `U2`, `U3`, 
+        and other non-parametric logic gates are supported at present.
 
     Example::
 
