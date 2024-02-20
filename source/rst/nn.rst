@@ -3217,8 +3217,6 @@ Use ``average_grad_allreduce`` to pass the model parameter gradients across proc
             # if get_rank() == 0 :
             print(f"rank {get_rank()} grad is {model.parameters()[0].grad}")
             opti.step()
-            
-            return 
         
         # mpirun -n 2 python run.py
 
@@ -3318,8 +3316,6 @@ Use ``average_grad_reduce`` to pass the gradient of a parameter on a process as 
             print(f"rank {get_rank()} grad is {model.parameters()[0].grad}")
             opti.step()
             
-            return 
-        
         # mpirun -n 2 python run.py
 
 
@@ -3908,6 +3904,7 @@ Sets parameters for distributed computation.
         from pyvqnet.distributed.nccl_api import *
         from pyvqnet.nn.loss import MeanSquaredError
         from pyvqnet.optim import Adam
+        from pyvqnet.tensor import tensor
 
         nccl_op = NCCL_api()
         nccl_op.ncclCommInitRank()
@@ -3985,6 +3982,7 @@ Set parameters for distributed computation.
         from pyvqnet.distributed.nccl_api import *
         from pyvqnet.nn.loss import MeanSquaredError
         from pyvqnet.optim import Adam
+        from pyvqnet.tensor import tensor
 
         nccl_op = NCCL_api()
         nccl_op.ncclCommInitRank()
@@ -4226,8 +4224,6 @@ Set parameters for distributed computation.
         y_train = np.random.randint(2, size = (100, 1))
 
         x_train, y_train= split_data(x_train, y_train)
-
-        return x_train, y_train
 
 broadcast_model_params
 =================================
