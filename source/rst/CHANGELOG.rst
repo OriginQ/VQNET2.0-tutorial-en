@@ -1,7 +1,7 @@
 VQNet Changelog
 ###############################
 
-[v2.10.0] - 2024-03-01
+[v2.11.0] - 2024-03-01
 ***************************
 
 Added
@@ -12,6 +12,8 @@ Added
 - Added `CY`, `SparseHamiltonian`, `HermitianExpval`.
 - Added `is_csr`, `is_dense`, `dense_to_csr`, `csr_to_dense`.
 - Added `QuantumBatchAsyncQcloudLayer` to support pyqpanda's QCloud real chip calculation, `expval_qcloud`.
+- Add NCCL-based interface implementations for parallel model training of multi-GPU distributed computing data on a single node `nccl_average_parameters_allreduce`, `nccl_average_parameters_reduce`, `nccl_average_grad_allreduce`, `nccl_average_grad_reduce`, and classes to control NCCL initialization and related operations `NCCL_api`. 
+- Add quantum line evolution strategy gradient calculation interface `QuantumLayerES`.
 
 Changed
 ===================
