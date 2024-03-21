@@ -1,6 +1,33 @@
 VQNet Changelog
 ###############################
 
+[v2.11.0] - 2024-03-01
+***************************
+
+Added
+===================
+
+- Added new `QNG` (Quantum Natural Gradient) API and demo.
+- Added quantum circuit optimization, such as `wrapper_single_qubit_op_fuse`, `wrapper_commute_controlled`, `wrapper_merge_rotations` api and demo.
+- Added `CY`, `SparseHamiltonian`, `HermitianExpval`.
+- Added `is_csr`, `is_dense`, `dense_to_csr`, `csr_to_dense`.
+- Added `QuantumBatchAsyncQcloudLayer` to support pyqpanda's QCloud real chip calculation, `expval_qcloud`.
+- Add NCCL-based interface implementations for parallel model training of multi-GPU distributed computing data on a single node `nccl_average_parameters_allreduce`, `nccl_average_parameters_reduce`, `nccl_average_grad_allreduce`, `nccl_average_grad_reduce`, and classes to control NCCL initialization and related operations `NCCL_api`. 
+- Add quantum line evolution strategy gradient calculation interface `QuantumLayerES`.
+
+Changed
+===================
+
+- Refactored `VQC_CSWAP` circuit into `CSWAP`.
+- Delete old QNG documents.
+- Removed useless `num_wires` parameter from `pyvqnet.qnn.vqc` for functions and classes.
+- Refactor `MeasureAll`, `Probability` api.
+- Add qtype parameter to `QuantumMeasure`.
+
+Fixed
+===================
+- Changed `QuantumMeasure`'s slots to shots.
+
 [v2.10.0] - 2023-12-30
 ***************************
 

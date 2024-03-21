@@ -5309,8 +5309,7 @@ where :math:`g^{+}` is the pseudo-inverse.
 
 The following is an example of quantum natural gradient optimization of a quantum variational circuit parameter based on VQNet. It can be seen that the use of quantum natural gradient (Quantum Nature Gradient) makes some loss functions decline faster.
 
-Our goal is to minimize the expectation of the following quantum variational circuit. It can be seen that there are two layers of 3 quantum parametric logic gates in total. The first layer is composed of RZ and RY logic gates on bits 0 and 1, 
-and the second layer is composed of RX logic gate on 2 bits constitutes.
+Our goal is to minimize the expectation of the following quantum variational circuit. It can be seen that it contains two layers of three quantum parameter-containing logic gates. The first layer is composed of RZ, RY logic gates on 0 and 1 bits, and the second layer is composed of It is composed of RX logic gate on 2 bits.
 
 .. image:: ./images/qng_all_cir.png
    :width: 600 px
@@ -6321,17 +6320,17 @@ The following is the specific QSVD implementation code:
         num = 0
         for _ in range(20):
             for i in range(3):
-                ry(q_machine=qm, params=para[num], wires=i, num_wires=3)
+                ry(q_machine=qm, params=para[num], wires=i)
                 num += 1 
 
             for i in range(3):
-                rz(q_machine=qm, params=para[num], wires=i, num_wires=3)
+                rz(q_machine=qm, params=para[num], wires=i)
                 num += 1
 
             for i in range(2):
-                cnot(q_machine=qm, wires=[i, i+1], num_wires=3)
+                cnot(q_machine=qm, wires=[i, i+1])
 
-            cnot(q_machine=qm, wires=[2, 0], num_wires=3)
+            cnot(q_machine=qm, wires=[2, 0])
 
         return qm.states
 
@@ -6441,6 +6440,212 @@ loss and singular value results:
     [[[54.82772]], [[18.913624]], [[14.219269]], [[12.547045]], [[10.063704]], [[7.569273]], [[5.6508512]], [[-0.4574079]]]
      [[-5553.423]]  ## 200/200 [15:40<00:00,  4.70s/it]
     [[[54.829308]], [[19.001402]], [[14.423045]], [[12.262444]], [[10.100731]], [[7.5507345]], [[5.6469355]], [[-0.4976197]]]
+
+
+Optimization of variational quantum circuits
+====================================================
+
+VQNet currently provides 4 ways to optimize quantum logic gates in user-defined variational quantum circuits: fusion of revolving gates (commute_controlled_right, commute_controlled_left), controlled gate exchange (commute_controlled), and single-bit logic gate fusion (single_qubit_ops_fuse).
+
+Here, the `wrapper_compile` decorator is used to decorate the model forward function defined by `QModule`, and the three rules of `commute_controlled_right`, `merge_rotations`, and `single_qubit_ops_fuse` will be called continuously by default for line optimization.
+Finally, through the `op_history_summary` interface, the `op_history` information generated after running the `QModule` forward function is compared.
+
+
+.. code-block::
+
+    from functools import partial
+
+    from pyvqnet.qnn.vqc import op_history_summary
+    from pyvqnet.qnn.vqc import QModule
+    from pyvqnet import tensor
+    from pyvqnet.qnn.vqc import QMachine, wrapper_compile
+
+    from pyvqnet.qnn.vqc import pauliy
+
+    from pyvqnet.qnn.vqc import QMachine, ry,rz, ControlledPhaseShift, \
+        rx, S, rot, isingxy,CSWAP, PauliX, T, MeasureAll, RZ, CZ, PhaseShift, u3, cnot, cry, toffoli, cy
+    from pyvqnet.tensor import QTensor, tensor
+    import pyvqnet
+
+    class QModel_before(QModule):
+        def __init__(self, num_wires, dtype):
+            super(QModel_before, self).__init__()
+
+            self._num_wires = num_wires
+            self._dtype = dtype
+            self.qm = QMachine(num_wires, dtype=dtype)
+            self.qm.set_save_op_history_flag(True)
+            self.cswap = CSWAP(wires=(0, 2, 1))
+            self.cz = CZ(wires=[0, 2])
+
+            self.paulix = PauliX(wires=2)
+
+            self.s = S(wires=0)
+
+            self.ps = PhaseShift(has_params=True,
+                                    trainable=True,
+                                    wires=0,
+                                    dtype=dtype)
+
+            self.cps = ControlledPhaseShift(has_params=True,
+                                            trainable=True,
+                                            wires=(1, 0),
+                                            dtype=dtype)
+            self.t = T(wires=0)
+            self.rz = RZ(has_params=True, wires=1, dtype=dtype)
+
+            self.measure = MeasureAll(obs={
+                'wires': [0],
+                'observables': ['z'],
+                'coefficient': [1]
+            })
+
+        def forward(self, x, *args, **kwargs):
+            self.qm.reset_states(x.shape[0])
+            self.cz(q_machine=self.qm)
+            self.paulix(q_machine=self.qm)
+            rx(q_machine=self.qm,wires=1,params = x[:,[0]])
+            ry(q_machine=self.qm,wires=1,params = x[:,[1]])
+            rz(q_machine=self.qm,wires=1,params = x[:,[2]])
+            rot(q_machine=self.qm, params=x[:, 0:3], wires=(1, ), use_dagger=True)
+            rot(q_machine=self.qm, params=x[:, 1:4], wires=(1, ), use_dagger=True)
+            isingxy(q_machine=self.qm, params=x[:, [2]], wires=(0, 1))
+            u3(q_machine=self.qm, params=x[:, 0:3], wires=1)
+            self.s(q_machine=self.qm)
+            self.cswap(q_machine=self.qm)
+            cnot(q_machine=self.qm, wires=[0, 1])
+            ry(q_machine=self.qm,wires=2,params = x[:,[1]])
+            pauliy(q_machine=self.qm, wires=1)
+            cry(q_machine=self.qm, params=1 / 2, wires=[0, 1])
+            self.ps(q_machine=self.qm)
+            self.cps(q_machine=self.qm)
+            ry(q_machine=self.qm,wires=2,params = x[:,[1]])
+            rz(q_machine=self.qm,wires=2,params = x[:,[2]])
+            toffoli(q_machine=self.qm, wires=[0, 1, 2])
+            self.t(q_machine=self.qm)
+
+            cy(q_machine=self.qm, wires=(2, 1))
+            ry(q_machine=self.qm,wires=1,params = x[:,[1]])
+            self.rz(q_machine=self.qm)
+
+            rlt = self.measure(q_machine=self.qm)
+
+            return rlt
+    class QModel(QModule):
+        def __init__(self, num_wires, dtype):
+            super(QModel, self).__init__()
+
+            self._num_wires = num_wires
+            self._dtype = dtype
+            self.qm = QMachine(num_wires, dtype=dtype)
+
+            self.cswap = CSWAP(wires=(0, 2, 1))
+            self.cz = CZ(wires=[0, 2])
+
+            self.paulix = PauliX(wires=2)
+
+            self.s = S(wires=0)
+
+            self.ps = PhaseShift(has_params=True,
+                                    trainable=True,
+                                    wires=0,
+                                    dtype=dtype)
+
+            self.cps = ControlledPhaseShift(has_params=True,
+                                            trainable=True,
+                                            wires=(1, 0),
+                                            dtype=dtype)
+            self.t = T(wires=0)
+            self.rz = RZ(has_params=True, wires=1, dtype=dtype)
+
+            self.measure = MeasureAll(obs={
+                'wires': [0],
+                'observables': ['z'],
+                'coefficient': [1]
+            })
+
+        @partial(wrapper_compile)
+        def forward(self, x, *args, **kwargs):
+            self.qm.reset_states(x.shape[0])
+            self.cz(q_machine=self.qm)
+            self.paulix(q_machine=self.qm)
+            rx(q_machine=self.qm,wires=1,params = x[:,[0]])
+            ry(q_machine=self.qm,wires=1,params = x[:,[1]])
+            rz(q_machine=self.qm,wires=1,params = x[:,[2]])
+            rot(q_machine=self.qm, params=x[:, 0:3], wires=(1, ), use_dagger=True)
+            rot(q_machine=self.qm, params=x[:, 1:4], wires=(1, ), use_dagger=True)
+            isingxy(q_machine=self.qm, params=x[:, [2]], wires=(0, 1))
+            u3(q_machine=self.qm, params=x[:, 0:3], wires=1)
+            self.s(q_machine=self.qm)
+            self.cswap(q_machine=self.qm)
+            cnot(q_machine=self.qm, wires=[0, 1])
+            ry(q_machine=self.qm,wires=2,params = x[:,[1]])
+            pauliy(q_machine=self.qm, wires=1)
+            cry(q_machine=self.qm, params=1 / 2, wires=[0, 1])
+            self.ps(q_machine=self.qm)
+            self.cps(q_machine=self.qm)
+            ry(q_machine=self.qm,wires=2,params = x[:,[1]])
+            rz(q_machine=self.qm,wires=2,params = x[:,[2]])
+            toffoli(q_machine=self.qm, wires=[0, 1, 2])
+            self.t(q_machine=self.qm)
+
+            cy(q_machine=self.qm, wires=(2, 1))
+            ry(q_machine=self.qm,wires=1,params = x[:,[1]])
+            self.rz(q_machine=self.qm)
+
+            rlt = self.measure(q_machine=self.qm)
+
+            return rlt
+
+    import pyvqnet
+    import pyvqnet.tensor as tensor
+    input_x = tensor.QTensor([[0.1, 0.2, 0.3, 0.4], [0.1, 0.2, 0.3, 0.4]],
+                                dtype=pyvqnet.kfloat64)
+
+    input_x.requires_grad = True
+    num_wires = 3
+    qunatum_model = QModel(num_wires=num_wires, dtype=pyvqnet.kcomplex128)
+    qunatum_model_before = QModel_before(num_wires=num_wires, dtype=pyvqnet.kcomplex128)
+
+    batch_y = qunatum_model(input_x)
+    batch_y = qunatum_model_before(input_x)
+
+    flatten_oph_names = []
+
+    print("before")
+
+    print(op_history_summary(qunatum_model_before.qm.op_history))
+    flatten_oph_names = []
+    for d in qunatum_model.compiled_op_historys:
+            if "compile" in d.keys():
+                oph = d["op_history"]
+                for i in oph:
+                    n = i["name"]
+                    w = i["wires"]
+                    p = i["params"]
+                    flatten_oph_names.append({"name":n,"wires":w, "params": p})
+    print("after")
+    print(op_history_summary(qunatum_model.qm.op_history))
+
+
+    # ###################Summary#######################
+    # qubits num: 3
+    # gates: {'cz': 1, 'paulix': 1, 'rx': 1, 'ry': 4, 'rz': 3, 'rot': 2, 'isingxy': 1, 'u3': 1, 's': 1, 'cswap': 1, 'cnot': 1, 'pauliy': 1, 'cry': 1, 'phaseshift': 1, 'controlledphaseshift': 1, 'toffoli': 1, 't': 1, 'cy': 1}
+    # total gates: 24
+    # total parameter gates: 15
+    # total parameters: 21
+    # #################################################
+        
+    # after
+
+
+    # ###################Summary#######################
+    # qubits num: 3
+    # gates: {'cz': 1, 'rot': 7, 'isingxy': 1, 'u3': 1, 'cswap': 1, 'cnot': 1, 'cry': 1, 'controlledphaseshift': 1, 'toffoli': 1, 'cy': 1}
+    # total gates: 16
+    # total parameter gates: 11
+    # total parameters: 27
+    # #################################################
 
 
 Quantum convolutional neural network model based on small samples
