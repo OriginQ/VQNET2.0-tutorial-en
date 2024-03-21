@@ -146,6 +146,62 @@ dtype
         print(a.dtype)
         #4
 
+is_dense
+==============================
+
+.. py:attribute:: QTensor.is_dense
+
+    Whether it is a dense tensor.
+
+    :return: Returns 1 when the data is dense; otherwise returns 0.
+
+    Example::
+
+        from pyvqnet.tensor import QTensor
+
+        a = QTensor([2, 3, 4, 5])
+        print(a.is_dense)
+        #1
+
+is_csr
+==============================
+
+.. py:attribute:: QTensor.is_csr
+
+    Whether it is a sparse 2-dimensional matrix in Compressed Sparse Row format.
+
+    :return: When the data is a sparse tensor in CSR format, return 1; otherwise, return 0.
+
+    Example::
+
+        from pyvqnet.tensor import QTensor,dense_to_csr
+
+        a = QTensor([[2, 3, 4, 5]])
+        b = dense_to_csr(a)
+        print(b.is_csr)
+        #1
+
+csr_members
+==============================
+
+.. py:method:: QTensor.csr_members()
+
+    Returns the row_idx, col_idx and non-zero numerical data of the sparse 2-dimensional matrix in Compressed Sparse Row format, and three 1-dimensional QTensors. For the specific meaning, see https://en.wikipedia.org/wiki/Sparse_matrix#Compressed_sparse_row_(CSR,_CRS_or_Yale_format).
+    
+    :return:
+
+        Returns a list in which the first element is row_idx, shape is [number of matrix rows + 1],
+         the second element is col_idx, shape is [number of non-zero elements], the third element is data, shape is [number of non-zero elements].
+
+    Example::
+
+        from pyvqnet.tensor import QTensor,dense_to_csr
+
+        a = QTensor([[2, 3, 4, 5]])
+        b = dense_to_csr(a)
+        print(b.csr_members())
+        #([0,4], [0,1,2,3], [2,3,4,5])
+
 zero_grad
 ==============================
 
@@ -3674,6 +3730,48 @@ broadcast_to
         b = tensor.broadcast_to(a,ref)
         print(b.shape)
         #[2, 3, 4]
+
+
+dense_to_csr
+==============================
+
+.. py:function:: pyvqnet.tensor.dense_to_csr(t)
+    
+    Convert dense matrix to CSR format sparse matrix, only supports 2 dimensions.
+
+    :param t: input dense QTensor
+    :return: CSR sparse matrix
+
+    Example::
+
+        from pyvqnet.tensor import QTensor,dense_to_csr
+
+        a = QTensor([[2, 3, 4, 5]])
+        b = dense_to_csr(a)
+        print(b.csr_members())
+        #([0,4], [0,1,2,3], [2,3,4,5])
+
+
+csr_to_dense
+==============================
+
+.. py:function:: pyvqnet.tensor.csr_to_dense(t)
+    
+    Convert CSR format sparse matrix to dense matrix, only supports 2 dimensions.
+
+    :param t: input CSR sparse matrix
+    :return: Dense QTensor
+
+    Example::
+
+        from pyvqnet.tensor import QTensor,dense_to_csr,csr_to_dense
+
+        a = QTensor([[2, 3, 4, 5]])
+        b = dense_to_csr(a)
+        c = csr_to_dense(b)
+        print(c)
+        #[[2,3,4,5]]
+
 
 Utility Functions
 *****************************************************
