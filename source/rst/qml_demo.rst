@@ -5307,8 +5307,7 @@ The formula for the quantum natural gradient is as follows:
 
 where :math:`g^{+}` is the pseudo-inverse.
 
-Below we implement an example of quantum natural gradient optimization of a quantum variational line parameter based on VQNet, where `wrapper_calculate_qng` is the decorator of the forward function that needs to be added to the model to be calculated for the quantum natural gradient.
-Through the quantum natural gradient optimizer of `pyvqnet.qnn.vqc.QNG`, the `Parameter` type parameters registered by the model can be optimized.
+The following is an example of quantum natural gradient optimization of a quantum variational circuit parameter based on VQNet. It can be seen that the use of quantum natural gradient (Quantum Nature Gradient) makes some loss functions decline faster.
 
 Our goal is to minimize the expectation of the following quantum variational circuit. It can be seen that it contains two layers of three quantum parameter-containing logic gates. The first layer is composed of RZ, RY logic gates on 0 and 1 bits, and the second layer is composed of It is composed of RX logic gate on 2 bits.
 
@@ -5320,134 +5319,169 @@ Our goal is to minimize the expectation of the following quantum variational cir
 
 .. code-block::
 
-
-    import sys
-    sys.path.insert(0, "../")
+    import pyqpanda as pq
     import numpy as np
-    import pyvqnet
-    from pyvqnet.qnn import vqc
-    from pyvqnet.qnn.vqc import wrapper_calculate_qng
     from pyvqnet.tensor import QTensor
+    from pyvqnet.qnn.measure import expval, ProbsMeasure
+    from pyvqnet.qnn import insert_pauli_for_mt, get_metric_tensor, QNG,QuantumLayer
     import matplotlib.pyplot as plt
+    from pyvqnet.optim import SGD
+    from pyvqnet import _core
+    ###################################################
+    # Quantum Nature Gradients Examples
+    ###################################################
+    class pyqpanda_config_wrapper:
+        """
+        A wrapper for pyqpanda config,including QVM machine, allocated qubits, classic bits.
+        """
+        def __init__(self, qubits_num) -> None:
+            self._machine = pq.CPUQVM()
+            self._machine.init_qvm()
+            self._qubits = self._machine.qAlloc_many(qubits_num)
+            self._cubits = self._machine.cAlloc_many(qubits_num)
+            self._qcir = pq.QCircuit()
+        def __del__(self):
+            self._machine.finalize()
+    # use quantum nature gradient optimzer to optimize circuit quantum_net
+    steps = 200
+    def quantum_net(
+            q_input_features,
+            params,
+            qubits,
+            cubits,
+            machine):
+        qcir = pq.QCircuit()
+        qcir.insert(pq.RY(qubits[0], np.pi / 4))
+        qcir.insert(pq.RY(qubits[1], np.pi / 3))
+        qcir.insert(pq.RY(qubits[2], np.pi / 7))
+        qcir.insert(pq.RZ(qubits[0], params[0]))
+        qcir.insert(pq.RY(qubits[1], params[1]))
+        qcir.insert(pq.CNOT(qubits[0], qubits[1]))
+        qcir.insert(pq.CNOT(qubits[1], qubits[2]))
+        qcir.insert(pq.RX(qubits[2], params[2]))
+        qcir.insert(pq.CNOT(qubits[0], qubits[1]))
+        qcir.insert(pq.CNOT(qubits[1], qubits[2]))
+        m_prog = pq.QProg()
+        m_prog.insert(qcir)
+        return expval(machine, m_prog, {'Y0': 1}, qubits)
 
+To use the quantum natural gradient algorithm, we first need to compute the metric tensor.
+According to the definition of the algorithm, we manually defined the following two sub-circuits to calculate the Fubini-Study tensor of the two-layer circuit with parameters.
+The first parameter layer calculates the sub-circuit of the metric tensor as follows:
 
+.. image:: ./images/qng_subcir1.png
+   :width: 600 px
+   :align: center
 
-    class Hmodel(vqc.Module):
-        def __init__(self, num_wires, dtype,init_t):
-            super(Hmodel, self).__init__()
-            self._num_wires = num_wires
-            self._dtype = dtype
-            self.qm = vqc.QMachine(num_wires, dtype=dtype)
+|
 
-            self.p = pyvqnet.nn.Parameter([4], dtype=pyvqnet.kfloat64)
-            self.p.init_from_tensor(init_t)
-            self.ma = vqc.MeasureAll(obs={"Y0":1})
+.. code-block::
 
-        @wrapper_calculate_qng
-        def forward(self, x, *args, **kwargs):
-            self.qm.reset_states(1)
-            vqc.ry(q_machine=self.qm, wires=0, params=np.pi / 4)
-            vqc.ry(q_machine=self.qm, wires=1, params=np.pi / 3)
-            vqc.ry(q_machine=self.qm, wires=2, params=np.pi / 7)
+    def layer0_subcircuit(config: pyqpanda_config_wrapper, params):
+        qcir = pq.QCircuit()
+        qcir.insert(pq.RY(config._qubits[0], np.pi / 4))
+        qcir.insert(pq.RY(config._qubits[1], np.pi / 3))
+        return qcir
+    def get_p01_diagonal_(config, params, target_gate_type, target_gate_bits,
+                            wires):
+        qcir = layer0_subcircuit(config, params)
+        qcir2 = insert_pauli_for_mt(config._qubits, target_gate_type,
+                                    target_gate_bits)
+        qcir3 = pq.QCircuit()
+        qcir3.insert(qcir)
+        qcir3.insert(qcir2)
+        m_prog = pq.QProg()
+        m_prog.insert(qcir3)
+        return ProbsMeasure(wires, m_prog, config._machine, config._qubits)
 
-            # V0(theta0, theta1): Parametrized layer 0
-            vqc.rz(q_machine=self.qm, wires=0, params=self.p[0])
-            vqc.rz(q_machine=self.qm, wires=1, params=self.p[1])
+The sub-circuit for computing the metric tensor in the second parameter layer is as follows:
 
-            # W1: non-parametrized gates
-            vqc.cnot(q_machine=self.qm, wires=[0, 1])
-            vqc.cnot(q_machine=self.qm, wires=[1, 2])
+.. image:: ./images/qng_subcir2.png
+   :width: 600 px
+   :align: center
 
-            # V_1(theta2, theta3): Parametrized layer 1
-            vqc.ry(q_machine=self.qm, params=self.p[2], wires=1)
-            vqc.rx(q_machine=self.qm, params=self.p[3], wires=2)
+|
 
-            # W2: non-parametrized gates
-            vqc.cnot(q_machine=self.qm, wires=[0, 1])
-            vqc.cnot(q_machine=self.qm, wires=[1, 2])
+.. code-block::
 
-            return self.ma(q_machine=self.qm)
+    def layer1_subcircuit(config: pyqpanda_config_wrapper, params):
+        qcir = pq.QCircuit()
+        qcir.insert(pq.RY(config._qubits[0], np.pi / 4))
+        qcir.insert(pq.RY(config._qubits[1], np.pi / 3))
+        qcir.insert(pq.RY(config._qubits[2], np.pi / 7))
+        qcir.insert(pq.RZ(config._qubits[0], params[0]))
+        qcir.insert(pq.RY(config._qubits[1], params[1]))
+        qcir.insert(pq.CNOT(config._qubits[0], config._qubits[1]))
+        qcir.insert(pq.CNOT(config._qubits[1], config._qubits[2]))
+        return qcir
+    def get_p1_diagonal_(config, params, target_gate_type, target_gate_bits,
+                            wires):
+        qcir = layer1_subcircuit(config, params)
+        qcir2 = insert_pauli_for_mt(config._qubits, target_gate_type,
+                                    target_gate_bits)
+        qcir3 = pq.QCircuit()
+        qcir3.insert(qcir)
+        qcir3.insert(qcir2)
+        m_prog = pq.QProg()
+        m_prog.insert(qcir3)
+        
+        return ProbsMeasure(wires, m_prog, config._machine, config._qubits)
 
+Use the quantum natural gradient class defined by the `QNG` class, where [['RZ', 'RY'], ['RX']] are 3 gate types with parameter logic gates,
+[[0, 1], [2]] is the active bit, qcir is the circuit function list of the calculation tensor, and [0,1,2] is the qubit index of the entire circuit.
 
+.. code-block::
 
-    class Hmodel2(vqc.Module):
-        def __init__(self, num_wires, dtype,init_t):
-            super(Hmodel2, self).__init__()
-            self._num_wires = num_wires
-            self._dtype = dtype
-            self.qm = vqc.QMachine(num_wires, dtype=dtype)
+    config = pyqpanda_config_wrapper(3)
+    qcir = []
+    qcir.append(get_p01_diagonal_)
+    qcir.append(get_p1_diagonal_)
+    # define QNG optimzer
+    opt = QNG(config, quantum_net, 0.02, [['RZ', 'RY'], ['RX']], [[0, 1], [2]],
+                qcir, [0, 1, 2])
 
-            self.p = pyvqnet.nn.Parameter([4], dtype=pyvqnet.kfloat64)
-            self.p.init_from_tensor(init_t)
-            self.ma = vqc.MeasureAll(obs={"Y0":1})
+For iterative optimization, use the `opt` function for single-step optimization, where the first input parameter is the input data,
+There is no input in the line here, so it is None, and the second input parameter is the parameter to be optimized theta.
 
-        def forward(self, x, *args, **kwargs):
-            self.qm.reset_states(1)
-            vqc.ry(q_machine=self.qm, wires=0, params=np.pi / 4)
-            vqc.ry(q_machine=self.qm, wires=1, params=np.pi / 3)
-            vqc.ry(q_machine=self.qm, wires=2, params=np.pi / 7)
+.. code-block::
 
-            # V0(theta0, theta1): Parametrized layer 0
-            vqc.rz(q_machine=self.qm, wires=0, params=self.p[0])
-            vqc.rz(q_machine=self.qm, wires=1, params=self.p[1])
-
-            # W1: non-parametrized gates
-            vqc.cnot(q_machine=self.qm, wires=[0, 1])
-            vqc.cnot(q_machine=self.qm, wires=[1, 2])
-
-            # V_1(theta2, theta3): Parametrized layer 1
-            vqc.ry(q_machine=self.qm, params=self.p[2], wires=1)
-            vqc.rx(q_machine=self.qm, params=self.p[3], wires=2)
-
-            # W2: non-parametrized gates
-            vqc.cnot(q_machine=self.qm, wires=[0, 1])
-            vqc.cnot(q_machine=self.qm, wires=[1, 2])
-
-            return self.ma(q_machine=self.qm)
+    qng_cost = []
+    theta2 = QTensor([0.432, 0.543, 0.233])
+    # iteration
+    for _ in range(steps):
+        theta2 = opt.step(None, theta2)
+        qng_cost.append(
+            quantum_net(None, theta2, config._qubits, config._cubits,
+                        config._machine))
 
 Using the SGD classic gradient descent method as a baseline to compare the changes in the loss value of the two under the same number of iterations,
 it can be seen that the loss function declines faster using the quantum natural gradient.
 
 .. code-block::
 
-    steps = range(200)
-
-    x = QTensor([0.432, -0.123, 0.543, 0.233],
-                dtype=pyvqnet.kfloat64)
-    qng_model = Hmodel(3, pyvqnet.kcomplex128,x)
-    qng = pyvqnet.qnn.vqc.QNG(qng_model, 0.01)
-    qng_cost = []
-    for s in steps:
-        qng.zero_grad()
-        qng.step(None)
-        yy = qng_model(None).to_numpy().reshape([1])
-        qng_cost.append(yy)
-
-    x = QTensor([0.432, -0.123, 0.543, 0.233],
-                requires_grad=True,
-                dtype=pyvqnet.kfloat64)
-    qng_model = Hmodel2(3, pyvqnet.kcomplex128,x)
-    sgd = pyvqnet.optim.SGD(qng_model.parameters(), lr=0.01)
+    # use gradient descent as the baseline
     sgd_cost = []
-    for s in steps:
+    qlayer = QuantumLayer(quantum_net, 3, 'cpu', 3)
+    temp = _core.Tensor([0.432, 0.543, 0.233])
+    _core.vqnet.copyTensor(temp, qlayer.m_para.data)
+    opti = SGD(qlayer.parameters())
+    for i in range(steps):
+        opti.zero_grad()
+        loss = qlayer(QTensor([[1.0]]))
+        print(f'step {i}')
+        print(f'q param before {qlayer.m_para}')
+        loss.backward()
+        sgd_cost.append(loss.item())
+        opti._step()
+        print(f'q param after{qlayer.m_para}')
         
-        sgd.zero_grad()
-        y = qng_model(None)
-        y.backward()
-        sgd.step()
-
-        sgd_cost.append(y.to_numpy().reshape([1]))
-
-
     plt.style.use("seaborn")
     plt.plot(qng_cost, "b", label="Quantum natural gradient descent")
     plt.plot(sgd_cost, "g", label="Vanilla gradient descent")
-
     plt.ylabel("Cost function value")
     plt.xlabel("Optimization steps")
     plt.legend()
-    plt.savefig('qng_new_compare.png')
-
+    plt.show()
 
 .. image:: ./images/qng_vs_sgd.png
    :width: 600 px
