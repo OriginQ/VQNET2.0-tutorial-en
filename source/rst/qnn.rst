@@ -261,8 +261,9 @@ When you install the latest version of pyqpanda, you can use this interface to d
     :param dtype: The data type of the parameter. The default value is None, which uses the default data type pyvqnet.kfloat32.
     :param name: The name of the module. Defaults to empty string.
     :param diff_method: Differential method for gradient calculation. The default is "parameter_shift", other differential methods are not currently supported.
-    :param Submit_kwargs: Additional keyword parameters used to submit quantum circuits, reserved parameters, currently have no effect.
-    :param query_kwargs: Additional keyword parameters used to query quantum results, reserved parameters, currently have no effect.
+    :param submit_kwargs: Additional keyword parameters for submitting quantum circuits, default: {"chip_id":pyqpanda.real_chip_type.origin_72,"is_amend":True,"is_mapping":True,"is_optimization":True,"compile_level":3, "default_task_group_size":200, "test_qcloud_fake":False}, when test_qcloud_fake is set to True, the local CPUQVM is simulated.
+    :param query_kwargs: Additional keyword parameters for querying quantum results, default: {"timeout":2,"print_query_info":True,"sub_circuits_split_size":1}.
+    
     :return: A module that can calculate quantum circuits.
 
     Example::

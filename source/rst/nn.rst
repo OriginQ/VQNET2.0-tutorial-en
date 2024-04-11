@@ -1082,6 +1082,28 @@ Dropout
         #   [[  0.   0.]
         #    [  0.  14.]]]]
 
+DropPath
+=================================
+
+.. py:class:: pyvqnet.nn.dropout.DropPath(dropout_rate = 0.5,name="")
+    The DropPath module will drop paths (randomly deep) on a sample-by-sample basis.
+
+    :param dropout_rate: `float` - The probability that the neuron is set to zero.
+    :param name: The name of this module, the default is "".
+
+    :return: DropPath instance.
+
+    Example::
+
+        import pyvqnet.nn as nn
+        import pyvqnet.tensor as tensor
+
+        x = tensor.randu([4])
+        y = nn.DropPath()(x)
+        print(y)
+        #[0.9074978,0.9350062,0.6896403,0.3541051]
+
+
 Pixel_Shuffle 
 =================================
 
@@ -2096,6 +2118,31 @@ LeakyReLu
 
         # [-0.0100000, 2, -0.0300000, 4]
 
+Gelu
+=================================
+.. py:class:: pyvqnet.nn.Gelu(approximate="tanh", name="")
+    
+    Apply Gaussian error linear unit function:
+
+    .. math:: \text{GELU}(x) = x * \Phi(x)
+
+    When the approximation parameter is 'tanh', GELU is estimated by:
+
+    .. math:: \text{GELU}(x) = 0.5 * x * (1 + \text{Tanh}(\sqrt{2 / \pi} * (x + 0.044715 * x^3)))
+
+    Examples::
+
+        from pyvqnet.tensor import randu, ones_like
+        from pyvqnet.nn import Gelu
+        qa = randu([5,4])
+        qb = Gelu()(qa)
+        print(qb)
+        # [[0.0292515,0.0668998,0.4036024,0.8369502],
+        # [0.1929213,0.1981275,0.2358531,0.7790835],
+        # [0.1754935,0.6204091,0.2354677,0.2409406],
+        # [0.4238827,0.804715,0.1633414,0.2853],
+        # [0.1959854,0.590143,0.553995,0.0008423]]
+
 ELU
 =================================
 .. py:class:: pyvqnet.nn.ELU(alpha: float = 1.0, name: str = '')
@@ -2258,6 +2305,64 @@ adagrad
         #  [15.9829283, 16.9829292, 17.9829292, 18.9829292],
         #  [19.9829292, 20.9829292, 21.9829292, 22.9829292]]]
         # ]
+
+AdamW
+=================================
+.. py:class:: pyvqnet.optim.adam.AdamW(params, lr=0.01, beta1=0.9, beta2=0.999, epsilon=1e-8, weight_decay=0.01, amsgrad: bool = False)
+    
+    Implement the AdamW algorithm.
+
+    .. math::
+        t=t+1
+
+    .. math::
+        param\_new = param - lr*weight\_decay*param
+    .. math::
+        moment\_1\_new=\beta1*moment\_1+(1−\beta1)g
+    .. math::
+        moment\_2\_new=\beta2*moment\_2+(1−\beta2)g*g
+    .. math::
+        lr = lr*\frac{\sqrt{1-\beta2^t}}{1-\beta1^t}
+    If the parameter amsgrad is True
+
+    .. math::
+        moment\_2\_max = max(moment\_2\_max,moment\_2)
+    .. math::
+        param\_new=param\_new-lr*\frac{moment\_1}{\sqrt{moment\_2\_max}+\epsilon}
+    otherwise
+
+    .. math::
+        param\_new=param\_new-lr*\frac{moment\_1}{\sqrt{moment\_2}+\epsilon}
+    :param params: Model parameters that need to be optimized.
+    :param lr: learning rate (default: 0.01).
+    :param beta1: Coefficient used to calculate the running average of the gradient and its square (default: 0.9).
+    :param beta2: Coefficient used to calculate the running average of the gradient and its square (default: 0.999).
+    :param epsilon: Constant to add to the denominator to improve numerical stability (default: 1e-8).
+    :param weight_decay: Weight decay coefficient, default 0.01.
+    :param amsgrad: Whether to use the AMSGrad variant of this algorithm (default: False).
+    :return: An AdamW optimizer.
+
+    Example::
+
+        from pyvqnet.optim import adam
+        import numpy as np
+        from pyvqnet.tensor import QTensor
+        w = np.arange(24).reshape(1,2,3,4).astype(np.float64)
+        param = QTensor(w)
+        param.grad = QTensor(np.arange(24).reshape(1,2,3,4).astype(np.float64))
+        params = [param]
+        opti = adam.AdamW(params, lr=0.5)
+
+        for i in range(1,3):
+            opti.step()
+        print(param)
+        # [[[[ 0. ,-0.007475 , 0.98255 , 1.972575 ],
+        # [2.9626, 3.952625, 4.9426501, 5.9326751],
+        # [6.9227001, 7.9127251, 8.9027501, 9.8927751]],
+
+        # [[10.8828001,11.8728251,12.8628501,13.8528751],
+        # [14.8429002,15.8329252,16.8229502,17.8129752],
+        # [18.8030002,19.7930252,20.7830502,21.7730752]]]]
 
 adam
 =================================
@@ -2915,7 +3020,7 @@ Distributed Computing Module
 Environment deployment
 =================================
 
-The following describes the deployment of the environment under the Linux system based on CPU and GPU distributed computing, respectively.
+The following describes the VQNet deployment of the environment under the Linux system based on CPU and GPU distributed computing, respectively.
 
 MPI Installation
 ^^^^^^^^^^^^^^^^^^^^^^
@@ -4259,3 +4364,126 @@ Set parameters for distributed computation.
         print(f"bcast after rank {get_rank()}: {model.parameters()}")
 
         # mpirun -n 2 python run.py
+PipelineParallelTrainingWrapper
+=================================
+.. py:class:: pyvqnet.distributed.pp.PipelineParallelTrainingWrapper(args,join_layers,trainset)
+    
+    Pipeline Parallel Training Wrapper implements 1F1B training. Available only on Linux platforms with a GPU.
+    More algorithm details can be found at (https://www.deepspeed.ai/tutorials/pipeline/).
+
+    :param args: Parameter dictionary. See examples.
+    :param join_layers: List of Sequential modules.
+    :param trainset: Dataset.
+
+    :return:
+        PipelineParallelTrainingWrapper instance.
+
+    The following uses the CIFAR10 database `CIFAR10_Dataset` to train the classification task on AlexNet on 2 GPUs.
+    In this example, it is divided into two pipeline parallel processes `pipeline_parallel_size` = 2.
+    The batch size is `train_batch_size` = 64, on a single GPU it is `train_micro_batch_size_per_gpu` = 32.
+    Other configuration parameters can be found in `args`.
+    In addition, each process needs to configure the environment variable `LOCAL_RANK` in the `__main__` function.
+
+    Examples::
+
+        import os
+        import pyvqnet
+
+        from pyvqnet.nn import Module,Sequential,CrossEntropyLoss
+        from pyvqnet.nn import Linear
+        from pyvqnet.nn import Conv2D
+        from pyvqnet.nn import activation as F
+        from pyvqnet.nn import MaxPool2D
+        from pyvqnet.nn import CrossEntropyLoss
+
+        from pyvqnet.tensor import tensor
+        from pyvqnet.distributed.pp import PipelineParallelTrainingWrapper
+        from pyvqnet.distributed.pp import comm as dist
+        from pyvqnet.distributed import *
+
+
+        pipeline_parallel_size = 2
+
+        num_steps = 1000
+
+        def cifar_trainset_vqnet(local_rank, dl_path='./cifar10-data'):
+            transform = pyvqnet.data.TransformCompose([
+                pyvqnet.data.TransformResize(256),
+                pyvqnet.data.TransformCenterCrop(224),
+                pyvqnet.data.TransformToTensor(),
+                pyvqnet.data.TransformNormalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+            ])
+
+            trainset = pyvqnet.data.CIFAR10_Dataset(root=dl_path,
+                                                    mode="train",
+                                                    transform=transform,layout="HWC")
+
+            return trainset
+
+        class Model(Module):
+            def __init__(self):
+                super(Model, self).__init__()
+                self.features = Sequential( 
+                Conv2D(input_channels=3, output_channels=8, kernel_size=(3, 3), stride=(1, 1), padding='same'),
+                F.ReLu(),
+                MaxPool2D([2, 2], [2, 2]),
+
+                Conv2D(input_channels=8, output_channels=16, kernel_size=(3, 3), stride=(1, 1), padding='same'),
+                F.ReLu(),
+                MaxPool2D([2, 2], [2, 2]),
+
+                Conv2D(input_channels=16, output_channels=32, kernel_size=(3, 3), stride=(1, 1), padding='same'),
+                F.ReLu(),
+
+                Conv2D(input_channels=32, output_channels=64, kernel_size=(3, 3), stride=(1, 1), padding='same'),
+                F.ReLu(),
+
+                Conv2D(input_channels=64, output_channels=64, kernel_size=(3, 3), stride=(1, 1), padding='same'),
+                F.ReLu(),
+                MaxPool2D([3, 3], [2, 2]),)
+                
+                self.cls = Sequential( 
+                Linear(64 * 27 * 27, 512),
+                F.ReLu(),
+
+                Linear(512, 256),
+                F.ReLu(),
+                Linear(256, 10) )
+
+            def forward(self, x):
+                x = self.features(x)
+                x = tensor.flatten(x,1)
+                x = self.cls(x)
+
+                return x
+            
+        def join_layers(vision_model):
+            layers = [
+                *vision_model.features,
+                lambda x: tensor.flatten(x, 1),
+                *vision_model.cls,
+            ]
+            return layers
+
+
+        if __name__ == "__main__":
+
+
+            args = {
+            "backend":'nccl',  
+            "train_batch_size" : 64,
+            "train_micro_batch_size_per_gpu" : 32,
+        "optimizer": {
+            "type": "Adam",
+            "params": {
+            "lr": 0.001
+            }}, 
+            "local_rank":dist.get_local_rank(), 
+            "pipeline_parallel_size":pipeline_parallel_size, "seed":42, "steps":num_steps,
+            "loss":CrossEntropyLoss(),
+            }
+            os.environ["LOCAL_RANK"] = str(dist.get_local_rank())
+            trainset = cifar_trainset_vqnet(args["local_rank"])
+            w = PipelineParallelTrainingWrapper(args,join_layers(Model()),trainset)
+
+            w.train_batch()

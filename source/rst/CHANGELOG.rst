@@ -1,6 +1,29 @@
 VQNet Changelog
 ###############################
 
+[v2.12.0] - 2024-05-01
+***************************
+
+Added
+===================
+
+- Added PipelineParallelTrainingWrapper interface.
+- Added `Gelu`, `DropPath`, `binomial`, `adamW` interfaces.
+- Added `QuantumBatchAsyncQcloudLayer` to support pyqpanda's local virtual machine simulation calculation.
+- Add xtensor's `QuantumBatchAsyncQcloudLayer` to support pyqpanda's local virtual machine simulation calculation and real machine calculation.
+- Enables QTensor to be deepcopy and pickle.
+
+Changed
+===================
+
+- Added new dependencies "Pillow" and "hjson" to the installation package.
+- Optimize softmax and transpose running speed under GPU.
+- Compiled using cuda11.8.
+Fixed
+===================
+- Reduce the memory consumption when starting the Linux-GPU version.
+- Fixed the memory leak problem of select and power functions.
+
 [v2.11.0] - 2024-03-01
 ***************************
 

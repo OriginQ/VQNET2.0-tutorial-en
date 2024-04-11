@@ -2583,4 +2583,103 @@ SGD
         <Parameter 3x4 cpu(0) kfloat32>
         """
 
+Origin Quantum Cloud Interface
+******************************************
 
+Starting from version 2.12.0, when users also install pyQpanda 3.8.2.3 or above, they can use QuantumBatchAsyncQcloudLayer to call a real chip or local CPU virtual machine for simulation.
+
+
+QuantumBatchAsyncQcloudLayer
+===========================================
+.. py:class:: pyvqnet.xtensor.qcloud.QuantumBatchAsyncQcloudLayer(origin_qprog_func,qcloud_token,para_num,num_qubits,num_cubits,pauli_str_dict=None,shots=1000,initializer=None,dtype=None,name="",diff_method="parameter_shift ",submit_kwargs={},query_kwargs={})
+    
+    Variational circuit training module for quantum computation on native quantum computers, starting with version 3.8.2.2 using pyqpanda QCLOUD. It submits parameterized quantum circuits to real chips and obtains measurement results.
+    
+    :param origin_qprog_func: Callable quantum circuit function built by QPanda.
+    :param qcloud_token: str - The type of quantum machine or execution cloud token.
+    :param para_num: int - Number of parameters; parameters are one-dimensional.
+    :param num_qubits: int - Number of qubits in the quantum circuit.
+    :param num_cubits: int - The number of classical bits used  for measurement in quantum circuits.
+    :param pauli_str_dict: dict|list - A dictionary or list of dictionaries representing Pauli operators in quantum circuits. Default is None.
+    :param shots: int - Number of measurements. The default is 1000.
+    :param initializer: Initializer for parameter values. Default is None.
+    :param dtype: The data type of the parameter. Defaults to None, which uses the default data type.
+    :param name: The name of the module. Defaults to empty string.
+    :param diff_method: Differential method used for gradient calculation. Defaults to "parameter_shift".
+    :param submit_kwargs: Submit additional keyword parameters for the quantum circuit, the default is {"chip_id":pyqpanda.real_chip_type.origin_72,"is_amend":True,"is_mapping":True,"is_optimization": True,"default_task_group_size":200, "test_qcloud_fake":True}.
+    :param query_kwargs: Additional keyword parameters for querying quantum results, the default is {"timeout":2,"print_query_info":True,"sub_circuits_split_size":1}.
+
+    :return: A module capable of computing quantum circuits.
+
+    .. note::
+
+        `test_qcloud_fake` of submit_kwargs defaults to True, calling local simulation. If set to False, real machine calculation will be submitted.
+
+    Example::
+
+        from pyqpanda import *
+
+        import pyqpanda as pq
+        from pyvqnet.xtensor.qcloud import QuantumBatchAsyncQcloudLayer
+        from pyvqnet.xtensor.autograd import tape
+        from pyvqnet.xtensor import arange,XTensor,ones,ones_like
+
+
+        def qfun(input,param, m_machine, m_qlist,cubits):
+                measure_qubits = [0,2]
+                m_prog = pq.QProg()
+                cir = pq.QCircuit()
+                cir.insert(pq.RZ(m_qlist[0],input[0]))
+                cir.insert(pq.CNOT(m_qlist[0],m_qlist[1]))
+                cir.insert(pq.RY(m_qlist[1],param[0]))
+                cir.insert(pq.CNOT(m_qlist[0],m_qlist[2]))
+                cir.insert(pq.RZ(m_qlist[1],input[1]))
+                cir.insert(pq.RY(m_qlist[2],param[1]))
+                cir.insert(pq.RZ(m_qlist[2],param[2]))
+                cir.insert(pq.RZ(m_qlist[2],param[3]))
+                cir.insert(pq.RZ(m_qlist[1],param[4]))
+
+                cir.insert(pq.H(m_qlist[2]))
+                m_prog.insert(cir)
+
+
+                return m_prog
+
+        l = QuantumBatchAsyncQcloudLayer(qfun,
+                    "302e020100301006072a8648ce3d020106052b8104001c041730150201010410def6ef7286d4a2fd143ea10e2de4638f/12570",
+                    5,
+                    6,
+                    6,
+                    pauli_str_dict=[{'Z0 X1':1,'Y2':1},{'Y2':1},{'Z0 X1':1,'Y2':1,'X2':1}],#{'Z0 X1':1,'Y2':1},#,
+                    shots = 1000,
+                    initializer=None,
+                    dtype=None,
+                    name="",
+                    diff_method="parameter_shift",
+                    submit_kwargs={"test_qcloud_fake":True},
+                    query_kwargs={})
+
+
+        x = XTensor([[0.56,1.2],[0.56,1.2],[0.56,1.2]],requires_grad= True)
+
+        with tape():
+            y = l(x)
+
+        print(y)
+        y.backward(ones_like(y))
+
+        print(x.grad)
+        print(l.m_para.grad)
+
+        # [[-0.2554    -0.2038    -1.1429999]
+        #  [-0.2936    -0.2082    -1.127    ]
+        #  [-0.3144    -0.1812    -1.1208   ]]
+        # <XTensor 3x3 cpu(0) kfloat32>
+
+        # [[ 0.0241    -0.6001   ]
+        #  [-0.0017    -0.5624   ]
+        #  [ 0.0029999 -0.6071001]]
+        # <XTensor 3x2 cpu(0) kfloat32>
+
+        # [-1.5474    -1.0477002 -4.5562    -4.6365    -1.7573001]
+        # <XTensor 5 cpu(0) kfloat32>

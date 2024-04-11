@@ -1445,6 +1445,31 @@ randn
         # [-0.6987777, -0.0089036, -0.5084590]
         # ]
 
+binomial
+==============================
+.. py:function:: pyvqnet.tensor.binomial(total_countst, probs)
+    
+    Creates a binomial distribution parameterized by :attr:total_count and :attr:probs.
+
+    :param total_counts: Number of Bernoulli trials.
+    :param probs: Event probabilities.
+
+    :return:
+        QTensor for binomial distribution.
+
+    Example::
+
+        import pyvqnet.tensor as tensor
+
+        a = tensor.randu([3,4])
+        b = 1000
+
+        c = tensor.binomial(b,a)
+        print(c)
+
+        # [[221.,763., 30.,339.],
+        # [803.,899.,105.,356.],
+        # [550.,688.,828.,493.]]
 
 multinomial
 ==============================
