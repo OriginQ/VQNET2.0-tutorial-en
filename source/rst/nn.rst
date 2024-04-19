@@ -3867,7 +3867,7 @@ broadcast_model_params
 
 acc_allreduce
 ^^^^^^^^^^^^^^^^^^^^^^
-.. py:function:: CommController.broadcast_model_params(acc)
+.. py:function:: CommController.acc_allreduce(acc)
     
     Take allreduce to put the accuracy at the end of training.
 
