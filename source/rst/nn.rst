@@ -3943,6 +3943,70 @@ Set parameters for distributed computation.
 
         x_train, y_train= split_data(x_train, y_train)
 
+get_local_rank
+=================================
+
+Use ``get_local_rank`` to get the process number on the current machine.
+
+.. py:function:: pyvqnet.distributed.ControllComm.get_local_rank()
+
+    Used to get the current process number on the current machine.
+
+    :return: current process number on the current machine.
+
+    Example::
+
+        from pyvqnet.distributed.ControllComm import get_local_rank
+
+        print(get_local_rank())
+        # vqnetrun -n 2 python test.py
+
+get_rank
+=================================
+Use ``get_rank`` to get the process number on the current machine.
+
+.. py:function:: pyvqnet.distributed.ControllComm.get_rank()
+
+    Used to get the process number of the current process.
+
+    :return: the process number of the current process.
+
+    Example::
+
+        from pyvqnet.distributed.ControllComm import get_rank
+
+        print(get_rank())
+        # vqnetrun -n 2 python test.py
+
+init_group
+=================================
+Use ``init_group`` to initialise cpu-based process groups based on the given list of process numbers.
+
+.. py:function:: pyvqnet.distributed.ControllComm.init_group(rank_lists)
+
+    Used to initialise the process communication group.
+
+    :param rank_lists: List of communication process groups.
+    :return: A list of initialised process groups.
+
+    Example::
+        
+        from pyvqnet.distributed import *
+
+        Comm_OP = CommController("mpi")
+        num = tensor.to_tensor(np.random.rand(1, 5))
+        print(f"rank {Comm_OP.getRank()}  {num}")
+        
+        group_l = init_group([[0,2], [1]])
+
+        for comm_ in group_l:
+            if Comm_OP.getRank() in comm_[1]:
+                num = Comm_OP.allreduce_group(num, "sum", GroupComm = comm_[0])
+                print(f"rank {Comm_OP.getRank()}  {num} after")
+        
+        # vqnetrun -n 3 python test.py
+        
+
 PipelineParallelTrainingWrapper
 =================================
 .. py:class:: pyvqnet.distributed.pp.PipelineParallelTrainingWrapper(args,join_layers,trainset)
