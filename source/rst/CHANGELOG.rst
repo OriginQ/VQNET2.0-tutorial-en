@@ -19,7 +19,7 @@ Added
 Changed
 ===================
 
-- Added new dependencies "Pillow" and "hjson" to the installation package, linux系统下安装包添加新依赖 "psutil"。 "cloudpickle"。
+- Added new dependencies "Pillow" and "hjson" to the installation package, add new dependencies "psutil" and "cloudpickle" on linux systems 。
 - Optimize softmax and transpose running speed under GPU.
 - Compiled using cuda11.8.
 - Integration of distributed computing interfaces under cpu and gpu based.
