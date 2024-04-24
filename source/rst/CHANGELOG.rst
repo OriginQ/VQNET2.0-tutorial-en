@@ -12,17 +12,23 @@ Added
 - Added `QuantumBatchAsyncQcloudLayer` to support pyqpanda's local virtual machine simulation calculation.
 - Add xtensor's `QuantumBatchAsyncQcloudLayer` to support pyqpanda's local virtual machine simulation calculation and real machine calculation.
 - Enables QTensor to be deepcopy and pickle.
+- Add distributed computing startup command `vqnetrun`, used when using the distributed computing interface.
+- Add ES gradient calculation method real machine interface `QuantumBatchAsyncQcloudLayerES` to support local VM simulation calculations as well as real machine calculations for pyqpanda.
+- Add data communication interfaces `allreduce`, `reduce`, `broadcast`, `allgather`, `send`, `recv`, etc. that support QTensor in distributed computing.
 
 Changed
 ===================
 
-- Added new dependencies "Pillow" and "hjson" to the installation package.
+- Added new dependencies "Pillow" and "hjson" to the installation package, add new dependencies "psutil" and "cloudpickle" on linux systems 。
 - Optimize softmax and transpose running speed under GPU.
 - Compiled using cuda11.8.
+- Integration of distributed computing interfaces under cpu and gpu based.
+
 Fixed
 ===================
 - Reduce the memory consumption when starting the Linux-GPU version.
 - Fixed the memory leak problem of select and power functions.
+- Removed model parameters and gradient update methods `nccl_average_parameters_reduce`, `nccl_average_grad_reduce` based on the reduce method for cpu, gpu.
 
 [v2.11.0] - 2024-03-01
 ***************************
