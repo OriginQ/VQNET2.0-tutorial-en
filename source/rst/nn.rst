@@ -3865,59 +3865,6 @@ broadcast_model_params
         print(f"bcast after rank {get_rank()}: {model.parameters()}")
         
 
-acc_allreduce
-^^^^^^^^^^^^^^^^^^^^^^
-.. py:function:: CommController.acc_allreduce(acc)
-    
-    Take allreduce to put the accuracy at the end of training.
-
-    :param acc: Accuracy at the end of model training.
-
-    Examples::
-    
-        from pyvqnet.distributed import CommController,get_rank,get_local_rank
-        from pyvqnet.tensor import tensor
-        from pyvqnet.nn.module import Module
-        from pyvqnet.nn.linear import Linear
-        from pyvqnet.nn.loss import MeanSquaredError
-        from pyvqnet.optim import Adam
-        from pyvqnet.nn import activation as F
-        import numpy as np
-        Comm_OP = CommController("nccl")
-
-        def get_accuary(result, label):
-            result = (result > 0.5).astype(4)
-            score = tensor.sums(result == label)
-            return score
-
-        class Net(Module):
-            def __init__(self):
-                super(Net, self).__init__()
-                self.fc = Linear(input_channels=5, output_channels=1)
-            def forward(self, x):
-                x = F.ReLu()(self.fc(x))
-                return x
-        model = Net().toGPU(1000+ get_local_rank())
-        opti = Adam(model.parameters(), lr=0.01)
-        actual = tensor.QTensor([1,1,1,1,1,0,0,0,0,0],dtype=6).reshape((10,1)).toGPU(1000+ get_local_rank())
-        x = tensor.randn((10, 5)).toGPU(1000+ get_local_rank())
-        accuary = 0
-        count = 0
-        for i in range(100):
-            opti.zero_grad()
-            model.train()
-            result = model(x)
-            loss = MeanSquaredError()(actual, result)
-            loss.backward()
-            opti.step()
-            
-            count += 1
-            accuary += get_accuary(result, actual.reshape([-1,1]))
-        print(
-                f"rank {get_rank()} #####accuray:{accuary/count} #### {Comm_OP.acc_allreduce(accuary)/count}"
-            )
-        # vqnetrun -n 2 python test.py
-
 split_data
 =================================
 
@@ -3990,7 +3937,7 @@ Use ``init_group`` to initialise cpu-based process groups based on the given lis
     :return: A list of initialised process groups.
 
     Example::
-        
+
         from pyvqnet.distributed import *
 
         Comm_OP = CommController("mpi")
