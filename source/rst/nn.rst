@@ -5,47 +5,47 @@ The following classical neural network modules support automatic back propagatio
 
 .. code-block::
 
-        from pyvqnet.tensor import arange
-        from pyvqnet import kfloat32
-        from pyvqnet.nn import Conv2D
+    from pyvqnet.tensor import arange
+    from pyvqnet import kfloat32
+    from pyvqnet.nn import Conv2D
 
-        # an image feed into two dimension convolution layer
-        b = 2        # batch size
-        ic = 2       # input channels
-        oc = 2      # output channels
-        hw = 4      # input width and heights
+    # an image feed into two dimension convolution layer
+    b = 2        # batch size
+    ic = 2       # input channels
+    oc = 2      # output channels
+    hw = 4      # input width and heights
 
-        # two dimension convolution layer
-        test_conv = Conv2D(ic,oc,(2,2),(2,2),"same")
+    # two dimension convolution layer
+    test_conv = Conv2D(ic,oc,(2,2),(2,2),"same")
 
-        # input of shape [b,ic,hw,hw]
-        x0 = arange(1,b*ic*hw*hw+1,requires_grad=True,dtype=kfloat32).reshape([b,ic,hw,hw])
+    # input of shape [b,ic,hw,hw]
+    x0 = arange(1,b*ic*hw*hw+1,requires_grad=True,dtype=kfloat32).reshape([b,ic,hw,hw])
 
-        #forward function
-        x = test_conv(x0)
+    #forward function
+    x = test_conv(x0)
 
-        #backward function with autograd
-        x.backward()
-        print(x0.grad)
+    #backward function with autograd
+    x.backward()
+    print(x0.grad)
 
-        # [
-        # [[[0.0958736, 0.3032238, 0.0958736, 0.3032238],
-        #  [-0.2665333, 0.1081382, -0.2665333, 0.1081382],
-        #  [0.0958736, 0.3032238, 0.0958736, 0.3032238],
-        #  [-0.2665333, 0.1081382, -0.2665333, 0.1081382]],
-        # [[-0.0068994, 0.0914679, -0.0068994, 0.0914679],
-        #  [-0.2820665, 0.3160213, -0.2820665, 0.3160213],
-        #  [-0.0068994, 0.0914679, -0.0068994, 0.0914679],
-        #  [-0.2820665, 0.3160213, -0.2820665, 0.3160213]]],
-        # [[[0.0958736, 0.3032238, 0.0958736, 0.3032238],
-        #  [-0.2665333, 0.1081382, -0.2665333, 0.1081382],
-        #  [0.0958736, 0.3032238, 0.0958736, 0.3032238],
-        #  [-0.2665333, 0.1081382, -0.2665333, 0.1081382]],
-        # [[-0.0068994, 0.0914679, -0.0068994, 0.0914679],
-        #  [-0.2820665, 0.3160213, -0.2820665, 0.3160213],
-        #  [-0.0068994, 0.0914679, -0.0068994, 0.0914679],
-        #  [-0.2820665, 0.3160213, -0.2820665, 0.3160213]]]
-        # ]
+    # [
+    # [[[0.0958736, 0.3032238, 0.0958736, 0.3032238],
+    #  [-0.2665333, 0.1081382, -0.2665333, 0.1081382],
+    #  [0.0958736, 0.3032238, 0.0958736, 0.3032238],
+    #  [-0.2665333, 0.1081382, -0.2665333, 0.1081382]],
+    # [[-0.0068994, 0.0914679, -0.0068994, 0.0914679],
+    #  [-0.2820665, 0.3160213, -0.2820665, 0.3160213],
+    #  [-0.0068994, 0.0914679, -0.0068994, 0.0914679],
+    #  [-0.2820665, 0.3160213, -0.2820665, 0.3160213]]],
+    # [[[0.0958736, 0.3032238, 0.0958736, 0.3032238],
+    #  [-0.2665333, 0.1081382, -0.2665333, 0.1081382],
+    #  [0.0958736, 0.3032238, 0.0958736, 0.3032238],
+    #  [-0.2665333, 0.1081382, -0.2665333, 0.1081382]],
+    # [[-0.0068994, 0.0914679, -0.0068994, 0.0914679],
+    #  [-0.2820665, 0.3160213, -0.2820665, 0.3160213],
+    #  [-0.0068994, 0.0914679, -0.0068994, 0.0914679],
+    #  [-0.2820665, 0.3160213, -0.2820665, 0.3160213]]]
+    # ]
 
 .. currentmodule:: pyvqnet.nn
 
@@ -869,7 +869,7 @@ BatchNorm1d
 LayerNormNd
 =================================
 
-.. py:class:: pyvqnet.nn.layer_norm.LayerNormNd(normalized_shape: list, epsilon: float = 1e-5, affine: bool = True, dtype=None,name="")
+.. py:class:: pyvqnet.nn.layer_norm.LayerNormNd(normalized_shape: list, epsilon: float = 1e-5, dtype=None,name="")
 
     Layer normalization is performed on the last several dimensions of any input. The specific method is as described in the paper:
     `Layer Normalization <https://arxiv.org/abs/1607.06450>`__。
@@ -881,7 +881,6 @@ LayerNormNd
 
     :param norm_shape: `float` - standardize the shape.
     :param epsilon: `float` - numerical stability constant, defaults to 1e-5.
-    :param affine: `bool` - whether to use the applied affine transformation, the default is True.
     :param name: name of the output layer.
     :param dtype: The data type of the parameter, defaults: None, use the default data type kfloat32, which represents a 32-bit floating point number.
     
@@ -912,7 +911,7 @@ LayerNormNd
 LayerNorm2d
 =================================
 
-.. py:class:: pyvqnet.nn.layer_norm.LayerNorm2d(norm_size:int, epsilon:float = 1e-5, affine: bool = True, dtype=None, name="")
+.. py:class:: pyvqnet.nn.layer_norm.LayerNorm2d(norm_size:int, epsilon:float = 1e-5, dtype=None, name="")
 
     Applies Layer Normalization over a mini-batch of 4D inputs as described in
     the paper `Layer Normalization <https://arxiv.org/abs/1607.06450>`__
@@ -926,7 +925,6 @@ LayerNorm2d
 
     :param norm_size: `float` - normalize size,equals to C * H * W
     :param epsilon: `float` - numerical stability constant, defaults to 1e-5
-    :param affine: `bool` - whether to use the applied affine transformation, the default is True
     :param name: name of the output layer
     :param dtype: The data type of the parameter, defaults: None, use the default data type kfloat32, which represents a 32-bit floating point number.
     
@@ -966,7 +964,7 @@ LayerNorm2d
 LayerNorm1d
 =================================
 
-.. py:class:: pyvqnet.nn.layer_norm.LayerNorm1d(norm_size:int, epsilon:float = 1e-5, affine: bool = True, dtype=None,name="")
+.. py:class:: pyvqnet.nn.layer_norm.LayerNorm1d(norm_size:int, epsilon:float = 1e-5, dtype=None,name="")
 
     Applies Layer Normalization over a mini-batch of 2D inputs as described in
     the paper `Layer Normalization <https://arxiv.org/abs/1607.06450>`__
@@ -979,7 +977,6 @@ LayerNorm1d
 
     :param norm_size: `float` - normalize size,equals to last dim
     :param epsilon: `float` - numerical stability constant, defaults to 1e-5
-    :param affine: `bool` - whether to use the applied affine transformation, the default is True
     :param dtype: The data type of the parameter, defaults: None, use the default data type kfloat32, which represents a 32-bit floating point number.
     
     :param name: name of the output layer
