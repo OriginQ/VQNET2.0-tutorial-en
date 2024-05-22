@@ -222,6 +222,98 @@ If you are more familiar with pyQPanda syntax, please using QuantumLayerV2 class
         # ]
 
 
+QuantumLayerV3
+=============================
+
+.. py:class:: pyvqnet.qnn.quantumlayer.QuantumLayerV3(origin_qprog_func,para_num,num_qubits, num_cubits, pauli_str_dict=None, shots=1000, initializer=None,dtype=None,name="")
+    
+    It submits the parameterized quantum circuit to the local QPanda full amplitude simulator for calculation and trains the parameters in the circuit.
+    It supports batch data and uses the parameter shift rule to estimate the gradient of the parameters.
+    For CRX, CRY, CRZ, this layer uses the formula in https://iopscience.iop.org/article/10.1088/1367-2630/ac2cb3, and the rest of the logic gates use the default parameter drift method to calculate the gradient.
+
+    :param origin_qprog_func: The callable quantum circuit function built by QPanda.
+    :param para_num: `int` - Number of parameters; parameters are one-dimensional.
+    :param num_qubits: `int` - Number of qubits in the quantum circuit.
+    :param num_cubits: `int` - Number of classical bits used for measurements in the quantum circuit.
+    :param pauli_str_dict: `dict|list` - Dictionary or list of dictionaries representing Pauli operators in the quantum circuit. Defaults to None.
+    :param shots: `int` - Number of measurement shots. Defaults to 1000.
+    :param initializer: Initializer for parameter values. Defaults to None.
+    :param dtype: Data type of the parameter. Defaults to None, which uses the default data type.
+    :param name: Name of the module. Defaults to the empty string.
+
+    :return: Returns a QuantumLayerV3 class
+
+    .. note::
+
+        origin_qprog_func is a user defined quantum circuit function using pyQPanda:
+        https://pyqpanda-toturial.readthedocs.io/en/latest/QCircuit.html.
+
+        The function should contain the following input parameters and return a pyQPanda.QProg or originIR.
+
+        origin_qprog_func (input,param,m_machine,qubits,cubits)
+
+        `input`: user defined array-like input 1D classical data.
+
+        `param`: array_like input user defined 1D quantum circuit parameters.
+
+        `m_machine`: simulator created by QuantumLayerV3.
+
+        `qubits`: quantum bits allocated by QuantumLayerV3
+
+        `cubits`: classical bits allocated by QuantumLayerV3. If your circuit does not use classical bits, you should also keep this parameter as a function input.
+
+    Example::
+
+        import numpy as np
+        import pyqpanda as pq
+        import pyvqnet
+        from pyvqnet.qnn import QuantumLayerV3
+
+        def qfun(input, param, m_machine, m_qlist, cubits):
+        measure_qubits = [0,1, 2]
+        m_prog = pq.QProg()
+        cir = pq.QCircuit()
+
+        cir.insert(pq.RZ(m_qlist[0], input[0]))
+        cir.insert(pq.RX(m_qlist[2], input[2]))
+
+        qcir = pq.RX(m_qlist[1], param[1])
+        qcir.set_control(m_qlist[0])
+        cir.insert(qcir)
+
+        qcir = pq.RY(m_qlist[0], param[2])
+        qcir.set_control(m_qlist[1])
+        cir.insert(qcir)
+
+        cir.insert(pq.RY(m_qlist[0], input[1]))
+
+        qcir = pq.RZ(m_qlist[0], param[3])
+        qcir.set_control(m_qlist[1])
+        cir.insert(qcir)
+        m_prog.insert(cir)
+
+        for idx, ele in enumerate(measure_qubits):
+        m_prog << pq.Measure(m_qlist[ele], cubits[idx]) # pylint: disable=expression-not-assigned
+        return m_prog
+        from pyvqnet.utils.initializer import ones
+        l = QuantumLayerV3(qfun,
+        4,
+        3,
+        3,
+        pauli_str_dict=None,
+        shots=1000,
+        initializer=ones,
+        name="")
+        x = pyvqnet.tensor.QTensor(
+        [[2.56, 1.2,-3]],
+        requires_grad=True)
+        y = l(x)
+
+        y.backward()
+        print(l.m_para.grad.to_numpy())
+        print(x.grad.to_numpy())
+
+
 QuantumBatchAsyncQcloudLayer
 =================================
 
@@ -352,7 +444,7 @@ When you install the latest version of pyqpanda, you can use this interface to d
 QuantumBatchAsyncQcloudLayerES
 =================================
 
-当When you install the latest version of pyqpanda, you can use this interface to define a variational circuit and submit it to originqc for running on the real chip.
+When you install the latest version of pyqpanda, you can use this interface to define a variational circuit and submit it to originqc for running on the real chip.
 
 .. py:class:: pyvqnet.qnn.quantumlayer.QuantumBatchAsyncQcloudLayerES(origin_qprog_func, qcloud_token, para_num, num_qubits, num_cubits, pauli_str_dict=None, shots = 1000, initializer=None, dtype=None, name="", diff_method="ES", submit_kwargs={}, query_kwargs={}, sigma=np.pi/24)
     

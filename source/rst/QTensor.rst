@@ -181,6 +181,27 @@ is_csr
         print(b.is_csr)
         #1
 
+is_contiguous
+==============================
+
+.. py:attribute:: QTensor.is_contiguous
+
+    Check if a contiguous multidimensional array or not.
+
+    :return: If it is contiguous, return True, otherwise return False.
+
+    Example::
+
+        from pyvqnet.tensor import QTensor
+
+        a = QTensor([[2, 3, 4, 5],[2, 3, 4, 5]])
+        b = a.is_contiguous
+        print(b)
+        #True
+        c= a.permute((1,0))
+        print(c.is_contiguous)
+        #False
+
 csr_members
 ==============================
 
@@ -201,6 +222,24 @@ csr_members
         b = dense_to_csr(a)
         print(b.csr_members())
         #([0,4], [0,1,2,3], [2,3,4,5])
+
+
+contiguous
+==============================
+
+.. py:method:: QTensor.contiguous()
+    
+    Returns the contiguous form of the current QTensor. If it is already contiguous, it returns itself.
+
+    :return: Returns the contiguous form of the current QTensor. If it is already contiguous, it returns itself.
+
+Example::
+
+    from pyvqnet.tensor import tensor
+
+    t = tensor.ones([1])
+    print(t.contiguous())
+
 
 zero_grad
 ==============================
@@ -633,28 +672,32 @@ reshape\_
 
 .. py:method:: QTensor.reshape_(new_shape)
 
-        Change the current object's shape.
+    Change the shape of the current QTensor in place. This interface will first try to transform without changing the original memory data. If it fails, the current data will be copied to the new memory.
 
-        :param new_shape: the new shape (list of integers)
-        :return: None
+    .. warning::
 
-        Example::
+        It is recommended to use the reshape interface. In some cases, the actual underlying memory location will be copied instead of modified in place.
 
-            from pyvqnet.tensor import tensor
-            from pyvqnet.tensor import QTensor
-            import numpy as np
-            R, C = 3, 4
-            a = np.arange(R * C).reshape(R, C).astype(np.float32)
-            t = QTensor(a)
-            t.reshape_([C, R])
-            print(t)
+    :param new_shape: the new shape (list of integers)
+    :return: None
 
-            # [
-            # [0, 1, 2],
-            # [3, 4, 5],
-            # [6, 7, 8],
-            # [9, 10, 11]
-            # ]
+    Example::
+
+        from pyvqnet.tensor import tensor
+        from pyvqnet.tensor import QTensor
+        import numpy as np
+        R, C = 3, 4
+        a = np.arange(R * C).reshape(R, C).astype(np.float32)
+        t = QTensor(a)
+        t.reshape_([C, R])
+        print(t)
+
+        # [
+        # [0, 1, 2],
+        # [3, 4, 5],
+        # [6, 7, 8],
+        # [9, 10, 11]
+        # ]
 
 getdata
 ==============================
@@ -706,7 +749,7 @@ __getitem__
 
             from pyvqnet.tensor import tensor, QTensor
             aaa = tensor.arange(1, 61)
-            aaa.reshape_([4, 5, 3])
+            aaa = aaa.reshape([4, 5, 3])
             print(aaa[0:2, 3, :2])
             # [
             # [10, 11],
@@ -797,7 +840,7 @@ __setitem__
 
         from pyvqnet.tensor import tensor
         aaa = tensor.arange(1, 61)
-        aaa.reshape_([4, 5, 3])
+        aaa = aaa.reshape([4, 5, 3])
         vqnet_a2 = aaa[3, 4, 1]
         aaa[3, 4, 1] = tensor.arange(10001,
                                         10001 + vqnet_a2.size).reshape(vqnet_a2.shape)
@@ -825,7 +868,7 @@ __setitem__
         #  [58, 10001, 60]]
         # ]
         aaa = tensor.arange(1, 61)
-        aaa.reshape_([4, 5, 3])
+        aaa = aaa.reshape([4, 5, 3])
         vqnet_a3 = aaa[:, 2, :]
         aaa[:, 2, :] = tensor.arange(10001,
                                         10001 + vqnet_a3.size).reshape(vqnet_a3.shape)
@@ -853,7 +896,7 @@ __setitem__
         #  [58, 59, 60]]
         # ]
         aaa = tensor.arange(1, 61)
-        aaa.reshape_([4, 5, 3])
+        aaa = aaa.reshape([4, 5, 3])
         vqnet_a4 = aaa[2, :]
         aaa[2, :] = tensor.arange(10001,
                                     10001 + vqnet_a4.size).reshape(vqnet_a4.shape)
@@ -881,7 +924,7 @@ __setitem__
         #  [58, 59, 60]]
         # ]
         aaa = tensor.arange(1, 61)
-        aaa.reshape_([4, 5, 3])
+        aaa = aaa.reshape([4, 5, 3])
         vqnet_a5 = aaa[0:2, ::2, 1:2]
         aaa[0:2, ::2,
             1:2] = tensor.arange(10001,
@@ -1317,10 +1360,7 @@ diag
 
     Select diagonal elements or construct a diagonal QTensor.
 
-    If input is 2-D QTensor,returns a new tensor which is the same as this one, except that
-    elements other than those in the selected diagonal are set to zero.
-
-    If v is a 1-D QTensor, return a 2-D QTensor with v on the k-th diagonal.
+    Input a 2-D QTensor and return a new 1D tensor containing the selected diagonal elements. Input a 1-D QTensor and return a new 2D tensor whose selected diagonal elements are the input values ​​and the rest are 0
 
     :param t: input QTensor
     :param k: offset (0 for the main diagonal, positive for the nth
@@ -1338,55 +1378,26 @@ diag
         for k in range(-3, 4):
             u = tensor.diag(t,k=k)
             print(u)
+        # [12.]
+        # <QTensor [1] DEV_CPU kfloat32>
 
-        # [
-        # [0, 0, 0, 0],
-        # [0, 0, 0, 0],
-        # [0, 0, 0, 0],
-        # [12, 0, 0, 0]
-        # ]
+        # [ 8.,13.]
+        # <QTensor [2] DEV_CPU kfloat32>
 
-        # [
-        # [0, 0, 0, 0],
-        # [0, 0, 0, 0],
-        # [8, 0, 0, 0],
-        # [0, 13, 0, 0]
-        # ]
+        # [ 4., 9.,14.]
+        # <QTensor [3] DEV_CPU kfloat32>
 
-        # [
-        # [0, 0, 0, 0],
-        # [4, 0, 0, 0],
-        # [0, 9, 0, 0],
-        # [0, 0, 14, 0]
-        # ]
+        # [ 0., 5.,10.,15.]
+        # <QTensor [4] DEV_CPU kfloat32>
 
-        # [
-        # [0, 0, 0, 0],
-        # [0, 5, 0, 0],
-        # [0, 0, 10, 0],
-        # [0, 0, 0, 15]
-        # ]
+        # [ 1., 6.,11.]
+        # <QTensor [3] DEV_CPU kfloat32>
 
-        # [
-        # [0, 1, 0, 0],
-        # [0, 0, 6, 0],
-        # [0, 0, 0, 11],
-        # [0, 0, 0, 0]
-        # ]
+        # [2.,7.]
+        # <QTensor [2] DEV_CPU kfloat32>
 
-        # [
-        # [0, 0, 2, 0],
-        # [0, 0, 0, 7],
-        # [0, 0, 0, 0],
-        # [0, 0, 0, 0]
-        # ]
-
-        # [
-        # [0, 0, 0, 3],
-        # [0, 0, 0, 0],
-        # [0, 0, 0, 0],
-        # [0, 0, 0, 0]
-        # ]
+        # [3.]
+        # <QTensor [1] DEV_CPU kfloat32>
 
 randu
 ==============================
@@ -1712,7 +1723,7 @@ topK
             24., 13., 15., 4., 3., 8., 11., 3., 6., 15., 24., 13., 15., 3., 3., 8., 7.,
             3., 6., 11.
         ])
-        x.reshape_([2, 5, 1, 2])
+        x= x.reshape([2, 5, 1, 2])
         x.requires_grad = True
         y = tensor.topK(x, 3, 1)
         print(y)
@@ -1748,7 +1759,7 @@ argtopK
             24., 13., 15., 4., 3., 8., 11., 3., 6., 15., 24., 13., 15., 3., 3., 8., 7.,
             3., 6., 11.
         ])
-        x.reshape_([2, 5, 1, 2])
+        x= x.reshape([2, 5, 1, 2])
         x.requires_grad = True
         y = tensor.argtopK(x, 3, 1)
         print(y)
@@ -4010,3 +4021,21 @@ pack_pad_sequence
 
         print(data.batch_sizes)
         # [3, 2, 1, 1]
+
+no_grad
+==============================
+
+.. py:function:: pyvqnet.no_grad()
+
+    Log backpropagation nodes when forward computation is disabled.
+
+    Example::
+
+        import pyvqnet.tensor as tensor
+        from pyvqnet import no_grad
+
+        with no_grad():
+            x = tensor.QTensor([1.0, 2.0, 3.0],requires_grad=True)
+            y = tensor.tan(x)
+            y.backward()
+        #RuntimeError: output requires_grad is False.

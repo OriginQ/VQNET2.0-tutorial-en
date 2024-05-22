@@ -756,7 +756,7 @@ Embedding
 BatchNorm2d
 =================================
 
-.. py:class:: pyvqnet.nn.BatchNorm2d(channel_num:int, momentum:float=0.1, epsilon:float = 1e-5,beta_initializer=zeros, gamma_initializer=ones, dtype=None, name="")
+.. py:class:: pyvqnet.nn.BatchNorm2d(channel_num:int, momentum:float=0.1, epsilon:float = 1e-5, affine= True, beta_initializer=zeros, gamma_initializer=ones, dtype=None, name="")
 
     Applies Batch Normalization over a 4D input (B,C,H,W) as described in the paper
     `Batch Normalization: Accelerating Deep Network Training by Reducing
@@ -772,9 +772,10 @@ BatchNorm2d
 
     :param channel_num: `int` - the number of input features channels.
     :param momentum: `float` - momentum when calculation exponentially weighted average, defaults to 0.1.
+    :param epsilon: `float` - numerical stability constant, defaults to 1e-5.
+    :param affine: A boolean value that, when set to ``True``, causes this module to have learnable per-channel affine parameters, initialized to 1 (for weights) and 0 (for biases). Default: ``True``.
     :param beta_initializer: `callable` - defaults to zeros.
     :param gamma_initializer: `callable` - defaults to ones.
-    :param epsilon: `float` - numerical stability constant, defaults to 1e-5.
     :param dtype: The data type of the parameter, defaults: None, use the default data type kfloat32, which represents a 32-bit floating point number.
     :param name: name of the output layer
     :return: a BatchNorm2d class
@@ -818,7 +819,7 @@ BatchNorm2d
 BatchNorm1d
 =================================
 
-.. py:class:: pyvqnet.nn.BatchNorm1d(channel_num:int, momentum:float=0.1, epsilon:float = 1e-5, beta_initializer=zeros, gamma_initializer=ones, dtype=None, name="")
+.. py:class:: pyvqnet.nn.BatchNorm1d(channel_num:int, momentum:float=0.1, epsilon:float = 1e-5, affine = True, beta_initializer=zeros, gamma_initializer=ones, dtype=None, name="")
 
     Applies Batch Normalization over a 2D input (B,C) as described in the paper
     `Batch Normalization: Accelerating Deep Network Training by Reducing
@@ -835,9 +836,10 @@ BatchNorm1d
 
     :param channel_num: `int` - the number of input features channels.
     :param momentum: `float` - momentum when calculation exponentially weighted average, defaults to 0.1
+    :param epsilon: `float` - numerical stability constant, defaults to 1e-5.
+    :param affine: A boolean value that, when set to ``True``, causes this module to have learnable per-channel affine parameters, initialized to 1 (for weights) and 0 (for biases). Default: ``True``.
     :param beta_initializer: `callable` - defaults to zeros.
     :param gamma_initializer: `callable` - defaults to ones.
-    :param epsilon: `float` - numerical stability constant, defaults to 1e-5.
     :param dtype: The data type of the parameter, defaults: None, use the default data type kfloat32, which represents a 32-bit floating point number.
     :param name: name of the output layer
     :return: a BatchNorm1d class
@@ -869,7 +871,7 @@ BatchNorm1d
 LayerNormNd
 =================================
 
-.. py:class:: pyvqnet.nn.layer_norm.LayerNormNd(normalized_shape: list, epsilon: float = 1e-5, dtype=None,name="")
+.. py:class:: pyvqnet.nn.layer_norm.LayerNormNd(normalized_shape: list, epsilon: float = 1e-5, affine = True, dtype=None,name="")
 
     Layer normalization is performed on the last several dimensions of any input. The specific method is as described in the paper:
     `Layer Normalization <https://arxiv.org/abs/1607.06450>`__。
@@ -881,9 +883,10 @@ LayerNormNd
 
     :param norm_shape: `float` - standardize the shape.
     :param epsilon: `float` - numerical stability constant, defaults to 1e-5.
-    :param name: name of the output layer.
+    :param affine: A boolean value that, when set to ``True``, causes this module to have learnable per-channel affine parameters, initialized to 1 (for weights) and 0 (for biases). Default: ``True``.
     :param dtype: The data type of the parameter, defaults: None, use the default data type kfloat32, which represents a 32-bit floating point number.
-    
+    :param name: name of the output layer.
+
     :return: a LayerNormNd class.
 
     Example::
@@ -911,7 +914,7 @@ LayerNormNd
 LayerNorm2d
 =================================
 
-.. py:class:: pyvqnet.nn.layer_norm.LayerNorm2d(norm_size:int, epsilon:float = 1e-5, dtype=None, name="")
+.. py:class:: pyvqnet.nn.layer_norm.LayerNorm2d(norm_size:int, epsilon:float = 1e-5, affine= True, dtype=None, name="")
 
     Applies Layer Normalization over a mini-batch of 4D inputs as described in
     the paper `Layer Normalization <https://arxiv.org/abs/1607.06450>`__
@@ -925,6 +928,7 @@ LayerNorm2d
 
     :param norm_size: `float` - normalize size,equals to C * H * W
     :param epsilon: `float` - numerical stability constant, defaults to 1e-5
+    :param affine: A boolean value that, when set to ``True``, causes this module to have learnable per-channel affine parameters, initialized to 1 (for weights) and 0 (for biases). Default: ``True``.
     :param name: name of the output layer
     :param dtype: The data type of the parameter, defaults: None, use the default data type kfloat32, which represents a 32-bit floating point number.
     
@@ -964,7 +968,7 @@ LayerNorm2d
 LayerNorm1d
 =================================
 
-.. py:class:: pyvqnet.nn.layer_norm.LayerNorm1d(norm_size:int, epsilon:float = 1e-5, dtype=None,name="")
+.. py:class:: pyvqnet.nn.layer_norm.LayerNorm1d(norm_size:int, epsilon:float = 1e-5, affine= True, dtype=None,name="")
 
     Applies Layer Normalization over a mini-batch of 2D inputs as described in
     the paper `Layer Normalization <https://arxiv.org/abs/1607.06450>`__
@@ -977,6 +981,7 @@ LayerNorm1d
 
     :param norm_size: `float` - normalize size,equals to last dim
     :param epsilon: `float` - numerical stability constant, defaults to 1e-5
+    :param affine: A boolean value that, when set to ``True``, causes this module to have learnable per-channel affine parameters, initialized to 1 (for weights) and 0 (for biases). Default: ``True``.
     :param dtype: The data type of the parameter, defaults: None, use the default data type kfloat32, which represents a 32-bit floating point number.
     
     :param name: name of the output layer
@@ -1000,6 +1005,44 @@ LayerNorm1d
         # [-1.3416355, -0.4472118, 0.4472118, 1.3416355],
         # [-1.3416355, -0.4472118, 0.4472118, 1.3416355]
         # ]
+
+
+GroupNorm
+=============================================================
+
+.. py:class:: pyvqnet.nn.group_norm.GroupNorm(num_groups: int, num_channels: int, epsilon = 1e-5, affine = True, dtype = None, name = ""）
+
+    Apply group normalization to a mini-batch of inputs.
+
+    This layer implements the operation described in the paper `Group Normalization <https://arxiv.org/abs/1803.08494>`__
+
+    .. math::
+
+        y = \frac{x - \mathrm{E}[x]}{ \sqrt{\mathrm{Var}[x] + \epsilon}} * \gamma + \beta
+
+    The input channels are divided into :attr:`num_groups` groups, each containing ``num_channels / num_groups`` channels. :attr:`num_channels` must be divisible by :attr:`num_groups`. The mean and standard deviation are computed separately for each group. If :attr:`affine` is ``True``, then :math:`\gamma` and :math:`\beta` are learnable. Per-channel affine transformation parameter vector of size :attr:`num_channels`.
+
+    :param num_groups (int): Number of groups to split channels into
+    :param num_channels (int): Number of channels expected in the input
+    :param eps: Value to add to the denominator for numerical stability. Default: 1e-5
+    :param affine: A boolean value that, when set to ``True``, causes this module to have learnable per-channel affine parameters, initialized to 1 (for weights) and 0 (for biases). Default: ``True``.
+
+    Shape:
+        - Input: :math:`(N, C, *)` where :math:`C=\text{num\_channels}`
+        - Output: :math:`(N, C, *)`
+
+    :return: GroupNorm class
+
+    Example::
+
+        import numpy as np
+        from pyvqnet.tensor import QTensor,kfloat32
+        from pyvqnet.nn import GroupNorm
+        test_conv = GroupNorm(2,10)
+        x = QTensor(np.arange(0,60*2*5).reshape([2,10,3,2,5]),requires_grad=True,dtype=kfloat32)
+        y = test_conv.forward(x)
+        print(y)
+
 
 Linear
 =================================
@@ -1083,6 +1126,7 @@ DropPath
 =================================
 
 .. py:class:: pyvqnet.nn.dropout.DropPath(dropout_rate = 0.5,name="")
+
     The DropPath module will drop paths (randomly deep) on a sample-by-sample basis.
 
     :param dropout_rate: `float` - The probability that the neuron is set to zero.
@@ -1877,7 +1921,7 @@ NLL_Loss
             0.9818027091583286, 0.8673569904602182, 0.9860275114020933,
             0.9232667066664217, 0.303693313961628, 0.8461034903175555
         ])
-        x.reshape_([1, 3, 1, 5])
+        x= x.reshape([1, 3, 1, 5])
         x.requires_grad = True
         y = QTensor([[[2, 1, 0, 0, 2]]], dtype=kint64)
 
@@ -2255,7 +2299,7 @@ adadelta
 
 adagrad
 =================================
-.. py:class:: pyvqnet.optim.adagrad.Adagrad(params, lr=0.01, epsilon=1e-8)
+.. py:class:: pyvqnet.optim.adagrad.Adagrad(params, lr=0.01, epsilon=1e-8 )
 
     Implements Adagrad algorithm. reference: (https://databricks.com/glossary/adagrad)
 
@@ -2361,14 +2405,16 @@ AdamW
         # [14.8429002,15.8329252,16.8229502,17.8129752],
         # [18.8030002,19.7930252,20.7830502,21.7730752]]]]
 
-adam
+Adam
 =================================
-.. py:class:: pyvqnet.optim.adam.Adam(params, lr=0.01, beta1=0.9, beta2=0.999, epsilon=1e-8,amsgrad: bool = False)
+.. py:class:: pyvqnet.optim.adam.Adam(params, lr=0.01, beta1=0.9, beta2=0.999, epsilon=1e-8,weight_decay = 0, amsgrad: bool = False)
 
     Adam: A Method for Stochastic Optimization reference: (https://arxiv.org/abs/1412.6980),it can dynamically adjusts the learning rate of each parameter using the 1st moment estimates and the 2nd moment estimates of the gradient.
 
     .. math::
-        t = t + 1 
+        t = t + 1
+    .. math::
+        param  = param - lr*weight\_decay*param
     .. math::
         moment\_1\_new=\beta1∗moment\_1+(1−\beta1)g
     .. math::
@@ -2394,6 +2440,7 @@ adam
     :param beta1: coefficients used for computing running averages of gradient and its square (default: 0.9)
     :param beta2: coefficients used for computing running averages of gradient and its square (default: 0.999)
     :param epsilon: term added to the denominator to improve numerical stability (default: 1e-8)
+    :param weight_decay: Weight decay coefficient, default 0.
     :param amsgrad: whether to use the AMSGrad variant of this algorithm (default: False)
     :return: a Adam optimizer
 
@@ -3502,7 +3549,7 @@ allreduce
         num = tensor.to_tensor(np.random.rand(1, 5))
         print(f"rank {Comm_OP.getRank()}  {num}")
 
-        num = Comm_OP.allreduce(num, "sum")
+        Comm_OP.allreduce(num, "sum")
         print(f"rank {Comm_OP.getRank()}  {num}")
         # vqnetrun -n 2 python test.py
 
@@ -3527,7 +3574,7 @@ reduce
         num = tensor.to_tensor(np.random.rand(1, 5))
         print(f"rank {Comm_OP.getRank()}  {num}")
         
-        num = Comm_OP.reduce(num, 1)
+        Comm_OP.reduce(num, 1)
         print(f"rank {Comm_OP.getRank()}  {num}")
         # vqnetrun -n 2 python test.py
 
@@ -3659,7 +3706,7 @@ allreduce_group
 
         print(f"allreduce_group before rank {get_rank()}: {complex_data}")
 
-        complex_data = Comm_OP.allreduce_group(complex_data, c_op="sum")
+        Comm_OP.allreduce_group(complex_data, c_op="sum")
         print(f"allreduce_group after rank {get_rank()}: {complex_data}")
         # vqnetrun -n 2 python test.py
 
@@ -3688,7 +3735,7 @@ reduce_group
 
         print(f"reduce_group before rank {get_rank()}: {complex_data}")
 
-        complex_data = Comm_OP.reduce_group(complex_data, c_op="sum")
+        Comm_OP.reduce_group(complex_data, c_op="sum")
         print(f"reduce_group after rank {get_rank()}: {complex_data}")
         # vqnetrun -n 2 python test.py
 
@@ -3716,7 +3763,7 @@ broadcast_group
 
         print(f"broadcast_group before rank {get_rank()}: {complex_data}")
 
-        complex_data = Comm_OP.broadcast_group(complex_data)
+        Comm_OP.broadcast_group(complex_data)
         Comm_OP.barrier()
         print(f"broadcast_group after rank {get_rank()}: {complex_data}")
         # vqnetrun -n 2 python test.py
@@ -3945,7 +3992,7 @@ Use ``init_group`` to initialise cpu-based process groups based on the given lis
 
         for comm_ in group_l:
             if Comm_OP.getRank() in comm_[1]:
-                num = Comm_OP.allreduce_group(num, "sum", GroupComm = comm_[0])
+                Comm_OP.allreduce_group(num, "sum", GroupComm = comm_[0])
                 print(f"rank {Comm_OP.getRank()}  {num} after")
         
         # vqnetrun -n 3 python test.py

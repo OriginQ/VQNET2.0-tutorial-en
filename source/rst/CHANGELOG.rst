@@ -1,6 +1,31 @@
 VQNet Changelog
 ###############################
 
+[v2.13.0] - 2024-07-30
+***************************
+
+Added
+==================
+
+- Added `no_grad`, `GroupNorm`, `Interpolate`, `contiguous`, `QuantumLayerV3` interfaces.
+
+Changed
+===================
+
+- Added affine interface to `BatchNorm`, `LayerNorm`, `GroupNorm`.
+- `diag` interface now returns 1d output on the diagonal for 2d input, consistent with torch.
+- Operations such as slice and permute will try to use the view method to return a QTensor in shared memory.
+- All interfaces support non-contiguous input.
+- `Adam` supports the weight_decay parameter.
+
+Fixed
+====================
+- Modify the error of some logic gate decomposition functions of VQC.
+- Fix the memory leak problem of some functions.
+- Fix the problem that `QuantumLayerMultiProcess` does not support GPU input.
+- Modify the default parameter initialization method of `Linear`
+
+
 [v2.12.0] - 2024-05-01
 ***************************
 
