@@ -1083,6 +1083,7 @@ DropPath
 =================================
 
 .. py:class:: pyvqnet.nn.dropout.DropPath(dropout_rate = 0.5,name="")
+
     The DropPath module will drop paths (randomly deep) on a sample-by-sample basis.
 
     :param dropout_rate: `float` - The probability that the neuron is set to zero.
@@ -3502,7 +3503,7 @@ allreduce
         num = tensor.to_tensor(np.random.rand(1, 5))
         print(f"rank {Comm_OP.getRank()}  {num}")
 
-        num = Comm_OP.allreduce(num, "sum")
+        Comm_OP.allreduce(num, "sum")
         print(f"rank {Comm_OP.getRank()}  {num}")
         # vqnetrun -n 2 python test.py
 
@@ -3527,7 +3528,7 @@ reduce
         num = tensor.to_tensor(np.random.rand(1, 5))
         print(f"rank {Comm_OP.getRank()}  {num}")
         
-        num = Comm_OP.reduce(num, 1)
+        Comm_OP.reduce(num, 1)
         print(f"rank {Comm_OP.getRank()}  {num}")
         # vqnetrun -n 2 python test.py
 
@@ -3659,7 +3660,7 @@ allreduce_group
 
         print(f"allreduce_group before rank {get_rank()}: {complex_data}")
 
-        complex_data = Comm_OP.allreduce_group(complex_data, c_op="sum")
+        Comm_OP.allreduce_group(complex_data, c_op="sum")
         print(f"allreduce_group after rank {get_rank()}: {complex_data}")
         # vqnetrun -n 2 python test.py
 
@@ -3688,7 +3689,7 @@ reduce_group
 
         print(f"reduce_group before rank {get_rank()}: {complex_data}")
 
-        complex_data = Comm_OP.reduce_group(complex_data, c_op="sum")
+        Comm_OP.reduce_group(complex_data, c_op="sum")
         print(f"reduce_group after rank {get_rank()}: {complex_data}")
         # vqnetrun -n 2 python test.py
 
@@ -3716,7 +3717,7 @@ broadcast_group
 
         print(f"broadcast_group before rank {get_rank()}: {complex_data}")
 
-        complex_data = Comm_OP.broadcast_group(complex_data)
+        Comm_OP.broadcast_group(complex_data)
         Comm_OP.barrier()
         print(f"broadcast_group after rank {get_rank()}: {complex_data}")
         # vqnetrun -n 2 python test.py
@@ -3945,7 +3946,7 @@ Use ``init_group`` to initialise cpu-based process groups based on the given lis
 
         for comm_ in group_l:
             if Comm_OP.getRank() in comm_[1]:
-                num = Comm_OP.allreduce_group(num, "sum", GroupComm = comm_[0])
+                Comm_OP.allreduce_group(num, "sum", GroupComm = comm_[0])
                 print(f"rank {Comm_OP.getRank()}  {num} after")
         
         # vqnetrun -n 3 python test.py
