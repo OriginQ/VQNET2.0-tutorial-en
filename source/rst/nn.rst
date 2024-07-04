@@ -1010,7 +1010,7 @@ LayerNorm1d
 GroupNorm
 =============================================================
 
-.. py:class:: pyvqnet.nn.group_norm.GroupNorm(num_groups: int, num_channels: int, epsilon = 1e-5, affine = True, dtype = None, name = ""）
+.. py:class:: pyvqnet.nn.group_norm.GroupNorm(num_groups: int, num_channels: int, epsilon = 1e-5, affine = True, dtype = None, name = "")
 
     Apply group normalization to a mini-batch of inputs.
 
