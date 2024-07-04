@@ -207,12 +207,9 @@ csr_members
 
 .. py:method:: QTensor.csr_members()
 
-    Returns the row_idx, col_idx and non-zero numerical data of the sparse 2-dimensional matrix in Compressed Sparse Row format, and three 1-dimensional QTensors. For the specific meaning, see https://en.wikipedia.org/wiki/Sparse_matrix#Compressed_sparse_row_(CSR,_CRS_or_Yale_format).
+    Returns the row_idx, col_idx and non-zero numerical data of the sparse 2-dimensional matrix in Compressed Sparse Row format, and three 1-dimensional QTensors .
     
-    :return:
-
-        Returns a list in which the first element is row_idx, shape is [number of matrix rows + 1],
-         the second element is col_idx, shape is [number of non-zero elements], the third element is data, shape is [number of non-zero elements].
+    :return: Returns a list in which the first element is row_idx, shape is [number of matrix rows + 1], the second element is col_idx, shape is [number of non-zero elements], the third element is data, shape is [number of non-zero elements].
 
     Example::
 
@@ -1022,8 +1019,8 @@ toGPU
     For example, device = DEV_GPU_1, DEV_GPU_2, DEV_GPU_3, ... indicates storage on GPUs with different serial numbers.
 
     .. note::
-        QTensor cannot perform calculations on different GPUs.
-         A Cuda error will be raised if you try to create a QTensor on a GPU whose ID exceeds the maximum number of verified GPUs.
+
+        QTensor cannot perform calculations on different GPUs. A Cuda error will be raised if you try to create a QTensor on a GPU whose ID exceeds the maximum number of verified GPUs.
 
     :param device: The device currently saving QTensor, default=DEV_GPU_0. device = pyvqnet.DEV_GPU_0, stored in the first GPU, devcie = DEV_GPU_1, stored in the second GPU, and so on.
     :return: QTensor moved to GPU device.

@@ -983,7 +983,6 @@ LayerNorm1d
     :param epsilon: `float` - numerical stability constant, defaults to 1e-5
     :param affine: A boolean value that, when set to ``True``, causes this module to have learnable per-channel affine parameters, initialized to 1 (for weights) and 0 (for biases). Default: ``True``.
     :param dtype: The data type of the parameter, defaults: None, use the default data type kfloat32, which represents a 32-bit floating point number.
-    
     :param name: name of the output layer
 
     :return: a LayerNorm1d class
@@ -1012,7 +1011,7 @@ GroupNorm
 
 .. py:class:: pyvqnet.nn.group_norm.GroupNorm(num_groups: int, num_channels: int, epsilon = 1e-5, affine = True, dtype = None, name = "")
 
-    Apply group normalization to a mini-batch of inputs.
+    Apply group normalization to a mini-batch of inputs. Input: :math:`(N, C, *)` where :math:`C=\text{num_channels}` , Output: :math:`(N, C, *)` .
 
     This layer implements the operation described in the paper `Group Normalization <https://arxiv.org/abs/1803.08494>`__
 
@@ -1026,10 +1025,8 @@ GroupNorm
     :param num_channels (int): Number of channels expected in the input
     :param eps: Value to add to the denominator for numerical stability. Default: 1e-5
     :param affine: A boolean value that, when set to ``True``, causes this module to have learnable per-channel affine parameters, initialized to 1 (for weights) and 0 (for biases). Default: ``True``.
-
-    Shape:
-        - Input: :math:`(N, C, *)` where :math:`C=\text{num\_channels}`
-        - Output: :math:`(N, C, *)`
+    :param dtype: The data type of the parameter, defaults: None, use the default data type kfloat32, which represents a 32-bit floating point number.
+    :param name: name of the output layer
 
     :return: GroupNorm class
 
