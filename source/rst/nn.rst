@@ -1706,6 +1706,229 @@ Dynamic_LSTM
         # ]
         # [3 4 1]
 
+Interpolate
+=================================
+.. py:class:: pyvqnet.nn.Interpolate(size, scale_factor, mode = "nearest", align_corners = None,  recompute_scale_factor = None, name = "")
+
+    Down/up samples the input.
+
+    Only four-dimensional input data is currently supported.
+
+    The input dimensions are interpreted in the form: `B x C x H x W`。
+
+    The modes available for resizing are: ``nearest`` 、``bilinear`` 、``bicubic``.
+
+    :param size: output spatial size.
+    :param scale_factor: multiplier for spatial size. 
+    :param mode: algorithm used for upsampling  ``nearest`` | ``bilinear`` | ``bicubic``.
+    :param align_corners:  Geometrically, we consider the pixels of the
+            input and output as squares rather than points.
+            If set to ``True``, the input and output tensors are aligned by the
+            center points of their corner pixels, preserving the values at the corner pixels.
+            If set to ``False``, the input and output tensors are aligned by the corner
+            points of their corner pixels, and the interpolation uses edge value padding
+            for out-of-boundary values, making this operation *independent* of input size
+            when :attr:`scale_factor` is kept the same. This only has an effect when :attr:`mode`
+            is ``bilinear``, ``bicubic``.
+    :param recompute_scale_factor: recompute the scale_factor for use in the interpolation calculation.
+    :param name: Module name.
+
+    Example::
+
+        from pyvqnet.nn import Interpolate
+        from pyvqnet.tensor import tensor 
+        import pyvqnet
+        pyvqnet.utils.set_random_seed(1)
+
+        import numpy as np
+        np.random.seed(0)
+
+        from time import time
+        np_ = np.random.randn(36).reshape((1, 1, 6, 6)).astype(np.float32)
+        mode_ = "bilinear"
+        size_ = 3
+
+        class model_vqnet(pyvqnet.nn.Module):
+
+            def __init__(self):
+                super().__init__()
+                self.inter = Interpolate(size = size_, mode=mode_)
+                self.ln = pyvqnet.nn.Linear(9, 1)
+                
+            def forward(self, x):
+                x = self.inter(x).reshape((1,-1))
+                x = self.ln(x)
+                return 2 * x 
+
+        input_vqnet = tensor.QTensor(np_,  dtype=pyvqnet.kfloat32, requires_grad=True).toGPU()
+        model = model_vqnet().toGPU()
+        loss_pyvqnet = pyvqnet.nn.MeanSquaredError()
+        time3 = time()
+        output_vqnet = model(input_vqnet)
+        time4 = time()
+        print(f"output_vqnet {output_vqnet} time {time4 - time3}")
+
+        l = loss_pyvqnet(tensor.QTensor([[1.0]]).toGPU(), output_vqnet)
+        l.backward()
+        print(model.parameters()[0].grad)
+
+
+fuse_model
+=================================
+.. py:class:: pyvqnet.nn.fuse_model(model)
+
+    It is used to fuse the corresponding neighbouring modules of the model in the reasoning stage into one module, 
+    which reduces the amount of computation in the model reasoning stage and increases the speed of model reasoning.
+
+    The currently supported module sequences are as follows:
+
+    conv, bn
+
+    linear, bn
+
+    The other sequences remain unchanged, for which the first module in the list is replaced with the fused module, and the others are replaced with ``Identity``.
+
+    :param input: Includes modelling of fusion modules.
+
+    :return: Module fused model.
+
+    Examples::
+    
+        from pyvqnet import tensor 
+        from pyvqnet.nn import Linear
+        from pyvqnet.nn import Module, BatchNorm1d, BatchNorm2d, Conv1D, Conv2D
+
+        from pyvqnet.qnn.vqc import *
+        from pyvqnet.optim import Adam
+        from pyvqnet.nn import Module,BinaryCrossEntropy, Sigmoid
+        from pyvqnet.data import data_generator
+        import numpy as np
+        from pyvqnet.tensor import QTensor
+
+        from time import time
+        from pyvqnet.utils import set_random_seed
+        from pyvqnet.nn import fuse_module
+        
+        class Model(Module):
+            def __init__(self):
+
+                super(Model, self).__init__()
+
+                self.conv1 = Conv2D(1,2,1)
+                self.ban = BatchNorm2d(2)
+
+                self.conv2 = Conv2D(2,1,1)
+                self.li1 = Linear(64,1)
+                self.ac = Sigmoid()
+                
+            def forward(self, x):
+                x = self.conv1(x)
+                x = self.ban(x)
+                x = self.conv2(x).reshape([-1,64])
+                x = self.li1(x)
+                x = self.ac(x)
+
+                return x
+        X_train = np.random.randn(80, 1, 8, 8)
+        y_train = np.random.choice([0,1], size=(80))
+        
+        model = Model().toGPU()
+        optimizer = Adam(model.parameters(), lr = lr)
+        batch_size = 20
+        epoch = 80
+        loss = BinaryCrossEntropy()
+        print("start training..............")
+        model.train()
+        
+        loss_history = []
+        accuracy_history = []
+        time2 = time()
+        
+        for i in range(epoch):
+            count = 0
+            sum_loss = 0
+            accuary = 0
+            t = 0
+            for data, label in data_generator(X_train, y_train, batch_size, False):
+                optimizer.zero_grad()
+                data, label = QTensor(data,requires_grad=True).toGPU(), QTensor(label,
+                                                    dtype=6,
+                                                    requires_grad=False).toGPU()
+                
+                result = model(data)
+                
+                loss_b = loss(label.reshape([-1, 1]), result)
+                
+                loss_b.backward()
+                optimizer._step()
+
+                sum_loss += loss_b.item()
+                count += batch_size
+                accuary += get_accuary(result, label.reshape([-1,1]))
+                t = t + 1
+            
+            loss_history.append(sum_loss/count)
+            accuracy_history.append(accuary/count)
+            print(
+                f"epoch:{i}, #### loss:{sum_loss/count} #####accuray:{accuary/count}"
+            )
+        print(f"run time {time() - time2}")
+        
+        
+        model.eval()
+
+        input = tensor.randn((20, 1, 8, 8)).toGPU()
+        print(list(model.named_children()))
+        time_a = time()
+        a = model(input)
+        print(f"fuse before {time() - time_a}")
+        fuse_module(model)
+        model.toGPU()
+        print(list(model.named_children()))
+        time_b = time()
+        b = model(input)
+        print(f"fuse after {time() - time_b}")
+        
+        print(tensor.max(tensor.abs(a - b)).item())
+
+
+SDPA
+=================================
+.. py:class:: pyvqnet.transformer.e2eqvit.SDPA(attn_mask=None,dropout_p=0.,scale=None,is_causal=False)
+
+    SDPA scaling dot product attention mechanism, math method on cpu, flash method on gpu.
+
+    :param attn_mask: Attention mask; shape must be broadcastable to the shape of attention weights.
+    :param dropout_p: Dropout probability; if greater than 0.0, dropout is applied.
+    :param scale: Scaling factor applied prior to softmax.
+    :param is_causal: If true, assumes upper left causal attention masking and errors if both attn_mask and is_causal are set.
+    
+    Examples::
+    
+        from pyvqnet.transformer.e2eqvit.e2eqvit import SDPA, scaled_dot_product_attention_pyimpl
+        from pyvqnet import tensor
+        import pyvqnet
+        from time import time
+        import pyvqnet.nn as nn
+        import numpy as np
+
+        np.random.seed(42)
+
+        query_np = np.random.randn(3, 3, 3, 5).astype(np.float32) 
+        key_np = np.random.randn(3, 3, 3, 5).astype(np.float32)   
+        value_np = np.random.randn(3, 3, 3, 5).astype(np.float32) 
+
+        model = SDPA(tensor.QTensor([1.])).toGPU()
+
+        query_p = tensor.QTensor(query_np, dtype=pyvqnet.kfloat32, requires_grad=True).toGPU()
+        key_p = tensor.QTensor(key_np, dtype=pyvqnet.kfloat32, requires_grad=True).toGPU()
+        value_p = tensor.QTensor(value_np, dtype=pyvqnet.kfloat32, requires_grad=True).toGPU()
+
+        out_sdpa = model(query_p, key_p, value_p)
+
+        out_sdpa.backward()
+
+
 Loss Function Layer
 ********************************************************
 

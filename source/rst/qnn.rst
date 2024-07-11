@@ -2838,6 +2838,160 @@ Simultaneous Perturbation Stochastic Approximation optimizers
         y = model(data)
         print(y)
 
+Quantum fisher information computation matrix
+========================================================
+
+.. py:class:: pyvqnet.qnn.opt.quantum_fisher(py_qpanda_config, params, target_gate_type_lists,target_gate_bits_lists, qcir_lists, wires)
+    
+    Returns the quantum fisher information matrix for a quantum circuit.
+
+    .. math::
+
+    \text{QFIM}_{i, j} = 4 \text{Re}\left[ \langle \partial_i \psi(\bm{\theta}) | \partial_j \psi(\bm{\theta}) \rangle
+    - \langle \partial_i \psi(\bm{\theta}) | \psi(\bm{\theta}) \rangle \langle \psi(\bm{\theta}) | \partial_j \psi(\bm{\theta}) \rangle \right]
+    
+    The short version is :math:`| \partial_j \psi(\bm{\theta}) \rangle := \frac{\partial}{\partial \theta_j}| \psi(\bm{\theta}) \rangle`.
+
+    .. note::
+
+        Currently only RX,RY,RZ are supported.
+
+    :param params: Variable parameters in circuits.
+    :param target_gate_type_lists: Supports "RX", "RY", "RZ" or lists.
+    :param target_gate_bits_lists:  Which quantum bit or bits the parameterised gate acts on .
+    :param qcir_lists: The list of quantum circles before the target parameterised gate to compute the metric tensor, see the following example.
+    :param wires: Total Quantum Bit Index for Quantum Circuits.
+
+    Example::
+    
+        import pyqpanda as pq
+
+        from pyvqnet import *
+        from pyvqnet.qnn.opt import pyqpanda_config_wrapper, insert_pauli_for_mt, quantum_fisher
+        from pyvqnet.qnn import ProbsMeasure
+        import numpy as np
+        import pennylane as qml
+        import pennylane.numpy as pnp
+
+        n_wires = 4
+        def layer_subcircuit_new(config: pyqpanda_config_wrapper, params):
+            qcir = pq.QCircuit()
+            qcir.insert(pq.RX(config._qubits[0], params[0]))
+            qcir.insert(pq.RY(config._qubits[1], params[1]))
+            
+            qcir.insert(pq.CNOT(config._qubits[0], config._qubits[1]))
+            
+            qcir.insert(pq.RZ(config._qubits[2], params[2]))
+            qcir.insert(pq.RZ(config._qubits[3], params[3]))
+            return qcir
+
+
+        def get_p1_diagonal_new(config, params, target_gate_type, target_gate_bits,
+                            wires):
+            qcir = layer_subcircuit_new(config, params)
+            qcir2 = insert_pauli_for_mt(config._qubits, target_gate_type,
+                                        target_gate_bits)
+            qcir3 = pq.QCircuit()
+            qcir3.insert(qcir)
+            qcir3.insert(qcir2)
+            
+            m_prog = pq.QProg()
+            m_prog.insert(qcir3)
+            return ProbsMeasure(wires, m_prog, config._machine, config._qubits)
+
+        config = pyqpanda_config_wrapper(n_wires)
+        qcir = []
+        
+        qcir.append(get_p1_diagonal_new)
+
+        params2 = QTensor([0.5, 0.5, 0.5, 0.25], requires_grad=True)
+
+        mt = quantum_fisher(config, params2, [['RX', 'RY', 'RZ', 'RZ']],
+                                [[0, 1, 2, 3]], qcir, [0, 1, 2, 3])
+
+        # The above example shows that there are no identical gates in the same layer, 
+        # but in the same layer you need to modify the logic gates according to the following example.
+        
+        n_wires = 3
+        def layer_subcircuit_01(config: pyqpanda_config_wrapper, params):
+            qcir = pq.QCircuit()
+            qcir.insert(pq.RX(config._qubits[0], params[0]))
+            qcir.insert(pq.RY(config._qubits[1], params[1]))
+            qcir.insert(pq.CNOT(config._qubits[0], config._qubits[1]))
+            
+            return qcir
+
+        def layer_subcircuit_02(config: pyqpanda_config_wrapper, params):
+            qcir = pq.QCircuit()
+            qcir.insert(pq.RX(config._qubits[0], params[0]))
+            qcir.insert(pq.RY(config._qubits[1], params[1]))
+            qcir.insert(pq.CNOT(config._qubits[0], config._qubits[1]))
+            qcir.insert(pq.RZ(config._qubits[1], params[2]))
+            return qcir
+
+        def layer_subcircuit_03(config: pyqpanda_config_wrapper, params):
+            qcir = pq.QCircuit()
+            qcir.insert(pq.RX(config._qubits[0], params[0]))
+            qcir.insert(pq.RY(config._qubits[1], params[1]))
+            qcir.insert(pq.CNOT(config._qubits[0], config._qubits[1])) #  01 part
+            
+            qcir.insert(pq.RZ(config._qubits[1], params[2]))  #  02 part
+            
+            qcir.insert(pq.RZ(config._qubits[1], params[3]))
+            return qcir
+
+        def get_p1_diagonal_01(config, params, target_gate_type, target_gate_bits,
+                            wires):
+            qcir = layer_subcircuit_01(config, params)
+            qcir2 = insert_pauli_for_mt(config._qubits, target_gate_type,
+                                        target_gate_bits)
+            qcir3 = pq.QCircuit()
+            qcir3.insert(qcir)
+            qcir3.insert(qcir2)
+            
+            m_prog = pq.QProg()
+            m_prog.insert(qcir3)
+            return ProbsMeasure(wires, m_prog, config._machine, config._qubits)
+        
+        def get_p1_diagonal_02(config, params, target_gate_type, target_gate_bits,
+                            wires):
+            qcir = layer_subcircuit_02(config, params)
+            qcir2 = insert_pauli_for_mt(config._qubits, target_gate_type,
+                                        target_gate_bits)
+            qcir3 = pq.QCircuit()
+            qcir3.insert(qcir)
+            qcir3.insert(qcir2)
+            
+            m_prog = pq.QProg()
+            m_prog.insert(qcir3)
+            return ProbsMeasure(wires, m_prog, config._machine, config._qubits)
+        
+        def get_p1_diagonal_03(config, params, target_gate_type, target_gate_bits,
+                            wires):
+            qcir = layer_subcircuit_03(config, params)
+            qcir2 = insert_pauli_for_mt(config._qubits, target_gate_type,
+                                        target_gate_bits)
+            qcir3 = pq.QCircuit()
+            qcir3.insert(qcir)
+            qcir3.insert(qcir2)
+            
+            m_prog = pq.QProg()
+            m_prog.insert(qcir3)
+            return ProbsMeasure(wires, m_prog, config._machine, config._qubits)
+        
+        config = pyqpanda_config_wrapper(n_wires)
+        qcir = []
+        
+        qcir.append(get_p1_diagonal_01)
+        qcir.append(get_p1_diagonal_02)
+        qcir.append(get_p1_diagonal_03)
+        
+        params2 = QTensor([0.5, 0.5, 0.5, 0.25], requires_grad=True)
+
+        mt = quantum_fisher(config, params2, [['RX', 'RY'], ['RZ'], ['RZ']], # rx,ry counts as layer one, first rz as layer two, second rz as layer three.
+                                [[0, 1], [1], [1]], qcir, [0, 1])
+
+
 Automatic differential simulation of variational quantum circuits
 ******************************************************************************
 
