@@ -4170,7 +4170,623 @@ The training results are shown in the figure below. It can be seen that the fina
 
 |
 
+7. Quantum convolutional neural network model based on small samples
+=========================================================================
 
+The following example implements the quantum convolutional neural for small samples in the paper `Generalization in quantum machine learning from few training data <https://www.nature.com/articles/s41467-022-32550-3>`_ network model. For exploring generalization capabilities in quantum machine learning models.
+
+To build the convolutional and pooling layers in a quantum circuit, we will follow the QCNN structure proposed in the paper. The former layer will extract local correlations, while the latter allows reducing the dimensionality of the feature vectors. In quantum circuits, a convolutional layer consists of a kernel scanned along the entire image, a unit of two qubits related to adjacent qubits.
+As for the pooling layer, we will use conditional single-qubit units that depend on neighboring qubit measurements. Finally, we use a dense layer to entangle all qubits of the final state using an all-to-all single gate, as shown below:
+
+.. image:: ./images/qcnn_structrue.png
+   :width: 500 px
+   :align: center
+
+|
+
+Referring to the design method of this quantum convolution layer, we constructed the quantum circuit based on three quantum logic gates IsingXX, IsingYY, and IsingZZ, as shown in the following figure:
+
+.. image:: ./images/Qcnn_circuit.png
+   :width: 600 px
+   :align: center
+
+|
+
+The input data is a handwritten digit data set with dimensions of 8*8. It passes through the data encoding layer and the first layer of convolution, which is composed of IsingXX, IsingYY, IsingZZ, and U3, and then passes through a pooling layer, at 0, 2, The 5-bit qubit goes through a layer of convolution and a layer of pooling, and finally a layer of Random Unitary, which is composed of 15 random unitary matrices, corresponding to the classic Dense Layer. The measurement result is that the handwritten data is 0 and 1. The prediction probability of , the specific code implementation is as follows: Unitary，其中由15个随机酉矩阵构成，对应经典的Dense Layer，测量结果为对手写数据为0和1的预测概率，具体代码实现如下：
+
+.. code-block::
+
+    import matplotlib as mpl
+    import matplotlib.pyplot as plt
+    import numpy as np
+    import pandas as pd
+    from sklearn import datasets
+    import seaborn as sns
+
+    from pyqpanda import *
+    from pyvqnet.qnn.vqc.qcircuit import isingxx,isingyy,isingzz,u3,cnot,VQC_AmplitudeEmbedding,rxx,ryy,rzz,rzx
+    from pyvqnet.qnn.vqc.qmachine import QMachine
+    from pyvqnet.qnn.vqc.qmeasure import probs
+    from pyvqnet.nn import Module, Parameter
+    from pyvqnet.tensor import tensor
+    from pyvqnet.tensor import QTensor
+    from pyvqnet.dtype import *
+    from pyvqnet.optim import Adam
+
+    sns.set()
+
+    seed = 0
+    rng = np.random.default_rng(seed=seed)
+
+
+    def convolutional_layer(qm, weights, wires, skip_first_layer=True):
+
+        n_wires = len(wires)
+        assert n_wires >= 3, "this circuit is too small!"
+        for p in [0, 1]:
+            for indx, w in enumerate(wires):
+                if indx % 2 == p and indx < n_wires - 1:
+                    if indx % 2 == 0 and not skip_first_layer:
+
+                        u3(q_machine=qm, wires=w, params=weights[:3])
+                        u3(q_machine=qm, wires=wires[indx + 1], params=weights[3:6])
+
+                    isingxx(q_machine=qm,  wires=[w, wires[indx + 1]], params=weights[6])
+                    isingyy(q_machine=qm,  wires=[w, wires[indx + 1]], params=weights[7])
+                    isingzz(q_machine=qm,  wires=[w, wires[indx + 1]], params=weights[8])
+                    u3(q_machine=qm, wires=w, params=weights[9:12])
+                    u3(q_machine=qm, wires=wires[indx + 1], params=weights[12:])
+
+        return qm
+
+    def pooling_layer(qm, weights, wires):
+        """Adds a pooling layer to a circuit."""
+        n_wires = len(wires)
+        assert len(wires) >= 2, "this circuit is too small!"
+        for indx, w in enumerate(wires):
+            if indx % 2 == 1 and indx < n_wires:
+                cnot(q_machine=qm, wires=[w, wires[indx - 1]])
+                u3(q_machine=qm, params=weights, wires=wires[indx - 1])
+
+    def conv_and_pooling(qm, kernel_weights, n_wires, skip_first_layer=True):
+        """Apply both the convolutional and pooling layer."""
+
+        convolutional_layer(qm, kernel_weights[:15], n_wires, skip_first_layer=skip_first_layer)
+        pooling_layer(qm, kernel_weights[15:], n_wires)
+        return qm
+
+    def dense_layer(qm, weights, wires):
+        """Apply an arbitrary unitary gate to a specified set of wires."""
+        
+        rzz(q_machine=qm,params=weights[0], wires=wires)
+        rxx(q_machine=qm,params=weights[1], wires=wires)
+        ryy(q_machine=qm,params=weights[2], wires=wires)
+        rzx(q_machine=qm,params=weights[3], wires=wires)
+        rxx(q_machine=qm,params=weights[5], wires=wires)
+        rzx(q_machine=qm,params=weights[6], wires=wires)
+        rzz(q_machine=qm,params=weights[7], wires=wires)
+        ryy(q_machine=qm,params=weights[8], wires=wires)
+        rzz(q_machine=qm,params=weights[9], wires=wires)
+        rxx(q_machine=qm,params=weights[10], wires=wires)
+        rzx(q_machine=qm,params=weights[11], wires=wires)
+        rzx(q_machine=qm,params=weights[12], wires=wires)
+        rzz(q_machine=qm,params=weights[13], wires=wires)
+        ryy(q_machine=qm,params=weights[14], wires=wires)
+        return qm
+
+
+    num_wires = 6
+
+    def conv_net(qm, weights, last_layer_weights, features):
+
+        layers = weights.shape[1]
+        wires = list(range(num_wires))
+
+        VQC_AmplitudeEmbedding(input_feature = features, q_machine=qm)
+
+        # adds convolutional and pooling layers
+        for j in range(layers):
+            conv_and_pooling(qm, weights[:, j], wires, skip_first_layer=(not j == 0))
+            wires = wires[::2]
+
+        assert last_layer_weights.size == 4 ** (len(wires)) - 1, (
+            "The size of the last layer weights vector is incorrect!"
+            f" \n Expected {4 ** (len(wires)) - 1}, Given {last_layer_weights.size}"
+        )
+        dense_layer(qm, last_layer_weights, wires)
+
+        return probs(q_state=qm.states, num_wires=qm.num_wires, wires=[0])
+
+
+    def load_digits_data(num_train, num_test, rng):
+        """Return training and testing data of digits dataset."""
+        digits = datasets.load_digits()
+        features, labels = digits.data, digits.target
+
+        # only use first two classes
+        features = features[np.where((labels == 0) | (labels == 1))]
+        labels = labels[np.where((labels == 0) | (labels == 1))]
+
+        # normalize data
+        features = features / np.linalg.norm(features, axis=1).reshape((-1, 1))
+
+        # subsample train and test split
+        train_indices = rng.choice(len(labels), num_train, replace=False)
+        test_indices = rng.choice(
+            np.setdiff1d(range(len(labels)), train_indices), num_test, replace=False
+        )
+
+        x_train, y_train = features[train_indices], labels[train_indices]
+        x_test, y_test = features[test_indices], labels[test_indices]
+
+        return x_train, y_train,x_test, y_test
+
+
+    class Qcnn_ising(Module):
+
+        def __init__(self):
+            super(Qcnn_ising, self).__init__()
+            self.conv = conv_net
+            self.qm = QMachine(num_wires)
+            self.weights = Parameter((18, 2), dtype=7)
+            self.weights_last = Parameter((4 ** 2 -1,1), dtype=7)
+
+        def forward(self, input):
+
+            return self.conv(self.qm, self.weights, self.weights_last, input)
+
+
+    from tqdm import tqdm  
+
+
+    def train_qcnn(n_train, n_test, n_epochs):
+        """
+        Args:
+            n_train  (int): number of training examples
+            n_test   (int): number of test examples
+            n_epochs (int): number of training epochs
+            desc  (string): displayed string during optimization
+
+        Returns:
+            dict: n_train,
+            steps,
+            train_cost_epochs,
+            train_acc_epochs,
+            test_cost_epochs,
+            test_acc_epochs
+
+        """
+        # load data
+        x_train, y_train, x_test, y_test = load_digits_data(n_train, n_test, rng)
+
+        # init weights and optimizer
+        model = Qcnn_ising()
+
+        opti = Adam(model.parameters(), lr=0.01)
+
+        # data containers
+        train_cost_epochs, test_cost_epochs, train_acc_epochs, test_acc_epochs = [], [], [], []
+
+        for step in range(n_epochs):
+            model.train()
+            opti.zero_grad()
+
+            result = model(QTensor(x_train))
+
+            train_cost = 1.0 - tensor.sums(result[tensor.arange(0, len(y_train)), y_train]) / len(y_train)
+            # print(f"step {step}, train_cost {train_cost}")
+
+            train_cost.backward()
+            opti.step()
+
+            train_cost_epochs.append(train_cost.to_numpy()[0])
+            # compute accuracy on training data
+
+            # print(tensor.sums(result[tensor.arange(0, len(y_train)), y_train] > 0.5))
+            train_acc = tensor.sums(result[tensor.arange(0, len(y_train)), y_train] > 0.5) / result.shape[0]
+            # print(train_acc)
+            # print(f"step {step}, train_acc {train_acc}")
+            train_acc_epochs.append(train_acc.to_numpy()[0])
+
+            # compute accuracy and cost on testing data
+            test_out = model(QTensor(x_test))
+            test_acc = tensor.sums(test_out[tensor.arange(0, len(y_test)), y_test] > 0.5) / test_out.shape[0]
+            test_acc_epochs.append(test_acc.to_numpy()[0])
+            test_cost = 1.0 - tensor.sums(test_out[tensor.arange(0, len(y_test)), y_test]) / len(y_test)
+            test_cost_epochs.append(test_cost.to_numpy()[0])
+
+            # print(f"step {step}, test_cost {test_cost}")
+            # print(f"step {step}, test_acc {test_acc}")
+
+        return dict(
+            n_train=[n_train] * n_epochs,
+            step=np.arange(1, n_epochs + 1, dtype=int),
+            train_cost=train_cost_epochs,
+            train_acc=train_acc_epochs,
+            test_cost=test_cost_epochs,
+            test_acc=test_acc_epochs,
+        )
+
+    n_reps = 100
+    n_test = 100
+    n_epochs = 100
+
+    def run_iterations(n_train):
+        results_df = pd.DataFrame(
+            columns=["train_acc", "train_cost", "test_acc", "test_cost", "step", "n_train"]
+        )
+
+        for _ in tqdm(range(n_reps)):
+            results = train_qcnn(n_train=n_train, n_test=n_test, n_epochs=n_epochs)
+            # np.save('test_qcnn.npy', results)
+            results_df = pd.concat(
+                [results_df, pd.DataFrame.from_dict(results)], axis=0, ignore_index=True
+            )
+
+        return results_df
+
+    # run training for multiple sizes
+    train_sizes = [2, 5, 10, 20, 40, 80]
+    results_df = run_iterations(n_train=2)
+
+
+    for n_train in train_sizes[1:]:
+        results_df = pd.concat([results_df, run_iterations(n_train=n_train)])
+
+    save = 0
+    draw = 0 
+
+    if save:
+        results_df.to_csv('test_qcnn.csv', index=False)
+    import pickle
+
+    if draw:
+        # aggregate dataframe
+        results_df = pd.read_csv('test_qcnn.csv')
+        df_agg = results_df.groupby(["n_train", "step"]).agg(["mean", "std"])
+        df_agg = df_agg.reset_index()
+
+        sns.set_style('whitegrid')
+        colors = sns.color_palette()
+        fig, axes = plt.subplots(ncols=3, figsize=(16.5, 5))
+
+        generalization_errors = []
+
+        # plot losses and accuracies
+        for i, n_train in enumerate(train_sizes):
+            df = df_agg[df_agg.n_train == n_train]
+
+            dfs = [df.train_cost["mean"], df.test_cost["mean"], df.train_acc["mean"], df.test_acc["mean"]]
+            lines = ["o-", "x--", "o-", "x--"]
+            labels = [fr"$N={n_train}$", None, fr"$N={n_train}$", None]
+            axs = [0, 0, 2, 2]
+
+            for k in range(4):
+                ax = axes[axs[k]]
+                ax.plot(df.step, dfs[k], lines[k], label=labels[k], markevery=10, color=colors[i], alpha=0.8)
+
+            # plot final loss difference
+            dif = df[df.step == 100].test_cost["mean"] - df[df.step == 100].train_cost["mean"]
+            generalization_errors.append(dif)
+
+        # format loss plot
+        ax = axes[0]
+        ax.set_title('Train and Test Losses', fontsize=14)
+        ax.set_xlabel('Epoch')
+        ax.set_ylabel('Loss')
+
+        # format generalization error plot
+        ax = axes[1]
+        ax.plot(train_sizes, generalization_errors, "o-", label=r"$gen(\alpha)$")
+        ax.set_xscale('log')
+        ax.set_xticks(train_sizes)
+        ax.set_xticklabels(train_sizes)
+        ax.set_title(r'Generalization Error $gen(\alpha) = R(\alpha) - \hat{R}_N(\alpha)$', fontsize=14)
+        ax.set_xlabel('Training Set Size')
+
+        # format loss plot
+        ax = axes[2]
+        ax.set_title('Train and Test Accuracies', fontsize=14)
+        ax.set_xlabel('Epoch')
+        ax.set_ylabel('Accuracy')
+        ax.set_ylim(0.5, 1.05)
+
+        legend_elements = [
+                              mpl.lines.Line2D([0], [0], label=f'N={n}', color=colors[i]) for i, n in enumerate(train_sizes)
+                          ] + [
+                              mpl.lines.Line2D([0], [0], marker='o', ls='-', label='Train', color='Black'),
+                              mpl.lines.Line2D([0], [0], marker='x', ls='--', label='Test', color='Black')
+                          ]
+
+        axes[0].legend(handles=legend_elements, ncol=3)
+        axes[2].legend(handles=legend_elements, ncol=3)
+
+        axes[1].set_yscale('log', base=2)
+        plt.show()
+
+
+The experimental results after running are shown in the figure below:
+
+.. image:: ./images/result_qcnn_small.png
+   :width: 1000 px
+   :align: center
+
+|
+
+
+8. Quantum kernel function model for handwritten digit recognition
+=======================================================================
+
+The following example implements quantum kernel function in the paper `Quantum Advantage Seeker with Kernels (QuASK): a software framework to speed up the research in quantum machine learning <https://link.springer.com/article/10.1007/s42484-023-00107-2>`_  to evaluate the performance of quantum kernels based on a handwritten digit data set.
+
+This experiment implemented the design of two circuits in the quantum core matrix and quantum core mapping based on crz and ZZFeatureMap logic gates.
+The input data of the algorithm is a handwritten digital data set with dimensions of 8*8. Through PCA dimensionality reduction, the input data is reduced to the corresponding bit dimensions such as 2, 4, and 8. After that, the data is standardized and the training data is obtained. The set and test data are used for training. This implementation can be divided into two, namely quantum kernel matrix and kernel mapping.
+The quantum kernel matrix uses quantum circuits to calculate the similarity of each pair of data, and then forms a matrix and outputs it;
+Quantum kernel mapping calculates the mapping of two sets of data separately and then calculates the similarity matrix of the two sets of data.
+
+The specific code implementation is as follows:
+
+.. code-block::
+
+    import numpy as np
+    from sklearn.svm import SVC
+    from sklearn import datasets
+    from sklearn.decomposition import PCA
+    from sklearn.preprocessing import StandardScaler, MinMaxScaler
+    from sklearn.model_selection import train_test_split
+    from sklearn.metrics import accuracy_score
+    from scipy.linalg import sqrtm
+    import matplotlib.pyplot as plt
+    from scipy.linalg import expm
+    import numpy.linalg as la
+
+
+    import sys
+    sys.path.insert(0, "../")
+    import pyvqnet
+    from pyvqnet import _core
+    from pyvqnet.dtype import *
+
+    from pyvqnet.tensor.tensor import QTensor
+    from pyvqnet.qnn.vqc.qcircuit import PauliZ, VQC_ZZFeatureMap,PauliX,PauliY,hadamard,crz,rz
+    from pyvqnet.qnn.vqc import QMachine
+    from pyvqnet.qnn.vqc.qmeasure import expval
+    from pyvqnet import tensor
+    import functools as ft
+
+    np.random.seed(42)
+    # data load
+    digits = datasets.load_digits(n_class=2)
+    # create lists to save the results
+    gaussian_accuracy = []
+    quantum_accuracy = []
+    projected_accuracy = []
+    quantum_gaussian = []
+    projected_gaussian = []
+
+    # reduce dimensionality
+
+    def custom_data_map_func(x):
+        """
+        custom data map function
+        """
+        coeff = x[0] if x.shape[0] == 1 else ft.reduce(lambda m, n: m * n, x)
+        return coeff
+
+    def vqnet_quantum_kernel(X_1, X_2=None):
+        """
+        Create a Quantum Kernel given the template written in Pennylane framework
+
+        Args:
+            feature_map: Pennylane template for the quantum feature map
+            X_1: First dataset 
+            X_2: Second dataset
+
+        Returns:
+            Gram matrix
+        """
+        if X_2 is None:
+            X_2 = X_1  # Training Gram matrix
+        assert (
+            X_1.shape[1] == X_2.shape[1]
+        ), "The training and testing data must have the same dimensionality"
+        N = X_1.shape[1]
+
+        # create device using JAX
+
+        # create projector (measures probability of having all "00...0")
+        projector = np.zeros((2**N, 2**N))
+        projector[0, 0] = 1
+        projector = QTensor(projector,dtype=kcomplex128)
+        # define the circuit for the quantum kernel ("overlap test" circuit)
+
+        def kernel(x1, x2):
+            qm = QMachine(N, dtype=kcomplex128)
+
+            for i in range(N):
+                hadamard(q_machine=qm, wires=i)
+                rz(q_machine=qm,params=QTensor(2 * x1[i],dtype=kcomplex128), wires=i)
+            for i in range(N):
+                for j in range(i + 1, N):
+                    crz(q_machine=qm,params=QTensor(2 * (np.pi - x1[i]) * (np.pi - x1[j]),dtype=kcomplex128), wires=[i, j])
+
+            for i in range(N):
+                for j in range(i + 1, N):
+                    crz(q_machine=qm,params=QTensor(2 * (np.pi - x2[i]) * (np.pi - x2[j]),dtype=kcomplex128), wires=[i, j],use_dagger=True)        
+            for i in range(N):
+                rz(q_machine=qm,params=QTensor(2 * x2[i],dtype=kcomplex128), wires=i,use_dagger=True)
+                hadamard(q_machine=qm, wires=i,use_dagger=True)
+
+            states_1 = qm.states.reshape((1,-1))
+            states_1 = tensor.conj(states_1)
+
+            states_2 = qm.states.reshape((-1,1))
+
+            result = tensor.matmul(tensor.conj(states_1), projector)
+            result = tensor.matmul(result, states_2)
+            return result.to_numpy()[0][0].real
+
+        gram = np.zeros(shape=(X_1.shape[0], X_2.shape[0]))
+        for i in range(len(X_1)):
+            for j in range(len(X_2)):
+                gram[i][j] = kernel(X_1[i], X_2[j])
+
+        return gram
+
+
+    def vqnet_projected_quantum_kernel(X_1, X_2=None, params=QTensor([1.0])):
+        """
+        Create a Quantum Kernel given the template written in Pennylane framework.
+
+        Args:
+            feature_map: Pennylane template for the quantum feature map
+            X_1: First dataset
+            X_2: Second dataset
+            params: List of one single parameter representing the constant in the exponentiation
+
+        Returns:
+            Gram matrix
+        """
+        if X_2 is None:
+            X_2 = X_1  # Training Gram matrix
+        assert (
+            X_1.shape[1] == X_2.shape[1]
+        ), "The training and testing data must have the same dimensionality"
+
+
+        def projected_xyz_embedding(X):
+            """
+            Create a Quantum Kernel given the template written in Pennylane framework
+
+            Args:
+                embedding: Pennylane template for the quantum feature map
+                X: feature data (matrix)
+
+            Returns:
+                projected quantum feature map X
+            """
+            N = X.shape[1]
+
+            def proj_feature_map(x):
+                qm = QMachine(N, dtype=kcomplex128)
+                VQC_ZZFeatureMap(x, qm, data_map_func=custom_data_map_func, entanglement="linear")
+
+                return (
+                    [expval(qm, i, PauliX(init_params=QTensor(1.0))).to_numpy() for i in range(N)]
+                    + [expval(qm, i, PauliY(init_params=QTensor(1.0))).to_numpy() for i in range(N)]
+                    + [expval(qm, i, PauliZ(init_params=QTensor(1.0))).to_numpy() for i in range(N)]
+                )
+
+            # build the gram matrix
+            X_proj = [proj_feature_map(x) for x in X]
+
+            return X_proj
+        X_1_proj = projected_xyz_embedding(QTensor(X_1))
+        X_2_proj = projected_xyz_embedding(QTensor(X_2))
+
+        # print(X_1_proj)
+        # print(X_2_proj)
+        # build the gram matrix
+
+        gamma = params[0]
+        gram = tensor.zeros(shape=[X_1.shape[0], X_2.shape[0]],dtype=7)
+
+        for i in range(len(X_1_proj)):
+            for j in range(len(X_2_proj)):
+                result = [a - b for a,b in zip(X_1_proj[i], X_2_proj[j])]
+                result = [a**2 for a in result]
+                value = tensor.exp(-gamma * sum(result))
+                gram[i,j] = value
+        return gram
+
+
+    def calculate_generalization_accuracy(
+        training_gram, training_labels, testing_gram, testing_labels
+    ):
+        """
+        Calculate accuracy wrt a precomputed kernel, a training and testing set
+
+        Args:
+            training_gram: Gram matrix of the training set, must have shape (N,N)
+            training_labels: Labels of the training set, must have shape (N,)
+            testing_gram: Gram matrix of the testing set, must have shape (M,N)
+            testing_labels: Labels of the training set, must have shape (M,)
+
+        Returns:
+            generalization accuracy (float)
+        """
+        svm = SVC(kernel="precomputed")
+        svm.fit(training_gram, training_labels)
+
+        y_predict = svm.predict(testing_gram)
+        correct = np.sum(testing_labels == y_predict)
+        accuracy = correct / len(testing_labels)
+        return accuracy
+
+    import time 
+    qubits = [2, 4, 8]
+
+    for n in qubits:
+        n_qubits = n
+        x_tr, x_te , y_tr , y_te = train_test_split(digits.data, digits.target, test_size=0.3, random_state=22)
+
+        pca = PCA(n_components=n_qubits).fit(x_tr)
+        x_tr_reduced = pca.transform(x_tr)
+        x_te_reduced = pca.transform(x_te)
+
+        # normalize and scale
+
+        std = StandardScaler().fit(x_tr_reduced)
+        x_tr_norm = std.transform(x_tr_reduced)
+        x_te_norm = std.transform(x_te_reduced)
+
+        samples = np.append(x_tr_norm, x_te_norm, axis=0)
+        minmax = MinMaxScaler((-1,1)).fit(samples)
+        x_tr_norm = minmax.transform(x_tr_norm)
+        x_te_norm = minmax.transform(x_te_norm)
+
+        # select only 100 training and 20 test data
+
+        tr_size = 100
+        x_tr = x_tr_norm[:tr_size]
+        y_tr = y_tr[:tr_size]
+
+        te_size = 100
+        x_te = x_te_norm[:te_size]
+        y_te = y_te[:te_size]
+        
+        quantum_kernel_tr = vqnet_quantum_kernel(X_1=x_tr)
+        
+
+        projected_kernel_tr = vqnet_projected_quantum_kernel(X_1=x_tr)
+        
+        quantum_kernel_te = vqnet_quantum_kernel(X_1=x_te, X_2=x_tr)
+        
+
+        projected_kernel_te = vqnet_projected_quantum_kernel(X_1=x_te, X_2=x_tr)
+        
+        quantum_accuracy.append(calculate_generalization_accuracy(quantum_kernel_tr, y_tr, quantum_kernel_te, y_te))
+        print(f"qubits {n}, quantum_accuracy {quantum_accuracy[-1]}")
+        projected_accuracy.append(calculate_generalization_accuracy(projected_kernel_tr.to_numpy(), y_tr, projected_kernel_te.to_numpy(), y_te))
+        print(f"qubits {n}, projected_accuracy {projected_accuracy[-1]}")
+
+    # train_size 100 test_size 20
+    #
+    # qubits 2, quantum_accuracy 1.0
+    # qubits 2, projected_accuracy 1.0
+    # qubits 4, quantum_accuracy 1.0
+    # qubits 4, projected_accuracy 1.0
+    # qubits 8, quantum_accuracy 0.45
+    # qubits 8, projected_accuracy 1.0
+
+    # train_size 100 test_size 100
+    #
+    # qubits 2, quantum_accuracy 1.0
+    # qubits 2, projected_accuracy 0.99
+    # qubits 4, quantum_accuracy 0.99
+    # qubits 4, projected_accuracy 0.98
+    # qubits 8, quantum_accuracy 0.51
+    # qubits 8, projected_accuracy 0.99
 
 Unsupervised learning
 ****************************
@@ -6647,624 +7263,320 @@ Finally, through the `op_history_summary` interface, the `op_history` informatio
     # total parameters: 27
     # #################################################
 
+Quantum dropout implementation
+===================================
 
-Quantum convolutional neural network model based on small samples
-=========================================================================
+Neural networks (NNs) typically require highly flexible models with a large number of trainable parameters in order to learn a specific basis function (or data distribution). However, it is not enough to be able to learn with low in-sample error; the ability to generalise is also very important.
 
-The following example implements the quantum convolutional neural for small samples in the paper `Generalization in quantum machine learning from few training data <https://www.nature.com/articles/s41467-022-32550-3>`_ network model. For exploring generalization capabilities in quantum machine learning models.
+Highly expressive models can suffer from overfitting problems, meaning that they are trained too well on the training data and as a result perform poorly on new unseen data. This occurs because the model learns the noise in the training data rather than the underlying patterns that can be generalised to new data.
 
-To build the convolutional and pooling layers in a quantum circuit, we will follow the QCNN structure proposed in the paper. The former layer will extract local correlations, while the latter allows reducing the dimensionality of the feature vectors. In quantum circuits, a convolutional layer consists of a kernel scanned along the entire image, a unit of two qubits related to adjacent qubits.
-As for the pooling layer, we will use conditional single-qubit units that depend on neighboring qubit measurements. Finally, we use a dense layer to entangle all qubits of the final state using an all-to-all single gate, as shown below:
+Dropout is a common technique in classical deep neural networks (DNNs) to prevent overspecialisation of computational units and reduce the risk of overfitting.
 
-.. image:: ./images/qcnn_structrue.png
-   :width: 500 px
-   :align: center
+The paper `A General Approach to Dropout in Quantum Neural Networks` shows that the use of over-parameterised QNN models can change the optimisation landscape by eliminating a large number of local minima. On the one hand, an increase in the number of parameters makes training faster and easier, but on the other hand, it may cause the model to overfit the data. This is also closely related to recoding classical data to achieve computational nonlinearity. Because of this, inspired by classical DNNs, we could consider applying some kind of "dropout" technique to QNNs. This is equivalent to randomly dropping some (groups of) parameterised gates during training to achieve better generalisation.
 
-|
+Next I will show how to use quantum dropout to avoid overfitting problems in the training of quantum machine learning algorithms by the following sample, where we set the parameter of the logic gate of the dropout to 0 to perform the dropout.
 
-Referring to the design method of this quantum convolution layer, we constructed the quantum circuit based on three quantum logic gates IsingXX, IsingYY, and IsingZZ, as shown in the following figure:
+import the appropriate package
 
-.. image:: ./images/Qcnn_circuit.png
+.. code-block::
+
+    import pyvqnet 
+    from pyvqnet.qnn.vqc import *
+    import numpy as np
+    from pyvqnet import tensor
+    from pyvqnet.qnn.vqc.qmeasure import expval
+    from sklearn.model_selection import train_test_split
+    from matplotlib import ticker
+    import matplotlib.pyplot as plt
+    from sklearn.preprocessing import MinMaxScaler
+
+Building quantum circuits
+
+.. code-block::
+
+    def embedding(x, wires, qmachine):
+        # Encodes the datum multiple times in the register,
+        for i in wires:
+            ry(qmachine, i, tensor.asin(x[i]))
+        for i in wires:
+            rz(qmachine, i, tensor.acos(x[i] ** 2))
+
+
+    def var_ansatz(
+        theta, wires, qmachine, rotations=[ry, rz, rx], entangler=cnot, keep_rotation=None
+    ):
+
+        # the length of `rotations` defines the number of inner layers
+        N = len(wires)
+        wires = list(wires)
+
+        counter = 0
+        # keep_rotations contains a list per each inner_layer
+        for rots in keep_rotation:
+            # we cicle over the elements of the lists inside keep_rotation
+            for qb, keep_or_drop in enumerate(rots):
+                rot = rotations[counter]  # each inner layer can have a different rotation
+
+                angle = theta[counter * N + qb]
+                # conditional statement implementing dropout
+                # if `keep_or_drop` is negative the rotation is dropped
+                if keep_or_drop < 0:
+                    angle_drop = tensor.QTensor(0.0)
+                else:
+                    angle_drop = angle
+                    
+                rot(qmachine, wires[qb], angle_drop)
+            for qb in wires[:-1]:
+                entangler(qmachine, wires=[wires[qb], wires[qb + 1]])
+            counter += 1
+
+    # quantum circuit qubits and params
+    n_qubits = 5
+    inner_layers = 3
+    params_per_layer = n_qubits * inner_layers
+
+
+    def qnn_circuit(x, theta, keep_rot, n_qubits, layers, qm):
+        for i in range(layers):
+            embedding(x, wires=range(n_qubits), qmachine=qm)
+
+            keep_rotation = keep_rot[i]
+
+            var_ansatz(
+                theta[i * params_per_layer : (i + 1) * params_per_layer],
+                wires=range(n_qubits),qmachine=qm,
+                entangler=cnot,
+                keep_rotation=keep_rotation,
+            )
+        
+        return expval(qm, 0, PauliZ()) 
+
+Generate a dropout list to randomly dropout the logic gates in the quantum line based on the dropout list
+
+.. code-block::
+
+    def make_dropout(rng, layer_drop_rate, rot_drop_rate, layers):
+        drop_layers = []
+
+        for lay in range(layers):
+            out = np.random.choice(np.array(range(2)), p=np.array([1 - layer_drop_rate, layer_drop_rate]))
+
+            if out == 1:  # Layers to dropout
+                drop_layers.append(lay)
+
+        keep_rot = []
+
+        for i in range(layers):
+            # Each list is divided into layers
+            # This is related to the QNN we use
+            keep_rot_layer = [list(range(n_qubits)) for j in range(1, inner_layers + 1)]
+
+            if i in drop_layers:  # If you need to apply dropout at this level
+                keep_rot_layer = [] 
+                inner_keep_r = [] 
+                for param in range(params_per_layer):
+                    # Each rotation has a probability p=rot_drop_rate to be dropped within the layer
+                    # Based on this probability, we sample for each parameter (rotation)
+                    # Whether it needs to be discarded
+                    out = np.random.choice(np.array(range(2)), p=np.array([1 - rot_drop_rate, rot_drop_rate]))
+
+                    if out == 0:  # If reservations are required
+                        inner_keep_r.append(param % n_qubits)  
+                    else:  # If the rotation needs to be discarded
+                        inner_keep_r.append(-1)
+
+                    if param % n_qubits == n_qubits - 1:  # If it's the last quantum bit of the register
+                        keep_rot_layer.append(inner_keep_r)
+                        inner_keep_r = []
+
+            keep_rot.append(keep_rot_layer)
+
+        return np.array(keep_rot)
+
+    seed = 42
+    layer_drop_rate = 0.5
+    rot_drop_rate = 0.5
+    layers = 5
+    n_qubits = 4
+    inner_layers = 3
+    params_per_layer = 12
+
+    result = make_dropout(seed, layer_drop_rate, rot_drop_rate, layers)
+
+Adding quantum lines to a quantum neural network module
+
+.. code-block::
+
+    class QNN(pyvqnet.nn.Module):
+        
+        def __init__(self, layers):
+            super(QNN, self).__init__()
+            self.qm = QMachine(n_qubits, dtype=pyvqnet.kcomplex64)
+            self.para = Parameter((params_per_layer * layers,))
+            
+        def forward(self, x:QTensor, keep_rot):
+            self.qm.reset_states(x.shape[0])
+            x = qnn_circuit(x, self.para, keep_rot, n_qubits, layers, self.qm)
+            
+            return x
+
+Making the sin dataset
+
+.. code-block::
+
+    def make_sin_dataset(dataset_size=100, test_size=0.4, noise_value=0.4, plot=False):
+        """1D regression problem y=sin(x*\pi)"""
+        # x-axis
+        x_ax = np.linspace(-1, 1, dataset_size)
+        y = [[np.sin(x * np.pi)] for x in x_ax]
+        np.random.seed(123)
+        # noise vector
+        noise = np.array([np.random.normal(0, 0.5, 1) for i in y]) * noise_value
+        X = np.array(x_ax)
+        y = np.array(y + noise)  # apply noise
+
+        # split the dataset
+        X_train, X_test, y_train, y_test = train_test_split(
+            X, y, test_size=test_size, random_state=40, shuffle=True
+        )
+
+        X_train = X_train.reshape(-1, 1)
+        X_test = X_test.reshape(-1, 1)
+
+        y_train = y_train.reshape(-1, 1)
+        y_test = y_test.reshape(-1, 1)
+
+        return X_train, X_test, y_train, y_test
+
+    X, X_test, y, y_test = make_sin_dataset(dataset_size=20, test_size=0.25)
+
+
+    scaler = MinMaxScaler(feature_range=(-1, 1))
+    y = scaler.fit_transform(y)
+    y_test = scaler.transform(y_test)
+
+    # reshaping for computation
+    y = y.reshape(-1,)
+    y_test = y_test.reshape(-1,)
+
+
+    fig, ax = plt.subplots()
+    plt.plot(X, y, "o", label="Training")
+    plt.plot(X_test, y_test, "o", label="Test")
+
+    plt.plot(
+        np.linspace(-1, 1, 100),
+        [np.sin(x * np.pi) for x in np.linspace(-1, 1, 100)],
+        linestyle="dotted",
+        label=r"$\sin(x)$",
+    )
+    plt.ylabel(r"$y = \sin(\pi\cdot x) + \epsilon$")
+    plt.xlabel(r"$x$")
+    ax.xaxis.set_major_locator(ticker.MultipleLocator(0.5))
+    ax.yaxis.set_major_locator(ticker.MultipleLocator(0.5))
+    plt.legend()
+
+    plt.show()
+
+
+.. image:: ./images/dropout_sin.png
    :width: 600 px
    :align: center
 
 |
 
-The input data is a handwritten digit data set with dimensions of 8*8. It passes through the data encoding layer and the first layer of convolution, which is composed of IsingXX, IsingYY, IsingZZ, and U3, and then passes through a pooling layer, at 0, 2, The 5-bit qubit goes through a layer of convolution and a layer of pooling, and finally a layer of Random Unitary, which is composed of 15 random unitary matrices, corresponding to the classic Dense Layer. The measurement result is that the handwritten data is 0 and 1. The prediction probability of , the specific code implementation is as follows: Unitary，其中由15个随机酉矩阵构成，对应经典的Dense Layer，测量结果为对手写数据为0和1的预测概率，具体代码实现如下：
+Model training code
 
 .. code-block::
 
-    import matplotlib as mpl
-    import matplotlib.pyplot as plt
-    import numpy as np
-    import pandas as pd
-    from sklearn import datasets
-    import seaborn as sns
-
-    from pyqpanda import *
-    from pyvqnet.qnn.vqc.qcircuit import isingxx,isingyy,isingzz,u3,cnot,VQC_AmplitudeEmbedding,rxx,ryy,rzz,rzx
-    from pyvqnet.qnn.vqc.qmachine import QMachine
-    from pyvqnet.qnn.vqc.qmeasure import probs
-    from pyvqnet.nn import Module, Parameter
-    from pyvqnet.tensor import tensor
-    from pyvqnet.tensor import QTensor
-    from pyvqnet.dtype import *
-    from pyvqnet.optim import Adam
-
-    sns.set()
-
-    seed = 0
-    rng = np.random.default_rng(seed=seed)
-
-
-    def convolutional_layer(qm, weights, wires, skip_first_layer=True):
-
-        n_wires = len(wires)
-        assert n_wires >= 3, "this circuit is too small!"
-        for p in [0, 1]:
-            for indx, w in enumerate(wires):
-                if indx % 2 == p and indx < n_wires - 1:
-                    if indx % 2 == 0 and not skip_first_layer:
-
-                        u3(q_machine=qm, wires=w, params=weights[:3])
-                        u3(q_machine=qm, wires=wires[indx + 1], params=weights[3:6])
-
-                    isingxx(q_machine=qm,  wires=[w, wires[indx + 1]], params=weights[6])
-                    isingyy(q_machine=qm,  wires=[w, wires[indx + 1]], params=weights[7])
-                    isingzz(q_machine=qm,  wires=[w, wires[indx + 1]], params=weights[8])
-                    u3(q_machine=qm, wires=w, params=weights[9:12])
-                    u3(q_machine=qm, wires=wires[indx + 1], params=weights[12:])
-
-        return qm
-
-    def pooling_layer(qm, weights, wires):
-        """Adds a pooling layer to a circuit."""
-        n_wires = len(wires)
-        assert len(wires) >= 2, "this circuit is too small!"
-        for indx, w in enumerate(wires):
-            if indx % 2 == 1 and indx < n_wires:
-                cnot(q_machine=qm, wires=[w, wires[indx - 1]])
-                u3(q_machine=qm, params=weights, wires=wires[indx - 1])
-
-    def conv_and_pooling(qm, kernel_weights, n_wires, skip_first_layer=True):
-        """Apply both the convolutional and pooling layer."""
-
-        convolutional_layer(qm, kernel_weights[:15], n_wires, skip_first_layer=skip_first_layer)
-        pooling_layer(qm, kernel_weights[15:], n_wires)
-        return qm
-
-    def dense_layer(qm, weights, wires):
-        """Apply an arbitrary unitary gate to a specified set of wires."""
-        
-        rzz(q_machine=qm,params=weights[0], wires=wires)
-        rxx(q_machine=qm,params=weights[1], wires=wires)
-        ryy(q_machine=qm,params=weights[2], wires=wires)
-        rzx(q_machine=qm,params=weights[3], wires=wires)
-        rxx(q_machine=qm,params=weights[5], wires=wires)
-        rzx(q_machine=qm,params=weights[6], wires=wires)
-        rzz(q_machine=qm,params=weights[7], wires=wires)
-        ryy(q_machine=qm,params=weights[8], wires=wires)
-        rzz(q_machine=qm,params=weights[9], wires=wires)
-        rxx(q_machine=qm,params=weights[10], wires=wires)
-        rzx(q_machine=qm,params=weights[11], wires=wires)
-        rzx(q_machine=qm,params=weights[12], wires=wires)
-        rzz(q_machine=qm,params=weights[13], wires=wires)
-        ryy(q_machine=qm,params=weights[14], wires=wires)
-        return qm
-
-
-    num_wires = 6
-
-    def conv_net(qm, weights, last_layer_weights, features):
-
-        layers = weights.shape[1]
-        wires = list(range(num_wires))
-
-        VQC_AmplitudeEmbedding(input_feature = features, q_machine=qm)
-
-        # adds convolutional and pooling layers
-        for j in range(layers):
-            conv_and_pooling(qm, weights[:, j], wires, skip_first_layer=(not j == 0))
-            wires = wires[::2]
-
-        assert last_layer_weights.size == 4 ** (len(wires)) - 1, (
-            "The size of the last layer weights vector is incorrect!"
-            f" \n Expected {4 ** (len(wires)) - 1}, Given {last_layer_weights.size}"
-        )
-        dense_layer(qm, last_layer_weights, wires)
-
-        return probs(q_state=qm.states, num_wires=qm.num_wires, wires=[0])
-
-
-    def load_digits_data(num_train, num_test, rng):
-        """Return training and testing data of digits dataset."""
-        digits = datasets.load_digits()
-        features, labels = digits.data, digits.target
-
-        # only use first two classes
-        features = features[np.where((labels == 0) | (labels == 1))]
-        labels = labels[np.where((labels == 0) | (labels == 1))]
-
-        # normalize data
-        features = features / np.linalg.norm(features, axis=1).reshape((-1, 1))
-
-        # subsample train and test split
-        train_indices = rng.choice(len(labels), num_train, replace=False)
-        test_indices = rng.choice(
-            np.setdiff1d(range(len(labels)), train_indices), num_test, replace=False
-        )
-
-        x_train, y_train = features[train_indices], labels[train_indices]
-        x_test, y_test = features[test_indices], labels[test_indices]
-
-        return x_train, y_train,x_test, y_test
-
-
-    class Qcnn_ising(Module):
-
-        def __init__(self):
-            super(Qcnn_ising, self).__init__()
-            self.conv = conv_net
-            self.qm = QMachine(num_wires)
-            self.weights = Parameter((18, 2), dtype=7)
-            self.weights_last = Parameter((4 ** 2 -1,1), dtype=7)
-
-        def forward(self, input):
-
-            return self.conv(self.qm, self.weights, self.weights_last, input)
-
-
-    from tqdm import tqdm  
-
-
-    def train_qcnn(n_train, n_test, n_epochs):
-        """
-        Args:
-            n_train  (int): number of training examples
-            n_test   (int): number of test examples
-            n_epochs (int): number of training epochs
-            desc  (string): displayed string during optimization
-
-        Returns:
-            dict: n_train,
-            steps,
-            train_cost_epochs,
-            train_acc_epochs,
-            test_cost_epochs,
-            test_acc_epochs
-
-        """
-        # load data
-        x_train, y_train, x_test, y_test = load_digits_data(n_train, n_test, rng)
-
-        # init weights and optimizer
-        model = Qcnn_ising()
-
-        opti = Adam(model.parameters(), lr=0.01)
-
-        # data containers
-        train_cost_epochs, test_cost_epochs, train_acc_epochs, test_acc_epochs = [], [], [], []
-
-        for step in range(n_epochs):
-            model.train()
-            opti.zero_grad()
-
-            result = model(QTensor(x_train))
-
-            train_cost = 1.0 - tensor.sums(result[tensor.arange(0, len(y_train)), y_train]) / len(y_train)
-            # print(f"step {step}, train_cost {train_cost}")
-
-            train_cost.backward()
-            opti.step()
-
-            train_cost_epochs.append(train_cost.to_numpy()[0])
-            # compute accuracy on training data
-
-            # print(tensor.sums(result[tensor.arange(0, len(y_train)), y_train] > 0.5))
-            train_acc = tensor.sums(result[tensor.arange(0, len(y_train)), y_train] > 0.5) / result.shape[0]
-            # print(train_acc)
-            # print(f"step {step}, train_acc {train_acc}")
-            train_acc_epochs.append(train_acc.to_numpy()[0])
-
-            # compute accuracy and cost on testing data
-            test_out = model(QTensor(x_test))
-            test_acc = tensor.sums(test_out[tensor.arange(0, len(y_test)), y_test] > 0.5) / test_out.shape[0]
-            test_acc_epochs.append(test_acc.to_numpy()[0])
-            test_cost = 1.0 - tensor.sums(test_out[tensor.arange(0, len(y_test)), y_test]) / len(y_test)
-            test_cost_epochs.append(test_cost.to_numpy()[0])
-
-            # print(f"step {step}, test_cost {test_cost}")
-            # print(f"step {step}, test_acc {test_acc}")
-
-        return dict(
-            n_train=[n_train] * n_epochs,
-            step=np.arange(1, n_epochs + 1, dtype=int),
-            train_cost=train_cost_epochs,
-            train_acc=train_acc_epochs,
-            test_cost=test_cost_epochs,
-            test_acc=test_acc_epochs,
-        )
-
-    n_reps = 100
-    n_test = 100
-    n_epochs = 100
-
-    def run_iterations(n_train):
-        results_df = pd.DataFrame(
-            columns=["train_acc", "train_cost", "test_acc", "test_cost", "step", "n_train"]
-        )
-
-        for _ in tqdm(range(n_reps)):
-            results = train_qcnn(n_train=n_train, n_test=n_test, n_epochs=n_epochs)
-            # np.save('test_qcnn.npy', results)
-            results_df = pd.concat(
-                [results_df, pd.DataFrame.from_dict(results)], axis=0, ignore_index=True
-            )
-
-        return results_df
-
-    # run training for multiple sizes
-    train_sizes = [2, 5, 10, 20, 40, 80]
-    results_df = run_iterations(n_train=2)
-
-
-    for n_train in train_sizes[1:]:
-        results_df = pd.concat([results_df, run_iterations(n_train=n_train)])
-
-    save = 0
-    draw = 0 
-
-    if save:
-        results_df.to_csv('test_qcnn.csv', index=False)
-    import pickle
-
-    if draw:
-        # aggregate dataframe
-        results_df = pd.read_csv('test_qcnn.csv')
-        df_agg = results_df.groupby(["n_train", "step"]).agg(["mean", "std"])
-        df_agg = df_agg.reset_index()
-
-        sns.set_style('whitegrid')
-        colors = sns.color_palette()
-        fig, axes = plt.subplots(ncols=3, figsize=(16.5, 5))
-
-        generalization_errors = []
-
-        # plot losses and accuracies
-        for i, n_train in enumerate(train_sizes):
-            df = df_agg[df_agg.n_train == n_train]
-
-            dfs = [df.train_cost["mean"], df.test_cost["mean"], df.train_acc["mean"], df.test_acc["mean"]]
-            lines = ["o-", "x--", "o-", "x--"]
-            labels = [fr"$N={n_train}$", None, fr"$N={n_train}$", None]
-            axs = [0, 0, 2, 2]
-
-            for k in range(4):
-                ax = axes[axs[k]]
-                ax.plot(df.step, dfs[k], lines[k], label=labels[k], markevery=10, color=colors[i], alpha=0.8)
-
-            # plot final loss difference
-            dif = df[df.step == 100].test_cost["mean"] - df[df.step == 100].train_cost["mean"]
-            generalization_errors.append(dif)
-
-        # format loss plot
-        ax = axes[0]
-        ax.set_title('Train and Test Losses', fontsize=14)
-        ax.set_xlabel('Epoch')
-        ax.set_ylabel('Loss')
-
-        # format generalization error plot
-        ax = axes[1]
-        ax.plot(train_sizes, generalization_errors, "o-", label=r"$gen(\alpha)$")
-        ax.set_xscale('log')
-        ax.set_xticks(train_sizes)
-        ax.set_xticklabels(train_sizes)
-        ax.set_title(r'Generalization Error $gen(\alpha) = R(\alpha) - \hat{R}_N(\alpha)$', fontsize=14)
-        ax.set_xlabel('Training Set Size')
-
-        # format loss plot
-        ax = axes[2]
-        ax.set_title('Train and Test Accuracies', fontsize=14)
-        ax.set_xlabel('Epoch')
-        ax.set_ylabel('Accuracy')
-        ax.set_ylim(0.5, 1.05)
-
-        legend_elements = [
-                              mpl.lines.Line2D([0], [0], label=f'N={n}', color=colors[i]) for i, n in enumerate(train_sizes)
-                          ] + [
-                              mpl.lines.Line2D([0], [0], marker='o', ls='-', label='Train', color='Black'),
-                              mpl.lines.Line2D([0], [0], marker='x', ls='--', label='Test', color='Black')
-                          ]
-
-        axes[0].legend(handles=legend_elements, ncol=3)
-        axes[2].legend(handles=legend_elements, ncol=3)
-
-        axes[1].set_yscale('log', base=2)
-        plt.show()
-
-
-The experimental results after running are shown in the figure below:
-
-.. image:: ./images/result_qcnn_small.png
-   :width: 1000 px
-   :align: center
-
-|
-
-
-Quantum kernel function model for handwritten digit recognition
-=======================================================================
-
-The following example implements quantum kernel function in the paper `Quantum Advantage Seeker with Kernels (QuASK): a software framework to speed up the research in quantum machine learning <https://link.springer.com/article/10.1007/s42484-023-00107-2>`_  to evaluate the performance of quantum kernels based on a handwritten digit data set.
-
-This experiment implemented the design of two circuits in the quantum core matrix and quantum core mapping based on crz and ZZFeatureMap logic gates.
-The input data of the algorithm is a handwritten digital data set with dimensions of 8*8. Through PCA dimensionality reduction, the input data is reduced to the corresponding bit dimensions such as 2, 4, and 8. After that, the data is standardized and the training data is obtained. The set and test data are used for training. This implementation can be divided into two, namely quantum kernel matrix and kernel mapping.
-The quantum kernel matrix uses quantum circuits to calculate the similarity of each pair of data, and then forms a matrix and outputs it;
-Quantum kernel mapping calculates the mapping of two sets of data separately and then calculates the similarity matrix of the two sets of data.
-
-The specific code implementation is as follows:
-
-.. code-block::
-
-    import numpy as np
-    from sklearn.svm import SVC
-    from sklearn import datasets
-    from sklearn.decomposition import PCA
-    from sklearn.preprocessing import StandardScaler, MinMaxScaler
-    from sklearn.model_selection import train_test_split
-    from sklearn.metrics import accuracy_score
-    from scipy.linalg import sqrtm
-    import matplotlib.pyplot as plt
-    from scipy.linalg import expm
-    import numpy.linalg as la
-
-
-    import sys
-    sys.path.insert(0, "../")
-    import pyvqnet
-    from pyvqnet import _core
-    from pyvqnet.dtype import *
-
-    from pyvqnet.tensor.tensor import QTensor
-    from pyvqnet.qnn.vqc.qcircuit import PauliZ, VQC_ZZFeatureMap,PauliX,PauliY,hadamard,crz,rz
-    from pyvqnet.qnn.vqc import QMachine
-    from pyvqnet.qnn.vqc.qmeasure import expval
-    from pyvqnet import tensor
-    import functools as ft
-
-    np.random.seed(42)
-    # data load
-    digits = datasets.load_digits(n_class=2)
-    # create lists to save the results
-    gaussian_accuracy = []
-    quantum_accuracy = []
-    projected_accuracy = []
-    quantum_gaussian = []
-    projected_gaussian = []
-
-    # reduce dimensionality
-
-    def custom_data_map_func(x):
-        """
-        custom data map function
-        """
-        coeff = x[0] if x.shape[0] == 1 else ft.reduce(lambda m, n: m * n, x)
-        return coeff
-
-    def vqnet_quantum_kernel(X_1, X_2=None):
-        """
-        Create a Quantum Kernel given the template written in Pennylane framework
-
-        Args:
-            feature_map: Pennylane template for the quantum feature map
-            X_1: First dataset 
-            X_2: Second dataset
-
-        Returns:
-            Gram matrix
-        """
-        if X_2 is None:
-            X_2 = X_1  # Training Gram matrix
-        assert (
-            X_1.shape[1] == X_2.shape[1]
-        ), "The training and testing data must have the same dimensionality"
-        N = X_1.shape[1]
-
-        # create device using JAX
-
-        # create projector (measures probability of having all "00...0")
-        projector = np.zeros((2**N, 2**N))
-        projector[0, 0] = 1
-        projector = QTensor(projector,dtype=kcomplex128)
-        # define the circuit for the quantum kernel ("overlap test" circuit)
-
-        def kernel(x1, x2):
-            qm = QMachine(N, dtype=kcomplex128)
-
-            for i in range(N):
-                hadamard(q_machine=qm, wires=i)
-                rz(q_machine=qm,params=QTensor(2 * x1[i],dtype=kcomplex128), wires=i)
-            for i in range(N):
-                for j in range(i + 1, N):
-                    crz(q_machine=qm,params=QTensor(2 * (np.pi - x1[i]) * (np.pi - x1[j]),dtype=kcomplex128), wires=[i, j])
-
-            for i in range(N):
-                for j in range(i + 1, N):
-                    crz(q_machine=qm,params=QTensor(2 * (np.pi - x2[i]) * (np.pi - x2[j]),dtype=kcomplex128), wires=[i, j],use_dagger=True)        
-            for i in range(N):
-                rz(q_machine=qm,params=QTensor(2 * x2[i],dtype=kcomplex128), wires=i,use_dagger=True)
-                hadamard(q_machine=qm, wires=i,use_dagger=True)
-
-            states_1 = qm.states.reshape((1,-1))
-            states_1 = tensor.conj(states_1)
-
-            states_2 = qm.states.reshape((-1,1))
-
-            result = tensor.matmul(tensor.conj(states_1), projector)
-            result = tensor.matmul(result, states_2)
-            return result.to_numpy()[0][0].real
-
-        gram = np.zeros(shape=(X_1.shape[0], X_2.shape[0]))
-        for i in range(len(X_1)):
-            for j in range(len(X_2)):
-                gram[i][j] = kernel(X_1[i], X_2[j])
-
-        return gram
-
-
-    def vqnet_projected_quantum_kernel(X_1, X_2=None, params=QTensor([1.0])):
-        """
-        Create a Quantum Kernel given the template written in Pennylane framework.
-
-        Args:
-            feature_map: Pennylane template for the quantum feature map
-            X_1: First dataset
-            X_2: Second dataset
-            params: List of one single parameter representing the constant in the exponentiation
-
-        Returns:
-            Gram matrix
-        """
-        if X_2 is None:
-            X_2 = X_1  # Training Gram matrix
-        assert (
-            X_1.shape[1] == X_2.shape[1]
-        ), "The training and testing data must have the same dimensionality"
-
-
-        def projected_xyz_embedding(X):
-            """
-            Create a Quantum Kernel given the template written in Pennylane framework
-
-            Args:
-                embedding: Pennylane template for the quantum feature map
-                X: feature data (matrix)
-
-            Returns:
-                projected quantum feature map X
-            """
-            N = X.shape[1]
-
-            def proj_feature_map(x):
-                qm = QMachine(N, dtype=kcomplex128)
-                VQC_ZZFeatureMap(x, qm, data_map_func=custom_data_map_func, entanglement="linear")
-
-                return (
-                    [expval(qm, i, PauliX(init_params=QTensor(1.0))).to_numpy() for i in range(N)]
-                    + [expval(qm, i, PauliY(init_params=QTensor(1.0))).to_numpy() for i in range(N)]
-                    + [expval(qm, i, PauliZ(init_params=QTensor(1.0))).to_numpy() for i in range(N)]
+    epochs = 700
+
+    n_run = 3
+    seed =1234
+    drop_rates = [(0.0, 0.0), (0.3, 0.2), (0.7, 0.7)]
+
+    train_history = {}
+    test_history = {}
+    opt_params = {}
+    layers = 3
+
+    for layer_drop_rate, rot_drop_rate in drop_rates:
+        costs_per_comb = []
+        test_costs_per_comb = []
+        opt_params_per_comb = []
+        # 多次执行
+        for tmp_seed in range(seed, seed + n_run):
+            
+            rng = np.random.default_rng(tmp_seed)
+            assert len(X.shape) == 2  # X must be a matrix
+            assert len(y.shape) == 1  # y must be an array
+            assert X.shape[0] == y.shape[0]  # compatibility check
+
+            # lists for saving single run training and test cost trend
+            costs = []
+            test_costs = []
+            model = QNN(layers)
+            optimizer = pyvqnet.optim.Adam(model.parameters(), lr=0.001)
+            loss = pyvqnet.nn.loss.MeanSquaredError()
+            
+            for epoch in range(epochs):
+                # 生成dropout列表
+                keep_rot = make_dropout(rng, layer_drop_rate, rot_drop_rate, layers)
+                # 更新rng
+                rng = np.random.default_rng(tmp_seed)
+                
+                optimizer.zero_grad()
+                data, label = QTensor(X,requires_grad=True,dtype=6), QTensor(y,
+                                                    dtype=6,
+                                                    requires_grad=False)
+
+                result = model(data, keep_rot)
+                cost = loss(label, result)
+                costs.append(cost)
+                cost.backward()
+                optimizer._step()
+
+                keep_rot = np.array(
+                    [
+                        [list(range((n_qubits))) for j in range(1, inner_layers + 1)]
+                        for i in range(layers)
+                    ]
                 )
+                
+                
+                data_test, label_test = QTensor(X_test,requires_grad=True,dtype=6), QTensor(y_test,
+                                                    dtype=6,
+                                                    requires_grad=False)
+                result_test = model(data_test, keep_rot)
+                test_cost = loss(label_test, result_test)
+                test_costs.append(test_cost)
+                
+                if epoch % 5 == 0:
+                    print(
+                        f"{layer_drop_rate:.1f}-{rot_drop_rate:.1f} ",
+                        f"run {tmp_seed-seed} - epoch {epoch}/{epochs}",
+                        f"--- Train cost:{cost}",
+                        f"--- Test cost:{test_cost}",
+                        end="\r",
+                    )
 
-            # build the gram matrix
-            X_proj = [proj_feature_map(x) for x in X]
+            costs_per_comb.append(costs)
+            test_costs_per_comb.append(test_costs)
+            opt_params_per_comb.append(model.parameters())
 
-            return X_proj
-        X_1_proj = projected_xyz_embedding(QTensor(X_1))
-        X_2_proj = projected_xyz_embedding(QTensor(X_2))
+        train_history[(layer_drop_rate, rot_drop_rate)] = costs_per_comb
+        test_history[(layer_drop_rate, rot_drop_rate)] = test_costs_per_comb
+        opt_params[(layer_drop_rate, rot_drop_rate)] = opt_params_per_comb
 
-        # print(X_1_proj)
-        # print(X_2_proj)
-        # build the gram matrix
+    ## 0.0-0.0  run 0 - epoch 695/700 --- Train cost:0.3917597 --- Test cost:0.2427316
+    ## 0.0-0.0  run 1 - epoch 695/700 --- Train cost:0.3917596 --- Test cost:0.2349882
+    ## 0.0-0.0  run 2 - epoch 695/700 --- Train cost:0.3917597 --- Test cost:0.2103992
+    ## 0.3-0.2  run 0 - epoch 695/700 --- Train cost:0.3920721 --- Test cost:0.2155183
+    ## 0.3-0.2  run 1 - epoch 695/700 --- Train cost:0.3932508 --- Test cost:0.2353068
+    ## 0.3-0.2  run 2 - epoch 695/700 --- Train cost:0.392473 --- Test cost:0.20580922
+    ## 0.7-0.7  run 0 - epoch 695/700 --- Train cost:0.3922218 --- Test cost:0.2057379
 
-        gamma = params[0]
-        gram = tensor.zeros(shape=[X_1.shape[0], X_2.shape[0]],dtype=7)
-
-        for i in range(len(X_1_proj)):
-            for j in range(len(X_2_proj)):
-                result = [a - b for a,b in zip(X_1_proj[i], X_2_proj[j])]
-                result = [a**2 for a in result]
-                value = tensor.exp(-gamma * sum(result))
-                gram[i,j] = value
-        return gram
-
-
-    def calculate_generalization_accuracy(
-        training_gram, training_labels, testing_gram, testing_labels
-    ):
-        """
-        Calculate accuracy wrt a precomputed kernel, a training and testing set
-
-        Args:
-            training_gram: Gram matrix of the training set, must have shape (N,N)
-            training_labels: Labels of the training set, must have shape (N,)
-            testing_gram: Gram matrix of the testing set, must have shape (M,N)
-            testing_labels: Labels of the training set, must have shape (M,)
-
-        Returns:
-            generalization accuracy (float)
-        """
-        svm = SVC(kernel="precomputed")
-        svm.fit(training_gram, training_labels)
-
-        y_predict = svm.predict(testing_gram)
-        correct = np.sum(testing_labels == y_predict)
-        accuracy = correct / len(testing_labels)
-        return accuracy
-
-    import time 
-    qubits = [2, 4, 8]
-
-    for n in qubits:
-        n_qubits = n
-        x_tr, x_te , y_tr , y_te = train_test_split(digits.data, digits.target, test_size=0.3, random_state=22)
-
-        pca = PCA(n_components=n_qubits).fit(x_tr)
-        x_tr_reduced = pca.transform(x_tr)
-        x_te_reduced = pca.transform(x_te)
-
-        # normalize and scale
-
-        std = StandardScaler().fit(x_tr_reduced)
-        x_tr_norm = std.transform(x_tr_reduced)
-        x_te_norm = std.transform(x_te_reduced)
-
-        samples = np.append(x_tr_norm, x_te_norm, axis=0)
-        minmax = MinMaxScaler((-1,1)).fit(samples)
-        x_tr_norm = minmax.transform(x_tr_norm)
-        x_te_norm = minmax.transform(x_te_norm)
-
-        # select only 100 training and 20 test data
-
-        tr_size = 100
-        x_tr = x_tr_norm[:tr_size]
-        y_tr = y_tr[:tr_size]
-
-        te_size = 100
-        x_te = x_te_norm[:te_size]
-        y_te = y_te[:te_size]
-        
-        quantum_kernel_tr = vqnet_quantum_kernel(X_1=x_tr)
-        
-
-        projected_kernel_tr = vqnet_projected_quantum_kernel(X_1=x_tr)
-        
-        quantum_kernel_te = vqnet_quantum_kernel(X_1=x_te, X_2=x_tr)
-        
-
-        projected_kernel_te = vqnet_projected_quantum_kernel(X_1=x_te, X_2=x_tr)
-        
-        quantum_accuracy.append(calculate_generalization_accuracy(quantum_kernel_tr, y_tr, quantum_kernel_te, y_te))
-        print(f"qubits {n}, quantum_accuracy {quantum_accuracy[-1]}")
-        projected_accuracy.append(calculate_generalization_accuracy(projected_kernel_tr.to_numpy(), y_tr, projected_kernel_te.to_numpy(), y_te))
-        print(f"qubits {n}, projected_accuracy {projected_accuracy[-1]}")
-
-    # train_size 100 test_size 20
-    #
-    # qubits 2, quantum_accuracy 1.0
-    # qubits 2, projected_accuracy 1.0
-    # qubits 4, quantum_accuracy 1.0
-    # qubits 4, projected_accuracy 1.0
-    # qubits 8, quantum_accuracy 0.45
-    # qubits 8, projected_accuracy 1.0
-
-    # train_size 100 test_size 100
-    #
-    # qubits 2, quantum_accuracy 1.0
-    # qubits 2, projected_accuracy 0.99
-    # qubits 4, quantum_accuracy 0.99
-    # qubits 4, projected_accuracy 0.98
-    # qubits 8, quantum_accuracy 0.51
-    # qubits 8, projected_accuracy 0.99
+Overfitting can be prevented by randomly dropping out the parameters of the model during training, but the probability of dropping out needs to be designed appropriately, otherwise it can also lead to poor model training results.
 
 
 Model training using quantum computing layer in VQNet

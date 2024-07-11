@@ -7,7 +7,8 @@ VQNet Changelog
 Added
 ==================
 
-- Added `no_grad`, `GroupNorm`, `Interpolate`, `contiguous`, `QuantumLayerV3` interfaces.
+- Added `no_grad`, `GroupNorm`, `Interpolate`, `contiguous`, `QuantumLayerV3`, `fuse_model`, `SDPA` interfaces.
+- Added Quantum Dropout method to avoid overfitting.
 
 Changed
 ===================
