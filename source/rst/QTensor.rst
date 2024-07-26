@@ -607,35 +607,6 @@ QTensor.transpose
         #  [8, 11]]
         # ]
 
-transpose\_
-==============================
-
-.. py:method:: QTensor.transpose_(new_dims=None)
-
-    Reverse or permute the axes of an array inplace.if new_dims = None, revsers the dim.
-
-    :param new_dims: the new order of the dimensions (list of integers).
-    :return: None.
-
-    Example::
-
-        from pyvqnet.tensor import tensor
-        from pyvqnet.tensor import QTensor
-        import numpy as np
-        R, C = 3, 4
-        a = np.arange(R * C).reshape([2, 2, 3]).astype(np.float32)
-        t = QTensor(a)
-        t.transpose_([2, 0, 1])
-        print(t)
-
-        # [
-        # [[0, 3],
-        #  [6, 9]],
-        # [[1, 4],
-        #  [7, 10]],
-        # [[2, 5],
-        #  [8, 11]]
-        # ]
 
 QTensor.reshape
 ==============================
