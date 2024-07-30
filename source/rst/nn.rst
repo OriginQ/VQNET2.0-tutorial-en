@@ -1773,9 +1773,9 @@ Interpolate
         print(model.parameters()[0].grad)
 
 
-fuse_model
+fuse_module
 =================================
-.. py:class:: pyvqnet.nn.fuse_model(model)
+.. py:class:: pyvqnet.nn.fuse_module(model)
 
     It is used to fuse the corresponding neighbouring modules of the model in the reasoning stage into one module, 
     which reduces the amount of computation in the model reasoning stage and increases the speed of model reasoning.
@@ -1808,7 +1808,12 @@ fuse_model
         from time import time
         from pyvqnet.utils import set_random_seed
         from pyvqnet.nn import fuse_module
-        
+
+        def get_accuary(result, label):
+            result = (result > 0.5).astype(4)
+            score = tensor.sums(result == label)
+            return score.item()
+            
         class Model(Module):
             def __init__(self):
 
@@ -1833,7 +1838,7 @@ fuse_model
         y_train = np.random.choice([0,1], size=(80))
         
         model = Model().toGPU()
-        optimizer = Adam(model.parameters(), lr = lr)
+        optimizer = Adam(model.parameters(), lr = 0.001)
         batch_size = 20
         epoch = 80
         loss = BinaryCrossEntropy()
