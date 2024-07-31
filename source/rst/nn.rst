@@ -488,7 +488,7 @@ Conv2D
 ConvT2D
 =================================
 
-.. py:class:: pyvqnet.nn.ConvT2D(input_channels,output_channels,kernel_size,stride=[1, 1],padding="valid",use_bias="True", kernel_initializer=None,bias_initializer=None, dilation_rate: int = 1, group: int = 1, dtype=None, name='')
+.. py:class:: pyvqnet.nn.ConvT2D(input_channels,output_channels,kernel_size,stride=[1, 1],padding="valid",use_bias="True", kernel_initializer=None,bias_initializer=None, dilation_rate: int = 1, out_padding=(0,0), group: int = 1, dtype=None, name='')
 
     Apply a two-dimensional transposed convolution kernel over an input. Inputs to the convT module are of shape (batch_size, input_channels, height, width)
 
@@ -500,7 +500,8 @@ ConvT2D
     :param use_bias: `bool` - Whether to use a offset item. Default to use
     :param kernel_initializer: `callable` - Defaults to None
     :param bias_initializer: `callable` - Defaults to None
-    :param dilation_rate: `int` - dilated size, defaults: 1
+    :param dilation_rate: `int` - dilated size, defaults: 1.
+    :param out_padding: Additional size added to one side of each dimension in the output shape. Default: (0,0) 
     :param group: `int` -  number of groups of grouped convolutions. Default: 1.
     :param dtype: The data type of the parameter, defaults: None, use the default data type kfloat32, which represents a 32-bit floating point number.
     :param name: The name of the module, default: "".
