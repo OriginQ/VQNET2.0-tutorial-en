@@ -5,47 +5,47 @@ The following classical neural network modules support automatic back propagatio
 
 .. code-block::
 
-        from pyvqnet.tensor import arange
-        from pyvqnet import kfloat32
-        from pyvqnet.nn import Conv2D
+    from pyvqnet.tensor import arange
+    from pyvqnet import kfloat32
+    from pyvqnet.nn import Conv2D
 
-        # an image feed into two dimension convolution layer
-        b = 2        # batch size
-        ic = 2       # input channels
-        oc = 2      # output channels
-        hw = 4      # input width and heights
+    # an image feed into two dimension convolution layer
+    b = 2        # batch size
+    ic = 2       # input channels
+    oc = 2      # output channels
+    hw = 4      # input width and heights
 
-        # two dimension convolution layer
-        test_conv = Conv2D(ic,oc,(2,2),(2,2),"same")
+    # two dimension convolution layer
+    test_conv = Conv2D(ic,oc,(2,2),(2,2),"same")
 
-        # input of shape [b,ic,hw,hw]
-        x0 = arange(1,b*ic*hw*hw+1,requires_grad=True,dtype=kfloat32).reshape([b,ic,hw,hw])
+    # input of shape [b,ic,hw,hw]
+    x0 = arange(1,b*ic*hw*hw+1,requires_grad=True,dtype=kfloat32).reshape([b,ic,hw,hw])
 
-        #forward function
-        x = test_conv(x0)
+    #forward function
+    x = test_conv(x0)
 
-        #backward function with autograd
-        x.backward()
-        print(x0.grad)
+    #backward function with autograd
+    x.backward()
+    print(x0.grad)
 
-        # [
-        # [[[0.0958736, 0.3032238, 0.0958736, 0.3032238],
-        #  [-0.2665333, 0.1081382, -0.2665333, 0.1081382],
-        #  [0.0958736, 0.3032238, 0.0958736, 0.3032238],
-        #  [-0.2665333, 0.1081382, -0.2665333, 0.1081382]],
-        # [[-0.0068994, 0.0914679, -0.0068994, 0.0914679],
-        #  [-0.2820665, 0.3160213, -0.2820665, 0.3160213],
-        #  [-0.0068994, 0.0914679, -0.0068994, 0.0914679],
-        #  [-0.2820665, 0.3160213, -0.2820665, 0.3160213]]],
-        # [[[0.0958736, 0.3032238, 0.0958736, 0.3032238],
-        #  [-0.2665333, 0.1081382, -0.2665333, 0.1081382],
-        #  [0.0958736, 0.3032238, 0.0958736, 0.3032238],
-        #  [-0.2665333, 0.1081382, -0.2665333, 0.1081382]],
-        # [[-0.0068994, 0.0914679, -0.0068994, 0.0914679],
-        #  [-0.2820665, 0.3160213, -0.2820665, 0.3160213],
-        #  [-0.0068994, 0.0914679, -0.0068994, 0.0914679],
-        #  [-0.2820665, 0.3160213, -0.2820665, 0.3160213]]]
-        # ]
+    # [
+    # [[[0.0958736, 0.3032238, 0.0958736, 0.3032238],
+    #  [-0.2665333, 0.1081382, -0.2665333, 0.1081382],
+    #  [0.0958736, 0.3032238, 0.0958736, 0.3032238],
+    #  [-0.2665333, 0.1081382, -0.2665333, 0.1081382]],
+    # [[-0.0068994, 0.0914679, -0.0068994, 0.0914679],
+    #  [-0.2820665, 0.3160213, -0.2820665, 0.3160213],
+    #  [-0.0068994, 0.0914679, -0.0068994, 0.0914679],
+    #  [-0.2820665, 0.3160213, -0.2820665, 0.3160213]]],
+    # [[[0.0958736, 0.3032238, 0.0958736, 0.3032238],
+    #  [-0.2665333, 0.1081382, -0.2665333, 0.1081382],
+    #  [0.0958736, 0.3032238, 0.0958736, 0.3032238],
+    #  [-0.2665333, 0.1081382, -0.2665333, 0.1081382]],
+    # [[-0.0068994, 0.0914679, -0.0068994, 0.0914679],
+    #  [-0.2820665, 0.3160213, -0.2820665, 0.3160213],
+    #  [-0.0068994, 0.0914679, -0.0068994, 0.0914679],
+    #  [-0.2820665, 0.3160213, -0.2820665, 0.3160213]]]
+    # ]
 
 .. currentmodule:: pyvqnet.nn
 
@@ -488,7 +488,7 @@ Conv2D
 ConvT2D
 =================================
 
-.. py:class:: pyvqnet.nn.ConvT2D(input_channels,output_channels,kernel_size,stride=[1, 1],padding="valid",use_bias="True", kernel_initializer=None,bias_initializer=None, dilation_rate: int = 1, group: int = 1, dtype=None, name='')
+.. py:class:: pyvqnet.nn.ConvT2D(input_channels,output_channels,kernel_size,stride=[1, 1],padding="valid",use_bias="True", kernel_initializer=None,bias_initializer=None, dilation_rate: int = 1, out_padding=(0,0), group: int = 1, dtype=None, name='')
 
     Apply a two-dimensional transposed convolution kernel over an input. Inputs to the convT module are of shape (batch_size, input_channels, height, width)
 
@@ -500,7 +500,8 @@ ConvT2D
     :param use_bias: `bool` - Whether to use a offset item. Default to use
     :param kernel_initializer: `callable` - Defaults to None
     :param bias_initializer: `callable` - Defaults to None
-    :param dilation_rate: `int` - dilated size, defaults: 1
+    :param dilation_rate: `int` - dilated size, defaults: 1.
+    :param out_padding: Additional size added to one side of each dimension in the output shape. Default: (0,0) 
     :param group: `int` -  number of groups of grouped convolutions. Default: 1.
     :param dtype: The data type of the parameter, defaults: None, use the default data type kfloat32, which represents a 32-bit floating point number.
     :param name: The name of the module, default: "".
@@ -756,7 +757,7 @@ Embedding
 BatchNorm2d
 =================================
 
-.. py:class:: pyvqnet.nn.BatchNorm2d(channel_num:int, momentum:float=0.1, epsilon:float = 1e-5,beta_initializer=zeros, gamma_initializer=ones, dtype=None, name="")
+.. py:class:: pyvqnet.nn.BatchNorm2d(channel_num:int, momentum:float=0.1, epsilon:float = 1e-5, affine= True, beta_initializer=zeros, gamma_initializer=ones, dtype=None, name="")
 
     Applies Batch Normalization over a 4D input (B,C,H,W) as described in the paper
     `Batch Normalization: Accelerating Deep Network Training by Reducing
@@ -772,9 +773,10 @@ BatchNorm2d
 
     :param channel_num: `int` - the number of input features channels.
     :param momentum: `float` - momentum when calculation exponentially weighted average, defaults to 0.1.
+    :param epsilon: `float` - numerical stability constant, defaults to 1e-5.
+    :param affine: A boolean value that, when set to ``True``, causes this module to have learnable per-channel affine parameters, initialized to 1 (for weights) and 0 (for biases). Default: ``True``.
     :param beta_initializer: `callable` - defaults to zeros.
     :param gamma_initializer: `callable` - defaults to ones.
-    :param epsilon: `float` - numerical stability constant, defaults to 1e-5.
     :param dtype: The data type of the parameter, defaults: None, use the default data type kfloat32, which represents a 32-bit floating point number.
     :param name: name of the output layer
     :return: a BatchNorm2d class
@@ -818,7 +820,7 @@ BatchNorm2d
 BatchNorm1d
 =================================
 
-.. py:class:: pyvqnet.nn.BatchNorm1d(channel_num:int, momentum:float=0.1, epsilon:float = 1e-5, beta_initializer=zeros, gamma_initializer=ones, dtype=None, name="")
+.. py:class:: pyvqnet.nn.BatchNorm1d(channel_num:int, momentum:float=0.1, epsilon:float = 1e-5, affine = True, beta_initializer=zeros, gamma_initializer=ones, dtype=None, name="")
 
     Applies Batch Normalization over a 2D input (B,C) as described in the paper
     `Batch Normalization: Accelerating Deep Network Training by Reducing
@@ -835,9 +837,10 @@ BatchNorm1d
 
     :param channel_num: `int` - the number of input features channels.
     :param momentum: `float` - momentum when calculation exponentially weighted average, defaults to 0.1
+    :param epsilon: `float` - numerical stability constant, defaults to 1e-5.
+    :param affine: A boolean value that, when set to ``True``, causes this module to have learnable per-channel affine parameters, initialized to 1 (for weights) and 0 (for biases). Default: ``True``.
     :param beta_initializer: `callable` - defaults to zeros.
     :param gamma_initializer: `callable` - defaults to ones.
-    :param epsilon: `float` - numerical stability constant, defaults to 1e-5.
     :param dtype: The data type of the parameter, defaults: None, use the default data type kfloat32, which represents a 32-bit floating point number.
     :param name: name of the output layer
     :return: a BatchNorm1d class
@@ -869,7 +872,7 @@ BatchNorm1d
 LayerNormNd
 =================================
 
-.. py:class:: pyvqnet.nn.layer_norm.LayerNormNd(normalized_shape: list, epsilon: float = 1e-5, affine: bool = True, dtype=None,name="")
+.. py:class:: pyvqnet.nn.layer_norm.LayerNormNd(normalized_shape: list, epsilon: float = 1e-5, affine = True, dtype=None,name="")
 
     Layer normalization is performed on the last several dimensions of any input. The specific method is as described in the paper:
     `Layer Normalization <https://arxiv.org/abs/1607.06450>`__。
@@ -881,10 +884,10 @@ LayerNormNd
 
     :param norm_shape: `float` - standardize the shape.
     :param epsilon: `float` - numerical stability constant, defaults to 1e-5.
-    :param affine: `bool` - whether to use the applied affine transformation, the default is True.
-    :param name: name of the output layer.
+    :param affine: A boolean value that, when set to ``True``, causes this module to have learnable per-channel affine parameters, initialized to 1 (for weights) and 0 (for biases). Default: ``True``.
     :param dtype: The data type of the parameter, defaults: None, use the default data type kfloat32, which represents a 32-bit floating point number.
-    
+    :param name: name of the output layer.
+
     :return: a LayerNormNd class.
 
     Example::
@@ -912,7 +915,7 @@ LayerNormNd
 LayerNorm2d
 =================================
 
-.. py:class:: pyvqnet.nn.layer_norm.LayerNorm2d(norm_size:int, epsilon:float = 1e-5, affine: bool = True, dtype=None, name="")
+.. py:class:: pyvqnet.nn.layer_norm.LayerNorm2d(norm_size:int, epsilon:float = 1e-5, affine= True, dtype=None, name="")
 
     Applies Layer Normalization over a mini-batch of 4D inputs as described in
     the paper `Layer Normalization <https://arxiv.org/abs/1607.06450>`__
@@ -926,7 +929,7 @@ LayerNorm2d
 
     :param norm_size: `float` - normalize size,equals to C * H * W
     :param epsilon: `float` - numerical stability constant, defaults to 1e-5
-    :param affine: `bool` - whether to use the applied affine transformation, the default is True
+    :param affine: A boolean value that, when set to ``True``, causes this module to have learnable per-channel affine parameters, initialized to 1 (for weights) and 0 (for biases). Default: ``True``.
     :param name: name of the output layer
     :param dtype: The data type of the parameter, defaults: None, use the default data type kfloat32, which represents a 32-bit floating point number.
     
@@ -966,7 +969,7 @@ LayerNorm2d
 LayerNorm1d
 =================================
 
-.. py:class:: pyvqnet.nn.layer_norm.LayerNorm1d(norm_size:int, epsilon:float = 1e-5, affine: bool = True, dtype=None,name="")
+.. py:class:: pyvqnet.nn.layer_norm.LayerNorm1d(norm_size:int, epsilon:float = 1e-5, affine= True, dtype=None,name="")
 
     Applies Layer Normalization over a mini-batch of 2D inputs as described in
     the paper `Layer Normalization <https://arxiv.org/abs/1607.06450>`__
@@ -979,9 +982,8 @@ LayerNorm1d
 
     :param norm_size: `float` - normalize size,equals to last dim
     :param epsilon: `float` - numerical stability constant, defaults to 1e-5
-    :param affine: `bool` - whether to use the applied affine transformation, the default is True
+    :param affine: A boolean value that, when set to ``True``, causes this module to have learnable per-channel affine parameters, initialized to 1 (for weights) and 0 (for biases). Default: ``True``.
     :param dtype: The data type of the parameter, defaults: None, use the default data type kfloat32, which represents a 32-bit floating point number.
-    
     :param name: name of the output layer
 
     :return: a LayerNorm1d class
@@ -1003,6 +1005,42 @@ LayerNorm1d
         # [-1.3416355, -0.4472118, 0.4472118, 1.3416355],
         # [-1.3416355, -0.4472118, 0.4472118, 1.3416355]
         # ]
+
+
+GroupNorm
+=============================================================
+
+.. py:class:: pyvqnet.nn.group_norm.GroupNorm(num_groups: int, num_channels: int, epsilon = 1e-5, affine = True, dtype = None, name = "")
+
+    Apply group normalization to a mini-batch of inputs. Input: :math:`(N, C, *)` where :math:`C=\text{num_channels}` , Output: :math:`(N, C, *)` .
+
+    This layer implements the operation described in the paper `Group Normalization <https://arxiv.org/abs/1803.08494>`__
+
+    .. math::
+
+        y = \frac{x - \mathrm{E}[x]}{ \sqrt{\mathrm{Var}[x] + \epsilon}} * \gamma + \beta
+
+    The input channels are divided into :attr:`num_groups` groups, each containing ``num_channels / num_groups`` channels. :attr:`num_channels` must be divisible by :attr:`num_groups`. The mean and standard deviation are computed separately for each group. If :attr:`affine` is ``True``, then :math:`\gamma` and :math:`\beta` are learnable. Per-channel affine transformation parameter vector of size :attr:`num_channels`.
+
+    :param num_groups (int): Number of groups to split channels into
+    :param num_channels (int): Number of channels expected in the input
+    :param eps: Value to add to the denominator for numerical stability. Default: 1e-5
+    :param affine: A boolean value that, when set to ``True``, causes this module to have learnable per-channel affine parameters, initialized to 1 (for weights) and 0 (for biases). Default: ``True``.
+    :param dtype: The data type of the parameter, defaults: None, use the default data type kfloat32, which represents a 32-bit floating point number.
+    :param name: name of the output layer
+
+    :return: GroupNorm class
+
+    Example::
+
+        import numpy as np
+        from pyvqnet.tensor import QTensor,kfloat32
+        from pyvqnet.nn import GroupNorm
+        test_conv = GroupNorm(2,10)
+        x = QTensor(np.arange(0,60*2*5).reshape([2,10,3,2,5]),requires_grad=True,dtype=kfloat32)
+        y = test_conv.forward(x)
+        print(y)
+
 
 Linear
 =================================
@@ -1081,6 +1119,29 @@ Dropout
 
         #   [[  0.   0.]
         #    [  0.  14.]]]]
+
+DropPath
+=================================
+
+.. py:class:: pyvqnet.nn.dropout.DropPath(dropout_rate = 0.5,name="")
+
+    The DropPath module will drop paths (randomly deep) on a sample-by-sample basis.
+
+    :param dropout_rate: `float` - The probability that the neuron is set to zero.
+    :param name: The name of this module, the default is "".
+
+    :return: DropPath instance.
+
+    Example::
+
+        import pyvqnet.nn as nn
+        import pyvqnet.tensor as tensor
+
+        x = tensor.randu([4])
+        y = nn.DropPath()(x)
+        print(y)
+        #[0.9074978,0.9350062,0.6896403,0.3541051]
+
 
 Pixel_Shuffle 
 =================================
@@ -1646,6 +1707,234 @@ Dynamic_LSTM
         # ]
         # [3 4 1]
 
+Interpolate
+=================================
+.. py:class:: pyvqnet.nn.Interpolate(size, scale_factor, mode = "nearest", align_corners = None,  recompute_scale_factor = None, name = "")
+
+    Down/up samples the input.
+
+    Only four-dimensional input data is currently supported.
+
+    The input dimensions are interpreted in the form: `B x C x H x W`。
+
+    The modes available for resizing are: ``nearest`` 、``bilinear`` 、``bicubic``.
+
+    :param size: output spatial size.
+    :param scale_factor: multiplier for spatial size. 
+    :param mode: algorithm used for upsampling  ``nearest`` | ``bilinear`` | ``bicubic``.
+    :param align_corners:  Geometrically, we consider the pixels of the
+            input and output as squares rather than points.
+            If set to ``True``, the input and output tensors are aligned by the
+            center points of their corner pixels, preserving the values at the corner pixels.
+            If set to ``False``, the input and output tensors are aligned by the corner
+            points of their corner pixels, and the interpolation uses edge value padding
+            for out-of-boundary values, making this operation *independent* of input size
+            when :attr:`scale_factor` is kept the same. This only has an effect when :attr:`mode`
+            is ``bilinear``, ``bicubic``.
+    :param recompute_scale_factor: recompute the scale_factor for use in the interpolation calculation.
+    :param name: Module name.
+
+    Example::
+
+        from pyvqnet.nn import Interpolate
+        from pyvqnet.tensor import tensor 
+        import pyvqnet
+        pyvqnet.utils.set_random_seed(1)
+
+        import numpy as np
+        np.random.seed(0)
+
+        from time import time
+        np_ = np.random.randn(36).reshape((1, 1, 6, 6)).astype(np.float32)
+        mode_ = "bilinear"
+        size_ = 3
+
+        class model_vqnet(pyvqnet.nn.Module):
+
+            def __init__(self):
+                super().__init__()
+                self.inter = Interpolate(size = size_, mode=mode_)
+                self.ln = pyvqnet.nn.Linear(9, 1)
+                
+            def forward(self, x):
+                x = self.inter(x).reshape((1,-1))
+                x = self.ln(x)
+                return 2 * x 
+
+        input_vqnet = tensor.QTensor(np_,  dtype=pyvqnet.kfloat32, requires_grad=True).toGPU()
+        model = model_vqnet().toGPU()
+        loss_pyvqnet = pyvqnet.nn.MeanSquaredError()
+        time3 = time()
+        output_vqnet = model(input_vqnet)
+        time4 = time()
+        print(f"output_vqnet {output_vqnet} time {time4 - time3}")
+
+        l = loss_pyvqnet(tensor.QTensor([[1.0]]).toGPU(), output_vqnet)
+        l.backward()
+        print(model.parameters()[0].grad)
+
+
+fuse_module
+=================================
+.. py:class:: pyvqnet.nn.fuse_module(model)
+
+    It is used to fuse the corresponding neighbouring modules of the model in the reasoning stage into one module, 
+    which reduces the amount of computation in the model reasoning stage and increases the speed of model reasoning.
+
+    The currently supported module sequences are as follows:
+
+    conv, bn
+
+    linear, bn
+
+    The other sequences remain unchanged, for which the first module in the list is replaced with the fused module, and the others are replaced with ``Identity``.
+
+    :param input: Includes modelling of fusion modules.
+
+    :return: Module fused model.
+
+    Examples::
+    
+        from pyvqnet import tensor 
+        from pyvqnet.nn import Linear
+        from pyvqnet.nn import Module, BatchNorm1d, BatchNorm2d, Conv1D, Conv2D
+
+        from pyvqnet.qnn.vqc import *
+        from pyvqnet.optim import Adam
+        from pyvqnet.nn import Module,BinaryCrossEntropy, Sigmoid
+        from pyvqnet.data import data_generator
+        import numpy as np
+        from pyvqnet.tensor import QTensor
+
+        from time import time
+        from pyvqnet.utils import set_random_seed
+        from pyvqnet.nn import fuse_module
+
+        def get_accuary(result, label):
+            result = (result > 0.5).astype(4)
+            score = tensor.sums(result == label)
+            return score.item()
+            
+        class Model(Module):
+            def __init__(self):
+
+                super(Model, self).__init__()
+
+                self.conv1 = Conv2D(1,2,1)
+                self.ban = BatchNorm2d(2)
+
+                self.conv2 = Conv2D(2,1,1)
+                self.li1 = Linear(64,1)
+                self.ac = Sigmoid()
+                
+            def forward(self, x):
+                x = self.conv1(x)
+                x = self.ban(x)
+                x = self.conv2(x).reshape([-1,64])
+                x = self.li1(x)
+                x = self.ac(x)
+
+                return x
+        X_train = np.random.randn(80, 1, 8, 8)
+        y_train = np.random.choice([0,1], size=(80))
+        
+        model = Model().toGPU()
+        optimizer = Adam(model.parameters(), lr = 0.001)
+        batch_size = 20
+        epoch = 80
+        loss = BinaryCrossEntropy()
+        print("start training..............")
+        model.train()
+        
+        loss_history = []
+        accuracy_history = []
+        time2 = time()
+        
+        for i in range(epoch):
+            count = 0
+            sum_loss = 0
+            accuary = 0
+            t = 0
+            for data, label in data_generator(X_train, y_train, batch_size, False):
+                optimizer.zero_grad()
+                data, label = QTensor(data,requires_grad=True).toGPU(), QTensor(label,
+                                                    dtype=6,
+                                                    requires_grad=False).toGPU()
+                
+                result = model(data)
+                
+                loss_b = loss(label.reshape([-1, 1]), result)
+                
+                loss_b.backward()
+                optimizer._step()
+
+                sum_loss += loss_b.item()
+                count += batch_size
+                accuary += get_accuary(result, label.reshape([-1,1]))
+                t = t + 1
+            
+            loss_history.append(sum_loss/count)
+            accuracy_history.append(accuary/count)
+            print(
+                f"epoch:{i}, #### loss:{sum_loss/count} #####accuray:{accuary/count}"
+            )
+        print(f"run time {time() - time2}")
+        
+        
+        model.eval()
+
+        input = tensor.randn((20, 1, 8, 8)).toGPU()
+        print(list(model.named_children()))
+        time_a = time()
+        a = model(input)
+        print(f"fuse before {time() - time_a}")
+        fuse_module(model)
+        model.toGPU()
+        print(list(model.named_children()))
+        time_b = time()
+        b = model(input)
+        print(f"fuse after {time() - time_b}")
+        
+        print(tensor.max(tensor.abs(a - b)).item())
+
+
+SDPA
+=================================
+.. py:class:: pyvqnet.transformer.e2eqvit.SDPA(attn_mask=None,dropout_p=0.,scale=None,is_causal=False)
+
+    SDPA scaling dot product attention mechanism, math method on cpu, flash method on gpu.
+
+    :param attn_mask: Attention mask; shape must be broadcastable to the shape of attention weights.
+    :param dropout_p: Dropout probability; if greater than 0.0, dropout is applied.
+    :param scale: Scaling factor applied prior to softmax.
+    :param is_causal: If true, assumes upper left causal attention masking and errors if both attn_mask and is_causal are set.
+    
+    Examples::
+    
+        from pyvqnet.transformer.e2eqvit.e2eqvit import SDPA, scaled_dot_product_attention_pyimpl
+        from pyvqnet import tensor
+        import pyvqnet
+        from time import time
+        import pyvqnet.nn as nn
+        import numpy as np
+
+        np.random.seed(42)
+
+        query_np = np.random.randn(3, 3, 3, 5).astype(np.float32) 
+        key_np = np.random.randn(3, 3, 3, 5).astype(np.float32)   
+        value_np = np.random.randn(3, 3, 3, 5).astype(np.float32) 
+
+        model = SDPA(tensor.QTensor([1.])).toGPU()
+
+        query_p = tensor.QTensor(query_np, dtype=pyvqnet.kfloat32, requires_grad=True).toGPU()
+        key_p = tensor.QTensor(key_np, dtype=pyvqnet.kfloat32, requires_grad=True).toGPU()
+        value_p = tensor.QTensor(value_np, dtype=pyvqnet.kfloat32, requires_grad=True).toGPU()
+
+        out_sdpa = model(query_p, key_p, value_p)
+
+        out_sdpa.backward()
+
+
 Loss Function Layer
 ********************************************************
 
@@ -1858,7 +2147,7 @@ NLL_Loss
             0.9818027091583286, 0.8673569904602182, 0.9860275114020933,
             0.9232667066664217, 0.303693313961628, 0.8461034903175555
         ])
-        x.reshape_([1, 3, 1, 5])
+        x= x.reshape([1, 3, 1, 5])
         x.requires_grad = True
         y = QTensor([[[2, 1, 0, 0, 2]]], dtype=kint64)
 
@@ -2096,6 +2385,31 @@ LeakyReLu
 
         # [-0.0100000, 2, -0.0300000, 4]
 
+Gelu
+=================================
+.. py:class:: pyvqnet.nn.Gelu(approximate="tanh", name="")
+    
+    Apply Gaussian error linear unit function:
+
+    .. math:: \text{GELU}(x) = x * \Phi(x)
+
+    When the approximation parameter is 'tanh', GELU is estimated by:
+
+    .. math:: \text{GELU}(x) = 0.5 * x * (1 + \text{Tanh}(\sqrt{2 / \pi} * (x + 0.044715 * x^3)))
+
+    Examples::
+
+        from pyvqnet.tensor import randu, ones_like
+        from pyvqnet.nn import Gelu
+        qa = randu([5,4])
+        qb = Gelu()(qa)
+        print(qb)
+        # [[0.0292515,0.0668998,0.4036024,0.8369502],
+        # [0.1929213,0.1981275,0.2358531,0.7790835],
+        # [0.1754935,0.6204091,0.2354677,0.2409406],
+        # [0.4238827,0.804715,0.1633414,0.2853],
+        # [0.1959854,0.590143,0.553995,0.0008423]]
+
 ELU
 =================================
 .. py:class:: pyvqnet.nn.ELU(alpha: float = 1.0, name: str = '')
@@ -2211,7 +2525,7 @@ adadelta
 
 adagrad
 =================================
-.. py:class:: pyvqnet.optim.adagrad.Adagrad(params, lr=0.01, epsilon=1e-8)
+.. py:class:: pyvqnet.optim.adagrad.Adagrad(params, lr=0.01, epsilon=1e-8 )
 
     Implements Adagrad algorithm. reference: (https://databricks.com/glossary/adagrad)
 
@@ -2259,14 +2573,74 @@ adagrad
         #  [19.9829292, 20.9829292, 21.9829292, 22.9829292]]]
         # ]
 
-adam
+AdamW
 =================================
-.. py:class:: pyvqnet.optim.adam.Adam(params, lr=0.01, beta1=0.9, beta2=0.999, epsilon=1e-8,amsgrad: bool = False)
+.. py:class:: pyvqnet.optim.adam.AdamW(params, lr=0.01, beta1=0.9, beta2=0.999, epsilon=1e-8, weight_decay=0.01, amsgrad: bool = False)
+    
+    Implement the AdamW algorithm.
+
+    .. math::
+        t=t+1
+
+    .. math::
+        param\_new = param - lr*weight\_decay*param
+    .. math::
+        moment\_1\_new=\beta1*moment\_1+(1−\beta1)g
+    .. math::
+        moment\_2\_new=\beta2*moment\_2+(1−\beta2)g*g
+    .. math::
+        lr = lr*\frac{\sqrt{1-\beta2^t}}{1-\beta1^t}
+    If the parameter amsgrad is True
+
+    .. math::
+        moment\_2\_max = max(moment\_2\_max,moment\_2)
+    .. math::
+        param\_new=param\_new-lr*\frac{moment\_1}{\sqrt{moment\_2\_max}+\epsilon}
+    otherwise
+
+    .. math::
+        param\_new=param\_new-lr*\frac{moment\_1}{\sqrt{moment\_2}+\epsilon}
+    :param params: Model parameters that need to be optimized.
+    :param lr: learning rate (default: 0.01).
+    :param beta1: Coefficient used to calculate the running average of the gradient and its square (default: 0.9).
+    :param beta2: Coefficient used to calculate the running average of the gradient and its square (default: 0.999).
+    :param epsilon: Constant to add to the denominator to improve numerical stability (default: 1e-8).
+    :param weight_decay: Weight decay coefficient, default 0.01.
+    :param amsgrad: Whether to use the AMSGrad variant of this algorithm (default: False).
+    :return: An AdamW optimizer.
+
+    Example::
+
+        from pyvqnet.optim import adam
+        import numpy as np
+        from pyvqnet.tensor import QTensor
+        w = np.arange(24).reshape(1,2,3,4).astype(np.float64)
+        param = QTensor(w)
+        param.grad = QTensor(np.arange(24).reshape(1,2,3,4).astype(np.float64))
+        params = [param]
+        opti = adam.AdamW(params, lr=0.5)
+
+        for i in range(1,3):
+            opti.step()
+        print(param)
+        # [[[[ 0. ,-0.007475 , 0.98255 , 1.972575 ],
+        # [2.9626, 3.952625, 4.9426501, 5.9326751],
+        # [6.9227001, 7.9127251, 8.9027501, 9.8927751]],
+
+        # [[10.8828001,11.8728251,12.8628501,13.8528751],
+        # [14.8429002,15.8329252,16.8229502,17.8129752],
+        # [18.8030002,19.7930252,20.7830502,21.7730752]]]]
+
+Adam
+=================================
+.. py:class:: pyvqnet.optim.adam.Adam(params, lr=0.01, beta1=0.9, beta2=0.999, epsilon=1e-8,weight_decay = 0, amsgrad: bool = False)
 
     Adam: A Method for Stochastic Optimization reference: (https://arxiv.org/abs/1412.6980),it can dynamically adjusts the learning rate of each parameter using the 1st moment estimates and the 2nd moment estimates of the gradient.
 
     .. math::
-        t = t + 1 
+        t = t + 1
+    .. math::
+        param  = param - lr*weight\_decay*param
     .. math::
         moment\_1\_new=\beta1∗moment\_1+(1−\beta1)g
     .. math::
@@ -2292,6 +2666,7 @@ adam
     :param beta1: coefficients used for computing running averages of gradient and its square (default: 0.9)
     :param beta2: coefficients used for computing running averages of gradient and its square (default: 0.999)
     :param epsilon: term added to the denominator to improve numerical stability (default: 1e-8)
+    :param weight_decay: Weight decay coefficient, default 0.
     :param amsgrad: whether to use the AMSGrad variant of this algorithm (default: False)
     :return: a Adam optimizer
 
@@ -2915,7 +3290,7 @@ Distributed Computing Module
 Environment deployment
 =================================
 
-The following describes the deployment of the environment under the Linux system based on CPU and GPU distributed computing, respectively.
+The following describes the VQNet deployment of the environment under the Linux system based on CPU and GPU distributed computing, respectively.
 
 MPI Installation
 ^^^^^^^^^^^^^^^^^^^^^^
@@ -3084,830 +3459,588 @@ The shared directory is implemented using nfs-utils and rpcbind.
     mount node1:/data/mpi/ /data/mpi
     mount node2:/data/mpi/ /data/mpi
 
-CPU Distributed Computing Interface and Samples
-==================================================
+Distributed launch
+=================================
+ 
+Using the Distributed Computing Interface, started by the ``vqnetrun`` command, the parameters of ``vqnetrun`` are described.
 
-This block describes how to use VQNet distributed computing interface to realize data parallel training model on cpu hardware platform (currently only supported on Linux system).
-
-init_process
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-Initialize distributed computing parameters using ``init_process``.
-
-.. py:function:: pyvqnet.distributed.init.init_process(size, path, hostpath=None, train_size=None, test_size=None, shuffle=False)
-
-    Setting Distributed Computing Parameters.
-
-    :param size: Number of processes.
-    :param path: absolute path to the current runtime file.
-    :param hostpath: absolute path to the multi-node configuration file.
-    :param train_size: The size of the training set.
-    :param test_size: The size of the test set.
-    :param shuffle: If or not random sampling.
-
-    Example::
-
-        import argparse
-        import os
-        from pyvqnet.distributed import *
-
-        parser = argparse.ArgumentParser(description='parser example')
-        parser.add_argument('--init', default=False, type=bool, help='whether to use multiprocessing')
-        parser.add_argument('--np', default=1, type=int, help='number of processes')
-        parser.add_argument('--hostpath', default=None, type=str, help='multi node configuration files')
-        parser.add_argument('--shuffle', default=False, type=bool, help='shuffle')
-        parser.add_argument('--train_size', default=120, type=int, help='train_size')
-        parser.add_argument('--test_size', default=50, type=int, help='test_size')
-        args = parser.parse_args()
-
-        if(args.init):
-            init_process(args.np, os.path.realpath(__file__))
-        else:
-            break
-
-        # python run.py --init true --np 2 
-
-average_parameters_allreduce
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-Use ``average_parameters_allreduce`` to pass model parameters on different processes in an allreduce fashion and update them with the average value.
-
-.. py:function:: pyvqnet.distributed.comm.average_parameters_allreduce(model)
-
-    Setting Distributed Computing Parameters.
-
-    :param model: `Module` - Trained Models.
-    
-    :return: Model after parameter update.
-
-    Example::
-
-        from pyvqnet.distributed import average_parameters_allreduce
-        import numpy as np
-        from pyvqnet.nn.module import Module
-        from pyvqnet.nn.linear import Linear
-        from pyvqnet.nn import activation as F
-        from pyvqnet.distributed import *
-
-        class Net(Module):
-            def __init__(self):
-                super(Net, self).__init__()
-                self.fc = Linear(input_channels=5, output_channels=1)
-
-            def forward(self, x):
-                x = F.ReLu()(self.fc(x))
-                return x
-
-        model = Net()
-        print(f"rank {get_rank()} parameters is {model.parameters()}")
-        model = average_parameters_allreduce(model)
-
-        if get_rank() == 0:
-            print(model.parameters())
-        
-        # mpirun -n 2 python run.py
-
-average_grad_allreduce
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-Use ``average_grad_allreduce`` to pass the model parameter gradients across processes in an allreduce fashion and update them with the average.
-
-.. py:function:: pyvqnet.distributed.comm.average_grad_allreduce(optimizer)
-
-    Setting Distributed Computing Parameters.
-
-    :param optimizer: optimizer.
-    
-    :return: Optimizer after gradient update.
-
-    Example::
-
-        from pyvqnet.distributed import average_grad_allreduce
-        import numpy as np
-        from pyvqnet.nn.module import Module
-        from pyvqnet.nn.linear import Linear
-        from pyvqnet.nn import activation as F
-        from pyvqnet.distributed import *
-        from pyvqnet.nn.loss import MeanSquaredError
-        from pyvqnet.optim import Adam
-        
-        class Net(Module):
-            def __init__(self):
-                super(Net, self).__init__()
-                self.fc = Linear(input_channels=5, output_channels=1)
-
-            def forward(self, x):
-                x = F.ReLu()(self.fc(x))
-                return x
-        model = Net()
-        opti = Adam(model.parameters(), lr=0.01)
-        actual = tensor.QTensor([1,1,1,1,1,0,0,0,0,0],dtype=6).reshape((10,1))
-                
-        x = tensor.randn((10, 5))
-        for i in range(10):
-            opti.zero_grad()
-            model.train()
-            
-            result = model(x)
-            loss = MeanSquaredError()(actual, result)
-            loss.backward()
-            
-            print(f"rank {get_rank()} grad is {model.parameters()[0].grad}")
-            opti = average_grad_allreduce(opti)
-            # if get_rank() == 0 :
-            print(f"rank {get_rank()} grad is {model.parameters()[0].grad}")
-            opti.step()
-        
-        # mpirun -n 2 python run.py
-
-
-average_parameters_reduce
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-Use ``average_parameters_reduce`` to pass model parameters on a process as a reduce, and update the parameters on the specified process.
-
-.. py:function:: pyvqnet.distributed.comm.average_parameters_reduce(model, root = 0)
-
-    Setting Distributed Computing Parameters.
-
-    :param model: `Module` - Trained Models.
-    :param root: Specified process number.
-
-    :return: Model after parameter update.
-
-    Example::
-
-        from pyvqnet.distributed import average_parameters_reduce
-        import numpy as np
-        from pyvqnet.nn.module import Module
-        from pyvqnet.nn.linear import Linear
-        from pyvqnet.nn import activation as F
-        from pyvqnet.distributed import *
-
-        class Net(Module):
-            def __init__(self):
-                super(Net, self).__init__()
-                self.fc = Linear(input_channels=5, output_channels=1)
-
-            def forward(self, x):
-                x = F.ReLu()(self.fc(x))
-                return x
-
-
-        model = Net()
-        print(f"rank {get_rank()} parameters is {model.parameters()}")
-        model = average_parameters_reduce(model)
-
-        if get_rank() == 0:
-            print(model.parameters())
-
-        # mpirun -n 2 python run.py
-
-
-average_grad_reduce
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-Use ``average_grad_reduce`` to pass the gradient of a parameter on a process as a reduce, and update the gradient of the parameter on the specified process.
-
-.. py:function:: pyvqnet.distributed.comm.average_grad_reduce(optimizer, root = 0)
-
-    Setting Distributed Computing Parameters.
-
-    :param optimizer: optimizer.
-    :param root: Specified process number.
-
-    :return: Optimizer after gradient update.
-
-    Example::
-
-        from pyvqnet.distributed import average_grad_reduce
-        import numpy as np
-        from pyvqnet.nn.module import Module
-        from pyvqnet.nn.linear import Linear
-        from pyvqnet.nn import activation as F
-        from pyvqnet.distributed import *
-        from pyvqnet.nn.loss import MeanSquaredError
-        from pyvqnet.optim import Adam
-        
-        class Net(Module):
-            def __init__(self):
-                super(Net, self).__init__()
-                self.fc = Linear(input_channels=5, output_channels=1)
-
-            def forward(self, x):
-                x = F.ReLu()(self.fc(x))
-                return x
-        model = Net()
-        opti = Adam(model.parameters(), lr=0.01)
-        actual = tensor.QTensor([1,1,1,1,1,0,0,0,0,0],dtype=6).reshape((10,1))
-                
-        x = tensor.randn((10, 5))
-        for i in range(10):
-            opti.zero_grad()
-            model.train()
-            
-            result = model(x)
-            loss = MeanSquaredError()(actual, result)
-            loss.backward()
-            
-            print(f"rank {get_rank()} grad is {model.parameters()[0].grad}")
-            opti = average_grad_reduce(opti)
-            # if get_rank() == 0 :
-            print(f"rank {get_rank()} grad is {model.parameters()[0].grad}")
-            opti.step()
-            
-        # mpirun -n 2 python run.py
-
-
-
-example
+n, np
 ^^^^^^^^^^^^^^^^^^^^^^
 
-Importing related libraries
-
-.. code-block::
-
-    import sys
-    sys.path.insert(0,"../")
-    import time
-    import os
-    import struct
-    import gzip
-    from pyvqnet.nn.module import Module
-    from pyvqnet.nn.linear import Linear
-    from pyvqnet.nn.conv import Conv2D
-
-    from pyvqnet.nn import activation as F
-    from pyvqnet.nn.pooling import MaxPool2D
-    from pyvqnet.nn.loss import CategoricalCrossEntropy
-    from pyvqnet.optim.adam import Adam
-    from pyvqnet.data.data import data_generator
-    from pyvqnet.tensor import tensor
-    from pyvqnet.tensor.tensor import QTensor
-    import pyqpanda as pq
-    import time
-    import numpy as np
-    import matplotlib
-    from pyvqnet.distributed import *  
-    import argparse 
-
-Data Acquisition
-
-.. code-block::
-
-    url_base = "http://yann.lecun.com/exdb/mnist/"
-    key_file = {
-        "train_img": "train-images-idx3-ubyte.gz",
-        "train_label": "train-labels-idx1-ubyte.gz",
-        "test_img": "t10k-images-idx3-ubyte.gz",
-        "test_label": "t10k-labels-idx1-ubyte.gz"
-    }
-    if_show_sample = 0
-    grad_time = []
-    forward_time = []
-    forward_time_sum = []
-
-    def _download(dataset_dir, file_name):
-        """
-        Download mnist data if needed.
-        """
-        file_path = dataset_dir + "/" + file_name
-
-        if os.path.exists(file_path):
-            with gzip.GzipFile(file_path) as file:
-                file_path_ungz = file_path[:-3].replace("\\", "/")
-                if not os.path.exists(file_path_ungz):
-                    open(file_path_ungz, "wb").write(file.read())
-            return
-
-        print("Downloading " + file_name + " ... ")
-        urllib.request.urlretrieve(url_base + file_name, file_path)
-        if os.path.exists(file_path):
-            with gzip.GzipFile(file_path) as file:
-                file_path_ungz = file_path[:-3].replace("\\", "/")
-                file_path_ungz = file_path_ungz.replace("-idx", ".idx")
-                if not os.path.exists(file_path_ungz):
-                    open(file_path_ungz, "wb").write(file.read())
-        print("Done")
-
-
-    def download_mnist(dataset_dir):
-        for v in key_file.values():
-            _download(dataset_dir, v)
-
-    def load_mnist(dataset="training_data", digits=np.arange(2), path="./"):
-        """
-        load mnist data
-        """
-        from array import array as pyarray
-        download_mnist(path)
-        if dataset == "training_data":
-            fname_image = os.path.join(path, "train-images.idx3-ubyte").replace(
-                "\\", "/")
-            fname_label = os.path.join(path, "train-labels.idx1-ubyte").replace(
-                "\\", "/")
-        elif dataset == "testing_data":
-            fname_image = os.path.join(path, "t10k-images.idx3-ubyte").replace(
-                "\\", "/")
-            fname_label = os.path.join(path, "t10k-labels.idx1-ubyte").replace(
-                "\\", "/")
-        else:
-            raise ValueError("dataset must be 'training_data' or 'testing_data'")
-
-        flbl = open(fname_label, "rb")
-        _, size = struct.unpack(">II", flbl.read(8))
-        lbl = pyarray("b", flbl.read())
-        flbl.close()
-
-        fimg = open(fname_image, "rb")
-        _, size, rows, cols = struct.unpack(">IIII", fimg.read(16))
-        img = pyarray("B", fimg.read())
-        fimg.close()
-
-        ind = [k for k in range(size) if lbl[k] in digits]
-        num = len(ind)
-        images = np.zeros((num, rows, cols))
-        labels = np.zeros((num, 1), dtype=int)
-        for i in range(len(ind)):
-            images[i] = np.array(img[ind[i] * rows * cols:(ind[i] + 1) * rows *
-                                     cols]).reshape((rows, cols))
-            labels[i] = lbl[ind[i]]
-
-        return images, labels
-
-
-    def data_select(train_num, test_num):
-        """
-        Select data from mnist dataset.
-        """
-
-        x_train, y_train = load_mnist("training_data")  
-        x_test, y_test = load_mnist("testing_data")
-        idx_train = np.append(
-                np.where(y_train == 0)[0][0:train_num],
-                np.where(y_train == 1)[0][0:train_num])
-        x_train = x_train[idx_train]
-        y_train = y_train[idx_train]
-        x_train = x_train / 255
-        y_train = np.eye(2)[y_train].reshape(-1, 2)
-
-        idx_test = np.append(
-                np.where(y_test == 0)[0][:test_num],
-                np.where(y_test == 1)[0][:test_num])
-        x_test = x_test[idx_test]
-        y_test = y_test[idx_test]
-        x_test = x_test / 255
-        y_test = np.eye(2)[y_test].reshape(-1, 2)
-
-        return x_train, y_train, x_test, y_test
-
-Model Definition
-
-.. code-block::
-
-    def circuit_func(weights):
-        """
-        A function using QPanda to create quantum circuits and run.
-        """
-        num_qubits = 1
-        machine = pq.CPUQVM()
-        machine.init_qvm()
-        qubits = machine.qAlloc_many(num_qubits)
-        cbits = machine.cAlloc_many(num_qubits)
-        circuit = pq.QCircuit()
-        circuit.insert(pq.H(qubits[0]))
-        circuit.insert(pq.RY(qubits[0], weights[0]))
-        prog = pq.QProg()
-        prog.insert(circuit)
-        prog << pq.measure_all(qubits, cbits)  #pylint:disable=expression-not-assigned
-
-        result = machine.run_with_configuration(prog, cbits, 1000)
-
-        counts = np.array(list(result.values()))
-        states = np.array(list(result.keys())).astype(float)
-        # Compute probabilities for each state
-        probabilities = counts / 100
-        # Get state expectation
-        expectation = np.sum(states * probabilities)
-        return expectation
-
-    class Hybrid(Module):
-        """ Hybrid quantum - Quantum layer definition """
-        def __init__(self, shift):
-            super(Hybrid, self).__init__()
-            self.shift = shift
-            self.input = None
-
-        def forward(self, x):
-            self.input = x
-            expectation_z = circuit_func(np.array(x.data))
-            result = [[expectation_z]]
-            # requires_grad = x.requires_grad and not QTensor.NO_GRAD
-            requires_grad = x.requires_grad
-            def _backward_mnist(g, x):
-                """ Backward pass computation """
-                start_grad_time = time.time()
-                input_list = np.array(x.data)
-                shift_right = input_list + np.ones(input_list.shape) * self.shift
-                shift_left = input_list - np.ones(input_list.shape) * self.shift
-
-                gradients = []
-                for i in range(len(input_list)):
-                    expectation_right = circuit_func(shift_right[i])
-                    expectation_left = circuit_func(shift_left[i])
-                    gradient = expectation_right - expectation_left
-                    gradients.append(gradient)
-                gradients = np.array([gradients]).T
-
-                end_grad_time = time.time()
-                grad_time.append(end_grad_time - start_grad_time)
-                in_g = gradients * np.array(g)
-                return in_g
-
-            nodes = []
-            if x.requires_grad:
-                nodes.append(
-                    QTensor.GraphNode(tensor=x,
-                                      df=lambda g: _backward_mnist(g, x)))
-            return QTensor(data=result, requires_grad=requires_grad, nodes=nodes)
-
-
-    class Net(Module):
-        """
-        Hybird Quantum Classci Neural Network Module
-        """
-        def __init__(self):
-            super(Net, self).__init__()
-            self.conv1 = Conv2D(input_channels=1,
-                                output_channels=6,
-                                kernel_size=(5, 5),
-                                stride=(1, 1),
-                                padding="valid")
-            self.maxpool1 = MaxPool2D([2, 2], [2, 2], padding="valid")
-            self.conv2 = Conv2D(input_channels=6,
-                                output_channels=16,
-                                kernel_size=(5, 5),
-                                stride=(1, 1),
-                                padding="valid")
-            self.maxpool2 = MaxPool2D([2, 2], [2, 2], padding="valid")
-
-            self.fc1 = Linear(input_channels=256, output_channels=64)
-            self.fc2 = Linear(input_channels=64, output_channels=1)
-
-            self.hybrid = Hybrid(np.pi / 2)
-            self.fc3 = Linear(input_channels=1, output_channels=2)
-
-        def forward(self, x):
-            start_time_forward = time.time()
-            x = F.ReLu()(self.conv1(x))
-
-            x = self.maxpool1(x)
-            x = F.ReLu()(self.conv2(x))
-
-            x = self.maxpool2(x)
-            x = tensor.flatten(x, 1)
-
-            x = F.ReLu()(self.fc1(x))
-            x = self.fc2(x)
-
-            start_time_hybrid = time.time()
-            x = self.hybrid(x)
-
-            end_time_hybrid = time.time()
-
-            forward_time.append(end_time_hybrid - start_time_hybrid)
-
-            x = self.fc3(x)
-            end_time_forward = time.time()
-            forward_time_sum.append(end_time_forward - start_time_forward)
-            return x
-
-
-Split_data, average_parameters_allreduce, and init_process are referenced during training to implement distributed computation based on CPU data parallelism.
-
-The method of use is as follows
-
-.. code-block::
-
-    def run(args):
-        """
-        Run mnist train function
-        """
-        x_train, y_train, x_test, y_test = data_select(args.train_size, args.test_size)
-
-        x_train, y_train= split_data(x_train, y_train) 
-        print(get_rank())
-        model = Net()
-        optimizer = Adam(model.parameters(), lr=0.001)
-        loss_func = CategoricalCrossEntropy()
-
-        epochs = 10
-        train_loss_list = []
-        val_loss_list = []
-        train_acc_list = []
-        val_acc_list = []
-        model.train()
-
-        for epoch in range(1, epochs):
-            total_loss = []
-            model.train()
-            batch_size = 1
-            correct = 0
-            n_train = 0
-
-            for x, y in data_generator(x_train,
-                                       y_train,
-                                       batch_size=1,
-                                       shuffle=False):
-
-                x = x.reshape(-1, 1, 28, 28)
-
-                optimizer.zero_grad()
-                output = model(x)
-                loss = loss_func(y, output)
-                loss_np = np.array(loss.data)
-
-                np_output = np.array(output.data, copy=False)
-                mask = (np_output.argmax(1) == y.argmax(1))
-                correct += np.sum(np.array(mask))
-                n_train += batch_size
-
-                loss.backward()
-                # optimizer = average_grad_allreduce(optimizer) Passing parameter gradients in the optimizer as allreduce and updating the
-                optimizer._step()
-
-                total_loss.append(loss_np)
-            model = average_parameters_allreduce(model)
-
-
-            train_loss_list.append(np.sum(total_loss) / len(total_loss))
-            train_acc_list.append(np.sum(correct) / n_train)
-            print("{:.0f} loss is : {:.10f}".format(epoch, train_loss_list[-1]))
-
-            model.eval()
-            correct = 0
-            n_eval = 0
-
-            for x, y in data_generator(x_test, y_test, batch_size=1, shuffle=True):
-                x = x.reshape(-1, 1, 28, 28)
-                output = model(x)
-                loss = loss_func(y, output)
-                loss_np = np.array(loss.data)
-                np_output = np.array(output.data, copy=False)
-                mask = (np_output.argmax(1) == y.argmax(1))
-                correct += np.sum(np.array(mask))
-                n_eval += 1
-
-                total_loss.append(loss_np)
-            print(f"Eval Accuracy: {correct / n_eval}")
-            val_loss_list.append(np.sum(total_loss) / len(total_loss))
-            val_acc_list.append(np.sum(correct) / n_eval)
-
-    if __name__ == "__main__":
-
-        parser = argparse.ArgumentParser(description='parser example')
-        parser.add_argument('--init', default=False, type=bool, help='whether to use multiprocessing')
-        parser.add_argument('--np', default=1, type=int, help='number of processes')
-        parser.add_argument('--hostpath', default=None, type=str, help='hosts absolute path')
-        parser.add_argument('--shuffle', default=False, type=bool, help='shuffle')
-        parser.add_argument('--train_size', default=120, type=int, help='train_size')
-        parser.add_argument('--test_size', default=50, type=int, help='test_size')
-        args = parser.parse_args()
-        # p_path = os.path.realpath (__file__)
-
-        if(args.init):
-            init_process(args.np, os.path.realpath(__file__), args.hostpath, args.train_size,args.test_size, args.shuffle)
-        else:
-            a = time.time()
-            run(args)
-            b=time.time()
-            if(get_rank()==0):
-                print("time: {}",format(b-a))
-                
-Where init represents whether the model is based on distributed training, np represents the number of processes, in addition to the hostpath file code on multiple nodes to run the model when the absolute path of the configuration file, 
-the configuration file content including the ip of multiple nodes and process allocation, as follows
-
-.. code-block::
-
-    node0:1
-    node1:1
-    node2:1
-
-
-At the command line
-
-.. code-block::
-
-    python test_mdis.py --init true
-
-    0
-    1 loss is : 0.8230862300
-    Eval Accuracy: 0.5
-            ...
-    9 loss is : 0.5660219193
-    Eval Accuracy: 0.46
-    time: {} 15.132369756698608
-
-
-    python test_mdis.py --init true --np 2
-
-    result
-
-    1
-    1 loss is : 0.0316730281
-    Eval Accuracy: 0.5
-            ...
-    9 loss is : 0.0006756162
-    Eval Accuracy: 0.5
-
-    0
-    1 loss is : 0.0072183679
-    Eval Accuracy: 0.85
-            ...
-    9 loss is : 0.0001979264
-    Eval Accuracy: 0.82
-    time: {} 9.132536888122559
-
-Above is the multi-process model training on a single node, it can be clearly seen that the training time is shortened
-
-To train on multiple nodes, the command is as follows
-
-.. code-block::
-
-    python3 test_mdis.py --init true --np 4 --hostpath ~/example/host.txt
-
-    0
-    1 loss is : 0.8609524409
-    Eval Accuracy: 0.5
-            ...
-    9 loss is : 0.4251357079
-    Eval Accuracy: 0.5
-    time: {} 6.5950517654418945
-    
-    3
-    1 loss is : 0.0034498004
-    Eval Accuracy: 0.5
-            ...
-    9 loss is : 0.0001483827
-    Eval Accuracy: 0.5
-    
-    1
-    1 loss is : 0.0990966797
-    Eval Accuracy: 0.5
-            ...
-    9 loss is : 0.0037492002
-    Eval Accuracy: 0.5
-    
-    2
-    1 loss is : 0.8468652089
-    Eval Accuracy: 0.5
-            ...
-    Eval Accuracy: 0.53
-    9 loss is : 0.4186156909
-    Eval Accuracy: 0.52
-
-GPU Distributed Computing Interface and Samples
-====================================================
-
-nccl_average_parameters_allreduce
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-GPU Distributed Computing Interface and Sample Usage ``nccl_average_parameters_allreduce`` Passing and updating model parameters on different processes in an allreduce manner.
-
-.. py:function:: pyvqnet.distributed.nccl_api.nccl_average_parameters_allreduce(optimizer, Ncclop:NCCL_api, c_op = "avg")
-
-Set parameters for distributed computation.
-
-    :param model: `Module` - the model for training.
-    :param Ncclop: `NCCL_api`.
-    :param c_op: Calculation method.
+The ``vqnetrun`` interface allows you to control the number of processes started with the ``-n``, ``-np`` parameters, as shown in the following example.
 
     Example::
 
-        import numpy as np
-        from pyvqnet.nn.module import Module
-        from pyvqnet.nn.linear import Linear
-        from pyvqnet.nn import activation as F
-        from pyvqnet.distributed.nccl_api import *
+        from pyvqnet.distributed import CommController
+        Comm_OP = CommController("mpi") # init mpi controller
         
-        nccl_op = NCCL_api()
-        nccl_op.ncclCommInitRank()
-        
-        class Net(Module):
-            def __init__(self):
-                super(Net, self).__init__()
-                self.fc = Linear(input_channels=5, output_channels=1)
-            def forward(self, x):
-                x = F.ReLu()(self.fc(x))
-                return x
-        model = Net().toGPU(1000 + get_rank())
-        print(f"rank {get_rank()} parameters is {model.parameters()}")
-        nccl_average_parameters_allreduce(model, nccl_op)
-        
-        if get_rank() == 0:
-            print(model.parameters())
-            
-        # mpirun -n 2 python test.py
+        rank = Comm_OP.getRank()
+        size = Comm_OP.getSize()
+        print(f"rank: {rank}, size {size}")
 
-        # rank 1 parameters is [[[ 0.8647987],
-        #  [ 0.8910748],
-        #  [-0.3896213],
-        #  [-0.871486 ],
-        #  [-0.8997867]], [0.4014191]]
-        # rank 0 parameters is [[[-0.6880538],
-        #  [ 0.0963508],
-        #  [-0.3776291],
-        #  [ 0.1773794],
-        #  [ 0.6670241]], [-0.1019871]]
-        # [[[ 0.0883724],
-        #  [ 0.4937128],
-        #  [-0.3836252],
-        #  [-0.3470533],
-        #  [-0.1163813]], [0.149716]]
+        # vqnetrun -n 2 python test.py
+        # vqnetrun -np 2 python test.py
 
-nccl_average_parameters_reduce
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+H, hosts
+^^^^^^^^^^^^^^^^^^^^^^
 
-Use ``nccl_average_parameters_reduce`` to pass and update model parameters on different processes in a reduce manner.
-
-.. py:function:: pyvqnet.distributed.nccl_api.nccl_average_parameters_reduce(model, Ncclop:NCCL_api, root = 0, c_op = "avg")
-
-Set parameters for distributed computation.
-
-    :param: model: `Module` - the model for training.
-    :param Ncclop: `NCCL_api`.
-    :param root: Specifies the process number.
-    :param c_op: Calculation method.
+The ``vqnetrun`` interface allows you to specify nodes and process assignments for cross-node execution via the ``-H``, ``--hosts`` interfaces (you must configure the node's environment successfully to execute in the same environment under the same path when running across nodes), with the following execution example.
 
     Example::
 
+        from pyvqnet.distributed import CommController, get_host_name
+        Comm_OP = CommController("mpi") # init mpi controller
+        
+        rank = Comm_OP.getRank()
+        size = Comm_OP.getSize()
+        print(f"rank: {rank}, size {size}")
+        print(f"LocalRank {Comm_OP.getLocalRank()} hosts name {get_host_name()}")
+
+        # vqnetrun -np 4 -H node0:1,node2:1 python test.py
+        # vqnetrun -np 4 --hosts node0:1,node2:1 python test.py
+
+hostfile, f, hostfile
+^^^^^^^^^^^^^^^^^^^^^^
+
+The ``vqnetrun`` interface allows you to specify nodes and process assignments across nodes by specifying a hosts file (when running across nodes, you must configure the node's environment successfully, executing in the same environment and under the same path), with the command line arguments ``-hostfile``, ``-f``, and ``--hostfile``.
+
+Each line within the file must be formatted as <hostname> slots=<slots> as;
+
+node0 slots=1
+
+node2 slots=1
+
+A sample implementation is as follows
+
+    Example::
+
+        from pyvqnet.distributed import CommController, get_host_name
+        Comm_OP = CommController("mpi") # init mpi controller
+        
+        rank = Comm_OP.getRank()
+        size = Comm_OP.getSize()
+        print(f"rank: {rank}, size {size}")
+        print(f"LocalRank {Comm_OP.getLocalRank()} hosts name {get_host_name()}")
+
+        # vqnetrun -np 4 -f hosts python test.py
+        # vqnetrun -np 4 -hostfile hosts python test.py
+        # vqnetrun -np 4 --hostfile hosts python test.py
+
+
+output-filename
+^^^^^^^^^^^^^^^^^^^^^^
+
+The ``vqnetrun`` interface allows you to save the output to a specified file with the command line parameter ``--output-filename``.
+
+A sample implementation is as follows:
+
+    Example::
+
+        from pyvqnet.distributed import CommController, get_host_name
+        Comm_OP = CommController("mpi") # init mpi controller
+        
+        rank = Comm_OP.getRank()
+        size = Comm_OP.getSize()
+        print(f"rank: {rank}, size {size}")
+        print(f"LocalRank {Comm_OP.getLocalRank()} hosts name {get_host_name()}")
+
+        # vqnetrun -np 4 --hostfile hosts --output-filename output  python test.py
+
+
+verbose
+^^^^^^^^^^^^^^^^^^^^^^
+
+The ``vqnetrun`` interface can be used with the command line parameter ``--verbose`` to instrument inter-node communication and additionally output the results of the instrumentation.
+
+A sample implementation is as follows
+
+    Example::
+
+        from pyvqnet.distributed import CommController, get_host_name
+        Comm_OP = CommController("mpi") # init mpi controller
+        
+        rank = Comm_OP.getRank()
+        size = Comm_OP.getSize()
+        print(f"rank: {rank}, size {size}")
+        print(f"LocalRank {Comm_OP.getLocalRank()} hosts name {get_host_name()}")
+
+        # vqnetrun -np 4 --hostfile hosts --verbose python test.py
+
+
+start-timeout
+^^^^^^^^^^^^^^^^^^^^^^
+
+The ``vqnetrun`` interface can be used with the command line parameter ``-start-timeout`` to specify that all checks are performed and the process is started before the timeout. The default value is 30 seconds.
+
+A sample implementation is as follows
+
+    Example::
+
+        from pyvqnet.distributed import CommController, get_host_name
+        Comm_OP = CommController("mpi") # init mpi controller
+        
+        rank = Comm_OP.getRank()
+        size = Comm_OP.getSize()
+        print(f"rank: {rank}, size {size}")
+        print(f"LocalRank {Comm_OP.getLocalRank()} hosts name {get_host_name()}")
+
+        # vqnetrun -np 4 --start-timeout 10 python test.py
+
+
+disable-cache
+^^^^^^^^^^^^^^^^^^^^^^
+
+If this flag is not set, ``vqnetrun`` will perform an initialization check every 60 minutes, provided the check passes successfully. Otherwise, all checks are performed every time ``vqnetrun`` is called.
+
+A sample implementation is as follows
+
+    Example::
+
+        from pyvqnet.distributed import CommController, get_host_name
+        Comm_OP = CommController("mpi") # init mpi controller
+        
+        rank = Comm_OP.getRank()
+        size = Comm_OP.getSize()
+        print(f"rank: {rank}, size {size}")
+        print(f"LocalRank {Comm_OP.getLocalRank()} hosts name {get_host_name()}")
+
+        # vqnetrun -np 4 --disable-cache python test.py
+
+cb, check-build
+^^^^^^^^^^^^^^^^^^^^^^
+
+The ``vqnetrun`` interface can be used to output the supported data communication methods for the current environment by adding this flag.
+
+A sample implementation is as follows
+
+    .. code-block::
+
+        # vqnetrun -cb
+        # vqnetrun --check-build
+
+
+h
+^^^^^^^^^^^^^^^^^^^^^^
+
+The ``vqnetrun`` interface can output all parameters supported by vqnetrun and a detailed description of the parameters using this flag.
+
+A sample implementation is as follows
+
+    .. code-block::
+
+        # vqnetrun -h
+
+
+CommController
+=================================
+
+    Distributed computing is used to control the data communication of different processes under cpu and gpu, generate different controllers for cpu (mpi) and gpu (nccl), and call the communication method to complete the communication and synchronization of data between different processes.
+
+__init__
+^^^^^^^^^^^^^^^^^^^^^^
+.. py:function:: CommController.__init__(backend="mpi")
+    
+    CommController is used to control the controller of data communication under cpu and gpu, by setting the parameter `backend` to generate the controller for cpu(mpi) and gpu(nccl). (Currently, the distributed computing function only supports the use of linux operating system system )
+
+    :param backend: Used to generate data communication controller for cpu or gpu.
+
+    :return:
+        CommController instance.
+
+    Examples::
+
+        from pyvqnet.distributed import CommController
+        Comm_OP = CommController("nccl") # init nccl controller
+
+        # Comm_OP = CommController("mpi") # init mpi controller
+
+getRank
+^^^^^^^^^^^^^^^^^^^^^^
+.. py:function:: CommController.getRank()
+    
+    Used to get the process number of the current process.
+
+    :return: Returns the process number of the current process.
+
+    Examples::
+
+        from pyvqnet.distributed import CommController
+        Comm_OP = CommController("nccl") # init nccl controller
+        
+        Comm_OP.getRank()
+
+getSize
+^^^^^^^^^^^^^^^^^^^^^^
+.. py:function:: CommController.getSize()
+    
+    Used to get the total number of processes started.
+
+
+    :return: Returns the total number of processes.
+
+    Examples::
+
+        from pyvqnet.distributed import CommController
+        Comm_OP = CommController("nccl") # init nccl controller
+        
+        Comm_OP.getSize()
+        # vqnetrun -n 2 python test.py 
+        # 2
+
+
+getLocalRank
+^^^^^^^^^^^^^^^^^^^^^^
+.. py:function:: CommController.getLocalRank()
+    
+    Used to get the current process number on the current machine.
+
+
+    :return: The current process number on the current machine.
+
+    Examples::
+
+        from pyvqnet.distributed import CommController
+        Comm_OP = CommController("nccl") # init nccl controller
+        
+        Comm_OP.getLocalRank()
+        # vqnetrun -n 2 python test.py 
+
+
+ncclSplitGroup
+^^^^^^^^^^^^^^^^^^^^^^
+.. py:function:: CommController.ncclSplitGroup(rankL)
+    
+    Used to divide communication groups on the gpu.
+
+    :param rankL: List of process groups.
+
+    Examples::
+
+        from pyvqnet.distributed import CommController
+        Comm_OP = CommController("nccl")
+        
+        Comm_OP.ncclSplitGroup([[0, 1]])
+        # vqnetrun -n 2 python test.py 
+
+
+barrier
+^^^^^^^^^^^^^^^^^^^^^^
+.. py:function:: CommController.barrier()
+    
+    Synchronization.
+
+    :return: Synchronization.
+
+    Examples::
+
+        from pyvqnet.distributed import CommController
+        Comm_OP = CommController("nccl")
+        
+        Comm_OP.barrier()
+
+
+GetDeviceNum
+^^^^^^^^^^^^^^^^^^^^^^
+.. py:function:: CommController.GetDeviceNum()
+    
+    Used to get the number of graphics cards on the current node, (only supported on gpu).
+
+    :return: Returns the number of graphics cards on the current node.
+
+    Examples::
+
+        from pyvqnet.distributed import CommController
+        Comm_OP = CommController("nccl")
+        
+        Comm_OP.GetDeviceNum()
+        # python test.py
+
+
+allreduce
+^^^^^^^^^^^^^^^^^^^^^^
+.. py:function:: CommController.allreduce(tensor, c_op = "avg")
+    
+    Supports allreduce communication of data.
+
+    :param tensor: Input data.
+    :param c_op: Calculation.
+
+    Examples::
+
+        from pyvqnet.distributed import CommController
+        from pyvqnet.tensor import tensor
         import numpy as np
-        from pyvqnet.nn.module import Module
-        from pyvqnet.nn.linear import Linear
-        from pyvqnet.nn import activation as F
-        from pyvqnet.distributed.nccl_api import *
+        Comm_OP = CommController("mpi")
+
+        num = tensor.to_tensor(np.random.rand(1, 5))
+        print(f"rank {Comm_OP.getRank()}  {num}")
+
+        Comm_OP.allreduce(num, "sum")
+        print(f"rank {Comm_OP.getRank()}  {num}")
+        # vqnetrun -n 2 python test.py
+
+
+reduce
+^^^^^^^^^^^^^^^^^^^^^^
+.. py:function:: CommController.reduce(tensor, root = 0, c_op = "avg")
+    
+    Supports reduce communication of data.
+
+    :param tensor: input.
+    :param root: Specifies the node to which the data is returned.
+    :param c_op: Calculation.
+
+    Examples::
+
+        from pyvqnet.distributed import CommController
+        from pyvqnet.tensor import tensor
+        import numpy as np
+        Comm_OP = CommController("mpi")
+
+        num = tensor.to_tensor(np.random.rand(1, 5))
+        print(f"rank {Comm_OP.getRank()}  {num}")
         
-        nccl_op = NCCL_api()
-        nccl_op.ncclCommInitRank()
+        Comm_OP.reduce(num, 1)
+        print(f"rank {Comm_OP.getRank()}  {num}")
+        # vqnetrun -n 2 python test.py
+
+
+broadcast
+^^^^^^^^^^^^^^^^^^^^^^
+.. py:function:: CommController.broadcast(tensor, root = 0)
+    
+    Broadcasts data on the specified process root to all processes.
+
+    :param tensor: input.
+    :param root: Specifies node.
+
+    Examples::
+
+        from pyvqnet.distributed import CommController
+        from pyvqnet.tensor import tensor
+        import numpy as np
+        Comm_OP = CommController("mpi")
+
+        num = tensor.to_tensor(np.random.rand(1, 5))
+        print(f"rank {Comm_OP.getRank()}  {num}")
         
-        class Net(Module):
-            def __init__(self):
-                super(Net, self).__init__()
-                self.fc = Linear(input_channels=5, output_channels=1)
-            def forward(self, x):
-                x = F.ReLu()(self.fc(x))
-                return x
-        model = Net().toGPU(1000 + get_rank())
-        print(f"rank {get_rank()} parameters is {model.parameters()}")
-        
-        nccl_average_parameters_reduce(model, nccl_op)
+        Comm_OP.broadcast(num, 1)
+        print(f"rank {Comm_OP.getRank()}  {num}")
+        # vqnetrun -n 2 python test.py
+
+allgather
+^^^^^^^^^^^^^^^^^^^^^^
+.. py:function:: CommController.allgather(tensor)
+    
+    Allgather the data on all processes together.
+
+    :param tensor: input.
+
+    Examples::
+
+        from pyvqnet.distributed import CommController
+        from pyvqnet.tensor import tensor
+        import numpy as np
+        Comm_OP = CommController("mpi")
+
+        num = tensor.to_tensor(np.random.rand(1, 5))
+        print(f"rank {Comm_OP.getRank()}  {num}")
+
+        num = Comm_OP.allgather(num)
+        print(f"rank {Comm_OP.getRank()}  {num}")
+        # vqnetrun -n 2 python test.py
+
+send
+^^^^^^^^^^^^^^^^^^^^^^
+.. py:function:: CommController.send(tensor, dest)
+    
+    p2p communication interface.
+
+    :param tensor: input.
+    :param dest: Destination process.
+
+    Examples::
+
+        from pyvqnet.distributed import CommController,get_rank
+        from pyvqnet.tensor import tensor
+        import numpy as np
+        Comm_OP = CommController("mpi")
+
+        num = tensor.to_tensor(np.random.rand(1, 5))
+        recv = tensor.zeros_like(num)
 
         if get_rank() == 0:
-            print(model.parameters())
-            
-        # mpirun -n 2 python test.py
-
-        # rank 1 parameters is [[[-0.7666817],
-        #  [ 0.3023796],
-        #  [-0.6021696],
-        #  [ 0.5293468],
-        #  [-0.1318247]], [0.4162451]]
-        # rank 0 parameters is [[[ 0.1145883],
-        #  [-0.3539237],
-        #  [ 0.8672745],
-        #  [ 0.5483069],
-        #  [-0.5038487]], [0.4179307]]
-        # [[[-0.3260467],
-        #  [-0.025772 ],
-        #  [ 0.1325525],
-        #  [ 0.5388269],
-        #  [-0.3178367]], [0.4170879]]
+            Comm_OP.send(num, 1)
+        elif get_rank() == 1:
+            Comm_OP.recv(recv, 0)
+        print(f"rank {Comm_OP.getRank()}  {num}")
+        print(f"rank {Comm_OP.getRank()}  {recv}")
         
-nccl_average_grad_allreduce
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        # vqnetrun -n 2 python test.py
 
-Use ``nccl_average_grad_allreduce`` to pass and update parameter gradients on different processes in an allreduce fashion.
 
-.. py:function:: pyvqnet.distributed.nccl_api.nccl_average_grad_allreduce(optimizer, Ncclop:NCCL_api, c_op = "avg")
+recv
+^^^^^^^^^^^^^^^^^^^^^^
+.. py:function:: CommController.recv(tensor, source)
+    
+    p2p communication interface.
 
-Sets parameters for distributed computation.
+    :param tensor: input.
+    :param source: Acceptance process.
 
-    :param optimizer: Optimizer.
-    :param Ncclop: `NCCL_api`.
-    :param root: Specified process number.
+    Examples::
 
-    Example::
-        
+        from pyvqnet.distributed import CommController,get_rank
+        from pyvqnet.tensor import tensor
         import numpy as np
+        Comm_OP = CommController("mpi")
+
+        num = tensor.to_tensor(np.random.rand(1, 5))
+        recv = tensor.zeros_like(num)
+
+        if get_rank() == 0:
+            Comm_OP.send(num, 1)
+        elif get_rank() == 1:
+            Comm_OP.recv(recv, 0)
+        print(f"rank {Comm_OP.getRank()}  {num}")
+        print(f"rank {Comm_OP.getRank()}  {recv}")
+        
+        # vqnetrun -n 2 python test.py
+
+
+allreduce_group
+^^^^^^^^^^^^^^^^^^^^^^
+.. py:function:: CommController.allreduce_group(tensor, c_op = "avg", GroupComm = None)
+    
+    The group allreduce communication interface.
+
+    :param tensor: input.
+    :param c_op: Calculation.
+    :param GroupComm: Communication group, only needed by mpi for intra-group communication.
+
+
+    Examples::
+
+        from pyvqnet.distributed import CommController,get_rank,get_local_rank
+        from pyvqnet.tensor import tensor
+        import numpy as np
+        Comm_OP = CommController("nccl")
+
+        Comm_OP.ncclSplitGroup([[0, 1]])
+
+        complex_data = tensor.QTensor([3+1j, 2, 1 + get_rank()],dtype=8).reshape((3,1)).toGPU(1000+ get_local_rank())
+
+        print(f"allreduce_group before rank {get_rank()}: {complex_data}")
+
+        Comm_OP.allreduce_group(complex_data, c_op="sum")
+        print(f"allreduce_group after rank {get_rank()}: {complex_data}")
+        # vqnetrun -n 2 python test.py
+
+
+reduce_group
+^^^^^^^^^^^^^^^^^^^^^^
+.. py:function:: CommController.reduce_group(tensor, root = 0, c_op = "avg", GroupComm = None)
+    
+    Intra-group REDUCE communication interface.
+
+    :param tensor: Input.
+    :param root: Specify the process number.
+    :param c_op: Calculation.
+    :param GroupComm: Communication group, only needed by mpi for intra-group communication.
+
+    Examples::
+        
+        from pyvqnet.distributed import CommController,get_rank,get_local_rank
+        from pyvqnet.tensor import tensor
+        import numpy as np
+        Comm_OP = CommController("nccl")
+
+        Comm_OP.ncclSplitGroup([[0, 1]])
+
+        complex_data = tensor.QTensor([3+1j, 2, 1 + get_rank()],dtype=8).reshape((3,1)).toGPU(1000+ get_local_rank())
+
+        print(f"reduce_group before rank {get_rank()}: {complex_data}")
+
+        Comm_OP.reduce_group(complex_data, c_op="sum")
+        print(f"reduce_group after rank {get_rank()}: {complex_data}")
+        # vqnetrun -n 2 python test.py
+
+
+broadcast_group
+^^^^^^^^^^^^^^^^^^^^^^
+.. py:function:: CommController.broadcast_group(tensor, root = 0, GroupComm = None)
+    
+    Intra-group broadcast communication interface.
+
+    :param tensor: Input.
+    :param root: Specify the process number.
+    :param GroupComm: Communication group, only needed by mpi for intra-group communication.
+
+    Examples::
+        
+        from pyvqnet.distributed import CommController,get_rank,get_local_rank
+        from pyvqnet.tensor import tensor
+        import numpy as np
+        Comm_OP = CommController("nccl")
+
+        Comm_OP.ncclSplitGroup([[0, 1]])
+
+        complex_data = tensor.QTensor([3+1j, 2, 1 + get_rank()],dtype=8).reshape((3,1)).toGPU(1000+ get_local_rank())
+
+        print(f"broadcast_group before rank {get_rank()}: {complex_data}")
+
+        Comm_OP.broadcast_group(complex_data)
+        Comm_OP.barrier()
+        print(f"broadcast_group after rank {get_rank()}: {complex_data}")
+        # vqnetrun -n 2 python test.py
+
+
+allgather_group
+^^^^^^^^^^^^^^^^^^^^^^
+.. py:function:: CommController.allgather_group(tensor, GroupComm = None)
+    
+    The group allgather communication interface.
+
+    :param tensor: Input.
+    :param GroupComm: Communication group, only needed by mpi for intra-group communication.
+
+    Examples::
+        
+        from pyvqnet.distributed import CommController,get_rank,get_local_rank
+        from pyvqnet.tensor import tensor
+        import numpy as np
+        Comm_OP = CommController("nccl")
+
+        Comm_OP.ncclSplitGroup([[0, 1]])
+
+        complex_data = tensor.QTensor([3+1j, 2, 1 + get_rank()],dtype=8).reshape((3,1)).toGPU(1000+ get_local_rank())
+
+        print(f"allgather_group before rank {get_rank()}: {complex_data}")
+
+        complex_data = Comm_OP.allgather_group(complex_data)
+        print(f"allgather_group after rank {get_rank()}: {complex_data}")
+        # vqnetrun -n 2 python test.py
+
+
+grad_allreduce
+^^^^^^^^^^^^^^^^^^^^^^
+.. py:function:: CommController.grad_allreduce(optimizer)
+    
+    Update the gradient of the parameters in the optimizer with allreduce.
+
+    :param optimizer: optimizer.
+
+    Examples::
+        
+        from pyvqnet.distributed import CommController,get_rank,get_local_rank
+        from pyvqnet.tensor import tensor
         from pyvqnet.nn.module import Module
         from pyvqnet.nn.linear import Linear
-        from pyvqnet.nn import activation as F
-        from pyvqnet.distributed.nccl_api import *
         from pyvqnet.nn.loss import MeanSquaredError
         from pyvqnet.optim import Adam
-        from pyvqnet.tensor import tensor
-
-        nccl_op = NCCL_api()
-        nccl_op.ncclCommInitRank()
+        from pyvqnet.nn import activation as F
+        import numpy as np
+        Comm_OP = CommController("nccl")
 
         class Net(Module):
             def __init__(self):
@@ -3916,76 +4049,42 @@ Sets parameters for distributed computation.
             def forward(self, x):
                 x = F.ReLu()(self.fc(x))
                 return x
-
-        model = Net().toGPU(1000+ get_rank())
+            
+        model = Net().toGPU(1000+ get_local_rank())
         opti = Adam(model.parameters(), lr=0.01)
-
-        actual = tensor.QTensor([1,1,1,1,1,0,0,0,0,0],dtype=6).reshape((10,1)).toGPU(1000+get_rank())
-
-        x = tensor.randn((10, 5)).toGPU(1000+get_rank())
-
+        actual = tensor.QTensor([1,1,1,1,1,0,0,0,0,0],dtype=6).reshape((10,1)).toGPU(1000+ get_local_rank())
+        x = tensor.randn((10, 5)).toGPU(1000+ get_local_rank())
         for i in range(10):
             opti.zero_grad()
             model.train()
-
             result = model(x)
             loss = MeanSquaredError()(actual, result)
             loss.backward()
-
-            print(f"rank {get_rank()} grad is {model.parameters()[0].grad}")
-
-            nccl_average_grad_allreduce(opti, nccl_op)
+            # print(f"rank {get_rank()} grad is {model.parameters()[0].grad} para {model.parameters()[0]}")
+            Comm_OP.grad_allreduce(opti)
+            # print(Comm_OP._allgather(model.parameters()[0]))
             if get_rank() == 0 :
-                print(f"rank {get_rank()} grad is {model.parameters()[0].grad}")
+                print(f"rank {get_rank()} grad is {model.parameters()[0].grad} para {model.parameters()[0]} after")
             opti.step()
+        # vqnetrun -n 2 python test.py
 
-            exit()
+param_allreduce
+^^^^^^^^^^^^^^^^^^^^^^
+.. py:function:: CommController.param_allreduce(model)
+    
+    Update the parameters in the model in an allreduce manner.
 
-        # mpirun -n 2 python test.py
-        # rank 1 grad is [[-0.2537998],
-        #  [-0.0411504],
-        #  [-0.3565139],
-        #  [ 0.5702319],
-        #  [ 0.0177623]]
-        # rank 0 grad is [[-0.1322807],
-        #  [ 0.481559 ],
-        #  [-0.8823745],
-        #  [ 0.211081 ],
-        #  [-0.0234532]]
-        # rank 0 grad is [[-0.1930403],
-        #  [ 0.2202043],
-        #  [-0.6194442],
-        #  [ 0.3906564],
-        #  [-0.0028455]]
-        
+    :param model: Model.
 
-nccl_average_grad_reduce
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-Use ``nccl_average_grad_reduce`` to pass and update parameter gradients on different processes in a reduce fashion.
-
-.. py:function:: pyvqnet.distributed.nccl_api.nccl_average_grad_reduce(optimizer, Ncclop:NCCL_api, root = 0, c_op = "avg")
-
-Set parameters for distributed computation.
-
-    :param optimizer: `Optimizer`.
-    :param Ncclop: `NCCL_api`.
-    :param root: Update parameter gradient on specified node.
-    :param c_op: Calculation method.
-
-    Example::
-
-        import numpy as np
+    Examples::
+    
+        from pyvqnet.distributed import CommController,get_rank,get_local_rank
+        from pyvqnet.tensor import tensor
         from pyvqnet.nn.module import Module
         from pyvqnet.nn.linear import Linear
         from pyvqnet.nn import activation as F
-        from pyvqnet.distributed.nccl_api import *
-        from pyvqnet.nn.loss import MeanSquaredError
-        from pyvqnet.optim import Adam
-        from pyvqnet.tensor import tensor
-
-        nccl_op = NCCL_api()
-        nccl_op.ncclCommInitRank()
+        import numpy as np
+        Comm_OP = CommController("nccl")
 
         class Net(Module):
             def __init__(self):
@@ -3994,211 +4093,47 @@ Set parameters for distributed computation.
             def forward(self, x):
                 x = F.ReLu()(self.fc(x))
                 return x
-
-        model = Net().toGPU(1000+ get_rank())
-        opti = Adam(model.parameters(), lr=0.01)
-
-        actual = tensor.QTensor([1,1,1,1,1,0,0,0,0,0],dtype=6).reshape((10,1)).toGPU(1000+get_rank())
-
-        x = tensor.randn((10, 5)).toGPU(1000+get_rank())
-
-        for i in range(10):
-            opti.zero_grad()
-            model.train()
-
-            result = model(x)
-            loss = MeanSquaredError()(actual, result)
-            loss.backward()
-
-            print(f"rank {get_rank()} grad is {model.parameters()[0].grad}")
-
-            nccl_average_grad_reduce(opti, nccl_op)
-            if get_rank() == 0 :
-                print(f"rank {get_rank()} grad is {model.parameters()[0].grad}")
-            opti.step()
-
-            exit()
-
-        # mpirun -n 2 python test.py
-        
-        # rank 1 grad is [[ 0.2536973],
-        #  [ 0.1971456],
-        #  [ 0.2229966],
-        #  [-0.1126524],
-        #  [-0.4308025]]
-        # rank 0 grad is [[-0.7967089],
-        #  [ 0.3266841],
-        #  [ 0.087491 ],
-        #  [-2.0684564],
-        #  [ 1.0999191]]
-        # rank 0 grad is [[-0.2715058],
-        #  [ 0.2619148],
-        #  [ 0.1552438],
-        #  [-1.0905544],
-        #  [ 0.3345583]]
-
-
-example
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-.. code-block::
-
-    from pyvqnet.qnn.vqc import *
-    from pyvqnet.optim import Adam
-    from pyvqnet.nn import Module, BinaryCrossEntropy, Sigmoid
-    from pyvqnet.data import data_generator
-    import numpy as np
-    from sklearn import datasets
-    from sklearn.model_selection import train_test_split
-    from pyvqnet.tensor import QTensor
-
-    from pyvqnet.distributed.nccl_api import *
-    from pyvqnet.distributed import split_data, broadcast_model_params
-
-    from time import time
-
-
-    # NCCL init
-    nccl_op = NCCL_api()
-    nccl_op.ncclCommInitRank()
-
-    iris_dataset = datasets.load_iris()
-
-    X1 = iris_dataset.data[:100, :].astype(np.float32)  
-    X_feature_names = iris_dataset.feature_names 
-    y = iris_dataset.target[:100].astype(int)  
-    y_target_names = iris_dataset.target_names[:2]
-
-    alpha = X1[:, :3] * X1[:,1:]  
-    X1 = np.append(X1, alpha, axis=1)  
-    X_train, X_test, y_train, y_test = train_test_split(X1,
-                                                        y,
-                                                        test_size=0.2,
-                                                        random_state=0,
-                                                        shuffle=True)
-
-    class Q_model(Module):
-        def __init__(self):
-            super(Q_model, self).__init__()
-
-            self.hardward = VQC_HardwareEfficientAnsatz(
-                n_qubits=4,
-                single_rot_gate_list=["ry"],
-                entangle_gate="cnot",
-                depth=15)
-            obs_list = [{
-                'wires': [2, 3],
-                'observables': ['Z', 'Z'],
-                'coefficient': [1, 1]
-            }]
-            # print(obs_list)
-            self.ma = MeasureAll(obs=obs_list)
-            self.ac = Sigmoid()
-            self.qm = QMachine(4)
-
-        def forward(self, input):
-            qm = self.qm
-            qm.reset_states(input.shape[0])
-
-            def cir(qm, x):
-                for i in range(4):
-                    hadamard(qm, i)
-
-                for i in range(4):
-                    rz(qm, i, x[:, [i]])
-
-                for i in range(3):
-                    cnot(qm, [i, i + 1])
-                    rz(qm, i + 1, x[:, [4 + i]])
-                return qm
-
-            qm = cir(qm, input)
-            self.hardward(q_machine=qm)
-            y = self.ma(q_machine=qm)
-            y = self.ac(y)
-
-            return y
-
-    def run():
-        """
-        Main run function
-        """
-
-        model = Q_model()
-        model = broadcast_model_params(model)
-        model = model.toGPU(1000 + get_rank())
-        # print(model.parameters())
-        optimizer = Adam(model.parameters(), lr=0.1)
-        batch_size = 20
-        epoch = 20
-        loss = BinaryCrossEntropy()
-        print("start training..............")
-        model.train()
-
-        datas, labels= split_data(X_train, y_train)
-
-        def get_accuary(result, label):
-            result = (result > 0.5).astype(4)
-            score = tensor.sums(result == label)
-            return score
-
-        time2 = time()
-        runtime = 0
-        for i in range(epoch):
-            count = 0
-            sum_loss = 0
-            accuary = 0
-            t = 0
-            for data, label in data_generator(datas, labels, batch_size, False):
-                time3 = time()
-                optimizer.zero_grad()
-                data, label = QTensor(data,requires_grad=True).toGPU(1000 + get_rank()), QTensor(label,
-                                                     dtype=6,
-                                                     requires_grad=False).toGPU(1000 + get_rank())
-
-                result = model(data)
-
-                loss_b = loss(label.reshape([-1, 1]), result)
-
-                loss_b.backward()
-
-                nccl_average_grad_allreduce(optimizer, nccl_op)
-                optimizer._step()
-
-                sum_loss += loss_b.item()
-                count += batch_size
-                accuary += get_accuary(result, label.reshape([-1,1]))
-                t = t + 1
-                runtime += time() - time3
-
-            # nccl_average_parameters_reduce(model, nccl_op)
-            if get_rank()==0:
-                print(
-                    f"epoch:{i}, #### loss:{sum_loss/count} #####accuray:{accuary/count}"
-                )
-
-        print("start testing..............")
-        model.eval()
-        count = 0
+            
+        model = Net().toGPU(1000+ get_local_rank())
+        print(f"rank {get_rank()} parameters is {model.parameters()}")
+        Comm_OP.param_allreduce(model)
+            
         if get_rank() == 0:
-            print(time() - time2)
-        test_data, test_label = X_test, y_test
-        test_batch_size = 5
-        accuary = 0
-        sum_loss = 0
-        for testd, testl in data_generator(test_data, test_label, test_batch_size):
-            testd = QTensor(testd).toGPU(1000+get_rank())
-            testl = QTensor(testl, dtype=6).toGPU(1000+get_rank())
-            test_result = model(testd)
-            test_loss = loss(testl.reshape([-1, 1]), test_result)
-            sum_loss += test_loss
-            count += test_batch_size
-            accuary += get_accuary(test_result, testl.reshape([-1, 1]))
-        if get_rank()==0:
-            print(
-                f"test:--------------->loss:{sum_loss/count} #####accuray:{accuary/count}"
-            )
-    run()
+            print(model.parameters())
+
+broadcast_model_params
+^^^^^^^^^^^^^^^^^^^^^^
+.. py:function:: CommController.broadcast_model_params(model, root = 0)
+    
+    Broadcasts the model parameters on the specified process number.
+
+    :param model: Models.
+    :param root: Specify the process number.
+
+    Examples::
+    
+        from pyvqnet.distributed import CommController,get_rank,get_local_rank
+        from pyvqnet.tensor import tensor
+        from pyvqnet.nn.module import Module
+        from pyvqnet.nn.linear import Linear
+        from pyvqnet.nn import activation as F
+        import numpy as np
+        Comm_OP = CommController("nccl")
+
+        class Net(Module):
+            def __init__(self):
+                super(Net, self).__init__()
+                self.fc = Linear(input_channels=5, output_channels=1)
+            def forward(self, x):
+                x = F.ReLu()(self.fc(x))
+                return x
+            
+        model = Net().toGPU(1000+ get_local_rank())
+        print(f"bcast before rank {get_rank()}:{model.parameters()}")
+        Comm_OP.broadcast_model_params(model, 0)
+        # model = model
+        print(f"bcast after rank {get_rank()}: {model.parameters()}")
+        
 
 split_data
 =================================
@@ -4225,37 +4160,190 @@ Set parameters for distributed computation.
 
         x_train, y_train= split_data(x_train, y_train)
 
-broadcast_model_params
+get_local_rank
 =================================
 
-Use ``broadcast_model_params`` to broadcast the model parameters on the specified process to other processes before model training to keep the parameters consistent before model training.
+Use ``get_local_rank`` to get the process number on the current machine.
 
-.. py:function:: pyvqnet.distributed.comm.broadcast_model_params(model, root = 0)
+.. py:function:: pyvqnet.distributed.ControllComm.get_local_rank()
 
-Set parameters for distributed computation.
+    Used to get the current process number on the current machine.
 
-    :param: model: `Module` - the model for training.
-    :param: root: Specified process number.
+    :return: current process number on the current machine.
 
     Example::
 
-        from pyvqnet.nn.module import Module
-        from pyvqnet.nn.linear import Linear
-        from pyvqnet.nn import activation as F
-        from pyvqnet.distributed import broadcast_model_params, get_rank
+        from pyvqnet.distributed.ControllComm import get_local_rank
+
+        print(get_local_rank())
+        # vqnetrun -n 2 python test.py
+
+get_rank
+=================================
+Use ``get_rank`` to get the process number on the current machine.
+
+.. py:function:: pyvqnet.distributed.ControllComm.get_rank()
+
+    Used to get the process number of the current process.
+
+    :return: the process number of the current process.
+
+    Example::
+
+        from pyvqnet.distributed.ControllComm import get_rank
+
+        print(get_rank())
+        # vqnetrun -n 2 python test.py
+
+init_group
+=================================
+Use ``init_group`` to initialise cpu-based process groups based on the given list of process numbers.
+
+.. py:function:: pyvqnet.distributed.ControllComm.init_group(rank_lists)
+
+    Used to initialise the process communication group.
+
+    :param rank_lists: List of communication process groups.
+    :return: A list of initialised process groups.
+
+    Example::
+
+        from pyvqnet.distributed import *
+
+        Comm_OP = CommController("mpi")
+        num = tensor.to_tensor(np.random.rand(1, 5))
+        print(f"rank {Comm_OP.getRank()}  {num}")
         
-        class Net(Module):
+        group_l = init_group([[0,2], [1]])
+
+        for comm_ in group_l:
+            if Comm_OP.getRank() in comm_[1]:
+                Comm_OP.allreduce_group(num, "sum", GroupComm = comm_[0])
+                print(f"rank {Comm_OP.getRank()}  {num} after")
+        
+        # vqnetrun -n 3 python test.py
+        
+
+PipelineParallelTrainingWrapper
+=================================
+.. py:class:: pyvqnet.distributed.pp.PipelineParallelTrainingWrapper(args,join_layers,trainset)
+    
+    Pipeline Parallel Training Wrapper implements 1F1B training. Available only on Linux platforms with a GPU.
+    More algorithm details can be found at (https://www.deepspeed.ai/tutorials/pipeline/).
+
+    :param args: Parameter dictionary. See examples.
+    :param join_layers: List of Sequential modules.
+    :param trainset: Dataset.
+
+    :return:
+        PipelineParallelTrainingWrapper instance.
+
+    The following uses the CIFAR10 database `CIFAR10_Dataset` to train the classification task on AlexNet on 2 GPUs.
+    In this example, it is divided into two pipeline parallel processes `pipeline_parallel_size` = 2.
+    The batch size is `train_batch_size` = 64, on a single GPU it is `train_micro_batch_size_per_gpu` = 32.
+    Other configuration parameters can be found in `args`.
+    In addition, each process needs to configure the environment variable `LOCAL_RANK` in the `__main__` function.
+
+    Examples::
+
+        import os
+        import pyvqnet
+
+        from pyvqnet.nn import Module,Sequential,CrossEntropyLoss
+        from pyvqnet.nn import Linear
+        from pyvqnet.nn import Conv2D
+        from pyvqnet.nn import activation as F
+        from pyvqnet.nn import MaxPool2D
+        from pyvqnet.nn import CrossEntropyLoss
+
+        from pyvqnet.tensor import tensor
+        from pyvqnet.distributed.pp import PipelineParallelTrainingWrapper
+        from pyvqnet.distributed.pp import comm as dist
+        from pyvqnet.distributed import *
+
+
+        pipeline_parallel_size = 2
+
+        num_steps = 1000
+
+        def cifar_trainset_vqnet(local_rank, dl_path='./cifar10-data'):
+            transform = pyvqnet.data.TransformCompose([
+                pyvqnet.data.TransformResize(256),
+                pyvqnet.data.TransformCenterCrop(224),
+                pyvqnet.data.TransformToTensor(),
+                pyvqnet.data.TransformNormalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+            ])
+
+            trainset = pyvqnet.data.CIFAR10_Dataset(root=dl_path,
+                                                    mode="train",
+                                                    transform=transform,layout="HWC")
+
+            return trainset
+
+        class Model(Module):
             def __init__(self):
-                super(Net, self).__init__()
-                self.fc = Linear(input_channels=5, output_channels=1)
+                super(Model, self).__init__()
+                self.features = Sequential( 
+                Conv2D(input_channels=3, output_channels=8, kernel_size=(3, 3), stride=(1, 1), padding='same'),
+                F.ReLu(),
+                MaxPool2D([2, 2], [2, 2]),
+
+                Conv2D(input_channels=8, output_channels=16, kernel_size=(3, 3), stride=(1, 1), padding='same'),
+                F.ReLu(),
+                MaxPool2D([2, 2], [2, 2]),
+
+                Conv2D(input_channels=16, output_channels=32, kernel_size=(3, 3), stride=(1, 1), padding='same'),
+                F.ReLu(),
+
+                Conv2D(input_channels=32, output_channels=64, kernel_size=(3, 3), stride=(1, 1), padding='same'),
+                F.ReLu(),
+
+                Conv2D(input_channels=64, output_channels=64, kernel_size=(3, 3), stride=(1, 1), padding='same'),
+                F.ReLu(),
+                MaxPool2D([3, 3], [2, 2]),)
+                
+                self.cls = Sequential( 
+                Linear(64 * 27 * 27, 512),
+                F.ReLu(),
+
+                Linear(512, 256),
+                F.ReLu(),
+                Linear(256, 10) )
+
             def forward(self, x):
-                x = F.ReLu()(self.fc(x))
+                x = self.features(x)
+                x = tensor.flatten(x,1)
+                x = self.cls(x)
+
                 return x
+            
+        def join_layers(vision_model):
+            layers = [
+                *vision_model.features,
+                lambda x: tensor.flatten(x, 1),
+                *vision_model.cls,
+            ]
+            return layers
 
-        model = Net()
-        print(f"bcast before rank {get_rank()}:{model.parameters()}")
-        model = broadcast_model_params(model)
-        model = model.toGPU(1000+ get_rank())
-        print(f"bcast after rank {get_rank()}: {model.parameters()}")
 
-        # mpirun -n 2 python run.py
+        if __name__ == "__main__":
+
+
+            args = {
+            "backend":'nccl',  
+            "train_batch_size" : 64,
+            "train_micro_batch_size_per_gpu" : 32,
+        "optimizer": {
+            "type": "Adam",
+            "params": {
+            "lr": 0.001
+            }}, 
+            "local_rank":dist.get_local_rank(), 
+            "pipeline_parallel_size":pipeline_parallel_size, "seed":42, "steps":num_steps,
+            "loss":CrossEntropyLoss(),
+            }
+            os.environ["LOCAL_RANK"] = str(dist.get_local_rank())
+            trainset = cifar_trainset_vqnet(args["local_rank"])
+            w = PipelineParallelTrainingWrapper(args,join_layers(Model()),trainset)
+
+            w.train_batch()

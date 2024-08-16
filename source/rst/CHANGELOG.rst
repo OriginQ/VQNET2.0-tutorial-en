@@ -1,6 +1,61 @@
 VQNet Changelog
 ###############################
 
+[v2.13.0] - 2024-07-30
+***************************
+
+Added
+==================
+
+- Added `no_grad`, `GroupNorm`, `Interpolate`, `contiguous`, `QuantumLayerV3`, `fuse_model`, `SDPA` interfaces.
+- Added Quantum Dropout method to avoid overfitting.
+
+Changed
+===================
+
+- Added affine interface to `BatchNorm`, `LayerNorm`, `GroupNorm`.
+- `diag` interface now returns 1d output on the diagonal for 2d input, consistent with torch.
+- Operations such as slice and permute will try to use the view method to return a QTensor in shared memory.
+- All interfaces support non-contiguous input.
+- `Adam` supports the weight_decay parameter.
+
+Fixed
+====================
+- Modify the error of some logic gate decomposition functions of VQC.
+- Fix the memory leak problem of some functions.
+- Fix the problem that `QuantumLayerMultiProcess` does not support GPU input.
+- Modify the default parameter initialization method of `Linear`
+
+
+[v2.12.0] - 2024-05-01
+***************************
+
+Added
+===================
+
+- Added PipelineParallelTrainingWrapper interface.
+- Added `Gelu`, `DropPath`, `binomial`, `adamW` interfaces.
+- Added `QuantumBatchAsyncQcloudLayer` to support pyqpanda's local virtual machine simulation calculation.
+- Add xtensor's `QuantumBatchAsyncQcloudLayer` to support pyqpanda's local virtual machine simulation calculation and real machine calculation.
+- Enables QTensor to be deepcopy and pickle.
+- Add distributed computing startup command `vqnetrun`, used when using the distributed computing interface.
+- Add ES gradient calculation method real machine interface `QuantumBatchAsyncQcloudLayerES` to support local VM simulation calculations as well as real machine calculations for pyqpanda.
+- Add data communication interfaces `allreduce`, `reduce`, `broadcast`, `allgather`, `send`, `recv`, etc. that support QTensor in distributed computing.
+
+Changed
+===================
+
+- Added new dependencies "Pillow" and "hjson" to the installation package, add new dependencies "psutil" and "cloudpickle" on linux systems 。
+- Optimize softmax and transpose running speed under GPU.
+- Compiled using cuda11.8.
+- Integration of distributed computing interfaces under cpu and gpu based.
+
+Fixed
+===================
+- Reduce the memory consumption when starting the Linux-GPU version.
+- Fixed the memory leak problem of select and power functions.
+- Removed model parameters and gradient update methods `nccl_average_parameters_reduce`, `nccl_average_grad_reduce` based on the reduce method for cpu, gpu.
+
 [v2.11.0] - 2024-03-01
 ***************************
 

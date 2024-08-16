@@ -222,6 +222,98 @@ If you are more familiar with pyQPanda syntax, please using QuantumLayerV2 class
         # ]
 
 
+QuantumLayerV3
+=============================
+
+.. py:class:: pyvqnet.qnn.quantumlayer.QuantumLayerV3(origin_qprog_func,para_num,num_qubits, num_cubits, pauli_str_dict=None, shots=1000, initializer=None,dtype=None,name="")
+    
+    It submits the parameterized quantum circuit to the local QPanda full amplitude simulator for calculation and trains the parameters in the circuit.
+    It supports batch data and uses the parameter shift rule to estimate the gradient of the parameters.
+    For CRX, CRY, CRZ, this layer uses the formula in https://iopscience.iop.org/article/10.1088/1367-2630/ac2cb3, and the rest of the logic gates use the default parameter drift method to calculate the gradient.
+
+    :param origin_qprog_func: The callable quantum circuit function built by QPanda.
+    :param para_num: `int` - Number of parameters; parameters are one-dimensional.
+    :param num_qubits: `int` - Number of qubits in the quantum circuit.
+    :param num_cubits: `int` - Number of classical bits used for measurements in the quantum circuit.
+    :param pauli_str_dict: `dict|list` - Dictionary or list of dictionaries representing Pauli operators in the quantum circuit. Defaults to None.
+    :param shots: `int` - Number of measurement shots. Defaults to 1000.
+    :param initializer: Initializer for parameter values. Defaults to None.
+    :param dtype: Data type of the parameter. Defaults to None, which uses the default data type.
+    :param name: Name of the module. Defaults to the empty string.
+
+    :return: Returns a QuantumLayerV3 class
+
+    .. note::
+
+        origin_qprog_func is a user defined quantum circuit function using pyQPanda:
+        https://pyqpanda-toturial.readthedocs.io/en/latest/QCircuit.html.
+
+        The function should contain the following input parameters and return a pyQPanda.QProg or originIR.
+
+        origin_qprog_func (input,param,m_machine,qubits,cubits)
+
+        `input`: user defined array-like input 1D classical data.
+
+        `param`: array_like input user defined 1D quantum circuit parameters.
+
+        `m_machine`: simulator created by QuantumLayerV3.
+
+        `qubits`: quantum bits allocated by QuantumLayerV3
+
+        `cubits`: classical bits allocated by QuantumLayerV3. If your circuit does not use classical bits, you should also keep this parameter as a function input.
+
+    Example::
+
+        import numpy as np
+        import pyqpanda as pq
+        import pyvqnet
+        from pyvqnet.qnn import QuantumLayerV3
+
+        def qfun(input, param, m_machine, m_qlist, cubits):
+        measure_qubits = [0,1, 2]
+        m_prog = pq.QProg()
+        cir = pq.QCircuit()
+
+        cir.insert(pq.RZ(m_qlist[0], input[0]))
+        cir.insert(pq.RX(m_qlist[2], input[2]))
+
+        qcir = pq.RX(m_qlist[1], param[1])
+        qcir.set_control(m_qlist[0])
+        cir.insert(qcir)
+
+        qcir = pq.RY(m_qlist[0], param[2])
+        qcir.set_control(m_qlist[1])
+        cir.insert(qcir)
+
+        cir.insert(pq.RY(m_qlist[0], input[1]))
+
+        qcir = pq.RZ(m_qlist[0], param[3])
+        qcir.set_control(m_qlist[1])
+        cir.insert(qcir)
+        m_prog.insert(cir)
+
+        for idx, ele in enumerate(measure_qubits):
+        m_prog << pq.Measure(m_qlist[ele], cubits[idx]) # pylint: disable=expression-not-assigned
+        return m_prog
+        from pyvqnet.utils.initializer import ones
+        l = QuantumLayerV3(qfun,
+        4,
+        3,
+        3,
+        pauli_str_dict=None,
+        shots=1000,
+        initializer=ones,
+        name="")
+        x = pyvqnet.tensor.QTensor(
+        [[2.56, 1.2,-3]],
+        requires_grad=True)
+        y = l(x)
+
+        y.backward()
+        print(l.m_para.grad.to_numpy())
+        print(x.grad.to_numpy())
+
+
 QuantumBatchAsyncQcloudLayer
 =================================
 
@@ -261,8 +353,9 @@ When you install the latest version of pyqpanda, you can use this interface to d
     :param dtype: The data type of the parameter. The default value is None, which uses the default data type pyvqnet.kfloat32.
     :param name: The name of the module. Defaults to empty string.
     :param diff_method: Differential method for gradient calculation. The default is "parameter_shift", other differential methods are not currently supported.
-    :param Submit_kwargs: Additional keyword parameters used to submit quantum circuits, reserved parameters, currently have no effect.
-    :param query_kwargs: Additional keyword parameters used to query quantum results, reserved parameters, currently have no effect.
+    :param submit_kwargs: Additional keyword parameters for submitting quantum circuits, default: {"chip_id":pyqpanda.real_chip_type.origin_72,"is_amend":True,"is_mapping":True,"is_optimization":True,"compile_level":3, "default_task_group_size":200, "test_qcloud_fake":False}, when test_qcloud_fake is set to True, the local CPUQVM is simulated.
+    :param query_kwargs: Additional keyword parameters for querying quantum results, default: {"timeout":2,"print_query_info":True,"sub_circuits_split_size":1}.
+    
     :return: A module that can calculate quantum circuits.
 
     Example::
@@ -346,6 +439,131 @@ When you install the latest version of pyqpanda, you can use this interface to d
         y.backward()
         print(l.m_para.grad)
         print(x.grad)
+
+
+QuantumBatchAsyncQcloudLayerES
+=================================
+
+When you install the latest version of pyqpanda, you can use this interface to define a variational circuit and submit it to originqc for running on the real chip.
+
+.. py:class:: pyvqnet.qnn.quantumlayer.QuantumBatchAsyncQcloudLayerES(origin_qprog_func, qcloud_token, para_num, num_qubits, num_cubits, pauli_str_dict=None, shots = 1000, initializer=None, dtype=None, name="", diff_method="ES", submit_kwargs={}, query_kwargs={}, sigma=np.pi/24)
+    
+    Abstract computing module for originqc real chips using pyqpanda QCLOUD starting with version 3.8.2.2. It submits parameterized quantum circuits to real chips and obtains measurement results.
+
+    .. note::
+
+        qcloud_token is the API token you applied for at https://qcloud.originqc.com.cn/.
+        origin_qprog_func needs to return data of type pypqanda.QProg. If pauli_str_dict is not set, you need to ensure that measure has been inserted into the QProg.
+        The form of origin_qprog_func must be as follows:
+
+        origin_qprog_func(input,param,qubits,cbits,machine)
+
+            `input`: Input 1~2-dimensional classic data. In the case of two-dimensional data, the first dimension is the batch size.
+
+            `param`: Enter the parameters to be trained for the one-dimensional variational quantum circuit.
+
+            `machine`: The simulator QCloud created by QuantumBatchAsyncQcloudLayerES does not require users to define it in additional functions.
+
+            `qubits`: Qubits created by the simulator QCloud created by QuantumBatchAsyncQcloudLayerES, the number is `num_qubits`, the type is pyQpanda.Qubits, no need for the user to define it in the function.
+
+            `cbits`: Classic bits allocated by QuantumBatchAsyncQcloudLayerES, the number is `num_cubits`, the type is pyQpanda.ClassicalCondition, no need for the user to define it in the function. .
+
+
+    :param origin_qprog_func: The variational quantum circuit function built by QPanda must return QProg.
+    :param qcloud_token: `str` - The type of quantum machine or cloud token used for execution.
+    :param para_num: `int` - Number of parameters, the parameter is a QTensor of size [para_num].
+    :param num_qubits: `int` - Number of qubits in the quantum circuit.
+    :param num_cubits: `int` - The number of classical bits used for measurement in quantum circuits.
+    :param pauli_str_dict: `dict|list` - A dictionary or list of dictionaries representing Pauli operators in quantum circuits. The default is "none", and the measurement operation is performed. If a dictionary of Pauli operators is entered, a single expectation or multiple expectations will be calculated.
+    :param shot: `int` - Number of measurements. The default value is 1000.
+    :param initializer: Initializer for parameter values. The default is "None", using 0~2*pi normal distribution.
+    :param dtype: The data type of the parameter. The default value is None, which uses the default data type pyvqnet.kfloat32.
+    :param name: The name of the module. Defaults to empty string.
+    :param diff_method: Differential method for gradient calculation. The default is "ES",  originate in paper "Learning to learn with an evolutionary strategy Learning to learn with an evolutionary strategy", other differential methods are not currently supported.
+    :param submit_kwargs: Additional keyword parameters for submitting quantum circuits, default: {"chip_id":pyqpanda.real_chip_type.origin_72,"is_amend":True,"is_mapping":True,"is_optimization":True,"compile_level":3, "default_task_group_size":200, "test_qcloud_fake":False}, when test_qcloud_fake is set to True, the local CPUQVM is simulated.
+    :param query_kwargs: Additional keyword parameters for querying quantum results, default: {"timeout":2,"print_query_info":True,"sub_circuits_split_size":1}.
+    :param sigma: Sampling variance of the multivariate non-trivial distribution, generally take pi/6, pi/12, pi/24, default is pi/24.
+    :return: A module that can calculate quantum circuits.
+
+    Example::
+
+        import numpy as np
+        import pyqpanda as pq
+        import pyvqnet
+        from pyvqnet.qnn import QuantumLayer,QuantumBatchAsyncQcloudLayerES
+        from pyvqnet.qnn import expval_qcloud
+
+        def qfun(input,param, m_machine, m_qlist,cubits):
+            measure_qubits = [0,2]
+            m_prog = pq.QProg()
+            cir = pq.QCircuit()
+            cir.insert(pq.RZ(m_qlist[0],input[0]))
+            cir.insert(pq.CNOT(m_qlist[0],m_qlist[1]))
+            cir.insert(pq.RY(m_qlist[1],param[0]))
+            cir.insert(pq.CNOT(m_qlist[0],m_qlist[2]))
+            cir.insert(pq.RZ(m_qlist[1],input[1]))
+            cir.insert(pq.RY(m_qlist[2],param[1]))
+            cir.insert(pq.H(m_qlist[2]))
+            m_prog.insert(cir)
+
+            for idx, ele in enumerate(measure_qubits):
+                m_prog << pq.Measure(m_qlist[ele], cubits[idx])  # pylint: disable=expression-not-assigned
+            return m_prog
+
+        l = QuantumBatchAsyncQcloudLayerES(qfun,
+                        "3047DE8A59764BEDAC9C3282093B16AF1",
+                        2,
+                        6,
+                        6,
+                        pauli_str_dict=None,
+                        shots = 1000,
+                        initializer=None,
+                        dtype=None,
+                        name="",
+                        diff_method="ES",
+                        submit_kwargs={},
+                        query_kwargs={},
+                        sigma=np.pi/24)
+        x = pyvqnet.tensor.QTensor([[0.56,1.2],[0.56,1.2],[0.56,1.2],[0.56,1.2],[0.56,1.2]],requires_grad= True)
+        y = l(x)
+        print(f"y {y}")
+        y.backward()
+        print(f"l.m_para.grad {l.m_para.grad}")
+        print(f"x.grad {x.grad}")
+
+        def qfun2(input,param, m_machine, m_qlist,cubits):
+            measure_qubits = [0,2]
+            m_prog = pq.QProg()
+            cir = pq.QCircuit()
+            cir.insert(pq.RZ(m_qlist[0],input[0]))
+            cir.insert(pq.CNOT(m_qlist[0],m_qlist[1]))
+            cir.insert(pq.RY(m_qlist[1],param[0]))
+            cir.insert(pq.CNOT(m_qlist[0],m_qlist[2]))
+            cir.insert(pq.RZ(m_qlist[1],input[1]))
+            cir.insert(pq.RY(m_qlist[2],param[1]))
+            cir.insert(pq.H(m_qlist[2]))
+            m_prog.insert(cir)
+
+            return m_prog
+        l = QuantumBatchAsyncQcloudLayerES(qfun2,
+                    "3047DE8A59764BEDAC9C3282093B16AF",
+                    2,
+                    6,
+                    6,
+                    pauli_str_dict={'Z0 X1':10,'':-0.5,'Y2':-0.543},
+                    shots = 1000,
+                    initializer=None,
+                    dtype=None,
+                    name="",
+                    diff_method="ES",
+                    submit_kwargs={},
+                    query_kwargs={})
+        x = pyvqnet.tensor.QTensor([[0.56,1.2],[0.56,1.2],[0.56,1.2],[0.56,1.2]],requires_grad= True)
+        y = l(x)
+        print(f"y {y}")
+        y.backward()
+        print(f"l.m_para.grad {l.m_para.grad}")
+        print(f"x.grad {x.grad}")
 
 
 QuantumLayerMultiProcess
@@ -2620,6 +2838,159 @@ Simultaneous Perturbation Stochastic Approximation optimizers
         y = model(data)
         print(y)
 
+Quantum fisher information computation matrix
+========================================================
+
+.. py:class:: pyvqnet.qnn.opt.quantum_fisher(py_qpanda_config, params, target_gate_type_lists,target_gate_bits_lists, qcir_lists, wires)
+    
+    Returns the quantum fisher information matrix for a quantum circuit.
+
+    .. math::
+
+        \mathrm{QFIM}_{i, j}=4 \operatorname{Re}\left[\left\langle\partial_i \psi(\boldsymbol{\theta}) \mid \partial_j \psi(\boldsymbol{\theta})\right\rangle-\left\langle\partial_i \psi(\boldsymbol{\theta}) \mid \psi(\boldsymbol{\theta})\right\rangle\left\langle\psi(\boldsymbol{\theta}) \mid \partial_j \psi(\boldsymbol{\theta})\right\rangle\right]
+
+    The short version is :math::math:`\left|\partial_j \psi(\boldsymbol{\theta})\right\rangle:=\frac{\partial}{\partial \theta_j}|\psi(\boldsymbol{\theta})\rangle`.
+
+    .. note::
+
+        Currently only RX,RY,RZ are supported.
+
+    :param params: Variable parameters in circuits.
+    :param target_gate_type_lists: Supports "RX", "RY", "RZ" or lists.
+    :param target_gate_bits_lists:  Which quantum bit or bits the parameterised gate acts on .
+    :param qcir_lists: The list of quantum circles before the target parameterised gate to compute the metric tensor, see the following example.
+    :param wires: Total Quantum Bit Index for Quantum Circuits.
+
+    Example::
+    
+        import pyqpanda as pq
+
+        from pyvqnet import *
+        from pyvqnet.qnn.opt import pyqpanda_config_wrapper, insert_pauli_for_mt, quantum_fisher
+        from pyvqnet.qnn import ProbsMeasure
+        import numpy as np
+        import pennylane as qml
+        import pennylane.numpy as pnp
+
+        n_wires = 4
+        def layer_subcircuit_new(config: pyqpanda_config_wrapper, params):
+            qcir = pq.QCircuit()
+            qcir.insert(pq.RX(config._qubits[0], params[0]))
+            qcir.insert(pq.RY(config._qubits[1], params[1]))
+            
+            qcir.insert(pq.CNOT(config._qubits[0], config._qubits[1]))
+            
+            qcir.insert(pq.RZ(config._qubits[2], params[2]))
+            qcir.insert(pq.RZ(config._qubits[3], params[3]))
+            return qcir
+
+
+        def get_p1_diagonal_new(config, params, target_gate_type, target_gate_bits,
+                            wires):
+            qcir = layer_subcircuit_new(config, params)
+            qcir2 = insert_pauli_for_mt(config._qubits, target_gate_type,
+                                        target_gate_bits)
+            qcir3 = pq.QCircuit()
+            qcir3.insert(qcir)
+            qcir3.insert(qcir2)
+            
+            m_prog = pq.QProg()
+            m_prog.insert(qcir3)
+            return ProbsMeasure(wires, m_prog, config._machine, config._qubits)
+
+        config = pyqpanda_config_wrapper(n_wires)
+        qcir = []
+        
+        qcir.append(get_p1_diagonal_new)
+
+        params2 = QTensor([0.5, 0.5, 0.5, 0.25], requires_grad=True)
+
+        mt = quantum_fisher(config, params2, [['RX', 'RY', 'RZ', 'RZ']],
+                                [[0, 1, 2, 3]], qcir, [0, 1, 2, 3])
+
+        # The above example shows that there are no identical gates in the same layer, 
+        # but in the same layer you need to modify the logic gates according to the following example.
+        
+        n_wires = 3
+        def layer_subcircuit_01(config: pyqpanda_config_wrapper, params):
+            qcir = pq.QCircuit()
+            qcir.insert(pq.RX(config._qubits[0], params[0]))
+            qcir.insert(pq.RY(config._qubits[1], params[1]))
+            qcir.insert(pq.CNOT(config._qubits[0], config._qubits[1]))
+            
+            return qcir
+
+        def layer_subcircuit_02(config: pyqpanda_config_wrapper, params):
+            qcir = pq.QCircuit()
+            qcir.insert(pq.RX(config._qubits[0], params[0]))
+            qcir.insert(pq.RY(config._qubits[1], params[1]))
+            qcir.insert(pq.CNOT(config._qubits[0], config._qubits[1]))
+            qcir.insert(pq.RZ(config._qubits[1], params[2]))
+            return qcir
+
+        def layer_subcircuit_03(config: pyqpanda_config_wrapper, params):
+            qcir = pq.QCircuit()
+            qcir.insert(pq.RX(config._qubits[0], params[0]))
+            qcir.insert(pq.RY(config._qubits[1], params[1]))
+            qcir.insert(pq.CNOT(config._qubits[0], config._qubits[1])) #  01 part
+            
+            qcir.insert(pq.RZ(config._qubits[1], params[2]))  #  02 part
+            
+            qcir.insert(pq.RZ(config._qubits[1], params[3]))
+            return qcir
+
+        def get_p1_diagonal_01(config, params, target_gate_type, target_gate_bits,
+                            wires):
+            qcir = layer_subcircuit_01(config, params)
+            qcir2 = insert_pauli_for_mt(config._qubits, target_gate_type,
+                                        target_gate_bits)
+            qcir3 = pq.QCircuit()
+            qcir3.insert(qcir)
+            qcir3.insert(qcir2)
+            
+            m_prog = pq.QProg()
+            m_prog.insert(qcir3)
+            return ProbsMeasure(wires, m_prog, config._machine, config._qubits)
+        
+        def get_p1_diagonal_02(config, params, target_gate_type, target_gate_bits,
+                            wires):
+            qcir = layer_subcircuit_02(config, params)
+            qcir2 = insert_pauli_for_mt(config._qubits, target_gate_type,
+                                        target_gate_bits)
+            qcir3 = pq.QCircuit()
+            qcir3.insert(qcir)
+            qcir3.insert(qcir2)
+            
+            m_prog = pq.QProg()
+            m_prog.insert(qcir3)
+            return ProbsMeasure(wires, m_prog, config._machine, config._qubits)
+        
+        def get_p1_diagonal_03(config, params, target_gate_type, target_gate_bits,
+                            wires):
+            qcir = layer_subcircuit_03(config, params)
+            qcir2 = insert_pauli_for_mt(config._qubits, target_gate_type,
+                                        target_gate_bits)
+            qcir3 = pq.QCircuit()
+            qcir3.insert(qcir)
+            qcir3.insert(qcir2)
+            
+            m_prog = pq.QProg()
+            m_prog.insert(qcir3)
+            return ProbsMeasure(wires, m_prog, config._machine, config._qubits)
+        
+        config = pyqpanda_config_wrapper(n_wires)
+        qcir = []
+        
+        qcir.append(get_p1_diagonal_01)
+        qcir.append(get_p1_diagonal_02)
+        qcir.append(get_p1_diagonal_03)
+        
+        params2 = QTensor([0.5, 0.5, 0.5, 0.25], requires_grad=True)
+
+        mt = quantum_fisher(config, params2, [['RX', 'RY'], ['RZ'], ['RZ']], # rx,ry counts as layer one, first rz as layer two, second rz as layer three.
+                                [[0, 1], [1], [1]], qcir, [0, 1])
+
+
 Automatic differential simulation of variational quantum circuits
 ******************************************************************************
 
@@ -4155,7 +4526,7 @@ cswap
 
 
 CSWAP
--------------------------------------------------- -------------
+-------------------------------------------------
 
 .. py:class:: pyvqnet.qnn.vqc.CSWAP(has_params: bool = False, trainable: bool = False, init_params=None, wires=None, dtype=pyvqnet.kcomplex64, use_dagger=False)
     

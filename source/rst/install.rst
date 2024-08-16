@@ -6,7 +6,7 @@ VQNet python package Installation
 
 We provide precompiled Python packages for installation on Linux, Windows, x86_64 OSX >=10.12, arm64 OSX >=13.0, supporting python3.8, 3.9, or 3.10.
 
-For Linux systems, pyvqnet offers accelerated computation for classic neural networks based on Nvidia GPU. If your computer's GPU is GTX10 series or later, you can build models with pyvqnet's GPU functionality by installing cuda11.7 following the official CUDA website.
+For Linux systems, pyvqnet offers accelerated computation for classic neural networks based on Nvidia GPU. If your computer's GPU is GTX10 series or later, you can build models with pyvqnet's GPU functionality by installing cuda11.8 following the official CUDA website.
 
 
 .. code-block::
