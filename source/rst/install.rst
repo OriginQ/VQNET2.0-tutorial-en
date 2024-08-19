@@ -13,6 +13,12 @@ For Linux systems, pyvqnet offers accelerated computation for classic neural net
 
     pip install pyvqnet --index-url https://pypi.originqc.com.cn
 
+If you encounter network problems and cannot download, try increasing the timeout.
+
+.. code-block::
+
+    pip install pyvqnet --index-url https://pypi.originqc.com.cn --default-timeout=100
+
 Validate VQNet's installation 
 ----------------------------------
 
