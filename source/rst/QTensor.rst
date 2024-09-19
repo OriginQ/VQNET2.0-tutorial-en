@@ -707,7 +707,9 @@ __getitem__
 
         If your QTensor as an index is the result of a logical operation, then you do a Boolean index.
 
-        .. note:: We use an index form like a[3,4,1],but the form a[3][4][1] is not supported.And ``Ellipsis`` is also not supported.
+        .. note:: 
+            
+            We use an index form like a[3,4,1],but the form a[3][4][1] is not supported.
 
         :param item: A integer or QTensor as an index.
 
@@ -797,7 +799,9 @@ __setitem__
 
     If your QTensor as an index is the result of a logical operation, then you do a Boolean index.
 
-    .. note:: We use an index form like a[3,4,1],but the form a[3][4][1] is not supported.And ``Ellipsis`` is also not supported.
+    .. note:: 
+        
+        We use an index form like a[3,4,1],but the form a[3][4][1] is not supported.
 
     :param item: A integer or QTensor as an index
 
@@ -1320,6 +1324,35 @@ eye
         # [0, 1, 0],
         # [0, 0, 1]
         # ]
+
+
+diagonal
+==============================
+
+.. py:function:: pyvqnet.tensor.diagonal(t: QTensor, offset: int = 0, dim1=0, dim2=1)
+
+
+    Returns a partial view of :attr:`t` with the diagonal elements appended as dimensions to the end of the shape relative to :attr:`dim1` and :attr:`dim2`.
+    :attr:`offset` is the offset of the main diagonal.
+
+    :param t: input tensor
+    :param offset: offset (0 means main diagonal, positive values ​​mean the nth diagonal above the main diagonal, negative values ​​mean the nth diagonal below the main diagonal)
+    :param dim1: first dimension to take the diagonal. Default: 0.
+    :param dim2: second dimension to take the diagonal. Default: 1.
+
+    Example::
+
+        from pyvqnet.tensor import randn,diagonal
+
+        x = randn((2, 5, 4, 2))
+        diagonal_elements = diagonal(x, offset=-1, dim1=1, dim2=2)
+        print(diagonal_elements)
+        # [[[-0.4641751,-0.1410288,-0.1215512, 0.5423283],
+        #   [ 0.9556418, 0.0376572, 1.2571657, 0.8268463]],
+
+        #  [[-0.7972266, 0.2080281,-0.1157126,-0.7342224],
+        #   [ 1.1039937, 0.4700735, 1.0219841,-0.146358 ]]]
+
 
 diag
 ==============================
@@ -2143,6 +2176,41 @@ kron
         #     [483. 506. 529. 552. 504. 528. 552. 576.]]]]]
 
 
+einsum
+==============================
+
+.. py:function:: pyvqnet.tensor.einsum(equation, *operands)
+    
+    Sum the products of the elements of the input operands along the specified dimension using a notation based on the Einstein summation convention.
+
+    .. note::
+
+        This function uses opt_einsum (https://optimized-einsum.readthedocs.io/en/stable/) to speed up the computation or reduce memory consumption by optimizing the contraction order. This optimization occurs when there are at least three inputs.
+
+        For more complex `einsum`, opt_einsum can be additionally imported to compute directly on QTensor.
+
+    :param equation: The subscript of the Einstein summation.
+    :param operands: The tensor on which the Einstein summation is to be computed.
+
+    :return:
+
+        The QTensor result.
+
+    Example::
+
+        from pyvqnet import tensor
+
+        vqneta = tensor.randn((3, 5, 4))
+        vqnetl = tensor.randn((2, 5))
+        vqnetr = tensor.randn((2, 4))
+        z = tensor.einsum('bn,anm,bm->ba',  vqnetl, vqneta,vqnetr)
+        print(z.shape)
+        #[2, 3]
+        vqneta = tensor.randn((20,30,40,50))
+        z = tensor.einsum('...ij->...ji', vqneta)
+        print(z.shape)
+        #[20, 30, 50, 40]
+
 reciprocal
 ==============================
 
@@ -2589,13 +2657,56 @@ square
         t = QTensor([1, 2, 3])
         x = tensor.square(t)
         print(x)
-
         # [1, 4, 9]
+
+
+
+eigh
+==============================
+
+.. py:function:: pyvqnet.tensor.eigh(t: QTensor)
+ 
+    Returns the eigenvalues ​​and eigenvectors of a complex Hermitian (conjugate symmetric) or real symmetric matrix.
+
+    Returns two objects, a 1D array containing the eigenvalues ​​of a,
+    and a 2D square matrix or matrix (depending on the input type) of the corresponding eigenvectors (in columns).
+
+    :param: Input QTensor.
+    :param: Eigenvalues ​​and eigenvectors of t.
+    :return:
+
+        Returns eigenvalues ​​and eigenvectors
+
+    Examples::
+
+        import numpy as np
+        import pyvqnet
+        from pyvqnet import tensor
+
+
+        def generate_random_symmetric_matrix(n):
+                A = pyvqnet.tensor.randn((n, n))
+                A = A + A.transpose()
+                return A
+
+        n = 3
+        symmetric_matrix = generate_random_symmetric_matrix(n)
+
+        evs,vecs = pyvqnet.tensor.eigh(symmetric_matrix)
+        print(evs)
+        print(vecs)
+        # [-4.0669565,-1.9191254,-1.3642329]
+        # <QTensor [3] DEV_CPU kfloat32>
+
+        # [[-0.9889652, 0.0325959,-0.1445187],
+        #  [ 0.0912495, 0.9025176,-0.4208745],
+        #  [ 0.1167119,-0.4294176,-0.8955328]]
+        # <QTensor [3, 3] DEV_CPU kfloat32>
 
 frobenius_norm
 ==============================
 
-.. py:function:: pyvqnet.tensor.frobenius_norm(t: QTensor, axis: int = None, keepdims=False):
+.. py:function:: pyvqnet.tensor.frobenius_norm(t: QTensor, axis: int = None, keepdims=False)
 
     Computes the F-norm of the tensor on the input QTensor along the axis set by axis ,
     if axis is None, returns the F-norm of all elements.
@@ -3136,6 +3247,31 @@ not_equal
         # [ True False]]
 
 
+bitwise_and
+==============================
+
+.. py:function:: pyvqnet.tensor.bitwise_and(t1, t2)
+ 
+    Computes the bitwise AND of two QTensor elements.
+
+    :param t1: Input QTensor t1. Only integers or booleans are valid inputs.
+    :param t2: Input QTensor t2. Only integers or booleans are valid inputs.
+    :return:
+        result QTensor
+
+    Example::
+
+        from pyvqnet.tensor import *
+        import numpy as np
+        from pyvqnet.dtype import *
+        powers_of_two = 1 << np.arange(14, dtype=np.int64)[::-1]
+        samples = tensor.QTensor([23],dtype=kint8)
+        samples = samples.unsqueeze(-1)
+        states_sampled_base_ten = samples & tensor.QTensor(powers_of_two,dtype = samples.dtype, device = samples.device)
+        print(states_sampled_base_ten)
+        #[[ 0, 0, 0, 0, 0, 0, 0, 0, 0,16, 0, 4, 2, 1]]
+
+
 Matrix Operations
 **********************
 
@@ -3445,6 +3581,32 @@ unsqueeze
         #  [18, 19, 20],
         #  [21, 22, 23]]]]]
         # ]
+
+
+moveaxis
+===============================
+
+.. py:function:: pyvqnet.tensor.moveaxis(t, source: int, destination: int)
+
+    Move dimensions of `t` from positions in `source` to positions in `destination`.
+
+    Other dimensions of `t` that are not explicitly moved retain their original order and appear at positions not specified in `destination`.
+
+    :param t: Input QTensor.
+    :param source: (integer or tuple of integers) The original positions of the dimensions to be moved. These positions must be unique.
+    :param destination: (integer or tuple of integers) The destination positions for each original dimension. These positions must also be unique.
+
+    :return:
+        New QTensor
+
+
+    Example::
+
+        from pyvqnet import QTensor,tensor
+        a = tensor.arange(24).reshape(2,3,4)
+        b = tensor.moveaxis(a,(1, 2), (0, 1))
+        print(b.shape)
+
 
 swapaxis
 ==============================
