@@ -333,7 +333,8 @@ When you install the latest version of pyqpanda, you can use this interface to d
 .. py:class:: pyvqnet.qnn.quantumlayer.QuantumBatchAsyncQcloudLayer(origin_qprog_func, qcloud_token, para_num, num_qubits, num_cubits, pauli_str_dict=None, shots = 1000, initializer=None, dtype=None, name="", diff_method="parameter_shift ", submit_kwargs={}, query_kwargs={})
     
     Abstract computing module for originqc real chips using pyqpanda QCLOUD starting with version 3.8.2.2. It submits parameterized quantum circuits to real chips and obtains measurement results.
-
+    If diff_method == "random_coordinate_descent" , we will randomly select a single parameter to compute the gradient, and the other parameters will remain zero. Ref: https://arxiv.org/abs/2311.00088 .
+    
     .. note::
 
         qcloud_token is the API token you applied for at https://qcloud.originqc.com.cn/.
@@ -363,7 +364,7 @@ When you install the latest version of pyqpanda, you can use this interface to d
     :param initializer: Initializer for parameter values. The default is "None", using 0~2*pi normal distribution.
     :param dtype: The data type of the parameter. The default value is None, which uses the default data type pyvqnet.kfloat32.
     :param name: The name of the module. Defaults to empty string.
-    :param diff_method: Differential method for gradient calculation. The default is "parameter_shift", other differential methods are not currently supported.
+    :param diff_method: Differentiation method for gradient computation. Default is "parameter_shift". If diff_method == "random_coordinate_descent" , we will randomly select a single parameter to compute the gradient, and the other parameters will remain zero. Ref: https://arxiv.org/abs/2311.00088 .
     :param submit_kwargs: Additional keyword parameters for submitting quantum circuits, default: {"chip_id":pyqpanda.real_chip_type.origin_72,"is_amend":True,"is_mapping":True,"is_optimization":True,"compile_level":3, "default_task_group_size":200, "test_qcloud_fake":False}, when test_qcloud_fake is set to True, the local CPUQVM is simulated.
     :param query_kwargs: Additional keyword parameters for querying quantum results, default: {"timeout":2,"print_query_info":True,"sub_circuits_split_size":1}.
     

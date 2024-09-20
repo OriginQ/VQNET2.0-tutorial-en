@@ -4317,10 +4317,9 @@ Other functions
 HybirdVQCQpandaQVMLayer
 -----------------------------------------------------------
 
-.. py:class:: pyvqnet.qnn.vqc.HybirdVQCQpandaQVMLayer(vqc_module: Module,qcloud_token: str,para_num: int,num_qubits: int,num_cubits: int,pauli_str_dict: Union[List[Dict], Dict, None] = None,shots: int = 1000,initializer: Callable = None,dtype: Union[int, None] = None,name: str = "",diff_method: str = "parameter_shift",submit_kwargs: Dict = {},query_kwargs: Dict = {})
+.. py:class:: pyvqnet.qnn.vqc.HybirdVQCQpandaQVMLayer(vqc_module: Module,qcloud_token: str,para_num: int,num_qubits: int,num_cubits: int,pauli_str_dict: Union[List[Dict], Dict, None] = None,shots: int = 1000,initializer: Callable = None,dtype: Union[int, None] = None,name: str = "",submit_kwargs: Dict = {},query_kwargs: Dict = {})
     
     Hybrid vqc and qpanda QVM layer. This layer converts quantum circuit computations defined by the user `forward` function into QPanda circuits, which can be run forward on a QPanda local VM or cloud service, and simulates circuit parameter gradients on the local CPU, reducing the time complexity of using the parameter drift method.
-    If diff_method == "random_coordinate_descent" , the layer will randomly select a single parameter to calculate the gradient, and other parameters will remain zero. Reference: https://arxiv.org/abs/2311.00088
 
     :param vqc_module: vqc_module with forward(), qmachine set up correctly.
     :param qcloud_token: `str` - Type of quantum machine or cloud token for execution.
@@ -4332,7 +4331,6 @@ HybirdVQCQpandaQVMLayer
     :param initializer: Initializer for parameter values. Default is None.
     :param dtype: Data type of the parameter. Default is None, i.e. use the default data type.
     :param name: Module name. Default is the empty string.
-    :param diff_method: Differentiation method for gradient computation. Default is "parameter_shift". If diff_method == "random_coordinate_descent" , we will randomly select a single parameter to compute the gradient, and the other parameters will remain zero. Ref: https://arxiv.org/abs/2311.00088 .
     :param submit_kwargs: Additional keyword parameters for submitting quantum circuits, default value:
                 {"chip_id":pyqpanda.real_chip_type.origin_72,"is_amend":True,"is_mapping":True,"is_optimization":True,"default_task_group_size":200,"test_qcloud_fake":True}.
     :param query_kwargs: Additional keyword parameters for querying quantum results, default value:{"timeout":2,"print_query_info":True,"sub_circuits_split_size":1}。
@@ -4451,7 +4449,6 @@ HybirdVQCQpandaQVMLayer
                     initializer=None,
                     dtype=None,
                     name="",
-            diff_method="random_coordinate_descent",
             submit_kwargs={"test_qcloud_fake":True},
                     query_kwargs={})
     
