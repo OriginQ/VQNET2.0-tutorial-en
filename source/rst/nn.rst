@@ -4347,3 +4347,538 @@ PipelineParallelTrainingWrapper
             w = PipelineParallelTrainingWrapper(args,join_layers(Model()),trainset)
 
             w.train_batch()
+
+
+ZeroModelInitial
+=================================
+.. py:class:: pyvqnet.distributed.ZeroModelInitial(args,model,optimizer)
+    
+    Zero1 api interface, currently only for linux platform based on GPU parallel computing.
+
+    :param args: parameters dict。
+    :param model: Module。
+    :param optimizer: Optimizer。
+
+    :return:
+        Zero1 Engine.
+
+The following uses the MNIST database to train a classification task on an MLP model on 2 GPUs.
+
+    The batch size is `train_batch_size` = 64, and the stage `stage` of `zero_optimization` is set to 1. 
+    If Optimizer is None, the setting of `optimizer` in `args` is used. Other configuration parameters can be found in `args`. 
+    
+    In addition, each process needs to be configured with the environment variable `LOCAL_RANK`.
+    
+    .. code-block::
+
+        os.environ["LOCAL_RANK"] = str(dist.get_local_rank())
+
+    Examples::
+
+        from pyvqnet.distributed import *
+        from pyvqnet import *
+        from time import time
+        import pyvqnet.optim as optim
+        import pyvqnet.nn as nn
+        import pyvqnet
+        import sys
+        import pyvqnet 
+        import numpy as np
+        import os
+        import struct
+
+        def load_mnist(dataset="training_data",
+                    digits=np.arange(2),
+                    path="./"):
+            """
+            load mnist data
+            """
+            from array import array as pyarray
+            if dataset == "training_data":
+                fname_image = os.path.join(path, "train-images.idx3-ubyte").replace(
+                    "\\", "/")
+                fname_label = os.path.join(path, "train-labels.idx1-ubyte").replace(
+                    "\\", "/")
+            elif dataset == "testing_data":
+                fname_image = os.path.join(path, "t10k-images.idx3-ubyte").replace(
+                    "\\", "/")
+                fname_label = os.path.join(path, "t10k-labels.idx1-ubyte").replace(
+                    "\\", "/")
+            else:
+                raise ValueError("dataset must be 'training_data' or 'testing_data'")
+
+            flbl = open(fname_label, "rb")
+            _, size = struct.unpack(">II", flbl.read(8))
+
+            lbl = pyarray("b", flbl.read())
+            flbl.close()
+
+            fimg = open(fname_image, "rb")
+            _, size, rows, cols = struct.unpack(">IIII", fimg.read(16))
+            img = pyarray("B", fimg.read())
+            fimg.close()
+
+            ind = [k for k in range(size) if lbl[k] in digits]
+            num = len(ind)
+            images = np.zeros((num, rows, cols),dtype=np.float32)
+
+            labels = np.zeros((num, 1), dtype=int)
+            for i in range(len(ind)):
+                images[i] = np.array(img[ind[i] * rows * cols:(ind[i] + 1) * rows *
+                                        cols]).reshape((rows, cols))
+                labels[i] = lbl[ind[i]]
+
+            return images, labels
+
+
+        train_images_np, train_labels_np = load_mnist(dataset="training_data", digits=np.arange(10),path="../data/MNIST_data/")
+        train_images_np = train_images_np / 255.
+
+        test_images_np, test_labels_np = load_mnist(dataset="testing_data", digits=np.arange(10),path="../data/MNIST_data/")
+        test_images_np = test_images_np / 255.
+
+        local_rank = pyvqnet.distributed.get_rank()
+
+        from pyvqnet.distributed import ZeroModelInitial
+
+        class MNISTClassifier(nn.Module):
+            
+            def __init__(self):
+                super(MNISTClassifier, self).__init__()
+                self.fc1 = nn.Linear(28*28, 512)
+                self.fc2 = nn.Linear(512, 256)
+                self.fc3 = nn.Linear(256, 128)
+                self.fc4 = nn.Linear(128, 64)
+                self.fc5 = nn.Linear(64, 10)
+                self.ac = nn.activation.ReLu()
+                
+            def forward(self, x:pyvqnet.QTensor):
+                
+                x = x.reshape([-1, 28*28])  
+                x = self.ac(self.fc1(x))
+                x = self.fc2(x)
+                x = self.fc3(x)
+                x = self.fc4(x)
+                x = self.fc5(x)
+                return x
+        
+        model = MNISTClassifier()
+
+        model.to(local_rank + 1000)
+            
+        Comm_op = CommController("nccl")
+        Comm_op.broadcast_model_params(model, 0)
+
+        batch_size = 64
+
+        criterion = nn.CrossEntropyLoss()  
+        optimizer = optim.Adam(model.parameters(), lr=0.001) 
+
+        args_ = {
+                "train_batch_size": batch_size, 
+                "optimizer": {
+                    "type": "adam",
+                    "params": {
+                    "lr": 0.001,
+                    }
+                },
+                "zero_optimization": {
+                    "stage": 1, 
+                }    
+            }
+
+        os.environ["LOCAL_RANK"] = str(get_local_rank())
+        model = ZeroModelInitial(args=args_, model=model, optimizer=optimizer) 
+
+        def compute_acc(outputs, labels, correct, total):
+            predicted = pyvqnet.tensor.argmax(outputs, dim=1, keepdims=True)
+            total += labels.size
+            correct += pyvqnet.tensor.sums(predicted == labels).item()
+            return correct, total
+
+        train_acc = 0
+        test_acc = 0
+        epochs = 5
+        loss = 0
+        time1 = time()
+
+        for epoch in range(epochs):
+            model.train()
+            total = 0
+            correct = 0
+            step = 0
+            
+            num_batches = (train_images_np.shape[0] + batch_size - 1) // batch_size
+            
+            for i in range(num_batches):
+                
+                data_ = tensor.QTensor(train_images_np[i*batch_size: (i+1) * batch_size,:], dtype = kfloat32)
+                labels = tensor.QTensor(train_labels_np[i*batch_size: (i+1) * batch_size,:], dtype = kint64)
+                    
+                data_ = data_.to(local_rank + 1000)
+                labels = labels.to(local_rank + 1000)
+                
+                outputs = model(data_)
+                loss = criterion(labels, outputs)
+                
+                model.backward(loss) 
+                model.step() 
+
+                correct, total = compute_acc(outputs, labels, correct, total)
+                step += 1
+                if step % 50 == 0:
+                    print(f"Train : rank {get_rank()} Epoch [{epoch+1}/{epochs}], step {step} Loss: {loss.item():.4f} acc {100 * correct / total}")
+                    sys.stdout.flush()
+                    
+            train_acc = 100 * correct / total
+            
+        time2 = time()
+        print(f'Accuracy of the model on the 10000 Train images: {train_acc}% time cost {time2 - time1}')
+
+
+ColumnParallelLinear
+=================================
+.. py:class:: pyvqnet.distributed.ColumnParallelLinear(input_size,output_size,weight_initializer,bias_initializer,use_bias,dtype,name,tp_comm)
+    
+    Tensor-parallel computation with column-parallel linear layer
+    
+    The linear layer is defined as Y = XA + b. Its 2D parallel rows are A = [A_1, ... , A_p].
+
+    :param input_size: first dimension of matrix A.
+    :param output_size: second dimension of matrix A.
+    :param weight_initializer: `callable` - defaults to normal.
+    :param bias_initializer: `callable` - defaults to zeros.
+    :param use_bias: `bool` - defaults to True.
+    :param dtype: default: None,use default data type.
+    :param name: name of module,default:"".
+    :param tp_comm: Comm Controller.
+
+    The following uses the MNIST database to train a classification task on an MLP model on 2 GPUs.
+
+    The usage is similar to that of the classic Linear layer.
+
+    Multi-process usage based on `vqnetrun -n 2 python test.py`.
+
+    Examples::
+
+        import pyvqnet.distributed
+        import pyvqnet.optim as optim
+        import pyvqnet.nn as nn
+        import pyvqnet
+        import sys
+        from pyvqnet.distributed.tensor_parallel import ColumnParallelLinear, RowParallelLinear
+        from pyvqnet.distributed import *
+        from time import time
+
+        import pyvqnet 
+        import numpy as np
+        import os
+        from pyvqnet import *
+        import pytest
+
+        Comm_OP = CommController("nccl")
+
+        import struct
+        def load_mnist(dataset="training_data",
+                    digits=np.arange(2),
+                    path="./"):
+            """
+            load mnist data
+            """
+            from array import array as pyarray
+            # download_mnist(path)
+            if dataset == "training_data":
+                fname_image = os.path.join(path, "train-images-idx3-ubyte").replace(
+                    "\\", "/")
+                fname_label = os.path.join(path, "train-labels-idx1-ubyte").replace(
+                    "\\", "/")
+            elif dataset == "testing_data":
+                fname_image = os.path.join(path, "t10k-images-idx3-ubyte").replace(
+                    "\\", "/")
+                fname_label = os.path.join(path, "t10k-labels-idx1-ubyte").replace(
+                    "\\", "/")
+            else:
+                raise ValueError("dataset must be 'training_data' or 'testing_data'")
+
+            flbl = open(fname_label, "rb")
+            _, size = struct.unpack(">II", flbl.read(8))
+
+            lbl = pyarray("b", flbl.read())
+            flbl.close()
+
+            fimg = open(fname_image, "rb")
+            _, size, rows, cols = struct.unpack(">IIII", fimg.read(16))
+            img = pyarray("B", fimg.read())
+            fimg.close()
+
+            ind = [k for k in range(size) if lbl[k] in digits]
+            num = len(ind)
+            images = np.zeros((num, rows, cols),dtype=np.float32)
+
+            labels = np.zeros((num, 1), dtype=int)
+            for i in range(len(ind)):
+                images[i] = np.array(img[ind[i] * rows * cols:(ind[i] + 1) * rows *
+                                        cols]).reshape((rows, cols))
+                labels[i] = lbl[ind[i]]
+
+            return images, labels
+
+        train_images_np, train_labels_np = load_mnist(dataset="training_data", digits=np.arange(10),path="./data/MNIST/raw/")
+        train_images_np = train_images_np / 255.
+
+        test_images_np, test_labels_np = load_mnist(dataset="testing_data", digits=np.arange(10),path="./data/MNIST/raw/")
+        test_images_np = test_images_np / 255.
+
+        local_rank = pyvqnet.distributed.get_rank()
+
+        class MNISTClassifier(nn.Module):
+            def __init__(self):
+                super(MNISTClassifier, self).__init__()
+                self.fc1 = RowParallelLinear(28*28, 512, tp_comm = Comm_OP)
+                self.fc2 = ColumnParallelLinear(512, 256, tp_comm = Comm_OP)
+                self.fc3 = RowParallelLinear(256, 128, tp_comm = Comm_OP)
+                self.fc4 = ColumnParallelLinear(128, 64, tp_comm = Comm_OP)
+                self.fc5 = RowParallelLinear(64, 10, tp_comm = Comm_OP)  
+                self.ac = nn.activation.ReLu()
+                
+            def forward(self, x:pyvqnet.QTensor):
+                
+                x = x.reshape([-1, 28*28])  
+                x = self.ac(self.fc1(x))
+                x = self.fc2(x)
+                x = self.fc3(x)
+                x = self.fc4(x)
+                x = self.fc5(x)
+                return x
+            
+        
+        model = MNISTClassifier()
+        total_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
+
+        model.to(local_rank + 1000)
+
+        Comm_OP.broadcast_model_params(model, 0)
+
+        criterion = nn.CrossEntropyLoss() 
+        optimizer = optim.Adam(model.parameters(), lr=0.001)
+
+        def compute_acc(outputs, labels, correct, total):
+            predicted = pyvqnet.tensor.argmax(outputs, dim=1, keepdims=True)
+            total += labels.size
+            correct += pyvqnet.tensor.sums(predicted == labels).item()
+            return correct, total
+
+        train_acc = 0
+        test_acc = 0
+        epochs = 5
+        loss = 0
+
+        time1 = time()
+        for epoch in range(epochs):
+            model.train()
+            total = 0
+            correct = 0
+            step = 0
+            
+            batch_size = 64
+            num_batches = (train_images_np.shape[0] + batch_size - 1) // batch_size
+            
+            for i in range(num_batches):
+                data_ = tensor.QTensor(train_images_np[i*batch_size: (i+1) * batch_size,:], dtype = kfloat32)
+                labels = tensor.QTensor(train_labels_np[i*batch_size: (i+1) * batch_size,:], dtype = kint64)
+
+                data_ = data_.to(local_rank + 1000)
+                labels = labels.to(local_rank + 1000)
+
+                optimizer.zero_grad()
+
+                outputs = model(data_)
+                loss = criterion(labels, outputs)
+
+                loss.backward()
+                optimizer.step()
+
+                correct, total = compute_acc(outputs, labels, correct, total)
+                step += 1
+                if step % 50 == 0:
+                    print(f"Train : rank {get_rank()} Epoch [{epoch+1}/{epochs}], step {step} Loss: {loss.item():.4f} acc {100 * correct / total}")
+                    sys.stdout.flush()
+
+            train_acc = 100 * correct / total
+        time2 = time()
+
+        print(f'Accuracy of the model on the 10000 Train images: {train_acc}% time cost {time2 - time1}')
+
+
+RowParallelLinear
+=================================
+.. py:class:: pyvqnet.distributed.RowParallelLinear(input_size,output_size,weight_initializer,bias_initializer,use_bias,dtype,name,tp_comm)
+    
+    Tensor-parallel computation with column-parallel linear layer.
+
+    The linear layer is defined as Y = XA + b. A is parallelized along its first dimension and X along its second dimension.
+    A = transpose([A_1 .. A_p]) X = [X_1, ..., X_p].
+
+    :param input_size: first dimension of matrix A.
+    :param output_size: second dimension of matrix A.
+    :param weight_initializer: `callable` - defaults to normal.
+    :param bias_initializer: `callable` - defaults to zeros.
+    :param use_bias: `bool` - defaults to True.
+    :param dtype: default: None,use default data type.
+    :param name: name of module,default:"".
+    :param tp_comm: Comm Controller.
+
+    The following uses the MNIST database to train a classification task on an MLP model on 2 GPUs.
+
+    The usage is similar to that of the classic Linear layer.
+
+    Multi-process usage based on `vqnetrun -n 2 python test.py`.
+
+    Examples::
+
+        import pyvqnet.distributed
+        import pyvqnet.optim as optim
+        import pyvqnet.nn as nn
+        import pyvqnet
+        import sys
+        from pyvqnet.distributed.tensor_parallel import ColumnParallelLinear, RowParallelLinear
+        from pyvqnet.distributed import *
+        from time import time
+
+        import pyvqnet 
+        import numpy as np
+        import os
+        from pyvqnet import *
+        import pytest
+
+        Comm_OP = CommController("nccl")
+
+        import struct
+        def load_mnist(dataset="training_data",
+                    digits=np.arange(2),
+                    path="./"):
+            """
+            load mnist data
+            """
+            from array import array as pyarray
+            # download_mnist(path)
+            if dataset == "training_data":
+                fname_image = os.path.join(path, "train-images-idx3-ubyte").replace(
+                    "\\", "/")
+                fname_label = os.path.join(path, "train-labels-idx1-ubyte").replace(
+                    "\\", "/")
+            elif dataset == "testing_data":
+                fname_image = os.path.join(path, "t10k-images-idx3-ubyte").replace(
+                    "\\", "/")
+                fname_label = os.path.join(path, "t10k-labels-idx1-ubyte").replace(
+                    "\\", "/")
+            else:
+                raise ValueError("dataset must be 'training_data' or 'testing_data'")
+
+            flbl = open(fname_label, "rb")
+            _, size = struct.unpack(">II", flbl.read(8))
+
+            lbl = pyarray("b", flbl.read())
+            flbl.close()
+
+            fimg = open(fname_image, "rb")
+            _, size, rows, cols = struct.unpack(">IIII", fimg.read(16))
+            img = pyarray("B", fimg.read())
+            fimg.close()
+
+            ind = [k for k in range(size) if lbl[k] in digits]
+            num = len(ind)
+            images = np.zeros((num, rows, cols),dtype=np.float32)
+
+            labels = np.zeros((num, 1), dtype=int)
+            for i in range(len(ind)):
+                images[i] = np.array(img[ind[i] * rows * cols:(ind[i] + 1) * rows *
+                                        cols]).reshape((rows, cols))
+                labels[i] = lbl[ind[i]]
+
+            return images, labels
+
+        train_images_np, train_labels_np = load_mnist(dataset="training_data", digits=np.arange(10),path="./data/MNIST/raw/")
+        train_images_np = train_images_np / 255.
+
+        test_images_np, test_labels_np = load_mnist(dataset="testing_data", digits=np.arange(10),path="./data/MNIST/raw/")
+        test_images_np = test_images_np / 255.
+
+        local_rank = pyvqnet.distributed.get_rank()
+
+        class MNISTClassifier(nn.Module):
+            def __init__(self):
+                super(MNISTClassifier, self).__init__()
+                self.fc1 = RowParallelLinear(28*28, 512, tp_comm = Comm_OP)
+                self.fc2 = ColumnParallelLinear(512, 256, tp_comm = Comm_OP)
+                self.fc3 = RowParallelLinear(256, 128, tp_comm = Comm_OP)
+                self.fc4 = ColumnParallelLinear(128, 64, tp_comm = Comm_OP)
+                self.fc5 = RowParallelLinear(64, 10, tp_comm = Comm_OP)  
+                self.ac = nn.activation.ReLu()
+                
+                
+            def forward(self, x:pyvqnet.QTensor):
+                
+                x = x.reshape([-1, 28*28])  
+                x = self.ac(self.fc1(x))
+                x = self.fc2(x)
+                x = self.fc3(x)
+                x = self.fc4(x)
+                x = self.fc5(x)
+                return x
+            
+        model = MNISTClassifier()
+        total_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
+
+        model.to(local_rank + 1000)
+        Comm_OP.broadcast_model_params(model, 0)
+
+        criterion = nn.CrossEntropyLoss()
+        optimizer = optim.Adam(model.parameters(), lr=0.001)
+
+        def compute_acc(outputs, labels, correct, total):
+            predicted = pyvqnet.tensor.argmax(outputs, dim=1, keepdims=True)
+            total += labels.size
+            correct += pyvqnet.tensor.sums(predicted == labels).item()
+            return correct, total
+
+        train_acc = 0
+        test_acc = 0
+        epochs = 5
+        loss = 0
+
+        time1 = time()
+        for epoch in range(epochs):
+            model.train()
+            total = 0
+            correct = 0
+            step = 0
+            
+            batch_size = 64
+            num_batches = (train_images_np.shape[0] + batch_size - 1) // batch_size
+            
+            for i in range(num_batches):
+                data_ = tensor.QTensor(train_images_np[i*batch_size: (i+1) * batch_size,:], dtype = kfloat32)
+                labels = tensor.QTensor(train_labels_np[i*batch_size: (i+1) * batch_size,:], dtype = kint64)
+
+                data_ = data_.to(local_rank + 1000)
+                labels = labels.to(local_rank + 1000)
+
+                optimizer.zero_grad()
+
+                outputs = model(data_)
+                loss = criterion(labels, outputs)
+
+                loss.backward()
+                optimizer.step()
+
+                correct, total = compute_acc(outputs, labels, correct, total)
+                step += 1
+                if step % 50 == 0:
+                    print(f"Train : rank {get_rank()} Epoch [{epoch+1}/{epochs}], step {step} Loss: {loss.item():.4f} acc {100 * correct / total}")
+                    sys.stdout.flush()
+
+            train_acc = 100 * correct / total
+        time2 = time()
+
+        print(f'Accuracy of the model on the 10000 Train images: {train_acc}% time cost {time2 - time1}')
