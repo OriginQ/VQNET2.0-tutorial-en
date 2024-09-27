@@ -1,6 +1,30 @@
 VQNet Changelog
 ###############################
 
+
+[v2.14.0] - 2024-09-30
+***************************
+
+Added
+===================
+
+- Add `VQC_LCU`, `VQC_FABLE`, `VQC_QSVT`, block-encoding algorithms, and qpanda algorithms to implement `QPANDA_QSVT`, `QPANDA_LCU`, `QPANDA_FABLE` interfaces.
+- Add integer addition to quantum bits `vqc_qft_add_to_register`, number addition on two quantum bits `vqc_qft_add_to_register`, number multiplication on two quantum bits `vqc_qft_mul`.
+- Add quantum heuristic fine-tuning method `quanTA`.
+- Add training module for mixing qpanda and vqc `HybirdVQCQpandaQVMLayer`.
+- Add `einsum`, `moveaxis`, `eigh`, `dignoal` interfaces.
+- Add `ColumnParallelLinear`, `RowParallelLinear` for tensor parallel computing.
+- Add `ZeroModelInitial` for Zero stage-1 functionality in distributed computing.
+
+===================
+- Deleted the xtensor section.
+
+Fixed
+===================
+- Modify the underlying communication interfaces `allreduce`, `allgather`, `reduce`, `broadcast` in the Distributed Computing functionality, add support for `core.Tensor` data communication.
+- Modify api documentation.
+- `QuantumBatchAsyncQcloudLayer` specifies that diff_method == "random_coordinate_descent" does not use PSR but instead randomly selects one of the quantum parameters for gradient calculation.
+
 [v2.13.0] - 2024-07-30
 ***************************
 
