@@ -8,22 +8,27 @@ VQNet Changelog
 Added
 ===================
 
-- Add `VQC_LCU`, `VQC_FABLE`, `VQC_QSVT`, block-encoding algorithms, and qpanda algorithms to implement `QPANDA_QSVT`, `QPANDA_LCU`, `QPANDA_FABLE` interfaces.
-- Add integer addition to quantum bits `vqc_qft_add_to_register`, number addition on two quantum bits `vqc_qft_add_to_register`, number multiplication on two quantum bits `vqc_qft_mul`.
-- Add quantum heuristic fine-tuning method `quanTA`.
-- Add training module for mixing qpanda and vqc `HybirdVQCQpandaQVMLayer`.
-- Add `einsum`, `moveaxis`, `eigh`, `dignoal` interfaces.
-- Add `ColumnParallelLinear`, `RowParallelLinear` for tensor parallel computing.
-- Add `ZeroModelInitial` for Zero stage-1 functionality in distributed computing.
+- Added block-encoding algorithms of `VQC_LCU`, `VQC_FABLE`, `VQC_QSVT`, and qpanda algorithm implementation `QPANDA_QSVT`, `QPANDA_LCU`, `QPANDA_FABLE` interfaces.
+- Added integer addition to quantum bits `vqc_qft_add_to_register`, addition of numbers on two quantum bits `vqc_qft_add_two_register`, and multiplication of numbers on two quantum bits `vqc_qft_mul`.
+- Added hybrid qpanda and vqc training module `HybirdVQCQpandaQVMLayer`.
+- Added `einsum`, `moveaxis`, `eigh`, `dignoal` and other interface implementations.
+- Added tensor parallel computing functions in distributed computing `ColumnParallelLinear`, `RowParallelLinear`.
+- Added Zero in distributed computing stage-1 function `ZeroModelInitial`.
+- `QuantumBatchAsyncQcloudLayer` specifies diff_method == "random_coordinate_descent" and does not use PSR but randomly selects a quantum parameter for gradient calculation.
 
-===================
-- Deleted the xtensor section.
+Changed
+====================
+- Deleted the xtensor part.
+- The api document was partially modified. Distinguished between quantum machine learning examples based on automatic differentiation and machine learning examples based on qpanda, and distinguished between quantum machine learning interfaces based on automatic differentiation and machine learning example interfaces based on qpanda.
+- `matmul` supports 1d@1d, 2d@1d, 1d@2d.
+- Added some quantum computing layer aliases: `QpandaQCircuitVQCLayer`` = `QuantumLayer`, `QpandaQCircuitVQCLayerLite` = `QuantumLayerV2`, `QpandaQProgVQCLayer` = `QuantumLayerV3`.
 
 Fixed
-===================
-- Modify the underlying communication interfaces `allreduce`, `allgather`, `reduce`, `broadcast` in the Distributed Computing functionality, add support for `core.Tensor` data communication.
-- Modify api documentation.
-- `QuantumBatchAsyncQcloudLayer` specifies that diff_method == "random_coordinate_descent" does not use PSR but instead randomly selects one of the quantum parameters for gradient calculation.
+====================
+- Modified the underlying communication interfaces `allreduce`, `allgather`, `reduce`, `broadcast` in the distributed computing function, and added support for `core.Tensor` data communication
+- Solved the bug in random number generation.
+- Solved the error in converting VQC's `RXX`, `RYY`, `RZZ`, `RZX` to originIR.
+
 
 [v2.13.0] - 2024-07-30
 ***************************
