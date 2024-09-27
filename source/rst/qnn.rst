@@ -457,8 +457,9 @@ QuantumBatchAsyncQcloudLayerES
 =================================
 
 When you install the latest version of pyqpanda, you can use this interface to define a variational circuit and submit it to originqc for running on the real chip.
+The interface estimates the parameter gradients and updates the parameters in an ‘evolutionary strategy’ approach, which can be found in the paper  `Learning to learn with an evolutionary strategy Learning to learn with an evolutionary strategy <https://arxiv.org/abs/2310.17402>`_ .
 
-.. py:class:: pyvqnet.qnn.quantumlayer.QuantumBatchAsyncQcloudLayerES(origin_qprog_func, qcloud_token, para_num, num_qubits, num_cubits, pauli_str_dict=None, shots = 1000, initializer=None, dtype=None, name="", diff_method="ES", submit_kwargs={}, query_kwargs={}, sigma=np.pi/24)
+.. py:class:: pyvqnet.qnn.quantumlayer.QuantumBatchAsyncQcloudLayerES(origin_qprog_func, qcloud_token, para_num, num_qubits, num_cubits, pauli_str_dict=None, shots = 1000, initializer=None, dtype=None, name="", submit_kwargs={}, query_kwargs={}, sigma=np.pi/24)
     
     Abstract computing module for originqc real chips using pyqpanda QCLOUD starting with version 3.8.2.2. It submits parameterized quantum circuits to real chips and obtains measurement results.
 
@@ -491,7 +492,6 @@ When you install the latest version of pyqpanda, you can use this interface to d
     :param initializer: Initializer for parameter values. The default is "None", using 0~2*pi normal distribution.
     :param dtype: The data type of the parameter. The default value is None, which uses the default data type pyvqnet.kfloat32.
     :param name: The name of the module. Defaults to empty string.
-    :param diff_method: Differential method for gradient calculation. The default is "ES",  originate in paper "Learning to learn with an evolutionary strategy Learning to learn with an evolutionary strategy", other differential methods are not currently supported.
     :param submit_kwargs: Additional keyword parameters for submitting quantum circuits, default: {"chip_id":pyqpanda.real_chip_type.origin_72,"is_amend":True,"is_mapping":True,"is_optimization":True,"compile_level":3, "default_task_group_size":200, "test_qcloud_fake":False}, when test_qcloud_fake is set to True, the local CPUQVM is simulated.
     :param query_kwargs: Additional keyword parameters for querying quantum results, default: {"timeout":2,"print_query_info":True,"sub_circuits_split_size":1}.
     :param sigma: Sampling variance of the multivariate non-trivial distribution, generally take pi/6, pi/12, pi/24, default is pi/24.
@@ -532,7 +532,6 @@ When you install the latest version of pyqpanda, you can use this interface to d
                         initializer=None,
                         dtype=None,
                         name="",
-                        diff_method="ES",
                         submit_kwargs={},
                         query_kwargs={},
                         sigma=np.pi/24)
@@ -567,7 +566,6 @@ When you install the latest version of pyqpanda, you can use this interface to d
                     initializer=None,
                     dtype=None,
                     name="",
-                    diff_method="ES",
                     submit_kwargs={},
                     query_kwargs={})
         x = pyvqnet.tensor.QTensor([[0.56,1.2],[0.56,1.2],[0.56,1.2],[0.56,1.2]],requires_grad= True)
