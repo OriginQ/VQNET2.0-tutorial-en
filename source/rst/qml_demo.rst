@@ -464,7 +464,7 @@ Following figures show the local quantum circuits structure on each qubits:
     except ImportError:
         raise ImportError("You should use Python 3.x")
 
-    url_base = "http://yann.lecun.com/exdb/mnist/"
+    url_base = 'https://ossci-datasets.s3.amazonaws.com/mnist/'
     key_file = {
         "train_img": "train-images-idx3-ubyte.gz",
         "train_label": "train-labels-idx1-ubyte.gz",
@@ -815,7 +815,7 @@ Mnist dataset definition
     except ImportError:
         raise ImportError("You should use Python 3.x")
 
-    url_base = "http://yann.lecun.com/exdb/mnist/"
+    url_base = 'https://ossci-datasets.s3.amazonaws.com/mnist/'
     key_file = {
         "train_img": "train-images-idx3-ubyte.gz",
         "train_label": "train-labels-idx1-ubyte.gz",
