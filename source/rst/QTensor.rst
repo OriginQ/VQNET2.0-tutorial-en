@@ -1907,13 +1907,13 @@ cumsum
     Example::
 
        from pyvqnet.tensor import tensor, QTensor
-        t = QTensor(([1, 2, 3], [4, 5, 6]))
-        x = tensor.cumsum(t,-1)
-        print(x)
-        # [
-        # [1, 3, 6],
-        # [4, 9, 15]
-        # ]
+       t = QTensor(([1, 2, 3], [4, 5, 6]))
+       x = tensor.cumsum(t,-1)
+       print(x)
+       # [
+       # [1, 3, 6],
+       # [4, 9, 15]
+       # ]
 
 
 mean
@@ -1932,11 +1932,11 @@ mean
 
         from pyvqnet.tensor import tensor
         from pyvqnet.tensor import QTensor
-        t = QTensor([[1, 2, 3], [4, 5, 6]])
+        t = QTensor([[1, 2, 3], [4, 5, 6.0]])
         x = tensor.mean(t, axis=1)
         print(x)
 
-        # [2, 5]
+        # [2., 5.]
 
 median
 ==============================
@@ -2399,7 +2399,7 @@ atan
         from pyvqnet.tensor import QTensor
 
         t = tensor.arange(-1, 1, .5)
-        u = Tensor.atan(t)
+        u = tensor.atan(t)
         print(u)
 
         # [-0.7853981, -0.4636476, 0.0000, 0.4636476]
@@ -3297,11 +3297,10 @@ select
         t.requires_grad = True
         t.zero_grad()
         ts = tensor.select(t,indx)
-        ts.backward(tensor.ones(ts.shape))
         print(ts)  
         # [
-        # [[1, 2, 3, 4]],
-        # [[13, 14, 15, 16]]
+        # [[1., 2., 3., 4.]],
+        # [[13., 14., 15., 16.]]
         # ]
 
 
@@ -3603,7 +3602,7 @@ moveaxis
     Example::
 
         from pyvqnet import QTensor,tensor
-        a = tensor.arange(24).reshape(2,3,4)
+        a = tensor.arange(0,24).reshape((2,3,4))
         b = tensor.moveaxis(a,(1, 2), (0, 1))
         print(b.shape)
 
