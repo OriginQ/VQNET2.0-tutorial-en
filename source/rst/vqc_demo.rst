@@ -84,7 +84,9 @@ Import the necessary libraries and define the variational quantum circuit model 
         def __init__(self):
             super(Model, self).__init__()
             self.q_fourier_series = QModel(1)
+
         def forward(self, x):
+            return self.q_fourier_series(x)
 
 Training code, we use GPU for training here, we need to put the model `Model` and input `data`, `label` on GPU using ``toGPU`` or specify `device`.
 Other interfaces are no different from the code for training using CPU.
@@ -2372,9 +2374,9 @@ which consists of 15 random You matrices corresponding to the classical Dense La
     from pyqpanda import *
     from pyvqnet.qnn.vqc.qcircuit import isingxx,isingyy,isingzz,u3,cnot,VQC_AmplitudeEmbedding,rxx,ryy,rzz,rzx
     from pyvqnet.qnn.vqc.qmachine import QMachine
-    from pyvqnet.qnn.vqc.qmeasure import probs
+    from pyvqnet.qnn.vqc.utils import probs
     from pyvqnet.nn import Module, Parameter
-    from pyvqnet.tensor import tensor
+    from pyvqnet.tensor import tensor,kfloat32
     from pyvqnet.tensor import QTensor
     from pyvqnet.dtype import *
     from pyvqnet.optim import Adam
@@ -2493,7 +2495,7 @@ which consists of 15 random You matrices corresponding to the classical Dense La
         def __init__(self):
             super(Qcnn_ising, self).__init__()
             self.conv = conv_net
-            self.qm = QMachine(num_wires)
+            self.qm = QMachine(num_wires,dtype=kcomplex128)
             self.weights = Parameter((18, 2), dtype=7)
             self.weights_last = Parameter((4 ** 2 -1,1), dtype=7)
 
@@ -2506,22 +2508,7 @@ which consists of 15 random You matrices corresponding to the classical Dense La
 
 
     def train_qcnn(n_train, n_test, n_epochs):
-        """
-        Args:
-            n_train  (int): number of training examples
-            n_test   (int): number of test examples
-            n_epochs (int): number of training epochs
-            desc  (string): displayed string during optimization
 
-        Returns:
-            dict: n_train,
-            steps,
-            train_cost_epochs,
-            train_acc_epochs,
-            test_cost_epochs,
-            test_acc_epochs
-
-        """
         # load data
         x_train, y_train, x_test, y_test = load_digits_data(n_train, n_test, rng)
 
@@ -2552,12 +2539,12 @@ which consists of 15 random You matrices corresponding to the classical Dense La
             train_acc = tensor.sums(result[tensor.arange(0, len(y_train)), y_train] > 0.5) / result.shape[0]
             # print(train_acc)
             # print(f"step {step}, train_acc {train_acc}")
-            train_acc_epochs.append(train_acc.to_numpy()[0])
+            train_acc_epochs.append(train_acc.to_numpy())
 
             # compute accuracy and cost on testing data
             test_out = model(QTensor(x_test))
             test_acc = tensor.sums(test_out[tensor.arange(0, len(y_test)), y_test] > 0.5) / test_out.shape[0]
-            test_acc_epochs.append(test_acc.to_numpy()[0])
+            test_acc_epochs.append(test_acc.to_numpy())
             test_cost = 1.0 - tensor.sums(test_out[tensor.arange(0, len(y_test)), y_test]) / len(y_test)
             test_cost_epochs.append(test_cost.to_numpy()[0])
 
@@ -3847,6 +3834,7 @@ Model training code
                                                     requires_grad=False)
 
                 result = model(data, keep_rot)
+                label = label.reshape((-1 ,1))
                 cost = loss(label, result)
                 costs.append(cost)
                 cost.backward()
@@ -3864,6 +3852,7 @@ Model training code
                                                     dtype=6,
                                                     requires_grad=False)
                 result_test = model(data_test, keep_rot)
+                label_test = label_test.reshape((-1 ,1))
                 test_cost = loss(label_test, result_test)
                 test_costs.append(test_cost)
                 
