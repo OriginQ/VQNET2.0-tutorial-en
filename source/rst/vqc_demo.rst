@@ -236,7 +236,7 @@ The following is data loading, training code:
 
 .. code-block::
 
-    url_base = "http://yann.lecun.com/exdb/mnist/"
+    url_base = 'https://ossci-datasets.s3.amazonaws.com/mnist/'
     key_file = {
         "train_img": "train-images-idx3-ubyte.gz",
         "train_label": "train-labels-idx1-ubyte.gz",
@@ -846,7 +846,7 @@ Define the data loading and training process code:
 
 .. code-block::
 
-    url_base = "http://yann.lecun.com/exdb/mnist/"
+    url_base = 'https://ossci-datasets.s3.amazonaws.com/mnist/'
     key_file = {
         "train_img": "train-images-idx3-ubyte.gz",
         "train_label": "train-labels-idx1-ubyte.gz",
@@ -1314,7 +1314,7 @@ The following code is the training data loading and training process code:
 .. code-block::
 
 
-    url_base = "http://yann.lecun.com/exdb/mnist/"
+    url_base = 'https://ossci-datasets.s3.amazonaws.com/mnist/'
     key_file = {
         "train_img": "train-images-idx3-ubyte.gz",
         "train_label": "train-labels-idx1-ubyte.gz",
@@ -2017,7 +2017,7 @@ The following is the code for loading data:
 
 .. code-block::
 
-    url_base = "http://yann.lecun.com/exdb/mnist/"
+    url_base = 'https://ossci-datasets.s3.amazonaws.com/mnist/'
     key_file = {
         "train_img": "train-images-idx3-ubyte.gz",
         "train_label": "train-labels-idx1-ubyte.gz",
