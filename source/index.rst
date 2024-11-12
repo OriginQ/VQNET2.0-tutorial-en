@@ -39,6 +39,7 @@ It can promote in a variety of applications such as the design of quantum algori
 •	Efficiency. In the implementation with high performance, VQNet designs a unified structure and uses QPanda to improve the efficiency of interaction between classical and quantum machine learning algorithms, between classic and quantum computers.
 •	Numerous application examples. We provide a number of quantum machine learning examples for quick learning and using.
 
+
 .. toctree::
     :caption: Installation Guide
     :maxdepth: 2
@@ -49,29 +50,35 @@ It can promote in a variety of applications such as the design of quantum algori
     :caption: Hands-on Examples
     :maxdepth: 2
 
+    rst/vqc_demo.rst
     rst/qml_demo.rst
 
 .. toctree::
-    :caption: The QTensor API
+    :caption: Classic neural network API
     :maxdepth: 2
 
     rst/QTensor.rst
     rst/nn.rst
-    rst/qnn.rst
     rst/utils.rst
 
-
-
 .. toctree::
-    :caption: Others
+    :caption: QNN API integrated with pyqpanda
     :maxdepth: 2
 
-    rst/xtensor.rst
-    rst/xtensor_nn.rst
-    rst/FAQ.rst
+    rst/qnn.rst
+
+.. toctree::
+    :caption: Autograd QNN API
+    :maxdepth: 2
+
+    rst/vqc.rst
+
+.. toctree:: 
+    :caption: Others 
+    :maxdepth: 2 
+    
+    rst/FAQ.rst 
     rst/CHANGELOG.rst
-
-
 
 
 

@@ -1,6 +1,35 @@
 VQNet Changelog
 ###############################
 
+
+[v2.14.0] - 2024-09-30
+***************************
+
+Added
+===================
+
+- Added block-encoding algorithms of `VQC_LCU`, `VQC_FABLE`, `VQC_QSVT`, and qpanda algorithm implementation `QPANDA_QSVT`, `QPANDA_LCU`, `QPANDA_FABLE` interfaces.
+- Added integer addition to quantum bits `vqc_qft_add_to_register`, addition of numbers on two quantum bits `vqc_qft_add_two_register`, and multiplication of numbers on two quantum bits `vqc_qft_mul`.
+- Added hybrid qpanda and vqc training module `HybirdVQCQpandaQVMLayer`.
+- Added `einsum`, `moveaxis`, `eigh`, `dignoal` and other interface implementations.
+- Added tensor parallel computing functions in distributed computing `ColumnParallelLinear`, `RowParallelLinear`.
+- Added Zero in distributed computing stage-1 function `ZeroModelInitial`.
+- `QuantumBatchAsyncQcloudLayer` specifies diff_method == "random_coordinate_descent" and does not use PSR but randomly selects a quantum parameter for gradient calculation.
+
+Changed
+====================
+- Deleted the xtensor part.
+- The api document was partially modified. Distinguished between quantum machine learning examples based on automatic differentiation and machine learning examples based on qpanda, and distinguished between quantum machine learning interfaces based on automatic differentiation and machine learning example interfaces based on qpanda.
+- `matmul` supports 1d@1d, 2d@1d, 1d@2d.
+- Added some quantum computing layer aliases: `QpandaQCircuitVQCLayer`` = `QuantumLayer`, `QpandaQCircuitVQCLayerLite` = `QuantumLayerV2`, `QpandaQProgVQCLayer` = `QuantumLayerV3`.
+
+Fixed
+====================
+- Modified the underlying communication interfaces `allreduce`, `allgather`, `reduce`, `broadcast` in the distributed computing function, and added support for `core.Tensor` data communication
+- Solved the bug in random number generation.
+- Solved the error in converting VQC's `RXX`, `RYY`, `RZZ`, `RZX` to originIR.
+
+
 [v2.13.0] - 2024-07-30
 ***************************
 

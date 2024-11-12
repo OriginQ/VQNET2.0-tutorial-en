@@ -113,7 +113,7 @@ VQNet will calculate the parameters' gradient automatically with `qdrl_circuit`,
 .. code-block::
 
     # number of parameters to be trained.
-    param_num = n_eval
+    param_num = 9
     # qubit number.
     qbit_num  = 1
 	#define a model class inherits from Module.
@@ -176,7 +176,7 @@ A function to train the model
             
         #  generate data to be trained randomly   
         x_train, y_train = circle(500)
-        x_train = np.hstack((x_train, np.zeros((x_train.shape[0], 1),dtype=np.float32))))  
+        x_train = np.hstack((x_train, np.zeros((x_train.shape[0], 1),dtype=np.float32)))  
         # define the number of data about each batch
         batch_size = 32
         # Maximum of training iteration times
