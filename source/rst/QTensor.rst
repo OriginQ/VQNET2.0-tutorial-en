@@ -1,3 +1,5 @@
+.. _qtensor_api:
+
 QTensor Module
 ###########################
 
@@ -10,10 +12,10 @@ QTensor's Functions and Attributes
 ******************************************
 
 
-__init__
+QTensor
 ==============================
 
-.. py:method:: QTensor.__init__(data, requires_grad=False, nodes=None, device=0, dtype=None, name='')
+.. py:class:: yvqnet.tensor.tensor.QTensor(data, requires_grad=False, nodes=None, device=0, dtype=None, name='')
 
     Wrapper of data structure with dynamic computational graph construction
     and automatic differentiation.
@@ -50,358 +52,354 @@ __init__
         # [[[ True  True  True  True]
         #   [ True  True  True  True]]]
 
-ndim
-==============================
+    .. py:attribute:: ndim
 
-.. py:method:: QTensor.ndim
+        Returns the number of dimensions of a tensor.
 
-    Return number of dimensions
+        :return: The number of dimensions of a tensor.
 
-    :return: number of dimensions
+        Example::
 
-    Example::
+            from pyvqnet.tensor import QTensor
 
-        from pyvqnet.tensor import tensor
-        from pyvqnet.tensor import QTensor
+            a = QTensor([2, 3, 4, 5], requires_grad=True)
+            print(a.ndim)
 
-        a = QTensor([2, 3, 4, 5], requires_grad=True)
-        print(a.ndim)
+            # 1
 
-        # 1
+    .. py:attribute:: shape
 
-shape
-==============================
+        Returns the dimensions of a tensor
 
-.. py:method:: QTensor.shape
+        :return: A list of the dimensions of the tensor
 
-    Return the shape of the QTensor.
+        Example::
 
-    :return: value of shape
+            from pyvqnet.tensor import QTensor
 
-    Example::
+            a = QTensor([2, 3, 4, 5], requires_grad=True)
+            print(a.shape)
 
-        from pyvqnet.tensor import tensor
-        from pyvqnet.tensor import QTensor
+            # [4]
 
-        a = QTensor([2, 3, 4, 5], requires_grad=True)
-        print(a.shape)
+    .. py:attribute:: size
 
-        # [4]
+        Returns the number of elements of a tensor.
 
-size
-==============================
+        :return: The number of elements of a tensor.
 
-.. py:method:: QTensor.size
+        Example::
 
-    Return the number of elements in the QTensor.
+            from pyvqnet.tensor import QTensor
 
-    :return: number of elements
+            a = QTensor([2, 3, 4, 5], requires_grad=True)
+            print(a.size)
 
-    Example::
+            # 4
 
-        from pyvqnet.tensor import tensor
-        from pyvqnet.tensor import QTensor
+    .. py:method:: numel
 
-        a = QTensor([2, 3, 4, 5], requires_grad=True)
-        print(a.size)
+        Returns the number of elements in a tensor.
 
-        # 4
+        :return: The number of elements in a tensor.
 
-numel
-==============================
+        Example::
 
-.. py:method:: QTensor.numel()
-    
-    Returns the number of elements in the tensor.
+            from pyvqnet.tensor import QTensor
 
-    :return: The number of elements in the tensor.
+            a = QTensor([2, 3, 4, 5], requires_grad=True)
+            print(a.numel())
 
-    Example::
+            # 4
 
-        from pyvqnet.tensor import tensor
-        from pyvqnet.tensor import QTensor
+    .. py:attribute:: dtype
 
-        a = QTensor([2, 3, 4, 5], requires_grad=True)
-        print(a.numel())
+        Returns the data type of a tensor.
 
-        # 4
+        QTensor internal data type dtype supports kbool = 0, kuint8 = 1, kint8 = 2,kint16 = 3,kint32 = 4,kint64 = 5,
+        kfloat32 = 6, kfloat64 = 7, kcomplex64 = 8, kcomplex128 = 9 .
 
-dtype
-=============================
+        :return: The data type of the tensor.
 
-.. py:attribute:: QTensor.dtype
+        Example::
 
-    Returns the data type of the tensor.
+            from pyvqnet.tensor import QTensor
 
-    QTensor internal data type dtype supports kbool=0, kuint8=1, kint8=2, kint16=3, kint32=4, 
-    kint64=5, kfloat32=6, kfloat64=7, kcomplex64=8, kcomplex128=9.
+            a = QTensor([2, 3, 4, 5])
+            print(a.dtype)
+            # 4
 
-    :return: The data type of the tensor.
+    .. py:attribute:: is_dense
 
-    Example::
+        Whether it is a dense tensor.
 
-        from pyvqnet.tensor import QTensor
+        :return: When the data is dense, it returns 1; otherwise it returns 0.
 
-        a = QTensor([2, 3, 4, 5])
-        print(a.dtype)
-        #4
+        Example::
 
-is_dense
-==============================
+            from pyvqnet.tensor import QTensor
 
-.. py:attribute:: QTensor.is_dense
+            a = QTensor([2, 3, 4, 5])
+            print(a.is_dense)
+            #1
 
-    Whether it is a dense tensor.
+    .. py:attribute:: is_csr
 
-    :return: Returns 1 when the data is dense; otherwise returns 0.
+        Whether it is a sparse 2-dimensional matrix in Compressed Sparse Row format.
 
-    Example::
+        :return: When the data is a sparse tensor in CSR format, it returns 1; otherwise it returns 0.
 
-        from pyvqnet.tensor import QTensor
+        Example::
 
-        a = QTensor([2, 3, 4, 5])
-        print(a.is_dense)
-        #1
+            from pyvqnet.tensor import QTensor,dense_to_csr
 
-is_csr
-==============================
+            a = QTensor([[2, 3, 4, 5]])
+            b = dense_to_csr(a)
+            print(b.is_csr)
+            #1
 
-.. py:attribute:: QTensor.is_csr
+ 
 
-    Whether it is a sparse 2-dimensional matrix in Compressed Sparse Row format.
+    .. py:method:: zero_grad()
 
-    :return: When the data is a sparse tensor in CSR format, return 1; otherwise, return 0.
+        Sets gradient to zero. Will be used by optimizer in the optimization process.
 
-    Example::
-
-        from pyvqnet.tensor import QTensor,dense_to_csr
-
-        a = QTensor([[2, 3, 4, 5]])
-        b = dense_to_csr(a)
-        print(b.is_csr)
-        #1
-
-is_contiguous
-==============================
-
-.. py:attribute:: QTensor.is_contiguous
-
-    Check if a contiguous multidimensional array or not.
-
-    :return: If it is contiguous, return True, otherwise return False.
-
-    Example::
-
-        from pyvqnet.tensor import QTensor
-
-        a = QTensor([[2, 3, 4, 5],[2, 3, 4, 5]])
-        b = a.is_contiguous
-        print(b)
-        #True
-        c= a.permute((1,0))
-        print(c.is_contiguous)
-        #False
-
-csr_members
-==============================
-
-.. py:method:: QTensor.csr_members()
-
-    Returns the row_idx, col_idx and non-zero numerical data of the sparse 2-dimensional matrix in Compressed Sparse Row format, and three 1-dimensional QTensors .
-    
-    :return: Returns a list in which the first element is row_idx, shape is [number of matrix rows + 1], the second element is col_idx, shape is [number of non-zero elements], the third element is data, shape is [number of non-zero elements].
-
-    Example::
-
-        from pyvqnet.tensor import QTensor,dense_to_csr
-
-        a = QTensor([[2, 3, 4, 5]])
-        b = dense_to_csr(a)
-        print(b.csr_members())
-        #([0,4], [0,1,2,3], [2,3,4,5])
-
-
-contiguous
-==============================
-
-.. py:method:: QTensor.contiguous()
-    
-    Returns the contiguous form of the current QTensor. If it is already contiguous, it returns itself.
-
-    :return: Returns the contiguous form of the current QTensor. If it is already contiguous, it returns itself.
-
-Example::
-
-    from pyvqnet.tensor import tensor
-
-    t = tensor.ones([1])
-    print(t.contiguous())
-
-
-zero_grad
-==============================
-
-.. py:method:: QTensor.zero_grad()
-
-    Sets gradient to zero. Will be used by optimizer in the optimization process.
-
-    :return: None
-
-    Example::
-
-        from pyvqnet.tensor import tensor
-        from pyvqnet.tensor import QTensor
-        t3  =  QTensor([2,3,4,5],requires_grad = True)
-        t3.zero_grad()
-        print(t3.grad)
-
-        # [0, 0, 0, 0]
-
-
-backward
-==============================
-
-.. py:method:: QTensor.backward(grad=None)
-
-    Computes the gradient of current QTensor .
-
-    :return: None
-
-    Example::
-
-        from pyvqnet.tensor import tensor
-        from pyvqnet.tensor import QTensor
-
-        target = QTensor([[0, 0, 1, 0, 0, 0, 0, 0, 0, 0.2]], requires_grad=True)
-        y = 2*target + 3
-        y.backward()
-        print(target.grad)
-        #[[2. 2. 2. 2. 2. 2. 2. 2. 2. 2.]]
-
-to_numpy
-==============================
-
-.. py:method:: QTensor.to_numpy()
-
-    Copy self data to a new numpy.array.
-
-    :return: a new numpy.array contains QTensor data
-
-    Example::
-
-        from pyvqnet.tensor import tensor
-        from pyvqnet.tensor import QTensor
-        t3  =  QTensor([2,3,4,5],requires_grad = True)
-        t4 = t3.to_numpy()
-        print(t4)
-
-        # [2. 3. 4. 5.]
-
-item
-==============================
-
-.. py:method:: QTensor.item()
-
-        Return the only element from in the QTensor.Raises 'RuntimeError' if QTensor has more than 1 element.
-
-        :return: only data of this object
+        :return: None
 
         Example::
 
             from pyvqnet.tensor import tensor
+            from pyvqnet.tensor import QTensor
+            t3  =  QTensor([2,3,4,5],requires_grad = True)
+            t3.zero_grad()
+            print(t3.grad)
 
-            t = tensor.ones([1])
-            print(t.item())
+            # [0, 0, 0, 0]
 
-            # 1.0
 
-argmax
-==============================
+ 
+    .. py:method:: backward(grad=None)
 
-.. py:method:: QTensor.argmax(*kargs)
+        Computes the gradient of current QTensor .
 
-    Return the indices of the maximum value of all elements in the input QTensor,or
-    Return the indices of the maximum values of a QTensor across a dimension.
+        :return: None
 
-    :param dim: dim (int) – the dimension to reduce,only accepts single axis. if dim == None, returns the indices of the maximum value of all elements in the input tensor.The valid dim range is [-R, R), where R is input's ndim. when dim < 0, it works the same way as dim + R.
-    :param keepdims:  whether the output QTensor has dim retained or not.
+        Example::
 
-    :return: the indices of the maximum value in the input QTensor.
+            from pyvqnet.tensor import tensor
+            from pyvqnet.tensor import QTensor
 
-    Example::
+            target = QTensor([[0, 0, 1, 0, 0, 0, 0, 0, 0, 0.2]], requires_grad=True)
+            y = 2*target + 3
+            y.backward()
+            print(target.grad)
+            #[[2. 2. 2. 2. 2. 2. 2. 2. 2. 2.]]
 
-        from pyvqnet.tensor import tensor
-        from pyvqnet.tensor import QTensor
-        a = QTensor([[1.3398, 0.2663, -0.2686, 0.2450],
-                    [-0.7401, -0.8805, -0.3402, -1.1936],
-                    [0.4907, -1.3948, -1.0691, -0.3132],
-                    [-1.6092, 0.5419, -0.2993, 0.3195]])
-        flag = a.argmax()
-        print(flag)
-        
-        # [0]
+ 
 
-        flag_0 = a.argmax([0], True)
-        print(flag_0)
+    .. py:method:: to_numpy()
 
-        # [
-        # [0, 3, 0, 3]
-        # ]
+        Copy self data to a new numpy.array.
 
-        flag_1 = a.argmax([1], True)
-        print(flag_1)
+        :return: a new numpy.array contains QTensor data
 
-        # [
-        # [0],
-        # [2],
-        # [0],
-        # [1]
-        # ]
+        Example::
 
-argmin
-==============================
+            from pyvqnet.tensor import tensor
+            from pyvqnet.tensor import QTensor
+            t3  =  QTensor([2,3,4,5],requires_grad = True)
+            t4 = t3.to_numpy()
+            print(t4)
 
-.. py:method:: QTensor.argmin(*kargs)
+            # [2. 3. 4. 5.]
 
-    Return the indices of the minimum  value of all elements in the input QTensor,or
-    Return the indices of the minimum  values of a QTensor across a dimension.
+ 
+    .. py:method:: item()
 
-    :param dim: dim (int) – the dimension to reduce,only accepts single axis. if dim == None, returns the indices of the minimum value of all elements in the input tensor.The valid dim range is [-R, R), where R is input's ndim. when dim < 0, it works the same way as dim + R.
-    :param keepdims:  whether the output QTensor has dim retained or not.
+            Return the only element from in the QTensor.Raises 'RuntimeError' if QTensor has more than 1 element.
 
-    :return: the indices of the minimum  value in the input QTensor.
+            :return: only data of this object
 
-    Example::
+            Example::
 
-        from pyvqnet.tensor import tensor
-        from pyvqnet.tensor import QTensor
-        a = QTensor([[1.3398, 0.2663, -0.2686, 0.2450],
-                    [-0.7401, -0.8805, -0.3402, -1.1936],
-                    [0.4907, -1.3948, -1.0691, -0.3132],
-                    [-1.6092, 0.5419, -0.2993, 0.3195]])
-        flag = a.argmin()
-        print(flag)
+                from pyvqnet.tensor import tensor
 
-        # [12]
+                t = tensor.ones([1])
+                print(t.item())
 
-        flag_0 = a.argmin([0], True)
-        print(flag_0)
+                # 1.0
 
-        # [
-        # [3, 2, 2, 1]
-        # ]
+ 
+    .. py:method:: argmax(*kargs)
 
-        flag_1 = a.argmin([1], False)
-        print(flag_1)
+        Return the indices of the maximum value of all elements in the input QTensor,or
+        Return the indices of the maximum values of a QTensor across a dimension.
 
-        # [2, 3, 1, 0]
+        :param dim: dim (int) – the dimension to reduce,only accepts single axis. if dim == None, returns the indices of the maximum value of all elements in the input tensor.The valid dim range is [-R, R), where R is input's ndim. when dim < 0, it works the same way as dim + R.
+        :param keepdims:  whether the output QTensor has dim retained or not.
 
-fill\_
-==============================
+        :return: the indices of the maximum value in the input QTensor.
 
-.. py:method:: QTensor.fill_(v)
+        Example::
 
-        Fill the QTensor with the specified value inplace.
+            from pyvqnet.tensor import tensor
+            from pyvqnet.tensor import QTensor
+            a = QTensor([[1.3398, 0.2663, -0.2686, 0.2450],
+                        [-0.7401, -0.8805, -0.3402, -1.1936],
+                        [0.4907, -1.3948, -1.0691, -0.3132],
+                        [-1.6092, 0.5419, -0.2993, 0.3195]])
+            flag = a.argmax()
+            print(flag)
+            
+            # [0]
+
+            flag_0 = a.argmax([0], True)
+            print(flag_0)
+
+            # [
+            # [0, 3, 0, 3]
+            # ]
+
+            flag_1 = a.argmax([1], True)
+            print(flag_1)
+
+            # [
+            # [0],
+            # [2],
+            # [0],
+            # [1]
+            # ]
+
+ 
+    .. py:method:: argmin(*kargs)
+
+        Return the indices of the minimum  value of all elements in the input QTensor,or
+        Return the indices of the minimum  values of a QTensor across a dimension.
+
+        :param dim: dim (int) – the dimension to reduce,only accepts single axis. if dim == None, returns the indices of the minimum value of all elements in the input tensor.The valid dim range is [-R, R), where R is input's ndim. when dim < 0, it works the same way as dim + R.
+        :param keepdims:  whether the output QTensor has dim retained or not.
+
+        :return: the indices of the minimum  value in the input QTensor.
+
+        Example::
+
+            from pyvqnet.tensor import tensor
+            from pyvqnet.tensor import QTensor
+            a = QTensor([[1.3398, 0.2663, -0.2686, 0.2450],
+                        [-0.7401, -0.8805, -0.3402, -1.1936],
+                        [0.4907, -1.3948, -1.0691, -0.3132],
+                        [-1.6092, 0.5419, -0.2993, 0.3195]])
+            flag = a.argmin()
+            print(flag)
+
+            # [12]
+
+            flag_0 = a.argmin([0], True)
+            print(flag_0)
+
+            # [
+            # [3, 2, 2, 1]
+            # ]
+
+            flag_1 = a.argmin([1], False)
+            print(flag_1)
+
+            # [2, 3, 1, 0]
+
+
+
+    .. py:method:: fill_(v)
+
+            Fill the QTensor with the specified value inplace.
+
+            :param v: a scalar value
+            :return: None
+
+            Example::
+
+                from pyvqnet.tensor import tensor
+                from pyvqnet.tensor import QTensor
+                shape = [2, 3]
+                value = 42
+                t = tensor.zeros(shape)
+                t.fill_(value)
+                print(t)
+
+                # [
+                # [42, 42, 42],
+                # [42, 42, 42]
+                # ]
+
+    
+    .. py:method:: all()
+
+            Return True, if all QTensor value is non-zero.
+
+            :return: True,if all QTensor value is non-zero.
+
+            Example::
+
+                from pyvqnet.tensor import tensor
+                from pyvqnet.tensor import QTensor
+                shape = [2, 3]
+                t = tensor.zeros(shape)
+                t.fill_(1.0)
+                flag = t.all()
+                print(flag)
+
+                # True
+
+ 
+    .. py:method:: any()
+
+            Return True,if any QTensor value is non-zero.
+
+            :return: True,if any QTensor value is non-zero.
+
+            Example::
+
+                from pyvqnet.tensor import tensor
+                from pyvqnet.tensor import QTensor
+
+                shape = [2, 3]
+                t = tensor.ones(shape)
+                t.fill_(1.0)
+                flag = t.any()
+                print(flag)
+
+                # True
+
+ 
+    .. py:method:: fill_rand_binary_(v=0.5)
+
+        Fills a QTensor with values randomly sampled from a binomial distribution.
+
+        If the data generated randomly after binomial distribution is greater than Binarization threshold,then the number of corresponding positions of the QTensor is set to 1, otherwise 0.
+
+        :param v: Binarization threshold
+        :return: None
+
+        Example::
+
+            from pyvqnet.tensor import tensor
+            from pyvqnet.tensor import QTensor
+            import numpy as np
+            a = np.arange(6).reshape(2, 3).astype(np.float32)
+            t = QTensor(a)
+            t.fill_rand_binary_(2)
+            print(t)
+
+            # [
+            # [1, 1, 1],
+            # [1, 1, 1]
+            # ]
+
+ 
+    .. py:method:: fill_rand_signed_uniform_(v=1)
+
+        Fills a QTensor with values randomly sampled from a signed uniform distribution.
+
+        Scale factor of the values generated by the signed uniform distribution.
 
         :param v: a scalar value
         :return: None
@@ -410,148 +408,48 @@ fill\_
 
             from pyvqnet.tensor import tensor
             from pyvqnet.tensor import QTensor
-            shape = [2, 3]
+            import numpy as np
+            a = np.arange(6).reshape(2, 3).astype(np.float32)
+            t = QTensor(a)
             value = 42
-            t = tensor.zeros(shape)
-            t.fill_(value)
+
+            t.fill_rand_signed_uniform_(value)
             print(t)
 
             # [
-            # [42, 42, 42],
-            # [42, 42, 42]
+            # [12.8852444, 4.4327269, 4.8489408],
+            # [-24.3309803, 26.8036957, 39.4903450]
             # ]
 
-all
-==============================
+ 
+    .. py:method:: fill_rand_uniform_(v=1)
 
-.. py:method:: QTensor.all()
+        Fills a QTensor with values randomly sampled from a uniform distribution
 
-        Return True, if all QTensor value is non-zero.
+        Scale factor of the values generated by the uniform distribution.
 
-        :return: True,if all QTensor value is non-zero.
-
-        Example::
-
-            from pyvqnet.tensor import tensor
-            from pyvqnet.tensor import QTensor
-            shape = [2, 3]
-            t = tensor.zeros(shape)
-            t.fill_(1.0)
-            flag = t.all()
-            print(flag)
-
-            # True
-
-any
-==============================
-
-.. py:method:: QTensor.any()
-
-        Return True,if any QTensor value is non-zero.
-
-        :return: True,if any QTensor value is non-zero.
+        :param v: a scalar value
+        :return: None
 
         Example::
 
             from pyvqnet.tensor import tensor
             from pyvqnet.tensor import QTensor
+            import numpy as np
+            a = np.arange(6).reshape(2, 3).astype(np.float32)
+            t = QTensor(a)
+            value = 42
+            t.fill_rand_uniform_(value)
+            print(t)
 
-            shape = [2, 3]
-            t = tensor.ones(shape)
-            t.fill_(1.0)
-            flag = t.any()
-            print(flag)
+            # [
+            # [20.0404720, 14.4064417, 40.2955666],
+            # [5.5692234, 26.2520485, 35.3326073]
+            # ]
 
-            # True
 
-fill_rand_binary\_
-==============================
 
-.. py:method:: QTensor.fill_rand_binary_(v=0.5)
-
-    Fills a QTensor with values randomly sampled from a binomial distribution.
-
-    If the data generated randomly after binomial distribution is greater than Binarization threshold,then the number of corresponding positions of the QTensor is set to 1, otherwise 0.
-
-    :param v: Binarization threshold
-    :return: None
-
-    Example::
-
-        from pyvqnet.tensor import tensor
-        from pyvqnet.tensor import QTensor
-        import numpy as np
-        a = np.arange(6).reshape(2, 3).astype(np.float32)
-        t = QTensor(a)
-        t.fill_rand_binary_(2)
-        print(t)
-
-        # [
-        # [1, 1, 1],
-        # [1, 1, 1]
-        # ]
-
-fill_rand_signed_uniform\_
-==============================
-
-.. py:method:: QTensor.fill_rand_signed_uniform_(v=1)
-
-    Fills a QTensor with values randomly sampled from a signed uniform distribution.
-
-    Scale factor of the values generated by the signed uniform distribution.
-
-    :param v: a scalar value
-    :return: None
-
-    Example::
-
-        from pyvqnet.tensor import tensor
-        from pyvqnet.tensor import QTensor
-        import numpy as np
-        a = np.arange(6).reshape(2, 3).astype(np.float32)
-        t = QTensor(a)
-        value = 42
-
-        t.fill_rand_signed_uniform_(value)
-        print(t)
-
-        # [
-        # [12.8852444, 4.4327269, 4.8489408],
-        # [-24.3309803, 26.8036957, 39.4903450]
-        # ]
-
-fill_rand_uniform\_
-==============================
-
-.. py:method:: QTensor.fill_rand_uniform_(v=1)
-
-    Fills a QTensor with values randomly sampled from a uniform distribution
-
-    Scale factor of the values generated by the uniform distribution.
-
-    :param v: a scalar value
-    :return: None
-
-    Example::
-
-        from pyvqnet.tensor import tensor
-        from pyvqnet.tensor import QTensor
-        import numpy as np
-        a = np.arange(6).reshape(2, 3).astype(np.float32)
-        t = QTensor(a)
-        value = 42
-        t.fill_rand_uniform_(value)
-        print(t)
-
-        # [
-        # [20.0404720, 14.4064417, 40.2955666],
-        # [5.5692234, 26.2520485, 35.3326073]
-        # ]
-
-fill_rand_normal\_
-==============================
-
-.. py:method:: QTensor.fill_rand_normal_(m=0, s=1, fast_math=True)
+    .. py:method:: fill_rand_normal_(m=0, s=1, fast_math=True)
 
         Fills a QTensor with values randomly sampled from a normal distribution
         Mean of the normal distribution. Standard deviation of the normal distribution.
@@ -578,122 +476,203 @@ fill_rand_normal\_
             # ]
 
 
-QTensor.transpose
-==============================
 
-.. py:method:: QTensor.transpose(new_dims=None)
+    .. py:method:: transpose(new_dims=None)
 
-    Reverse or permute the axes of an array.if new_dims = None, revsers the dim.
+        Reverse or permute the axes of an array.if new_dims = None, revsers the dim.
 
-    :param new_dims: the new order of the dimensions (list of integers).
-    :return:  result QTensor.
-
-    Example::
-
-        from pyvqnet.tensor import tensor
-        from pyvqnet.tensor import QTensor
-        import numpy as np
-        R, C = 3, 4
-        a = np.arange(R * C).reshape([2, 2, 3]).astype(np.float32)
-        t = QTensor(a)
-        rlt = t.transpose([2,0,1])
-        print(rlt)
-        # [
-        # [[0, 3],
-        #  [6, 9]],
-        # [[1, 4],
-        #  [7, 10]],
-        # [[2, 5],
-        #  [8, 11]]
-        # ]
-
-
-QTensor.reshape
-==============================
-
-.. py:method:: QTensor.reshape(new_shape)
-
-    Change the tensor’s shape ,return a new QTensor.
-
-    :param new_shape: the new shape (list of integers)
-    :return: a new QTensor
-
-    Example::
-
-        from pyvqnet.tensor import tensor
-        from pyvqnet.tensor import QTensor
-        import numpy as np
-        R, C = 3, 4
-        a = np.arange(R * C).reshape(R, C).astype(np.float32)
-        t = QTensor(a)
-        reshape_t = t.reshape([C, R])
-        print(reshape_t)
-        # [
-        # [0, 1, 2],
-        # [3, 4, 5],
-        # [6, 7, 8],
-        # [9, 10, 11]
-        # ]
-
-reshape\_
-==============================
-
-.. py:method:: QTensor.reshape_(new_shape)
-
-    Change the shape of the current QTensor in place. This interface will first try to transform without changing the original memory data. If it fails, the current data will be copied to the new memory.
-
-    .. warning::
-
-        It is recommended to use the reshape interface. In some cases, the actual underlying memory location will be copied instead of modified in place.
-
-    :param new_shape: the new shape (list of integers)
-    :return: None
-
-    Example::
-
-        from pyvqnet.tensor import tensor
-        from pyvqnet.tensor import QTensor
-        import numpy as np
-        R, C = 3, 4
-        a = np.arange(R * C).reshape(R, C).astype(np.float32)
-        t = QTensor(a)
-        t.reshape_([C, R])
-        print(t)
-
-        # [
-        # [0, 1, 2],
-        # [3, 4, 5],
-        # [6, 7, 8],
-        # [9, 10, 11]
-        # ]
-
-getdata
-==============================
-
-.. py:method:: QTensor.getdata()
-
-        Get the QTensor's data as a NumPy array.
-
-        :return: a NumPy array
+        :param new_dims: the new order of the dimensions (list of integers).
+        :return:  result QTensor.
 
         Example::
 
+            from pyvqnet.tensor import tensor
+            from pyvqnet.tensor import QTensor
+            import numpy as np
+            R, C = 3, 4
+            a = np.arange(R * C).reshape([2, 2, 3]).astype(np.float32)
+            t = QTensor(a)
+            rlt = t.transpose([2,0,1])
+            print(rlt)
+            # [
+            # [[0, 3],
+            #  [6, 9]],
+            # [[1, 4],
+            #  [7, 10]],
+            # [[2, 5],
+            #  [8, 11]]
+            # ]
+
+
+
+    .. py:method:: reshape(new_shape)
+
+        Change the tensor’s shape ,return a new QTensor.
+
+        :param new_shape: the new shape (list of integers)
+        :return: a new QTensor
+
+        Example::
 
             from pyvqnet.tensor import tensor
             from pyvqnet.tensor import QTensor
+            import numpy as np
+            R, C = 3, 4
+            a = np.arange(R * C).reshape(R, C).astype(np.float32)
+            t = QTensor(a)
+            reshape_t = t.reshape([C, R])
+            print(reshape_t)
+            # [
+            # [0, 1, 2],
+            # [3, 4, 5],
+            # [6, 7, 8],
+            # [9, 10, 11]
+            # ]
 
-            t = tensor.ones([3, 4])
-            a = t.getdata()
-            print(a)
+    .. py:method:: reshape_(new_shape)
 
-            # [[1. 1. 1. 1.]
-            #  [1. 1. 1. 1.]
-            #  [1. 1. 1. 1.]]
+        Change the shape of the current QTensor in place. This interface will first try to transform without changing the original memory data. If it fails, the current data will be copied to the new memory.
 
-__getitem__
-==============================
+        .. warning::
 
-.. py:method:: QTensor.__getitem__()
+            It is recommended to use the reshape interface. In some cases, the actual underlying memory location will be copied instead of modified in place.
+
+        :param new_shape: the new shape (list of integers)
+        :return: None
+
+        Example::
+
+            from pyvqnet.tensor import tensor
+            from pyvqnet.tensor import QTensor
+            import numpy as np
+            R, C = 3, 4
+            a = np.arange(R * C).reshape(R, C).astype(np.float32)
+            t = QTensor(a)
+            t.reshape_([C, R])
+            print(t)
+
+            # [
+            # [0, 1, 2],
+            # [3, 4, 5],
+            # [6, 7, 8],
+            # [9, 10, 11]
+            # ]
+
+
+    .. py:method:: getdata()
+
+            Get the QTensor's data as a NumPy array.
+
+            :return: a NumPy array
+
+            Example::
+
+
+                from pyvqnet.tensor import tensor
+                from pyvqnet.tensor import QTensor
+
+                t = tensor.ones([3, 4])
+                a = t.getdata()
+                print(a)
+
+                # [[1. 1. 1. 1.]
+                #  [1. 1. 1. 1.]
+                #  [1. 1. 1. 1.]]
+
+ 
+
+    .. py:method:: __getitem__()
+
+            Slicing indexing of QTensor is supported, or using QTensor as advanced index access input. A new QTensor will be returned.
+
+            The parameters start, stop, and step can be separated by a colon,such as start:stop:step, where start, stop, and step can be default
+
+            As a 1-D QTensor,indexing or slicing can only be done on a single axis.
+
+            As a 2-D QTensor and a multidimensional QTensor,indexing or slicing can be done on multiple axes.
+
+            If you use QTensor as an index for advanced indexing, see numpy for `advanced indexing <https://docs.scipy.org/doc/numpy-1.10.1/reference/arrays.indexing.html>`_ .
+
+            If your QTensor as an index is the result of a logical operation, then you do a Boolean index.
+
+            .. note:: 
+                
+                We use an index form like a[3,4,1],but the form a[3][4][1] is not supported.
+
+            :param item: A integer or QTensor as an index.
+
+            :return: A new QTensor.
+
+            Example::
+
+                from pyvqnet.tensor import tensor, QTensor
+                aaa = tensor.arange(1, 61)
+                aaa = aaa.reshape([4, 5, 3])
+                print(aaa[0:2, 3, :2])
+                # [
+                # [10, 11],
+                #  [25, 26]
+                # ]
+                print(aaa[3, 4, 1])
+                #[59]
+                print(aaa[:, 2, :])
+                # [
+                # [7, 8, 9],
+                #  [22, 23, 24],
+                #  [37, 38, 39],
+                #  [52, 53, 54]
+                # ]
+                print(aaa[2])
+                # [
+                # [31, 32, 33],
+                #  [34, 35, 36],
+                #  [37, 38, 39],
+                #  [40, 41, 42],
+                #  [43, 44, 45]
+                # ]
+                print(aaa[0:2, ::3, 2:])
+                # [
+                # [[3],
+                #  [12]],
+                # [[18],
+                #  [27]]
+                # ]
+                a = tensor.ones([2, 2])
+                b = QTensor([[1, 1], [0, 1]])
+                b = b > 0
+                c = a[b]
+                print(c)
+                #[1, 1, 1]
+                tt = tensor.arange(1, 56 * 2 * 4 * 4 + 1).reshape([2, 8, 4, 7, 4])
+                tt.requires_grad = True
+                index_sample1 = tensor.arange(0, 3).reshape([3, 1])
+                index_sample2 = QTensor([0, 1, 0, 2, 3, 2, 2, 3, 3]).reshape([3, 3])
+                gg = tt[:, index_sample1, 3:, index_sample2, 2:]
+                print(gg)
+                # [
+                # [[[[87, 88]],
+                # [[983, 984]]],
+                # [[[91, 92]],
+                # [[987, 988]]],
+                # [[[87, 88]],
+                # [[983, 984]]]],
+                # [[[[207, 208]],
+                # [[1103, 1104]]],
+                # [[[211, 212]],
+                # [[1107, 1108]]],
+                # [[[207, 208]],
+                # [[1103, 1104]]]],
+                # [[[[319, 320]],
+                # [[1215, 1216]]],
+                # [[[323, 324]],
+                # [[1219, 1220]]],
+                # [[[323, 324]],
+                # [[1219, 1220]]]]
+                # ]
+
+ 
+
+    .. py:method:: __setitem__()
 
         Slicing indexing of QTensor is supported, or using QTensor as advanced index access input. A new QTensor will be returned.
 
@@ -711,355 +690,251 @@ __getitem__
             
             We use an index form like a[3,4,1],but the form a[3][4][1] is not supported.
 
-        :param item: A integer or QTensor as an index.
+        :param item: A integer or QTensor as an index
 
-        :return: A new QTensor.
+        :return: None
+
 
         Example::
 
-            from pyvqnet.tensor import tensor, QTensor
+            from pyvqnet.tensor import tensor
             aaa = tensor.arange(1, 61)
             aaa = aaa.reshape([4, 5, 3])
-            print(aaa[0:2, 3, :2])
+            vqnet_a2 = aaa[3, 4, 1]
+            aaa[3, 4, 1] = tensor.arange(10001,
+                                            10001 + vqnet_a2.size).reshape(vqnet_a2.shape)
+            print(aaa)
             # [
-            # [10, 11],
-            #  [25, 26]
-            # ]
-            print(aaa[3, 4, 1])
-            #[59]
-            print(aaa[:, 2, :])
-            # [
-            # [7, 8, 9],
+            # [[1, 2, 3],
+            #  [4, 5, 6],
+            #  [7, 8, 9],
+            #  [10, 11, 12],
+            #  [13, 14, 15]],
+            # [[16, 17, 18],
+            #  [19, 20, 21],
             #  [22, 23, 24],
-            #  [37, 38, 39],
-            #  [52, 53, 54]
-            # ]
-            print(aaa[2])
-            # [
-            # [31, 32, 33],
+            #  [25, 26, 27],
+            #  [28, 29, 30]],
+            # [[31, 32, 33],
             #  [34, 35, 36],
             #  [37, 38, 39],
             #  [40, 41, 42],
-            #  [43, 44, 45]
+            #  [43, 44, 45]],
+            # [[46, 47, 48],
+            #  [49, 50, 51],
+            #  [52, 53, 54],
+            #  [55, 56, 57],
+            #  [58, 10001, 60]]
             # ]
-            print(aaa[0:2, ::3, 2:])
+            aaa = tensor.arange(1, 61)
+            aaa = aaa.reshape([4, 5, 3])
+            vqnet_a3 = aaa[:, 2, :]
+            aaa[:, 2, :] = tensor.arange(10001,
+                                            10001 + vqnet_a3.size).reshape(vqnet_a3.shape)
+            print(aaa)
             # [
-            # [[3],
-            #  [12]],
-            # [[18],
-            #  [27]]
+            # [[1, 2, 3],
+            #  [4, 5, 6],
+            #  [10001, 10002, 10003],
+            #  [10, 11, 12],
+            #  [13, 14, 15]],
+            # [[16, 17, 18],
+            #  [19, 20, 21],
+            #  [10004, 10005, 10006],
+            #  [25, 26, 27],
+            #  [28, 29, 30]],
+            # [[31, 32, 33],
+            #  [34, 35, 36],
+            #  [10007, 10008, 10009],
+            #  [40, 41, 42],
+            #  [43, 44, 45]],
+            # [[46, 47, 48],
+            #  [49, 50, 51],
+            #  [10010, 10011, 10012],
+            #  [55, 56, 57],
+            #  [58, 59, 60]]
+            # ]
+            aaa = tensor.arange(1, 61)
+            aaa = aaa.reshape([4, 5, 3])
+            vqnet_a4 = aaa[2, :]
+            aaa[2, :] = tensor.arange(10001,
+                                        10001 + vqnet_a4.size).reshape(vqnet_a4.shape)
+            print(aaa)
+            # [
+            # [[1, 2, 3],
+            #  [4, 5, 6],
+            #  [7, 8, 9],
+            #  [10, 11, 12],
+            #  [13, 14, 15]],
+            # [[16, 17, 18],
+            #  [19, 20, 21],
+            #  [22, 23, 24],
+            #  [25, 26, 27],
+            #  [28, 29, 30]],
+            # [[10001, 10002, 10003],
+            #  [10004, 10005, 10006],
+            #  [10007, 10008, 10009],
+            #  [10010, 10011, 10012],
+            #  [10013, 10014, 10015]],
+            # [[46, 47, 48],
+            #  [49, 50, 51],
+            #  [52, 53, 54],
+            #  [55, 56, 57],
+            #  [58, 59, 60]]
+            # ]
+            aaa = tensor.arange(1, 61)
+            aaa = aaa.reshape([4, 5, 3])
+            vqnet_a5 = aaa[0:2, ::2, 1:2]
+            aaa[0:2, ::2,
+                1:2] = tensor.arange(10001,
+                                        10001 + vqnet_a5.size).reshape(vqnet_a5.shape)
+            print(aaa)
+            # [
+            # [[1, 10001, 3],
+            #  [4, 5, 6],
+            #  [7, 10002, 9],
+            #  [10, 11, 12],
+            #  [13, 10003, 15]],
+            # [[16, 10004, 18],
+            #  [19, 20, 21],
+            #  [22, 10005, 24],
+            #  [25, 26, 27],
+            #  [28, 10006, 30]],
+            # [[31, 32, 33],
+            #  [34, 35, 36],
+            #  [37, 38, 39],
+            #  [40, 41, 42],
+            #  [43, 44, 45]],
+            # [[46, 47, 48],
+            #  [49, 50, 51],
+            #  [52, 53, 54],
+            #  [55, 56, 57],
+            #  [58, 59, 60]]
             # ]
             a = tensor.ones([2, 2])
-            b = QTensor([[1, 1], [0, 1]])
+            b = tensor.QTensor([[1, 1], [0, 1]])
             b = b > 0
-            c = a[b]
-            print(c)
-            #[1, 1, 1]
-            tt = tensor.arange(1, 56 * 2 * 4 * 4 + 1).reshape([2, 8, 4, 7, 4])
-            tt.requires_grad = True
-            index_sample1 = tensor.arange(0, 3).reshape([3, 1])
-            index_sample2 = QTensor([0, 1, 0, 2, 3, 2, 2, 3, 3]).reshape([3, 3])
-            gg = tt[:, index_sample1, 3:, index_sample2, 2:]
-            print(gg)
+            x = tensor.QTensor([1001, 2001, 3001])
+
+            a[b] = x
+            print(a)
             # [
-            # [[[[87, 88]],
-            # [[983, 984]]],
-            # [[[91, 92]],
-            # [[987, 988]]],
-            # [[[87, 88]],
-            # [[983, 984]]]],
-            # [[[[207, 208]],
-            # [[1103, 1104]]],
-            # [[[211, 212]],
-            # [[1107, 1108]]],
-            # [[[207, 208]],
-            # [[1103, 1104]]]],
-            # [[[[319, 320]],
-            # [[1215, 1216]]],
-            # [[[323, 324]],
-            # [[1219, 1220]]],
-            # [[[323, 324]],
-            # [[1219, 1220]]]]
+            # [1001, 2001],
+            #  [1, 3001]
             # ]
+ 
 
-__setitem__
-==============================
+    .. py:method:: GPU(device: int = DEV_GPU_0)
 
-.. py:method:: QTensor.__setitem__()
+        Clone QTensor to specified GPU device.
 
-    Slicing indexing of QTensor is supported, or using QTensor as advanced index access input. A new QTensor will be returned.
-
-    The parameters start, stop, and step can be separated by a colon,such as start:stop:step, where start, stop, and step can be default
-
-    As a 1-D QTensor,indexing or slicing can only be done on a single axis.
-
-    As a 2-D QTensor and a multidimensional QTensor,indexing or slicing can be done on multiple axes.
-
-    If you use QTensor as an index for advanced indexing, see numpy for `advanced indexing <https://docs.scipy.org/doc/numpy-1.10.1/reference/arrays.indexing.html>`_ .
-
-    If your QTensor as an index is the result of a logical operation, then you do a Boolean index.
-
-    .. note:: 
+        device specifies the device whose internal data is stored. When device >= DEV_GPU_0, the data is stored on the GPU.
+        If your computer has multiple GPUs, you can designate different devices to store data on. 
+        For example, device = DEV_GPU_1, DEV_GPU_2, DEV_GPU_3, ... indicates storage on GPUs with different serial numbers.
         
-        We use an index form like a[3,4,1],but the form a[3][4][1] is not supported.
+        .. note::
+            QTensor cannot perform calculations on different GPUs.
+            A Cuda error will be raised if you try to create a QTensor on a GPU whose ID exceeds the maximum number of verified GPUs.
 
-    :param item: A integer or QTensor as an index
+        :param device: The device currently saving QTensor, default=DEV_GPU_0,
 
-    :return: None
+        device = pyvqnet.DEV_GPU_0, stored in the first GPU, devcie = DEV_GPU_1,
+        stored in the second GPU, and so on.
+
+        :return: Clone QTensor to GPU device.
+
+        Examples::
+
+            from pyvqnet.tensor import QTensor
+            a = QTensor([2])
+            b = a.GPU()
+            print(b.device)
+            #1000
+
+ 
+
+    .. py:method:: CPU()
+
+        Clone QTensor to specific CPU device
+
+        :return: Clone QTensor to CPU device.
+
+        Examples::
+
+            from pyvqnet.tensor import QTensor
+            a = QTensor([2])
+            b = a.CPU()
+            print(b.device)
+            # 0
+
+ 
+    .. py:method:: toGPU(device: int = DEV_GPU_0)
+
+        Move QTensor to specified GPU device.
+
+        device specifies the device whose internal data is stored. When device >= DEV_GPU, the data is stored on the GPU.
+        If your computer has multiple GPUs, you can designate different devices to store data on.
+        For example, device = DEV_GPU_1, DEV_GPU_2, DEV_GPU_3, ... indicates storage on GPUs with different serial numbers.
+
+        .. note::
+
+            QTensor cannot perform calculations on different GPUs. A Cuda error will be raised if you try to create a QTensor on a GPU whose ID exceeds the maximum number of verified GPUs.
+
+        :param device: The device currently saving QTensor, default=DEV_GPU_0. device = pyvqnet.DEV_GPU_0, stored in the first GPU, devcie = DEV_GPU_1, stored in the second GPU, and so on.
+        :return: QTensor moved to GPU device.
+
+        Examples::
+
+            from pyvqnet.tensor import QTensor
+            a = QTensor([2])
+            a = a.toGPU()
+            print(a.device)
+            #1000
 
 
-    Example::
+    
+    .. py:method:: toCPU()
 
-        from pyvqnet.tensor import tensor
-        aaa = tensor.arange(1, 61)
-        aaa = aaa.reshape([4, 5, 3])
-        vqnet_a2 = aaa[3, 4, 1]
-        aaa[3, 4, 1] = tensor.arange(10001,
-                                        10001 + vqnet_a2.size).reshape(vqnet_a2.shape)
-        print(aaa)
-        # [
-        # [[1, 2, 3],
-        #  [4, 5, 6],
-        #  [7, 8, 9],
-        #  [10, 11, 12],
-        #  [13, 14, 15]],
-        # [[16, 17, 18],
-        #  [19, 20, 21],
-        #  [22, 23, 24],
-        #  [25, 26, 27],
-        #  [28, 29, 30]],
-        # [[31, 32, 33],
-        #  [34, 35, 36],
-        #  [37, 38, 39],
-        #  [40, 41, 42],
-        #  [43, 44, 45]],
-        # [[46, 47, 48],
-        #  [49, 50, 51],
-        #  [52, 53, 54],
-        #  [55, 56, 57],
-        #  [58, 10001, 60]]
-        # ]
-        aaa = tensor.arange(1, 61)
-        aaa = aaa.reshape([4, 5, 3])
-        vqnet_a3 = aaa[:, 2, :]
-        aaa[:, 2, :] = tensor.arange(10001,
-                                        10001 + vqnet_a3.size).reshape(vqnet_a3.shape)
-        print(aaa)
-        # [
-        # [[1, 2, 3],
-        #  [4, 5, 6],
-        #  [10001, 10002, 10003],
-        #  [10, 11, 12],
-        #  [13, 14, 15]],
-        # [[16, 17, 18],
-        #  [19, 20, 21],
-        #  [10004, 10005, 10006],
-        #  [25, 26, 27],
-        #  [28, 29, 30]],
-        # [[31, 32, 33],
-        #  [34, 35, 36],
-        #  [10007, 10008, 10009],
-        #  [40, 41, 42],
-        #  [43, 44, 45]],
-        # [[46, 47, 48],
-        #  [49, 50, 51],
-        #  [10010, 10011, 10012],
-        #  [55, 56, 57],
-        #  [58, 59, 60]]
-        # ]
-        aaa = tensor.arange(1, 61)
-        aaa = aaa.reshape([4, 5, 3])
-        vqnet_a4 = aaa[2, :]
-        aaa[2, :] = tensor.arange(10001,
-                                    10001 + vqnet_a4.size).reshape(vqnet_a4.shape)
-        print(aaa)
-        # [
-        # [[1, 2, 3],
-        #  [4, 5, 6],
-        #  [7, 8, 9],
-        #  [10, 11, 12],
-        #  [13, 14, 15]],
-        # [[16, 17, 18],
-        #  [19, 20, 21],
-        #  [22, 23, 24],
-        #  [25, 26, 27],
-        #  [28, 29, 30]],
-        # [[10001, 10002, 10003],
-        #  [10004, 10005, 10006],
-        #  [10007, 10008, 10009],
-        #  [10010, 10011, 10012],
-        #  [10013, 10014, 10015]],
-        # [[46, 47, 48],
-        #  [49, 50, 51],
-        #  [52, 53, 54],
-        #  [55, 56, 57],
-        #  [58, 59, 60]]
-        # ]
-        aaa = tensor.arange(1, 61)
-        aaa = aaa.reshape([4, 5, 3])
-        vqnet_a5 = aaa[0:2, ::2, 1:2]
-        aaa[0:2, ::2,
-            1:2] = tensor.arange(10001,
-                                    10001 + vqnet_a5.size).reshape(vqnet_a5.shape)
-        print(aaa)
-        # [
-        # [[1, 10001, 3],
-        #  [4, 5, 6],
-        #  [7, 10002, 9],
-        #  [10, 11, 12],
-        #  [13, 10003, 15]],
-        # [[16, 10004, 18],
-        #  [19, 20, 21],
-        #  [22, 10005, 24],
-        #  [25, 26, 27],
-        #  [28, 10006, 30]],
-        # [[31, 32, 33],
-        #  [34, 35, 36],
-        #  [37, 38, 39],
-        #  [40, 41, 42],
-        #  [43, 44, 45]],
-        # [[46, 47, 48],
-        #  [49, 50, 51],
-        #  [52, 53, 54],
-        #  [55, 56, 57],
-        #  [58, 59, 60]]
-        # ]
-        a = tensor.ones([2, 2])
-        b = tensor.QTensor([[1, 1], [0, 1]])
-        b = b > 0
-        x = tensor.QTensor([1001, 2001, 3001])
+        Move QTensor to specific GPU device
 
-        a[b] = x
-        print(a)
-        # [
-        # [1001, 2001],
-        #  [1, 3001]
-        # ]
+        :return: QTensor moved to CPU device.
+
+        Examples::
+
+            from pyvqnet.tensor import QTensor
+            a = QTensor([2])
+            b = a.toCPU()
+            print(b.device)
+            # 0
+
+    
+    .. py:method:: isGPU()
+
+        Whether this QTensor's data is stored on GPU host memory.
+
+        :return: Whether this QTensor's data is stored on GPU host memory.
+
+        Examples::
         
-GPU
-==============================
+            from pyvqnet.tensor import QTensor
+            a = QTensor([2])
+            a = a.isGPU()
+            print(a)
+            # False
+ 
+    .. py:method:: isCPU()
 
-.. py:function:: QTensor.GPU(device: int = DEV_GPU_0)
+        Whether this QTensor's data is stored in CPU host memory.
 
-    Clone QTensor to specified GPU device.
+        :return: Whether this QTensor's data is stored in CPU host memory.
 
-    device specifies the device whose internal data is stored. When device >= DEV_GPU_0, the data is stored on the GPU.
-    If your computer has multiple GPUs, you can designate different devices to store data on. 
-    For example, device = DEV_GPU_1, DEV_GPU_2, DEV_GPU_3, ... indicates storage on GPUs with different serial numbers.
-    
-    .. note::
-        QTensor cannot perform calculations on different GPUs.
-        A Cuda error will be raised if you try to create a QTensor on a GPU whose ID exceeds the maximum number of verified GPUs.
-
-    :param device: The device currently saving QTensor, default=DEV_GPU_0,
-      device = pyvqnet.DEV_GPU_0, stored in the first GPU, devcie = DEV_GPU_1,
-      stored in the second GPU, and so on.
-
-    :return: Clone QTensor to GPU device.
-
-    Examples::
-
-        from pyvqnet.tensor import QTensor
-        a = QTensor([2])
-        b = a.GPU()
-        print(b.device)
-        #1000
-
-CPU
-==============================
-
-.. py:function:: QTensor.CPU()
-
-    Clone QTensor to specific CPU device
-
-    :return: Clone QTensor to CPU device.
-
-    Examples::
-
-        from pyvqnet.tensor import QTensor
-        a = QTensor([2])
-        b = a.CPU()
-        print(b.device)
-        # 0
-
-toGPU
-==============================
-
-.. py:function:: QTensor.toGPU(device: int = DEV_GPU_0)
-
-    Move QTensor to specified GPU device.
-
-    device specifies the device whose internal data is stored. When device >= DEV_GPU, the data is stored on the GPU.
-    If your computer has multiple GPUs, you can designate different devices to store data on.
-    For example, device = DEV_GPU_1, DEV_GPU_2, DEV_GPU_3, ... indicates storage on GPUs with different serial numbers.
-
-    .. note::
-
-        QTensor cannot perform calculations on different GPUs. A Cuda error will be raised if you try to create a QTensor on a GPU whose ID exceeds the maximum number of verified GPUs.
-
-    :param device: The device currently saving QTensor, default=DEV_GPU_0. device = pyvqnet.DEV_GPU_0, stored in the first GPU, devcie = DEV_GPU_1, stored in the second GPU, and so on.
-    :return: QTensor moved to GPU device.
-
-    Examples::
-
-        from pyvqnet.tensor import QTensor
-        a = QTensor([2])
-        a = a.toGPU()
-        print(a.device)
-        #1000
-
-
-toCPU
-==============================
-
-.. py:function:: QTensor.toCPU()
-
-    Move QTensor to specific GPU device
-
-    :return: QTensor moved to CPU device.
-
-    Examples::
-
-        from pyvqnet.tensor import QTensor
-        a = QTensor([2])
-        b = a.toCPU()
-        print(b.device)
-        # 0
-
-
-isGPU
-==============================
-
-.. py:function:: QTensor.isGPU()
-
-    Whether this QTensor's data is stored on GPU host memory.
-
-    :return: Whether this QTensor's data is stored on GPU host memory.
-
-    Examples::
-    
-        from pyvqnet.tensor import QTensor
-        a = QTensor([2])
-        a = a.isGPU()
-        print(a)
-        # False
-
-isCPU
-==============================
-
-.. py:function:: QTensor.isCPU()
-
-    Whether this QTensor's data is stored in CPU host memory.
-
-    :return: Whether this QTensor's data is stored in CPU host memory.
-
-    Examples::
-    
-        from pyvqnet.tensor import QTensor
-        a = QTensor([2])
-        a = a.isCPU()
-        print(a)
-        # True
+        Examples::
+        
+            from pyvqnet.tensor import QTensor
+            a = QTensor([2])
+            a = a.isCPU()
+            print(a)
+            # True
 
 
 Create Functions

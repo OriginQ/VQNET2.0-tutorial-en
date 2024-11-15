@@ -77,6 +77,7 @@ It can promote in a variety of applications such as the design of quantum algori
     :caption: Others 
     :maxdepth: 2 
     
+    rst/torch_api.rst
     rst/FAQ.rst 
     rst/CHANGELOG.rst
 
