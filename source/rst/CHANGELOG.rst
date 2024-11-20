@@ -1,6 +1,27 @@
 VQNet Changelog
 ###############################
 
+[v2.15.0] - 2024-11-19
+***************************
+
+Added
+===================
+
+- Added `pyvqnet.backends.set_backend()` interface. When users install `torch`, `torch` can be used to perform matrix calculations and variational quantum circuit calculations of QTensor. For details, see the document :ref:`torch_api`.
+- Added `pyvqnet.nn.torch` to inherit the neural network interface and variational quantum circuit neural interface of `torch.nn.Module`. For details, see the document :ref:`torch_api`.
+
+Changed
+===================
+- Modified diag interface.
+- Modified all_gather implementation to be consistent with torch.distributed.all_gather.
+- Modify `QTensor` to support up to 30-dimensional data.
+- Modify `mpi4py` required for distributed functions to require version 4.0.1 or above
+
+Fixed
+===================
+- Some random number implementations cannot fix the seed because omp.
+- Fix some bugs in distributed startup.
+
 
 [v2.14.0] - 2024-09-30
 ***************************
