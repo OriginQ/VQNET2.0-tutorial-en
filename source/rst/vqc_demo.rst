@@ -3592,6 +3592,26 @@ import the appropriate package
     from matplotlib import ticker
     import matplotlib.pyplot as plt
     from sklearn.preprocessing import MinMaxScaler
+    from pyvqnet.nn import Parameter
+
+Set related global variables
+
+.. code-block::
+
+    # Set the number of layers of quantum circuits and other related global variables
+    n_qubits = 5
+    inner_layers = 3
+    layers = 3
+    params_per_layer = n_qubits * inner_layers 
+
+    # Set parameters related to model training
+    epochs = 700
+    n_run = 3
+    seed =1234
+    drop_rates = [(0.0, 0.0), (0.3, 0.2), (0.7, 0.7)]
+    train_history = {}
+    test_history = {}
+    opt_params = {}
 
 Building quantum circuits
 
@@ -3632,12 +3652,6 @@ Building quantum circuits
             for qb in wires[:-1]:
                 entangler(qmachine, wires=[wires[qb], wires[qb + 1]])
             counter += 1
-
-    # quantum circuit qubits and params
-    n_qubits = 5
-    inner_layers = 3
-    params_per_layer = n_qubits * inner_layers
-
 
     def qnn_circuit(x, theta, keep_rot, n_qubits, layers, qm):
         for i in range(layers):
@@ -3695,16 +3709,6 @@ Generate a dropout list to randomly dropout the logic gates in the quantum line 
             keep_rot.append(keep_rot_layer)
 
         return np.array(keep_rot)
-
-    seed = 42
-    layer_drop_rate = 0.5
-    rot_drop_rate = 0.5
-    layers = 5
-    n_qubits = 4
-    inner_layers = 3
-    params_per_layer = 12
-
-    result = make_dropout(seed, layer_drop_rate, rot_drop_rate, layers)
 
 Adding quantum lines to a quantum neural network module
 
@@ -3792,22 +3796,11 @@ Model training code
 
 .. code-block::
 
-    epochs = 700
-
-    n_run = 3
-    seed =1234
-    drop_rates = [(0.0, 0.0), (0.3, 0.2), (0.7, 0.7)]
-
-    train_history = {}
-    test_history = {}
-    opt_params = {}
-    layers = 3
-
     for layer_drop_rate, rot_drop_rate in drop_rates:
         costs_per_comb = []
         test_costs_per_comb = []
         opt_params_per_comb = []
-        # 多次执行
+       
         for tmp_seed in range(seed, seed + n_run):
             
             rng = np.random.default_rng(tmp_seed)
@@ -3823,9 +3816,7 @@ Model training code
             loss = pyvqnet.nn.loss.MeanSquaredError()
             
             for epoch in range(epochs):
-                # 生成dropout列表
                 keep_rot = make_dropout(rng, layer_drop_rate, rot_drop_rate, layers)
-                # 更新rng
                 rng = np.random.default_rng(tmp_seed)
                 
                 optimizer.zero_grad()
