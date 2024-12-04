@@ -2591,16 +2591,19 @@ AdamW
         moment\_2\_new=\beta2*moment\_2+(1−\beta2)g*g
     .. math::
         lr = lr*\frac{\sqrt{1-\beta2^t}}{1-\beta1^t}
+    
     If the parameter amsgrad is True
 
     .. math::
         moment\_2\_max = max(moment\_2\_max,moment\_2)
     .. math::
         param\_new=param\_new-lr*\frac{moment\_1}{\sqrt{moment\_2\_max}+\epsilon}
+    
     otherwise
 
     .. math::
         param\_new=param\_new-lr*\frac{moment\_1}{\sqrt{moment\_2}+\epsilon}
+
     :param params: Model parameters that need to be optimized.
     :param lr: learning rate (default: 0.01).
     :param beta1: Coefficient used to calculate the running average of the gradient and its square (default: 0.9).

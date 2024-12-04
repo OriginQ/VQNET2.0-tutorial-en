@@ -2813,7 +2813,7 @@ are connected through concatenate for feature fusion.
         def forward(self, x):
             """
             :param x:
-            :return: out(Output to deep)，out_2(enter to next level)，
+            :return: out(Output to deep)，out_2(enter to next level),
             """
             x1 = self.conv1(x)
             x2 = self.BatchNorm2d1(x1)
@@ -5567,7 +5567,7 @@ Run the ``step`` function of ``Gradient_Prune_Instance``.
 Model training using quantum computing layer in VQNet
 *******************************************************************
 
-The following are some examples of using VQNet inrerface for quantum machine learning ``QuantumLayer`` ，``NoiseQuantumLayer`` ，``VQCLayer``.
+The following are some examples of using VQNet inrerface for quantum machine learning ``QuantumLayer`` ,``NoiseQuantumLayer`` ,``VQCLayer``.
 
 Model training using quantumlayer in VQNet
 ===============================================================================
