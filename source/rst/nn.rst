@@ -19,10 +19,11 @@ The following classical neural network modules support automatic back propagatio
     test_conv = Conv2D(ic,oc,(2,2),(2,2),"same")
 
     # input of shape [b,ic,hw,hw]
-    x0 = arange(1,b*ic*hw*hw+1,requires_grad=True,dtype=kfloat32).reshape([b,ic,hw,hw])
+    x0 = arange(1,b*ic*hw*hw+1,requires_grad=True,dtype=kfloat32)
 
+    x1 = x0.reshape([b,ic,hw,hw])
     #forward function
-    x = test_conv(x0)
+    x = test_conv(x1)
 
     #backward function with autograd
     x.backward()
@@ -1718,7 +1719,7 @@ Interpolate
 
     Only four-dimensional input data is currently supported.
 
-    The input dimensions are interpreted in the form: `B x C x H x W`。
+    The input dimensions are interpreted in the form: `B x C x H x W`.
 
     The modes available for resizing are: ``nearest`` 、``bilinear`` 、``bicubic``.
 
@@ -1914,7 +1915,7 @@ SDPA
     
     Examples::
     
-        from pyvqnet.transformer.e2eqvit.e2eqvit import SDPA, scaled_dot_product_attention_pyimpl
+        from pyvqnet.transformer import SDPA
         from pyvqnet import tensor
         import pyvqnet
         from time import time
@@ -2606,7 +2607,7 @@ AdamW
         moment\_2\_new=\beta2*moment\_2+(1−\beta2)g*g
     .. math::
         lr = lr*\frac{\sqrt{1-\beta2^t}}{1-\beta1^t}
-
+    
     If the parameter amsgrad is True
 
     .. math::
@@ -3181,7 +3182,7 @@ precision_recall_f1_N_score
 
 
 precision_recall_f1_Multi_score
-=================================^^^^^^^
+=================================
 
 .. py:class:: pyvqnet.utils.metrics.precision_recall_f1_Multi_score(y_true_Qtensor, y_pred_Qtensor, N, average)
 

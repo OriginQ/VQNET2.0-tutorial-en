@@ -1068,10 +1068,10 @@ and then the final fully connected result is obtained through the derivation ope
         print(output)
 
         # [
-        #[0.0568473， 0.1264389]，
-        #[0.1524036， 0.1264389]，
-        #[0.1524036， 0.1442845]，
-        #[0.1524036， 0.1442845]
+        #[0.0568473, 0.1264389],
+        #[0.1524036, 0.1264389],
+        #[0.1524036, 0.1442845],
+        #[0.1524036, 0.1442845]
         # ]
 
 |
@@ -1140,7 +1140,7 @@ HybirdVQCQpandaQVMLayer
     :param name: Module name. Default is the empty string.
     :param submit_kwargs: Additional keyword parameters for submitting quantum circuits, default value:
                 {"chip_id":pyqpanda.real_chip_type.origin_72,"is_amend":True,"is_mapping":True,"is_optimization":True,"default_task_group_size":200,"test_qcloud_fake":True}.
-    :param query_kwargs: Additional keyword parameters for querying quantum results, default value:{"timeout":2,"print_query_info":True,"sub_circuits_split_size":1}。
+    :param query_kwargs: Additional keyword parameters for querying quantum results, default value:{"timeout":2,"print_query_info":True,"sub_circuits_split_size":1}.
 
     :return: The module that can calculate quantum circuits.
 
@@ -1657,6 +1657,7 @@ RotCircuit
         import numpy as np
         from pyvqnet.tensor import QTensor
         from pyvqnet.qnn.template import RotCircuit
+        import pyvqnet
         m_machine = pq.init_quantum_machine(pq.QMachineType.CPU)
         m_clist = m_machine.cAlloc_many(2)
         m_prog = pq.QProg()
@@ -2492,12 +2493,12 @@ expval_qcloud
 
     Example::
 
-        from pyqpanda import *
+        import pyqpanda as pq
         input = [0.56, 0.1]
 
-        m_machine = QCloud()
+        m_machine = pq.QCloud()
 
-        m_machine.init_qvm("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx")
+        m_machine.init_qvm("your api token")
 
         m_prog = pq.QProg()
         m_qlist = m_machine.qAlloc_many(4)
@@ -2595,7 +2596,7 @@ QuantumMeasure
         m_prog.insert(cir)
         rlt_quant = QuantumMeasure(measure_qubits,m_prog,m_machine,m_qlist)
         print(rlt_quant)
-        #[0.25, 0.264, 0.257, 0.229]
+        #[240, 246, 246, 268]
 
 ProbsMeasure
 =================================

@@ -949,7 +949,7 @@ ones
     Return one-tensor with the input shape.
 
     :param shape: input shape
-    :param device: stored in which device，default 0 , CPU.
+    :param device: stored in which device,default 0 , CPU.
     :param dtype: The data type of the parameter, defaults None, use the default data type: kfloat32, which represents a 32-bit floating point number.
     
     :return: output QTensor with the input shape.
@@ -974,7 +974,7 @@ ones_like
     Return one-tensor with the same shape as the input QTensor.
 
     :param t: input QTensor
-    :param device: stored in which device，default 0 , CPU.
+    :param device: stored in which device,default 0 , CPU.
     :param dtype: The data type of the parameter, defaults None, use the default data type: kfloat32, which represents a 32-bit floating point number.
     
     :return:  output QTensor
@@ -1048,7 +1048,7 @@ full_like
 zeros
 ==============================
 
-.. py:function:: pyvqnet.tensor.zeros(shape，device = 0,dtype=None)
+.. py:function:: pyvqnet.tensor.zeros(shape,device = 0,dtype=None)
 
     Return zero-tensor of the input shape.
 
@@ -1583,11 +1583,11 @@ topK
 
     Returns the k largest elements of the input tensor along the given axis.
 
-    If if_descent is False，then return k smallest elements.
+    If if_descent is False,then return k smallest elements.
 
     :param t: input a QTensor
     :param k: numbers of largest elements or smallest elements
-    :param axis: sort axis,default = -1，the last axis
+    :param axis: sort axis,default = -1,the last axis
     :param if_descent: sort order,defaults to True
 
     :return: A new QTensor
@@ -1619,11 +1619,11 @@ argtopK
 
     Return the index of the k largest elements along the given axis of the input tensor.
 
-    If if_descent is False，then return the index of k smallest elements.
+    If if_descent is False,then return the index of k smallest elements.
 
     :param t: input a QTensor
     :param k: numbers of largest elements or smallest elements
-    :param axis: sort axis,default = -1，the last axis
+    :param axis: sort axis,default = -1,the last axis
     :param if_descent: sort order,defaults to True
 
     :return: A new QTensor
@@ -1782,13 +1782,13 @@ cumsum
     Example::
 
        from pyvqnet.tensor import tensor, QTensor
-        t = QTensor(([1, 2, 3], [4, 5, 6]))
-        x = tensor.cumsum(t,-1)
-        print(x)
-        # [
-        # [1, 3, 6],
-        # [4, 9, 15]
-        # ]
+       t = QTensor(([1, 2, 3], [4, 5, 6]))
+       x = tensor.cumsum(t,-1)
+       print(x)
+       # [
+       # [1, 3, 6],
+       # [4, 9, 15]
+       # ]
 
 
 mean
@@ -1807,11 +1807,11 @@ mean
 
         from pyvqnet.tensor import tensor
         from pyvqnet.tensor import QTensor
-        t = QTensor([[1, 2, 3], [4, 5, 6]])
+        t = QTensor([[1, 2, 3], [4, 5, 6.0]])
         x = tensor.mean(t, axis=1)
         print(x)
 
-        # [2, 5]
+        # [2., 5.]
 
 median
 ==============================
@@ -2274,7 +2274,7 @@ atan
         from pyvqnet.tensor import QTensor
 
         t = tensor.arange(-1, 1, .5)
-        u = Tensor.atan(t)
+        u = tensor.atan(t)
         print(u)
 
         # [-0.7853981, -0.4636476, 0.0000, 0.4636476]
@@ -3172,11 +3172,10 @@ select
         t.requires_grad = True
         t.zero_grad()
         ts = tensor.select(t,indx)
-        ts.backward(tensor.ones(ts.shape))
         print(ts)  
         # [
-        # [[1, 2, 3, 4]],
-        # [[13, 14, 15, 16]]
+        # [[1., 2., 3., 4.]],
+        # [[13., 14., 15., 16.]]
         # ]
 
 
@@ -3478,7 +3477,7 @@ moveaxis
     Example::
 
         from pyvqnet import QTensor,tensor
-        a = tensor.arange(24).reshape(2,3,4)
+        a = tensor.arange(0,24).reshape((2,3,4))
         b = tensor.moveaxis(a,(1, 2), (0, 1))
         print(b.shape)
 

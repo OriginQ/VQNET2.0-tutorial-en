@@ -34,54 +34,54 @@ In this example, we encode the binary input onto the qubits in the corresponding
 
     import pyqpanda as pq
 
-        def qvc_circuits(input,weights,qlist,clist,machine):
+    def qvc_circuits(input,weights,qlist,clist,machine):
 
-            def get_cnot(nqubits):
-                cir = pq.QCircuit()
-                for i in range(len(nqubits)-1):
-                    cir.insert(pq.CNOT(nqubits[i],nqubits[i+1]))
-                cir.insert(pq.CNOT(nqubits[len(nqubits)-1],nqubits[0]))
-                return cir
+        def get_cnot(nqubits):
+            cir = pq.QCircuit()
+            for i in range(len(nqubits)-1):
+                cir.insert(pq.CNOT(nqubits[i],nqubits[i+1]))
+            cir.insert(pq.CNOT(nqubits[len(nqubits)-1],nqubits[0]))
+            return cir
 
-            def build_circult(weights, xx, nqubits):
+        def build_circult(weights, xx, nqubits):
 
-                def Rot(weights_j, qubits):
-                    circult = pq.QCircuit()
-                    circult.insert(pq.RZ(qubits, weights_j[0]))
-                    circult.insert(pq.RY(qubits, weights_j[1]))
-                    circult.insert(pq.RZ(qubits, weights_j[2]))
-                    return circult
-                def basisstate():
-                    circult = pq.QCircuit()
-                    for i in range(len(nqubits)):
-                        if xx[i] == 1:
-                            circult.insert(pq.X(nqubits[i]))
-                    return circult
-
+            def Rot(weights_j, qubits):
                 circult = pq.QCircuit()
-                circult.insert(basisstate())
+                circult.insert(pq.RZ(qubits, weights_j[0]))
+                circult.insert(pq.RY(qubits, weights_j[1]))
+                circult.insert(pq.RZ(qubits, weights_j[2]))
+                return circult
+            def basisstate():
+                circult = pq.QCircuit()
+                for i in range(len(nqubits)):
+                    if xx[i] == 1:
+                        circult.insert(pq.X(nqubits[i]))
+                return circult
 
-                for i in range(weights.shape[0]):
+            circult = pq.QCircuit()
+            circult.insert(basisstate())
 
-                    weights_i = weights[i,:,:]
-                    for j in range(len(nqubits)):
-                        weights_j = weights_i[j]
-                        circult.insert(Rot(weights_j,nqubits[j]))
-                    cnots = get_cnot(nqubits)
-                    circult.insert(cnots)
+            for i in range(weights.shape[0]):
 
-                circult.insert(pq.Z(nqubits[0]))
+                weights_i = weights[i,:,:]
+                for j in range(len(nqubits)):
+                    weights_j = weights_i[j]
+                    circult.insert(Rot(weights_j,nqubits[j]))
+                cnots = get_cnot(nqubits)
+                circult.insert(cnots)
 
-                prog = pq.QProg()
-                prog.insert(circult)
-                return prog
+            circult.insert(pq.Z(nqubits[0]))
 
-            weights = weights.reshape([2,4,3])
-            prog = build_circult(weights,input,qlist)
-            prob = machine.prob_run_dict(prog, qlist[0], -1)
-            prob = list(prob.values())
+            prog = pq.QProg()
+            prog.insert(circult)
+            return prog
 
-            return prob
+        weights = weights.reshape([2,4,3])
+        prog = build_circult(weights,input,qlist)
+        prob = machine.prob_run_dict(prog, qlist[0], -1)
+        prob = list(prob.values())
+
+        return prob
 
 Model building
 -----------------------
@@ -1093,7 +1093,7 @@ QAE quantum circuits:
     import os.path
     import gzip
 
-    url_base = 'http://yann.lecun.com/exdb/mnist/'
+    url_base = 'https://ossci-datasets.s3.amazonaws.com/mnist/'
     key_file = {
         'train_img':'train-images-idx3-ubyte.gz',
         'train_label':'train-labels-idx1-ubyte.gz',
@@ -1469,7 +1469,7 @@ The purpose of this example is to demonstrate the simplicity of VQNet and encour
 Data Preparation
 -----------------------
 
-We will use `MNIST datasets <http://yann.lecun.com/exdb/mnist/>`_, the most basic neural network handwritten digit database as the classification data.
+We will use `MNIST datasets <https://ossci-datasets.s3.amazonaws.com/mnist/>`_, the most basic neural network handwritten digit database as the classification data.
 We first load MNIST and filter data samples containing 0 and 1.
 These samples are divided into training data training_data and testing data testing_data, each of which has a dimension of 1*784.
 
@@ -1506,7 +1506,7 @@ These samples are divided into training data training_data and testing data test
     except ImportError:
         raise ImportError("You should use Python 3.x")
 
-    url_base = 'http://yann.lecun.com/exdb/mnist/'
+    url_base = 'https://ossci-datasets.s3.amazonaws.com/mnist/'
     key_file = {
         'train_img':'train-images-idx3-ubyte.gz',
         'train_label':'train-labels-idx1-ubyte.gz',
@@ -1957,7 +1957,7 @@ Quantum partial circuit diagram are illustrated below:
     import os.path
     import gzip
 
-    url_base = 'http://yann.lecun.com/exdb/mnist/'
+    url_base = 'https://ossci-datasets.s3.amazonaws.com/mnist/'
     key_file = {
         'train_img':'train-images-idx3-ubyte.gz',
         'train_label':'train-labels-idx1-ubyte.gz',
@@ -2806,14 +2806,14 @@ are connected through concatenate for feature fusion.
             self.BatchNorm2d2 = BatchNorm2d(out_ch)
             self.Relu2 = F.ReLu()
             self.conv3 = Conv2D(input_channels=out_ch, output_channels=out_ch, kernel_size=(3, 3), stride=(2, 2),
-                                padding="(1,1))
+                                padding=(1,1))
             self.BatchNorm2d3 = BatchNorm2d(out_ch)
             self.Relu3 = F.ReLu()
 
         def forward(self, x):
             """
             :param x:
-            :return: out(Output to deep)，out_2(enter to next level)，
+            :return: out(Output to deep),out_2(enter to next level),
             """
             x1 = self.conv1(x)
             x2 = self.BatchNorm2d1(x1)
@@ -3190,7 +3190,7 @@ Building Hybrid Classical-Quantum Neural Networks
     except ImportError:
         raise ImportError("You should use Python 3.x")
 
-    url_base = "http://yann.lecun.com/exdb/mnist/"
+    url_base = "https://ossci-datasets.s3.amazonaws.com/mnist/"
     key_file = {
         "train_img": "train-images-idx3-ubyte.gz",
         "train_label": "train-labels-idx1-ubyte.gz",
@@ -5568,7 +5568,7 @@ Run the ``step`` function of ``Gradient_Prune_Instance``.
 Model training using quantum computing layer in VQNet
 *******************************************************************
 
-The following are some examples of using VQNet inrerface for quantum machine learning ``QuantumLayer`` ，``NoiseQuantumLayer`` ，``VQCLayer``.
+The following are some examples of using VQNet inrerface for quantum machine learning ``QuantumLayer`` ,``NoiseQuantumLayer`` ,``VQCLayer``.
 
 Model training using quantumlayer in VQNet
 ===============================================================================
@@ -5811,7 +5811,7 @@ An example of a complete noisy quantum machine learning model is as follows:
     import os.path
     import gzip
 
-    url_base = 'http://yann.lecun.com/exdb/mnist/'
+    url_base = 'https://ossci-datasets.s3.amazonaws.com/mnist/'
     key_file = {
         'train_img':'train-images-idx3-ubyte.gz',
         'train_label':'train-labels-idx1-ubyte.gz',
@@ -5898,140 +5898,139 @@ is used to classify 0 and 1 handwritten digits in MNIST database.
 
 .. code-block::
 
-	def load_mnist(dataset="training_data", digits=np.arange(2), path="..//..//data//MNIST_data"):         # load data
-		import os, struct
-		from array import array as pyarray
-		if dataset == "training_data":
-			fname_image = os.path.join(path, 'train-images.idx3-ubyte').replace('\\', '/')
-			fname_label = os.path.join(path, 'train-labels.idx1-ubyte').replace('\\', '/')
-		elif dataset == "testing_data":
-			fname_image = os.path.join(path, 't10k-images.idx3-ubyte').replace('\\', '/')
-			fname_label = os.path.join(path, 't10k-labels.idx1-ubyte').replace('\\', '/')
-		else:
-			raise ValueError("dataset must be 'training_data' or 'testing_data'")
+    def load_mnist(dataset="training_data", digits=np.arange(2), path="./"):         # 下载数据
+        import os, struct
+        from array import array as pyarray
+        download_mnist(path)
+        if dataset == "training_data":
+            fname_image = os.path.join(path, 'train-images.idx3-ubyte').replace('\\', '/')
+            fname_label = os.path.join(path, 'train-labels.idx1-ubyte').replace('\\', '/')
+        elif dataset == "testing_data":
+            fname_image = os.path.join(path, 't10k-images.idx3-ubyte').replace('\\', '/')
+            fname_label = os.path.join(path, 't10k-labels.idx1-ubyte').replace('\\', '/')
+        else:
+            raise ValueError("dataset must be 'training_data' or 'testing_data'")
 
-		flbl = open(fname_label, 'rb')
-		magic_nr, size = struct.unpack(">II", flbl.read(8))
-		lbl = pyarray("b", flbl.read())
-		flbl.close()
+        flbl = open(fname_label, 'rb')
+        _, size = struct.unpack(">II", flbl.read(8))
+        lbl = pyarray("b", flbl.read())
+        flbl.close()
 
-		fimg = open(fname_image, 'rb')
-		magic_nr, size, rows, cols = struct.unpack(">IIII", fimg.read(16))
-		img = pyarray("B", fimg.read())
-		fimg.close()
+        fimg = open(fname_image, 'rb')
+        _, size, rows, cols = struct.unpack(">IIII", fimg.read(16))
+        img = pyarray("B", fimg.read())
+        fimg.close()
 
-		ind = [k for k in range(size) if lbl[k] in digits]
-		N = len(ind)
-		images = np.zeros((N, rows, cols))
-		labels = np.zeros((N, 1), dtype=int)
-		for i in range(len(ind)):
-			images[i] = np.array(img[ind[i] * rows * cols: (ind[i] + 1) * rows * cols]).reshape((rows, cols))
-			labels[i] = lbl[ind[i]]
+        ind = [k for k in range(size) if lbl[k] in digits]
+        N = len(ind)
+        images = np.zeros((N, rows, cols))
+        labels = np.zeros((N, 1), dtype=int)
+        for i in range(len(ind)):
+            images[i] = np.array(img[ind[i] * rows * cols: (ind[i] + 1) * rows * cols]).reshape((rows, cols))
+            labels[i] = lbl[ind[i]]
 
-		return images, labels
+        return images, labels
 
-	def data_select(train_num, test_num):
-		x_train, y_train = load_mnist("training_data")  # load train data
-		x_test, y_test = load_mnist("testing_data")
-		idx_train = np.append(np.where(y_train == 0)[0][:train_num],
-						np.where(y_train == 1)[0][:train_num])
+    def data_select(train_num, test_num):
+        x_train, y_train = load_mnist("training_data")  
+        x_test, y_test = load_mnist("testing_data")
+        idx_train = np.append(np.where(y_train == 0)[0][:train_num],
+                        np.where(y_train == 1)[0][:train_num])
 
-		x_train = x_train[idx_train]
-		y_train = y_train[idx_train]
-		
-		x_train = x_train / 255
-		y_train = np.eye(2)[y_train].reshape(-1, 2)
+        x_train = x_train[idx_train]
+        y_train = y_train[idx_train]
+        
+        x_train = x_train / 255
+        y_train = np.eye(2)[y_train].reshape(-1, 2)
 
-		# Test Leaving only labels 0 and 1
-		idx_test = np.append(np.where(y_test == 0)[0][:test_num],
-						np.where(y_test == 1)[0][:test_num])
+        # Test Leaving only labels 0 and 1
+        idx_test = np.append(np.where(y_test == 0)[0][:test_num],
+                        np.where(y_test == 1)[0][:test_num])
 
-		x_test = x_test[idx_test]
-		y_test = y_test[idx_test]
-		x_test = x_test / 255
-		y_test = np.eye(2)[y_test].reshape(-1, 2)
-		
-		return x_train, y_train, x_test, y_test
+        x_test = x_test[idx_test]
+        y_test = y_test[idx_test]
+        x_test = x_test / 255
+        y_test = np.eye(2)[y_test].reshape(-1, 2)
+        
+        return x_train, y_train, x_test, y_test
 
-	if __name__=="__main__":
-		x_train, y_train, x_test, y_test = data_select(100, 50)
-		# train sample:200
-		model = Net()
-		optimizer = Adam(model.parameters(), lr=0.005)
-		loss_func = CategoricalCrossEntropy()
+    if __name__=="__main__":
+        x_train, y_train, x_test, y_test = data_select(100, 50)
+        
+        model = Net()
+        optimizer = Adam(model.parameters(), lr=0.005)
+        loss_func = CategoricalCrossEntropy()
 
-		epochs = 10
-		loss_list = []
-		eval_loss_list = []
-		model.train()
+        epochs = 10
+        loss_list = []
+        eval_loss_list = []
+        train_acc_list = []
+        eval_acc_list = []
+        model.train()
+        if not os.path.exists("./result"):
+            os.makedirs("./result")
+        else:
+            pass
+        eval_time = []
+        F1 = open("./result/hqcnn_train_rlt.txt","w")
+        F2 = open("./result/hqcnn_eval_rlt.txt","w")
+        for epoch in range(1, epochs):
+            total_loss = []
+            iter  = 0
+            correct = 0
+            n_train = 0
+            for x, y in data_generator(x_train, y_train, batch_size=1, shuffle=True):
+                iter +=1
+                start_time = time.time()
+                x = x.reshape(-1, 1, 28, 28)
+                optimizer.zero_grad()
+                # Forward pass
+                output = model(x)
+                # Calculating loss
+                loss = loss_func(y, output) 
+                loss_np = np.array(loss.data)
+                np_output = np.array(output.data, copy=False)
+                mask = (np_output.argmax(1) == y.argmax(1))
+                correct += np.sum(np.array(mask))
+                n_train += 1
+                
+                # Backward pass
+                loss.backward()
+                # Optimize the weights
+                optimizer._step()
+                total_loss.append(loss_np)
+            print("##########################")
+            print(f"Train Accuracy: {correct / n_train}")
+            loss_list.append(np.sum(total_loss) / len(total_loss))
+            train_acc_list.append(correct/n_train)
+            print("epoch: ", epoch)
+            print(100. * (epoch + 1) / epochs)
+            print("{:.0f} loss is : {:.10f}".format(epoch, loss_list[-1]))
+            F1.writelines(f"{epoch},{loss_list[-1]},{correct/n_train}\n")
 
-		eval_time = []
-		F1 = open("hqcnn_noise_train_rlt.txt","w")
-		F2 = open("hqcnn_noise_eval_rlt.txt","w")
-		for epoch in range(1, epochs):
-			total_loss = []
-			iter  = 0
-			correct = 0
-			n_train = 0
-			for x, y in data_generator(x_train, y_train, batch_size=1, shuffle=True):
-				iter +=1
-				
-				start_time = time.time()
-				x = x.reshape(-1, 1, 28, 28)
+            model.eval()
+            correct = 0
+            total_eval_loss = []
+            n_eval = 0
+            
+            for x, y in data_generator(x_test, y_test, batch_size=1, shuffle=True):
+                start_time1 = time.time()
+                x = x.reshape(-1, 1, 28, 28)
+                output = model(x)
+                loss = loss_func(y, output)
 
-				optimizer.zero_grad()
-				# Forward pass
-				output = model(x)
-	  
-				# Calculating loss
-				loss = loss_func(y, output)  # target output
-				loss_np = np.array(loss.data)
-				np_output = np.array(output.data, copy=False)
-				mask = (np_output.argmax(1) == y.argmax(1))
-				correct += np.sum(np.array(mask))
-				n_train += 1
-				
-				# Backward pass
-				loss.backward()
-				# Optimize the weights
-				optimizer._step()
-				total_loss.append(loss_np)
-
-			loss_list.append(np.sum(total_loss) / len(total_loss))
-			print(100. * (epoch + 1) / epochs)
-			print("{:.0f} loss is : {:.10f}".format(epoch, loss_list[-1]))
-			F1.writelines(f"{epoch},{loss_list[-1]},{correct/n_train}\n")
-
-			model.eval()
-			correct = 0
-			total_loss1 = []
-			n_eval = 0
-			eval_time1 = []
-			start_init1 = time.time()
-			
-			for x, y in data_generator(x_test, y_test, batch_size=1, shuffle=True):
-				start_time1 = time.time()
-				x = x.reshape(-1, 1, 28, 28)
-				output = model(x)
-				loss = loss_func(y, output)
-
-				np_output = np.array(output.data, copy=False)
-				mask = (np_output.argmax(1) == y.argmax(1))
-				correct += np.sum(np.array(mask))
-				n_eval += 1
-				
-				end_time1 = time.time()
-				eval_time1.append(end_time1 - start_time1)
-				loss_np = np.array(loss.data)
-				total_loss1.append(loss_np)
-			print(f"Eval Accuracy: {correct / n_eval}")
-
-			end_init1 = time.time()
-			print("predict run all epochs time {}".format(end_init1 - start_init1))
-			print("predict mean time:{}".format(np.mean(eval_time1)))
-			F2.writelines(f"{epoch},{np.sum(total_loss1) / len(total_loss1)},{correct/n_eval}\n")
-		F1.close()
-		F2.close()
+                np_output = np.array(output.data, copy=False)
+                mask = (np_output.argmax(1) == y.argmax(1))
+                correct += np.sum(np.array(mask))
+                n_eval += 1
+                
+                loss_np = np.array(loss.data)
+                total_eval_loss.append(loss_np)
+                eval_acc_list.append(correct/n_eval)
+            print(f"Eval Accuracy: {correct / n_eval}")
+            F2.writelines(f"{epoch},{np.sum(total_eval_loss) / len(total_eval_loss)},{correct/n_eval}\n")
+        F1.close()
+        F2.close()
 		
 Comparing the classification results of machine learning models of noisy quantum circuits and ideal quantum circuits, 
 the loss change log and acc change log are as follows:

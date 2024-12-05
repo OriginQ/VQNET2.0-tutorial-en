@@ -1474,7 +1474,7 @@ SDPA
 
    .. py:method:: forward(query,key,value)
 
-        进行前向计算，如果输入为cpu下的QTensor,则使用数学公式计算, 如果输入在gpu下QTensor，则使用flash-attention方法计算.
+        进行前向计算,如果输入为cpu下的QTensor,则使用数学公式计算, 如果输入在gpu下QTensor,则使用flash-attention方法计算.
 
         :param query: query输入QTensor.
         :param key: key输入QTensor.
