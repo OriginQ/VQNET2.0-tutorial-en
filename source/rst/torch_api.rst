@@ -3719,7 +3719,7 @@ Common templates for quantum circuits
 VQC_HardwareEfficientAnsatz
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. py:class:: pyvqnet.qnn.vqc.torch.VQC_HardwareEfficientAnsatz(n_qubits,single_rot_gate_list,entangle_gate="CNOT",entangle_rules='linear',depth=1)
+.. py:class:: pyvqnet.qnn.vqc.torch.VQC_HardwareEfficientAnsatz(n_qubits,single_rot_gate_list,entangle_gate="CNOT",entangle_rules='linear',depth=1,initial=None,dtype=None)
 
     Implementation of Hardware Efficient Ansatz introduced in the paper: `Hardware-efficient Variational Quantum Eigensolver for Small Molecules <https://arxiv.org/pdf/1704.05018.pdf>`__ .
 
@@ -3727,11 +3727,15 @@ VQC_HardwareEfficientAnsatz
 
     This class can be added to the torch model as a submodule of ``torch.nn.Module``.
 
-    :param n_qubits: The number of qubits.
-    :param single_rot_gate_list: A list of single qubit rotation gates consisting of one or more rotation gates acting on each qubit. Currently supports Rx, Ry, Rz.
-    :param entangle_gate: Non-parametric entanglement gate. Supports CNOT, CZ. Default: CNOT.
-    :param entangle_rules: How to use the entanglement gate in the circuit. ``linear`` means the entanglement gate will be applied to every adjacent qubit. ``all`` means the entanglement gate will be applied to any two qbuits. Default: ``linear``.
-    :param depth: the depth of ansatz, default: 1.
+
+    :param n_qubits: Number of qubits.
+    :param single_rot_gate_list: A single qubit rotation gate list is constructed by one or several rotation gate that act on every qubit.Currently support Rx, Ry, Rz.
+    :param entangle_gate: The non parameterized entanglement gate.CNOT,CZ is supported.default:CNOT.
+    :param entangle_rules: How entanglement gate is used in the circuit. 'linear' means the entanglement gate will be act on every neighboring qubits. 'all' means the entanglment gate will be act on any two qbuits. Default:linear.
+    :param depth: The depth of ansatz, default:1.
+    :param initial: initial one same value for paramaters,default:None,this module will initialize parameters randomly.
+    :param dtype: data dtype of parameters.
+    :return: a VQC_HardwareEfficientAnsatz instance.
 
     Example::
 
@@ -3786,9 +3790,12 @@ VQC_BasicEntanglerTemplate
 
     This class can be added to the torch model as a submodule of ``torch.nn.Module``.
 
-    :param num_layer: Number of qubit circuit layers.
-    :param num_qubits: Number of qubits, defaults to 1.
-    :param rotation: Uses single-parameter single-qubit gates, ``RX`` is used as the default.
+    :param num_layers: number of repeat layers, default: 1.
+    :param num_qubits: number of qubits, default: 1.
+    :param rotation: one-parameter single-qubit gate to use, default: `RX`
+    :param initial: initialized same value for all paramters. default:None,parameters will be initialized randomly.
+    :param dtype: data type of parameter, default:None,use float32.
+    :return: A VQC_BasicEntanglerTemplate instance
 
     Example::
 
@@ -3828,20 +3835,21 @@ VQC_BasicEntanglerTemplate
 VQC_StronglyEntanglingTemplate
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. py:class:: pyvqnet.qnn.vqc.torch.VQC_StronglyEntanglingTemplate(weights=None, num_qubits=1, ranges=None)
+.. py:class:: pyvqnet.qnn.vqc.torch.VQC_StronglyEntanglingTemplate(num_layers=1, num_qubits=1, ranges=None,initial=None, dtype=None)
 
     Layers consisting of single qubit rotations and entanglers, as in `circuit-centric classifier design <https://arxiv.org/abs/1804.00633>`__ .
-
-    The parameter ``weights`` contains the weights for each layer. So the number of layers :math:`L` is equal to the ath dimension of ``weights``.
-
-    It contains 2-qubit CNOT gates acting on :math:`M` qubits, :math:`i = 1,...,M`. The index of the second qubit of each gate is given by :math:`(i+r)\mod M`, where :math:`r` is a hyperparameter called ``range``, and :math:`0 < r < M`.
 
     This class inherits from ``pyvqnet.qnn.vqc.torch.QModule`` and ``torch.nn.Module``.
     This class can be added to the torch model as a submodule of ``torch.nn.Module``.
 
-    :param weights: Weight tensor of shape ``(L, M, 3)``, default value: None, use a random tensor of shape ``(1,1,3)``.
-    :param num_qubits: Number of qubits, default value: 1.
-    :param ranges: Sequence that determines the range hyperparameters for each subsequent layer; default value: None, use :math:`r=l \ mod M` as the value of ranges.
+
+    :param num_layers: number of repeat layers, default: 1.
+    :param num_qubits: number of qubits, default: 1.
+    :param ranges: sequence determining the range hyperparameter for each subsequent layer; default: None
+                                using :math: `r=l \mod M` for the :math:`l` th layer and :math:`M` qubits.
+    :param initial: initial value for all parameters.default: None,initialized randomly.
+    :param dtype: data type of parameter, default:None,use float32.
+    :return: A VQC_StronglyEntanglingTemplate instance.
 
     Example::
 
@@ -3883,7 +3891,7 @@ VQC_QuantumEmbedding
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 
-.. py:class:: pyvqnet.qnn.vqc.torch.VQC_QuantumEmbedding(qubits, machine, num_repetitions_input, depth_input, num_unitary_layers, num_repetitions)
+.. py:class:: pyvqnet.qnn.vqc.torch.VQC_QuantumEmbedding( num_repetitions_input, depth_input, num_unitary_layers, num_repetitions,initial=None,dtype=None)
 
     Use RZ,RY,RZ to create variational quantum circuits to encode classical data into quantum states.
     Reference `Quantum embeddings for machine learning <https://arxiv.org/abs/2001.03622>`_.
@@ -3891,12 +3899,15 @@ VQC_QuantumEmbedding
     This class inherits from ``pyvqnet.qnn.vqc.torch.QModule`` and ``torch.nn.Module``.
     This class can be added to the torch model as a submodule of ``torch.nn.Module``.
 
-    :param qubits: qubits requested using pyqpanda.
-    :param machine: quantum virtual machine requested using pyqpanda.
-    :param num_repetitions_input: the number of repetitions to encode the input in the submodule.
-    :param depth_input: the feature dimension of the input data.
-    :param num_unitary_layers: the number of repetitions of the variational quantum gate in each submodule.
-    :param num_repetitions: The number of repetitions of the submodule.
+ 
+    :param num_repetitions_input: number of repeat times to encode input in a submodule.
+    :param depth_input: number of input dimension .
+    :param num_unitary_layers: number of repeat times of variational quantum gates.
+    :param num_repetitions: number of repeat times of submodule.
+    :param initial: initial all parameters with same value, this argument must be QTensor with only one element, default:None.
+    :param dtype: data type of parameter, default:None,use float32.
+    :param name: name of this module.
+    :return: A VQC_QuantumEmbedding instance.
 
     Example::
 
@@ -3942,7 +3953,7 @@ VQC_QuantumEmbedding
 ExpressiveEntanglingAnsatz
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. py:class:: pyvqnet.qnn.vqc.torch.ExpressiveEntanglingAnsatz(type: int, num_wires: int, depth: int, name: str = "")
+.. py:class:: pyvqnet.qnn.vqc.torch.ExpressiveEntanglingAnsatz(type: int, num_wires: int, depth: int, dtype=None, name: str = "")
 
     19 different ansatz from the paper `Expressibility and entangling capability of parameterized quantum circuits for hybrid quantum-classical algorithms <https://arxiv.org/pdf/1905.10876.pdf>`_.
 
@@ -3953,6 +3964,7 @@ ExpressiveEntanglingAnsatz
     :param type: Circuit type from 1 to 19, a total of 19 lines.
     :param num_wires: Number of qubits.
     :param depth: Circuit depth.
+    :param dtype: data type of parameter, default:None,use float32.
     :param name: Name, default "".
 
     :return:
