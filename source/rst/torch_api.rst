@@ -961,12 +961,12 @@ DropPath
 
     Example::
 
-        import pyvqnet.nn as nn
+        import pyvqnet.nn.torch as nn
         import pyvqnet.tensor as tensor
         import pyvqnet
         pyvqnet.backends.set_backend("torch")
         x = tensor.randu([4])
-        y = nn.torch.DropPath()(x)
+        y = nn.DropPath()(x)
         print(y)
 
 Pixel_Shuffle
@@ -4473,9 +4473,9 @@ vqc_zzfeaturemap
 
     .. code-block::
 
-    def data_map_func(x):
-    coeff = x if x.shape[-1] == 1 else ft.reduce(lambda x, y: (np.pi - x) * (np.pi - y), x)
-    return coeff
+        def data_map_func(x):
+            coeff = x if x.shape[-1] == 1 else ft.reduce(lambda x, y: (np.pi - x) * (np.pi - y), x)
+            return coeff
 
     :param input_feat: Array representing input parameters.
     :param q_machine: Quantum virtual machine.
