@@ -1,6 +1,27 @@
 VQNet Changelog
 ###############################
 
+[v2.15.0] - 2024-11-19
+***************************
+
+Added
+===================
+
+- Added `pyvqnet.backends.set_backend()` interface. When users install `torch`, `torch` can be used to perform matrix calculations and variational quantum circuit calculations of QTensor. For details, see the document :ref:`torch_api`.
+- Added `pyvqnet.nn.torch` to inherit the neural network interface and variational quantum circuit neural interface of `torch.nn.Module`. For details, see the document :ref:`torch_api`.
+
+Changed
+===================
+- Modified diag interface.
+- Modified all_gather implementation to be consistent with torch.distributed.all_gather.
+- Modify `QTensor` to support up to 30-dimensional data.
+- Modify `mpi4py` required for distributed functions to require version 4.0.1 or above
+
+Fixed
+===================
+- Some random number implementations cannot fix the seed because omp.
+- Fix some bugs in distributed startup.
+
 
 [v2.14.0] - 2024-09-30
 ***************************
@@ -74,7 +95,7 @@ Added
 Changed
 ===================
 
-- Added new dependencies "Pillow" and "hjson" to the installation package, add new dependencies "psutil" and "cloudpickle" on linux systems 。
+- Added new dependencies "Pillow" and "hjson" to the installation package, add new dependencies "psutil" and "cloudpickle" on linux systems .
 - Optimize softmax and transpose running speed under GPU.
 - Compiled using cuda11.8.
 - Integration of distributed computing interfaces under cpu and gpu based.
@@ -144,7 +165,7 @@ Added
 ===================
 - Added existing interfaces to support complex128, complex64, double, float, uint8, int8, bool, int16, int32, int64 and other types of computing (gpu).
 - Basic logic gates based on vqc: Hadamard, CNOT, I, RX, RY, PauliZ, PauliX, PauliY, S, RZ, RXX, RYY, RZZ, RZX, X1, Y1, Z1, U1, U2, U3, T, SWAP , P, TOFFOLI, CZ, CR, ISWAP.
-- Combined quantum circuit based on vqc: VQC_HardwareEfficientAnsatz、VQC_BasicEntanglerTemplate、VQC_StronglyEntanglingTemplate、VQC_QuantumEmbedding、VQC_RotCircuit、VQC_CRotCircuit、VQC_CSWAPcircuit、VQC_Controlled_Hadamard、VQC_CCZ、VQC_FermionicSingleExcitation、VQC_FermionicDoubleExcitation、VQC_UCCSD、VQC_QuantumPoolingCircuit、VQC_BasisEmbedding、VQC_AngleEmbedding、VQC_AmplitudeEmbedding、VQC_IQPEmbedding。
+- Combined quantum circuit based on vqc: VQC_HardwareEfficientAnsatz、VQC_BasicEntanglerTemplate、VQC_StronglyEntanglingTemplate、VQC_QuantumEmbedding、VQC_RotCircuit、VQC_CRotCircuit、VQC_CSWAPcircuit、VQC_Controlled_Hadamard、VQC_CCZ、VQC_FermionicSingleExcitation、VQC_FermionicDoubleExcitation、VQC_UCCSD、VQC_QuantumPoolingCircuit、VQC_BasisEmbedding、VQC_AngleEmbedding、VQC_AmplitudeEmbedding、VQC_IQPEmbedding.
 - Measurement methods based on vqc: VQC_Purity, VQC_VarMeasure, VQC_DensityMatrixFromQstate, Probability, MeasureAll。
 
 

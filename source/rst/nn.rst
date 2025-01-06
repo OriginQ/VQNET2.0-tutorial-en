@@ -189,6 +189,7 @@ toCPU
         print(test_conv.backend)
         #0
 
+.. _save_parameters:
 
 save_parameters
 =================================
@@ -894,7 +895,8 @@ LayerNormNd
     Example::
 
         import numpy as np
-        from pyvqnet.tensor import QTensor,kfloat32
+        from pyvqnet.tensor import QTensor
+        form pyvqnet import kfloat32
         from pyvqnet.nn.layer_norm import LayerNormNd
         ic = 4
         test_conv = LayerNormNd([2,2])
@@ -1035,7 +1037,8 @@ GroupNorm
     Example::
 
         import numpy as np
-        from pyvqnet.tensor import QTensor,kfloat32
+        from pyvqnet.tensor import QTensor
+        from pyvqnet import kfloat32
         from pyvqnet.nn import GroupNorm
         test_conv = GroupNorm(2,10)
         x = QTensor(np.arange(0,60*2*5).reshape([2,10,3,2,5]),requires_grad=True,dtype=kfloat32)
@@ -1716,7 +1719,7 @@ Interpolate
 
     Only four-dimensional input data is currently supported.
 
-    The input dimensions are interpreted in the form: `B x C x H x W`。
+    The input dimensions are interpreted in the form: `B x C x H x W`.
 
     The modes available for resizing are: ``nearest`` 、``bilinear`` 、``bicubic``.
 
@@ -1981,7 +1984,8 @@ MeanSquaredError
 
     Example::
     
-        from pyvqnet.tensor import QTensor, kfloat64
+        from pyvqnet.tensor import QTensor
+        from pyvqnet import kfloat64
         from pyvqnet.nn import MeanSquaredError
         y = QTensor([[0, 0, 1, 0, 0, 0, 0, 0, 0, 0]],
                     requires_grad=False,
@@ -2060,7 +2064,8 @@ CategoricalCrossEntropy
 
     Example::
 
-        from pyvqnet.tensor import QTensor,kfloat32,kint64
+        from pyvqnet.tensor import QTensor
+        from pyvqnet import kfloat32,kint64
         from pyvqnet.nn import CategoricalCrossEntropy
         x = QTensor([[1, 2, 3, 4, 5],
         [1, 2, 3, 4, 5],
@@ -2095,7 +2100,8 @@ SoftmaxCrossEntropy
 
     Example::
 
-        from pyvqnet.tensor import QTensor, kfloat32, kint64
+        from pyvqnet.tensor import QTensor
+        from pyvqnet import kfloat32, kint64
         from pyvqnet.nn import SoftmaxCrossEntropy
         x = QTensor([[1, 2, 3, 4, 5], [1, 2, 3, 4, 5], [1, 2, 3, 4, 5]],
                     requires_grad=True,
@@ -2138,7 +2144,8 @@ NLL_Loss
 
     Example::
 
-        from pyvqnet.tensor import QTensor, kint64
+        from pyvqnet.tensor import QTensor
+        from pyvqnet import kfloat32,kint64
         from pyvqnet.nn import NLL_Loss
 
         x = QTensor([
@@ -2184,7 +2191,8 @@ CrossEntropyLoss
 
     Example::
 
-        from pyvqnet.tensor import QTensor, kint64
+        from pyvqnet.tensor import QTensor
+        from pyvqnet import kfloat32,kint64
         from pyvqnet.nn import CrossEntropyLoss
         x = QTensor([
             0.9476322568516703, 0.226547421131723, 0.5944201443911326,
@@ -2398,6 +2406,11 @@ Gelu
 
     .. math:: \text{GELU}(x) = 0.5 * x * (1 + \text{Tanh}(\sqrt{2 / \pi} * (x + 0.044715 * x^3)))
 
+    :param approximate: Approximate calculation method, default is "tanh".
+    :param name: Name of the activation function layer, default is "".
+
+    :return: Gelu activation function layer instance.
+
     Examples::
 
         from pyvqnet.tensor import randu, ones_like
@@ -2458,6 +2471,9 @@ Tanh
         print(y)
 
         # [-0.7615942, 0.9640276, -0.9950548, 0.9993293]
+
+
+.. _Optimizer:
 
 Optimizer Module
 ********************************************************
@@ -2599,7 +2615,7 @@ AdamW
     .. math::
         param\_new=param\_new-lr*\frac{moment\_1}{\sqrt{moment\_2\_max}+\epsilon}
     
-    otherwise
+    otherwise:
 
     .. math::
         param\_new=param\_new-lr*\frac{moment\_1}{\sqrt{moment\_2}+\epsilon}
@@ -2883,7 +2899,9 @@ Rotosolve algorithm, which allows a direct jump to the optimal value of a single
 
         from pyvqnet.optim.rotosolve import Rotosolve
         import pyqpanda as pq
-        from pyvqnet.tensor import QTensor,kfloat64
+        from pyvqnet.tensor import QTensor
+
+        from pyvqnet import kfloat64
         from pyvqnet.qnn.measure import expval
         machine = pq.CPUQVM()
         machine.init_qvm()
@@ -3287,8 +3305,9 @@ auc_calculate
                 print("auc:", result)
                 # 0.1111111111111111
 
+.. _vqnet_dist:
 
-Distributed Computing Module
+VQNet Naive Distributed Computing Module
 *********************************************************
 
 Environment deployment
@@ -3350,13 +3369,13 @@ To solve the problem of incompatibility between mpi4py and python versions, you 
 .. code-block::
 
     # Staging the compiler for the current python environment with the following code
-    pushd /root/anaconda3/envs/mpi39/compiler_compat && mv ld ld.bak && popd
+    pushd /root/anaconda3/envs/$CONDA_DEFAULT_ENV/compiler_compat && mv ld ld.bak && popd
 
     # Re-installation
     pip install mpi4py
 
     # reduction
-    pushd /root/anaconda3/envs/mpi39/compiler_compat && mv ld.bak ld && popd
+    pushd /root/anaconda3/envs/$CONDA_DEFAULT_ENV/compiler_compat && mv ld.bak ld && popd
 
 NCCL Installation
 ^^^^^^^^^^^^^^^^^^^^^^
@@ -3418,50 +3437,47 @@ It can be verified with nccl-test
 Inter-node communication environment deployment
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-To implement distributed computing on multiple nodes, firstly, we need to ensure the consistency of the mpich environment on multiple nodes and the consistency of the python environment, and secondly, 
-we need to set up secret-free communication between nodes.
-Let's assume that we need to set up three nodes, node0 (master node), node1, and node2, for secret-free communication.
+    To implement distributed computing on multiple nodes, first **you need to ensure the consistency of the mpich environment and the python environment on multiple nodes**, and secondly, you need to set up **secret-free communication between nodes**.
+    .. code-block::
 
-.. code-block::
+        # Execute on each node
+        ssh-keygen
+        
+        # After that, keep entering to generate a public key (id_rsa.pub) and a private key (id_rsa) in the .ssh folder
+        # Add the public keys of both of its other nodes to the authorized_keys file of the first node.
+        # Then pass the authorized_keys file from the first node to the other two nodes to achieve password-free communication between the nodes.
+        # Execute on child node node1
+        cat ~/.ssh/id_dsa.pub >> node0:~/.ssh/authorized_keys
 
-    # Execute on each node
-    ssh-keygen
-    
-    # After that, keep entering to generate a public key (id_rsa.pub) and a private key (id_rsa) in the .ssh folder
-    # Add the public keys of both of its other nodes to the authorized_keys file of the first node.
-    # Then pass the authorized_keys file from the first node to the other two nodes to achieve password-free communication between the nodes.
-    # Execute on child node node1
-    cat ~/.ssh/id_dsa.pub >> node0:~/.ssh/authorized_keys
+        # Execute on child node node2
+        cat ~/.ssh/id_dsa.pub >> node0:~/.ssh/authorized_keys
+        
+        # After deleting the authorized_keys files on node1 and node2, copy the authorized_keys file on node0 to the other two nodes.
+        scp ~/.ssh/authorized_keys  node1:~/.ssh/authorized_keys
+        scp ~/.ssh/authorized_keys  node2:~/.ssh/authorized_keys
 
-    # Execute on child node node2
-    cat ~/.ssh/id_dsa.pub >> node0:~/.ssh/authorized_keys
-    
-    # After deleting the authorized_keys files on node1 and node2, copy the authorized_keys file on node0 to the other two nodes.
-    scp ~/.ssh/authorized_keys  node1:~/.ssh/authorized_keys
-    scp ~/.ssh/authorized_keys  node2:~/.ssh/authorized_keys
+        # After deleting the authorized_keys files on node1 and node2, copy the authorized_keys file on node0 to the other two nodes.
 
-    # After deleting the authorized_keys files on node1 and node2, copy the authorized_keys file on node0 to the other two nodes.
+    In addition to this, it is also a good idea to set up a shared directory so that when files in the shared directory are changed, 
+    files in different nodes are also changed, preventing files in different nodes from being out of sync when the model is run on multiple nodes.
+    The shared directory is implemented using nfs-utils and rpcbind.
 
-In addition to this, it is also a good idea to set up a shared directory so that when files in the shared directory are changed, 
-files in different nodes are also changed, preventing files in different nodes from being out of sync when the model is run on multiple nodes.
-The shared directory is implemented using nfs-utils and rpcbind.
+    .. code-block::
 
-.. code-block::
+        # Installation of software packages
+        yum -y install nfs* rpcbind  
 
-    # Installation of software packages
-    yum -y install nfs* rpcbind  
+        # Edit the configuration file on the master node
+        vim /etc/exports  
+        /data/mpi *(rw,sync,no_all_squash,no_subtree_check)
 
-    # Edit the configuration file on the master node
-    vim /etc/exports  
-    /data/mpi *(rw,sync,no_all_squash,no_subtree_check)
+        # Start the service on the master node
+        systemctl start rpcbind
+        systemctl start nfs
 
-    # Start the service on the master node
-    systemctl start rpcbind
-    systemctl start nfs
-
-    # Mount the directory to be shared on all child nodes node1,node2.
-    mount node1:/data/mpi/ /data/mpi
-    mount node2:/data/mpi/ /data/mpi
+        # Mount the directory to be shared on all child nodes node1,node2.
+        mount node1:/data/mpi/ /data/mpi
+        mount node2:/data/mpi/ /data/mpi
 
 Distributed launch
 =================================
@@ -3502,6 +3518,9 @@ The ``vqnetrun`` interface allows you to specify nodes and process assignments f
 
         # vqnetrun -np 4 -H node0:1,node2:1 python test.py
         # vqnetrun -np 4 --hosts node0:1,node2:1 python test.py
+
+
+.. _hostfile:
 
 hostfile, f, hostfile
 ^^^^^^^^^^^^^^^^^^^^^^
@@ -3590,39 +3609,6 @@ A sample implementation is as follows
 
         # vqnetrun -np 4 --start-timeout 10 python test.py
 
-
-disable-cache
-^^^^^^^^^^^^^^^^^^^^^^
-
-If this flag is not set, ``vqnetrun`` will perform an initialization check every 60 minutes, provided the check passes successfully. Otherwise, all checks are performed every time ``vqnetrun`` is called.
-
-A sample implementation is as follows
-
-    Example::
-
-        from pyvqnet.distributed import CommController, get_host_name
-        Comm_OP = CommController("mpi") # init mpi controller
-        
-        rank = Comm_OP.getRank()
-        size = Comm_OP.getSize()
-        print(f"rank: {rank}, size {size}")
-        print(f"LocalRank {Comm_OP.getLocalRank()} hosts name {get_host_name()}")
-
-        # vqnetrun -np 4 --disable-cache python test.py
-
-cb, check-build
-^^^^^^^^^^^^^^^^^^^^^^
-
-The ``vqnetrun`` interface can be used to output the supported data communication methods for the current environment by adding this flag.
-
-A sample implementation is as follows
-
-    .. code-block::
-
-        # vqnetrun -cb
-        # vqnetrun --check-build
-
-
 h
 ^^^^^^^^^^^^^^^^^^^^^^
 
@@ -3642,12 +3628,14 @@ CommController
 
 __init__
 ^^^^^^^^^^^^^^^^^^^^^^
-.. py:function:: CommController.__init__(backend="mpi")
+.. py:class:: pyvqnet.distributed.ControllComm.CommController(backend,rank=None,world_size=None)
     
     CommController is used to control the controller of data communication under cpu and gpu, by setting the parameter `backend` to generate the controller for cpu(mpi) and gpu(nccl). (Currently, the distributed computing function only supports the use of linux operating system system )
 
-    :param backend: Used to generate data communication controller for cpu or gpu.
-
+    :param backend: used to generate the data communication controller for cpu or gpu.
+    :param rank: This parameter is only useful in non-pyvqnet backends, the default value is: None.
+    :param world_size: This parameter is only useful in non-pyvqnet backends, the default value is: None.
+        
     :return:
         CommController instance.
 
@@ -3658,485 +3646,459 @@ __init__
 
         # Comm_OP = CommController("mpi") # init mpi controller
 
-getRank
-^^^^^^^^^^^^^^^^^^^^^^
-.. py:function:: CommController.getRank()
-    
-    Used to get the process number of the current process.
-
-    :return: Returns the process number of the current process.
-
-    Examples::
-
-        from pyvqnet.distributed import CommController
-        Comm_OP = CommController("nccl") # init nccl controller
+ 
+    .. py:method:: getRank()
         
-        Comm_OP.getRank()
+        Used to get the process number of the current process.
 
-getSize
-^^^^^^^^^^^^^^^^^^^^^^
-.. py:function:: CommController.getSize()
-    
-    Used to get the total number of processes started.
+        :return: Returns the process number of the current process.
 
+        Examples::
 
-    :return: Returns the total number of processes.
-
-    Examples::
-
-        from pyvqnet.distributed import CommController
-        Comm_OP = CommController("nccl") # init nccl controller
-        
-        Comm_OP.getSize()
-        # vqnetrun -n 2 python test.py 
-        # 2
-
-
-getLocalRank
-^^^^^^^^^^^^^^^^^^^^^^
-.. py:function:: CommController.getLocalRank()
-    
-    Used to get the current process number on the current machine.
-
-
-    :return: The current process number on the current machine.
-
-    Examples::
-
-        from pyvqnet.distributed import CommController
-        Comm_OP = CommController("nccl") # init nccl controller
-        
-        Comm_OP.getLocalRank()
-        # vqnetrun -n 2 python test.py 
-
-
-ncclSplitGroup
-^^^^^^^^^^^^^^^^^^^^^^
-.. py:function:: CommController.ncclSplitGroup(rankL)
-    
-    Used to divide communication groups on the gpu.
-
-    :param rankL: List of process groups.
-
-    Examples::
-
-        from pyvqnet.distributed import CommController
-        Comm_OP = CommController("nccl")
-        
-        Comm_OP.ncclSplitGroup([[0, 1]])
-        # vqnetrun -n 2 python test.py 
-
-
-barrier
-^^^^^^^^^^^^^^^^^^^^^^
-.. py:function:: CommController.barrier()
-    
-    Synchronization.
-
-    :return: Synchronization.
-
-    Examples::
-
-        from pyvqnet.distributed import CommController
-        Comm_OP = CommController("nccl")
-        
-        Comm_OP.barrier()
-
-
-GetDeviceNum
-^^^^^^^^^^^^^^^^^^^^^^
-.. py:function:: CommController.GetDeviceNum()
-    
-    Used to get the number of graphics cards on the current node, (only supported on gpu).
-
-    :return: Returns the number of graphics cards on the current node.
-
-    Examples::
-
-        from pyvqnet.distributed import CommController
-        Comm_OP = CommController("nccl")
-        
-        Comm_OP.GetDeviceNum()
-        # python test.py
-
-
-allreduce
-^^^^^^^^^^^^^^^^^^^^^^
-.. py:function:: CommController.allreduce(tensor, c_op = "avg")
-    
-    Supports allreduce communication of data.
-
-    :param tensor: Input data.
-    :param c_op: Calculation.
-
-    Examples::
-
-        from pyvqnet.distributed import CommController
-        from pyvqnet.tensor import tensor
-        import numpy as np
-        Comm_OP = CommController("mpi")
-
-        num = tensor.to_tensor(np.random.rand(1, 5))
-        print(f"rank {Comm_OP.getRank()}  {num}")
-
-        Comm_OP.allreduce(num, "sum")
-        print(f"rank {Comm_OP.getRank()}  {num}")
-        # vqnetrun -n 2 python test.py
-
-
-reduce
-^^^^^^^^^^^^^^^^^^^^^^
-.. py:function:: CommController.reduce(tensor, root = 0, c_op = "avg")
-    
-    Supports reduce communication of data.
-
-    :param tensor: input.
-    :param root: Specifies the node to which the data is returned.
-    :param c_op: Calculation.
-
-    Examples::
-
-        from pyvqnet.distributed import CommController
-        from pyvqnet.tensor import tensor
-        import numpy as np
-        Comm_OP = CommController("mpi")
-
-        num = tensor.to_tensor(np.random.rand(1, 5))
-        print(f"rank {Comm_OP.getRank()}  {num}")
-        
-        Comm_OP.reduce(num, 1)
-        print(f"rank {Comm_OP.getRank()}  {num}")
-        # vqnetrun -n 2 python test.py
-
-
-broadcast
-^^^^^^^^^^^^^^^^^^^^^^
-.. py:function:: CommController.broadcast(tensor, root = 0)
-    
-    Broadcasts data on the specified process root to all processes.
-
-    :param tensor: input.
-    :param root: Specifies node.
-
-    Examples::
-
-        from pyvqnet.distributed import CommController
-        from pyvqnet.tensor import tensor
-        import numpy as np
-        Comm_OP = CommController("mpi")
-
-        num = tensor.to_tensor(np.random.rand(1, 5))
-        print(f"rank {Comm_OP.getRank()}  {num}")
-        
-        Comm_OP.broadcast(num, 1)
-        print(f"rank {Comm_OP.getRank()}  {num}")
-        # vqnetrun -n 2 python test.py
-
-allgather
-^^^^^^^^^^^^^^^^^^^^^^
-.. py:function:: CommController.allgather(tensor)
-    
-    Allgather the data on all processes together.
-
-    :param tensor: input.
-
-    Examples::
-
-        from pyvqnet.distributed import CommController
-        from pyvqnet.tensor import tensor
-        import numpy as np
-        Comm_OP = CommController("mpi")
-
-        num = tensor.to_tensor(np.random.rand(1, 5))
-        print(f"rank {Comm_OP.getRank()}  {num}")
-
-        num = Comm_OP.allgather(num)
-        print(f"rank {Comm_OP.getRank()}  {num}")
-        # vqnetrun -n 2 python test.py
-
-send
-^^^^^^^^^^^^^^^^^^^^^^
-.. py:function:: CommController.send(tensor, dest)
-    
-    p2p communication interface.
-
-    :param tensor: input.
-    :param dest: Destination process.
-
-    Examples::
-
-        from pyvqnet.distributed import CommController,get_rank
-        from pyvqnet.tensor import tensor
-        import numpy as np
-        Comm_OP = CommController("mpi")
-
-        num = tensor.to_tensor(np.random.rand(1, 5))
-        recv = tensor.zeros_like(num)
-
-        if get_rank() == 0:
-            Comm_OP.send(num, 1)
-        elif get_rank() == 1:
-            Comm_OP.recv(recv, 0)
-        print(f"rank {Comm_OP.getRank()}  {num}")
-        print(f"rank {Comm_OP.getRank()}  {recv}")
-        
-        # vqnetrun -n 2 python test.py
-
-
-recv
-^^^^^^^^^^^^^^^^^^^^^^
-.. py:function:: CommController.recv(tensor, source)
-    
-    p2p communication interface.
-
-    :param tensor: input.
-    :param source: Acceptance process.
-
-    Examples::
-
-        from pyvqnet.distributed import CommController,get_rank
-        from pyvqnet.tensor import tensor
-        import numpy as np
-        Comm_OP = CommController("mpi")
-
-        num = tensor.to_tensor(np.random.rand(1, 5))
-        recv = tensor.zeros_like(num)
-
-        if get_rank() == 0:
-            Comm_OP.send(num, 1)
-        elif get_rank() == 1:
-            Comm_OP.recv(recv, 0)
-        print(f"rank {Comm_OP.getRank()}  {num}")
-        print(f"rank {Comm_OP.getRank()}  {recv}")
-        
-        # vqnetrun -n 2 python test.py
-
-
-allreduce_group
-^^^^^^^^^^^^^^^^^^^^^^
-.. py:function:: CommController.allreduce_group(tensor, c_op = "avg", GroupComm = None)
-    
-    The group allreduce communication interface.
-
-    :param tensor: input.
-    :param c_op: Calculation.
-    :param GroupComm: Communication group, only needed by mpi for intra-group communication.
-
-
-    Examples::
-
-        from pyvqnet.distributed import CommController,get_rank,get_local_rank
-        from pyvqnet.tensor import tensor
-        import numpy as np
-        Comm_OP = CommController("nccl")
-
-        Comm_OP.ncclSplitGroup([[0, 1]])
-
-        complex_data = tensor.QTensor([3+1j, 2, 1 + get_rank()],dtype=8).reshape((3,1)).toGPU(1000+ get_local_rank())
-
-        print(f"allreduce_group before rank {get_rank()}: {complex_data}")
-
-        Comm_OP.allreduce_group(complex_data, c_op="sum")
-        print(f"allreduce_group after rank {get_rank()}: {complex_data}")
-        # vqnetrun -n 2 python test.py
-
-
-reduce_group
-^^^^^^^^^^^^^^^^^^^^^^
-.. py:function:: CommController.reduce_group(tensor, root = 0, c_op = "avg", GroupComm = None)
-    
-    Intra-group REDUCE communication interface.
-
-    :param tensor: Input.
-    :param root: Specify the process number.
-    :param c_op: Calculation.
-    :param GroupComm: Communication group, only needed by mpi for intra-group communication.
-
-    Examples::
-        
-        from pyvqnet.distributed import CommController,get_rank,get_local_rank
-        from pyvqnet.tensor import tensor
-        import numpy as np
-        Comm_OP = CommController("nccl")
-
-        Comm_OP.ncclSplitGroup([[0, 1]])
-
-        complex_data = tensor.QTensor([3+1j, 2, 1 + get_rank()],dtype=8).reshape((3,1)).toGPU(1000+ get_local_rank())
-
-        print(f"reduce_group before rank {get_rank()}: {complex_data}")
-
-        Comm_OP.reduce_group(complex_data, c_op="sum")
-        print(f"reduce_group after rank {get_rank()}: {complex_data}")
-        # vqnetrun -n 2 python test.py
-
-
-broadcast_group
-^^^^^^^^^^^^^^^^^^^^^^
-.. py:function:: CommController.broadcast_group(tensor, root = 0, GroupComm = None)
-    
-    Intra-group broadcast communication interface.
-
-    :param tensor: Input.
-    :param root: Specify the process number.
-    :param GroupComm: Communication group, only needed by mpi for intra-group communication.
-
-    Examples::
-        
-        from pyvqnet.distributed import CommController,get_rank,get_local_rank
-        from pyvqnet.tensor import tensor
-        import numpy as np
-        Comm_OP = CommController("nccl")
-
-        Comm_OP.ncclSplitGroup([[0, 1]])
-
-        complex_data = tensor.QTensor([3+1j, 2, 1 + get_rank()],dtype=8).reshape((3,1)).toGPU(1000+ get_local_rank())
-
-        print(f"broadcast_group before rank {get_rank()}: {complex_data}")
-
-        Comm_OP.broadcast_group(complex_data)
-        Comm_OP.barrier()
-        print(f"broadcast_group after rank {get_rank()}: {complex_data}")
-        # vqnetrun -n 2 python test.py
-
-
-allgather_group
-^^^^^^^^^^^^^^^^^^^^^^
-.. py:function:: CommController.allgather_group(tensor, GroupComm = None)
-    
-    The group allgather communication interface.
-
-    :param tensor: Input.
-    :param GroupComm: Communication group, only needed by mpi for intra-group communication.
-
-    Examples::
-        
-        from pyvqnet.distributed import CommController,get_rank,get_local_rank
-        from pyvqnet.tensor import tensor
-        import numpy as np
-        Comm_OP = CommController("nccl")
-
-        Comm_OP.ncclSplitGroup([[0, 1]])
-
-        complex_data = tensor.QTensor([3+1j, 2, 1 + get_rank()],dtype=8).reshape((3,1)).toGPU(1000+ get_local_rank())
-
-        print(f"allgather_group before rank {get_rank()}: {complex_data}")
-
-        complex_data = Comm_OP.allgather_group(complex_data)
-        print(f"allgather_group after rank {get_rank()}: {complex_data}")
-        # vqnetrun -n 2 python test.py
-
-
-grad_allreduce
-^^^^^^^^^^^^^^^^^^^^^^
-.. py:function:: CommController.grad_allreduce(optimizer)
-    
-    Update the gradient of the parameters in the optimizer with allreduce.
-
-    :param optimizer: optimizer.
-
-    Examples::
-        
-        from pyvqnet.distributed import CommController,get_rank,get_local_rank
-        from pyvqnet.tensor import tensor
-        from pyvqnet.nn.module import Module
-        from pyvqnet.nn.linear import Linear
-        from pyvqnet.nn.loss import MeanSquaredError
-        from pyvqnet.optim import Adam
-        from pyvqnet.nn import activation as F
-        import numpy as np
-        Comm_OP = CommController("nccl")
-
-        class Net(Module):
-            def __init__(self):
-                super(Net, self).__init__()
-                self.fc = Linear(input_channels=5, output_channels=1)
-            def forward(self, x):
-                x = F.ReLu()(self.fc(x))
-                return x
+            from pyvqnet.distributed import CommController
+            Comm_OP = CommController("nccl") # init nccl controller
             
-        model = Net().toGPU(1000+ get_local_rank())
-        opti = Adam(model.parameters(), lr=0.01)
-        actual = tensor.QTensor([1,1,1,1,1,0,0,0,0,0],dtype=6).reshape((10,1)).toGPU(1000+ get_local_rank())
-        x = tensor.randn((10, 5)).toGPU(1000+ get_local_rank())
-        for i in range(10):
-            opti.zero_grad()
-            model.train()
-            result = model(x)
-            loss = MeanSquaredError()(actual, result)
-            loss.backward()
-            # print(f"rank {get_rank()} grad is {model.parameters()[0].grad} para {model.parameters()[0]}")
-            Comm_OP.grad_allreduce(opti)
-            # print(Comm_OP._allgather(model.parameters()[0]))
-            if get_rank() == 0 :
-                print(f"rank {get_rank()} grad is {model.parameters()[0].grad} para {model.parameters()[0]} after")
-            opti.step()
-        # vqnetrun -n 2 python test.py
+            Comm_OP.getRank()
 
-param_allreduce
-^^^^^^^^^^^^^^^^^^^^^^
-.. py:function:: CommController.param_allreduce(model)
+ 
+    .. py:method:: getSize()
     
-    Update the parameters in the model in an allreduce manner.
+        Used to get the total number of processes started.
 
-    :param model: Model.
 
-    Examples::
-    
-        from pyvqnet.distributed import CommController,get_rank,get_local_rank
-        from pyvqnet.tensor import tensor
-        from pyvqnet.nn.module import Module
-        from pyvqnet.nn.linear import Linear
-        from pyvqnet.nn import activation as F
-        import numpy as np
-        Comm_OP = CommController("nccl")
+        :return: Returns the total number of processes.
 
-        class Net(Module):
-            def __init__(self):
-                super(Net, self).__init__()
-                self.fc = Linear(input_channels=5, output_channels=1)
-            def forward(self, x):
-                x = F.ReLu()(self.fc(x))
-                return x
+        Examples::
+
+            from pyvqnet.distributed import CommController
+            Comm_OP = CommController("nccl") # init nccl controller
             
-        model = Net().toGPU(1000+ get_local_rank())
-        print(f"rank {get_rank()} parameters is {model.parameters()}")
-        Comm_OP.param_allreduce(model)
-            
-        if get_rank() == 0:
-            print(model.parameters())
+            Comm_OP.getSize()
+            # vqnetrun -n 2 python test.py 
+            # 2
 
-broadcast_model_params
-^^^^^^^^^^^^^^^^^^^^^^
-.. py:function:: CommController.broadcast_model_params(model, root = 0)
+
+
+    .. py:method:: getLocalRank()
     
-    Broadcasts the model parameters on the specified process number.
+        Used to get the current process number on the current machine.
 
-    :param model: Models.
-    :param root: Specify the process number.
 
-    Examples::
-    
-        from pyvqnet.distributed import CommController,get_rank,get_local_rank
-        from pyvqnet.tensor import tensor
-        from pyvqnet.nn.module import Module
-        from pyvqnet.nn.linear import Linear
-        from pyvqnet.nn import activation as F
-        import numpy as np
-        Comm_OP = CommController("nccl")
+        :return: The current process number on the current machine.
 
-        class Net(Module):
-            def __init__(self):
-                super(Net, self).__init__()
-                self.fc = Linear(input_channels=5, output_channels=1)
-            def forward(self, x):
-                x = F.ReLu()(self.fc(x))
-                return x
+        Examples::
+
+            from pyvqnet.distributed import CommController
+            Comm_OP = CommController("nccl") # init nccl controller
             
-        model = Net().toGPU(1000+ get_local_rank())
-        print(f"bcast before rank {get_rank()}:{model.parameters()}")
-        Comm_OP.broadcast_model_params(model, 0)
-        # model = model
-        print(f"bcast after rank {get_rank()}: {model.parameters()}")
+            Comm_OP.getLocalRank()
+            # vqnetrun -n 2 python test.py 
+
+
+ 
+    .. py:method:: ncclSplitGroup(rankL)
+    
+        Used to divide communication groups on the gpu.
+
+        :param rankL: List of process groups.
+
+        Examples::
+
+            from pyvqnet.distributed import CommController
+            Comm_OP = CommController("nccl")
+            
+            Comm_OP.ncclSplitGroup([[0, 1]])
+            # vqnetrun -n 2 python test.py 
+
+ 
+    .. py:method:: barrier()
+    
+        Synchronization.
+
+        :return: Synchronization.
+
+        Examples::
+
+            from pyvqnet.distributed import CommController
+            Comm_OP = CommController("nccl")
+            
+            Comm_OP.barrier()
+
+ 
+    .. py:method:: GetDeviceNum()
+    
+        Used to get the number of graphics cards on the current node, (only supported on gpu).
+
+        :return: Returns the number of graphics cards on the current node.
+
+        Examples::
+
+            from pyvqnet.distributed import CommController
+            Comm_OP = CommController("nccl")
+            
+            Comm_OP.GetDeviceNum()
+            # python test.py
+
+
+ 
+    .. py:method:: allreduce(tensor, c_op = "avg")
+    
+        Supports allreduce communication of data.
+
+        :param tensor: Input data.
+        :param c_op: Calculation.
+
+        Examples::
+
+            from pyvqnet.distributed import CommController
+            from pyvqnet.tensor import tensor
+            import numpy as np
+            Comm_OP = CommController("mpi")
+
+            num = tensor.to_tensor(np.random.rand(1, 5))
+            print(f"rank {Comm_OP.getRank()}  {num}")
+
+            Comm_OP.allreduce(num, "sum")
+            print(f"rank {Comm_OP.getRank()}  {num}")
+            # vqnetrun -n 2 python test.py
+
+ 
+    .. py:method:: reduce(tensor, root = 0, c_op = "avg")
+    
+        Supports reduce communication of data.
+
+        :param tensor: input.
+        :param root: Specifies the node to which the data is returned.
+        :param c_op: Calculation.
+
+        Examples::
+
+            from pyvqnet.distributed import CommController
+            from pyvqnet.tensor import tensor
+            import numpy as np
+            Comm_OP = CommController("mpi")
+
+            num = tensor.to_tensor(np.random.rand(1, 5))
+            print(f"rank {Comm_OP.getRank()}  {num}")
+            
+            Comm_OP.reduce(num, 1)
+            print(f"rank {Comm_OP.getRank()}  {num}")
+            # vqnetrun -n 2 python test.py
+
+
+ 
+    .. py:method:: broadcast(tensor, root = 0)
+    
+        Broadcasts data on the specified process root to all processes.
+
+        :param tensor: input.
+        :param root: Specifies node.
+
+        Examples::
+
+            from pyvqnet.distributed import CommController
+            from pyvqnet.tensor import tensor
+            import numpy as np
+            Comm_OP = CommController("mpi")
+
+            num = tensor.to_tensor(np.random.rand(1, 5))
+            print(f"rank {Comm_OP.getRank()}  {num}")
+            
+            Comm_OP.broadcast(num, 1)
+            print(f"rank {Comm_OP.getRank()}  {num}")
+            # vqnetrun -n 2 python test.py
+
+ 
+    .. py:method:: allgather(tensor)
+    
+        Allgather the data on all processes together.
+
+        :param tensor: input.
+
+        Examples::
+
+            from pyvqnet.distributed import CommController
+            from pyvqnet.tensor import tensor
+            import numpy as np
+            Comm_OP = CommController("mpi")
+
+            num = tensor.to_tensor(np.random.rand(1, 5))
+            print(f"rank {Comm_OP.getRank()}  {num}")
+
+            num = Comm_OP.allgather(num)
+            print(f"rank {Comm_OP.getRank()}  {num}")
+            # vqnetrun -n 2 python test.py
+
+
+    .. py:method:: send(tensor, dest)
+    
+        p2p communication interface.
+
+        :param tensor: input.
+        :param dest: Destination process.
+
+        Examples::
+
+            from pyvqnet.distributed import CommController,get_rank
+            from pyvqnet.tensor import tensor
+            import numpy as np
+            Comm_OP = CommController("mpi")
+
+            num = tensor.to_tensor(np.random.rand(1, 5))
+            recv = tensor.zeros_like(num)
+
+            if get_rank() == 0:
+                Comm_OP.send(num, 1)
+            elif get_rank() == 1:
+                Comm_OP.recv(recv, 0)
+            print(f"rank {Comm_OP.getRank()}  {num}")
+            print(f"rank {Comm_OP.getRank()}  {recv}")
+            
+            # vqnetrun -n 2 python test.py
+
+ 
+    .. py:method:: recv(tensor, source)
+    
+        p2p communication interface.
+
+        :param tensor: input.
+        :param source: Acceptance process.
+
+        Examples::
+
+            from pyvqnet.distributed import CommController,get_rank
+            from pyvqnet.tensor import tensor
+            import numpy as np
+            Comm_OP = CommController("mpi")
+
+            num = tensor.to_tensor(np.random.rand(1, 5))
+            recv = tensor.zeros_like(num)
+
+            if get_rank() == 0:
+                Comm_OP.send(num, 1)
+            elif get_rank() == 1:
+                Comm_OP.recv(recv, 0)
+            print(f"rank {Comm_OP.getRank()}  {num}")
+            print(f"rank {Comm_OP.getRank()}  {recv}")
+            
+            # vqnetrun -n 2 python test.py
+
+ 
+    .. py:method:: allreduce_group(tensor, c_op = "avg", GroupComm = None)
+    
+        The group allreduce communication interface.
+
+        :param tensor: input.
+        :param c_op: Calculation.
+        :param GroupComm: Communication group, only needed by mpi for intra-group communication.
+
+
+        Examples::
+
+            from pyvqnet.distributed import CommController,get_rank,get_local_rank
+            from pyvqnet.tensor import tensor
+            import numpy as np
+            Comm_OP = CommController("nccl")
+
+            Comm_OP.ncclSplitGroup([[0, 1]])
+
+            complex_data = tensor.QTensor([3+1j, 2, 1 + get_rank()],dtype=8).reshape((3,1)).toGPU(1000+ get_local_rank())
+
+            print(f"allreduce_group before rank {get_rank()}: {complex_data}")
+
+            Comm_OP.allreduce_group(complex_data, c_op="sum")
+            print(f"allreduce_group after rank {get_rank()}: {complex_data}")
+            # vqnetrun -n 2 python test.py
+
+ 
+    .. py:method:: reduce_group(tensor, root = 0, c_op = "avg", GroupComm = None)
+    
+        Intra-group REDUCE communication interface.
+
+        :param tensor: Input.
+        :param root: Specify the process number.
+        :param c_op: Calculation.
+        :param GroupComm: Communication group, only needed by mpi for intra-group communication.
+
+        Examples::
+            
+            from pyvqnet.distributed import CommController,get_rank,get_local_rank
+            from pyvqnet.tensor import tensor
+            import numpy as np
+            Comm_OP = CommController("nccl")
+
+            Comm_OP.ncclSplitGroup([[0, 1]])
+
+            complex_data = tensor.QTensor([3+1j, 2, 1 + get_rank()],dtype=8).reshape((3,1)).toGPU(1000+ get_local_rank())
+
+            print(f"reduce_group before rank {get_rank()}: {complex_data}")
+
+            Comm_OP.reduce_group(complex_data, c_op="sum")
+            print(f"reduce_group after rank {get_rank()}: {complex_data}")
+            # vqnetrun -n 2 python test.py
+
+ 
+    .. py:method:: broadcast_group(tensor, root = 0, GroupComm = None)
+    
+        Intra-group broadcast communication interface.
+
+        :param tensor: Input.
+        :param root: Specify the process number.
+        :param GroupComm: Communication group, only needed by mpi for intra-group communication.
+
+        Examples::
+            
+            from pyvqnet.distributed import CommController,get_rank,get_local_rank
+            from pyvqnet.tensor import tensor
+            import numpy as np
+            Comm_OP = CommController("nccl")
+
+            Comm_OP.ncclSplitGroup([[0, 1]])
+
+            complex_data = tensor.QTensor([3+1j, 2, 1 + get_rank()],dtype=8).reshape((3,1)).toGPU(1000+ get_local_rank())
+
+            print(f"broadcast_group before rank {get_rank()}: {complex_data}")
+
+            Comm_OP.broadcast_group(complex_data)
+            Comm_OP.barrier()
+            print(f"broadcast_group after rank {get_rank()}: {complex_data}")
+            # vqnetrun -n 2 python test.py
+
+
+ 
+    .. py:method:: allgather_group(tensor, GroupComm = None)
+    
+        The group allgather communication interface.
+
+        :param tensor: Input.
+        :param GroupComm: Communication group, only needed by mpi for intra-group communication.
+
+        Examples::
+            
+            from pyvqnet.distributed import CommController,get_rank,get_local_rank
+            from pyvqnet.tensor import tensor
+            import numpy as np
+            Comm_OP = CommController("nccl")
+
+            Comm_OP.ncclSplitGroup([[0, 1]])
+
+            complex_data = tensor.QTensor([3+1j, 2, 1 + get_rank()],dtype=8).reshape((3,1)).toGPU(1000+ get_local_rank())
+
+            print(f"allgather_group before rank {get_rank()}: {complex_data}")
+
+            complex_data = Comm_OP.allgather_group(complex_data)
+            print(f"allgather_group after rank {get_rank()}: {complex_data}")
+            # vqnetrun -n 2 python test.py
+
+
+ 
+    .. py:method:: grad_allreduce(optimizer)
+    
+        Update the gradient of the parameters in the optimizer with allreduce.
+
+        :param optimizer: optimizer.
+
+        Examples::
+            
+            from pyvqnet.distributed import CommController,get_rank,get_local_rank
+            from pyvqnet.tensor import tensor
+            from pyvqnet.nn.module import Module
+            from pyvqnet.nn.linear import Linear
+            from pyvqnet.nn.loss import MeanSquaredError
+            from pyvqnet.optim import Adam
+            from pyvqnet.nn import activation as F
+            import numpy as np
+            Comm_OP = CommController("nccl")
+
+            class Net(Module):
+                def __init__(self):
+                    super(Net, self).__init__()
+                    self.fc = Linear(input_channels=5, output_channels=1)
+                def forward(self, x):
+                    x = F.ReLu()(self.fc(x))
+                    return x
+                
+            model = Net().toGPU(1000+ get_local_rank())
+            opti = Adam(model.parameters(), lr=0.01)
+            actual = tensor.QTensor([1,1,1,1,1,0,0,0,0,0],dtype=6).reshape((10,1)).toGPU(1000+ get_local_rank())
+            x = tensor.randn((10, 5)).toGPU(1000+ get_local_rank())
+            for i in range(10):
+                opti.zero_grad()
+                model.train()
+                result = model(x)
+                loss = MeanSquaredError()(actual, result)
+                loss.backward()
+                # print(f"rank {get_rank()} grad is {model.parameters()[0].grad} para {model.parameters()[0]}")
+                Comm_OP.grad_allreduce(opti)
+                # print(Comm_OP._allgather(model.parameters()[0]))
+                if get_rank() == 0 :
+                    print(f"rank {get_rank()} grad is {model.parameters()[0].grad} para {model.parameters()[0]} after")
+                opti.step()
+            # vqnetrun -n 2 python test.py
+
+ 
+    .. py:method:: param_allreduce(model)
+    
+        Update the parameters in the model in an allreduce manner.
+
+        :param model: Model.
+
+        Examples::
+        
+            from pyvqnet.distributed import CommController,get_rank,get_local_rank
+            from pyvqnet.tensor import tensor
+            from pyvqnet.nn.module import Module
+            from pyvqnet.nn.linear import Linear
+            from pyvqnet.nn import activation as F
+            import numpy as np
+            Comm_OP = CommController("nccl")
+
+            class Net(Module):
+                def __init__(self):
+                    super(Net, self).__init__()
+                    self.fc = Linear(input_channels=5, output_channels=1)
+                def forward(self, x):
+                    x = F.ReLu()(self.fc(x))
+                    return x
+                
+            model = Net().toGPU(1000+ get_local_rank())
+            print(f"rank {get_rank()} parameters is {model.parameters()}")
+            Comm_OP.param_allreduce(model)
+                
+            if get_rank() == 0:
+                print(model.parameters())
+
+ 
+    .. py:method:: broadcast_model_params(model, root = 0)
+    
+        Broadcasts the model parameters on the specified process number.
+
+        :param model: Models.
+        :param root: Specify the process number.
+
+        Examples::
+        
+            from pyvqnet.distributed import CommController,get_rank,get_local_rank
+            from pyvqnet.tensor import tensor
+            from pyvqnet.nn.module import Module
+            from pyvqnet.nn.linear import Linear
+            from pyvqnet.nn import activation as F
+            import numpy as np
+            Comm_OP = CommController("nccl")
+
+            class Net(Module):
+                def __init__(self):
+                    super(Net, self).__init__()
+                    self.fc = Linear(input_channels=5, output_channels=1)
+                def forward(self, x):
+                    x = F.ReLu()(self.fc(x))
+                    return x
+                
+            model = Net().toGPU(1000+ get_local_rank())
+            print(f"bcast before rank {get_rank()}:{model.parameters()}")
+            Comm_OP.broadcast_model_params(model, 0)
+            # model = model
+            print(f"bcast after rank {get_rank()}: {model.parameters()}")
         
 
 split_data

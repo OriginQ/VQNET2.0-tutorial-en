@@ -2813,7 +2813,7 @@ are connected through concatenate for feature fusion.
         def forward(self, x):
             """
             :param x:
-            :return: out(Output to deep)，out_2(enter to next level),
+            :return: out(Output to deep),out_2(enter to next level),
             """
             x1 = self.conv1(x)
             x2 = self.BatchNorm2d1(x1)
@@ -3542,7 +3542,8 @@ Requires ``gym`` == 0.23.0 , ``pygame`` == 2.1.2 .
     from pyvqnet.nn.module import Module
     from pyvqnet.nn.loss import MeanSquaredError
     from pyvqnet.optim.adam import Adam
-    from pyvqnet.tensor.tensor import QTensor,kfloat32
+    from pyvqnet.tensor.tensor import QTensor
+    from pyvqnet import kfloat32
     from pyvqnet.qnn.quantumlayer import QuantumLayerMultiProcess
     from pyvqnet.tensor import tensor
     from pyvqnet.qnn.measure import expval

@@ -1,3 +1,4 @@
+.. _vqc_api:
 
 Autograd Variational Quantum Circuits' API
 ******************************************************************************
@@ -2485,129 +2486,6 @@ ControlledPhaseShift
         layer(q_machine = device)
         print(device.states)
 
-multicnot
----------------------------------
-
-.. py:function:: pyvqnet.qnn.vqc.multicnot(q_machine, wires, params=None,  use_dagger=False)
-    
-    Acting quantum logic gates on state vectors in q_machine multicnot.
-
-    :param q_machine: quantum virtual machine device.
-    :param wires: qubit idx.
-    :param params: parameter matrix, defaults to None,For a logic gate operation function with p parameters, the dimension of the input parameter needs to be [1,p], or [p].
-    :param use_dagger: whether to conjugate transpose, the default is False.
-
-
-    Example::
-    
-        from pyvqnet.qnn.vqc import QMachine
-        import pyvqnet.qnn.vqc as vqc
-        from pyvqnet.tensor import QTensor
-        qm = QMachine(4)
-        vqc.multicnot(q_machine=qm, wires=[0, 1])
-        print(qm.states)
-
-        # [[[[[1.+0.j 0.+0.j]
-        #     [0.+0.j 0.+0.j]]
-        # 
-        #    [[0.+0.j 0.+0.j]
-        #     [0.+0.j 0.+0.j]]]
-        # 
-        # 
-        #   [[[0.+0.j 0.+0.j]
-        #     [0.+0.j 0.+0.j]]
-        # 
-        #    [[0.+0.j 0.+0.j]
-        #     [0.+0.j 0.+0.j]]]]]
-
-MultiCnot
--------------------------------------------
-
-
-.. py:class:: pyvqnet.qnn.vqc.MultiCnot(has_params: bool = False,trainable: bool = False,init_params=None,wires=None,dtype=pyvqnet.kcomplex64,use_dagger=False)
-    
-    Define a MultiCnot logic gate class.
-
-    :param has_params: Whether there are parameters, such as RX, RY and other gates need to be set to True, those without parameters need to be set to False, the default is False.
-    :param trainable: Whether it contains parameters to be trained. If the layer uses external input data to construct a logic gate matrix, set it to False. If it contains parameters to be trained, it is True. The default is False.
-    :param init_params: Initialization parameters, used to encode classic data QTensor, default is None,If it is a parameter-containing logic gate with p parameters, the input data dimension needs to be [1,p] or [p].
-    :param wires: Bit index of wire action, default is None.
-    :param dtype: The data precision of the internal matrix of the logic gate can be set to pyvqnet.kcomplex64 or pyvqnet.kcomplex128, corresponding to float input or double input parameter respectively.
-    :param use_dagger: Whether to use the transposed conjugate version of this gate, the default is False.
-    :return: A Module that can be used to train the model.
-
-     Example::
-
-         from pyvqnet.qnn.vqc import MultiCnot,QMachine
-         device = QMachine(4)
-         layer = MultiCnot(wires=[0,2])
-         batchsize = 2
-         device.reset_states(batchsize)
-         layer(q_machine = device)
-         print(device.states)
-
-multixcnot
-----------------
-
-.. py:function:: pyvqnet.qnn.vqc.multixcnot(q_machine, wires, params=None,  use_dagger=False)
-    
-    Acting quantum logic gates on state vectors in q_machine multixcnot.
-
-    :param q_machine: quantum virtual machine device.
-    :param wires: qubit idx.
-    :param params: parameter matrix, defaults to None,For a logic gate operation function with p parameters, the dimension of the input parameter needs to be [1,p], or [p].
-    :param use_dagger: whether to conjugate transpose, the default is False.
-
-
-    Example::
-    
-        from pyvqnet.qnn.vqc import QMachine
-        import pyvqnet.qnn.vqc as vqc
-        from pyvqnet.tensor import QTensor
-        qm = QMachine(4)
-        vqc.multixcnot(q_machine=qm, wires=[0, 1])
-        print(qm.states)
-
-        # [[[[[0.+0.j 0.+0.j]
-        #     [0.+0.j 0.+0.j]]
-        # 
-        #    [[1.+0.j 0.+0.j]
-        #     [0.+0.j 0.+0.j]]]
-        # 
-        # 
-        #   [[[0.+0.j 0.+0.j]
-        #     [0.+0.j 0.+0.j]]
-        # 
-        #    [[0.+0.j 0.+0.j]
-        #     [0.+0.j 0.+0.j]]]]]
-
-MultiXcnot
----------------------------------------
-
-
-.. py:class:: pyvqnet.qnn.vqc.MultiXcnot(has_params: bool = False,trainable: bool = False,init_params=None,wires=None,dtype=pyvqnet.kcomplex64,use_dagger=False)
-    
-    Define a MultiXcnot logic gate class.
-
-    :param has_params: Whether there are parameters, such as RX, RY and other gates need to be set to True, those without parameters need to be set to False, the default is False.
-    :param trainable: Whether it contains parameters to be trained. If the layer uses external input data to construct a logic gate matrix, set it to False. If it contains parameters to be trained, it is True. The default is False.
-    :param init_params: Initialization parameters, used to encode classic data QTensor, default is None,If it is a parameter-containing logic gate with p parameters, the input data dimension needs to be [1,p] or [p].
-    :param wires: Bit index of wire action, default is None.
-    :param dtype: The data precision of the internal matrix of the logic gate can be set to pyvqnet.kcomplex64 or pyvqnet.kcomplex128, corresponding to float input or double input parameter respectively.
-    :param use_dagger: Whether to use the transposed conjugate version of this gate, the default is False.
-    :return: A Module that can be used to train the model.
-
-    Example::
-
-        from pyvqnet.qnn.vqc import MultiXcnot,QMachine
-        device = QMachine(4)
-        layer = MultiXcnot(wires=[0,2])
-        batchsize = 2
-        device.reset_states(batchsize)
-        layer(q_machine = device)
-        print(device.states)
-
-
 multicontrolledx
 ---------------------------------------------------------------
 
@@ -2673,7 +2551,8 @@ MultiControlledX
 
         from pyvqnet.qnn.vqc import QMachine
         import pyvqnet.qnn.vqc as vqc
-        from pyvqnet.tensor import QTensor,kcomplex64
+        from pyvqnet.tensor import QTensor
+        from pyvqnet import kcomplex64
 
         qm = QMachine(4,dtype=kcomplex64)
         qm.reset_states(2)
@@ -2822,7 +2701,7 @@ VQC_BasisEmbedding
 VQC_AngleEmbedding
 --------------------------
 
-.. py:function:: pyvqnet.qnn.vqc.VQC_AngleEmbedding(input_feat, wires, q_machine: QMachine, rotation: str = "X")
+.. py:function:: pyvqnet.qnn.vqc.VQC_AngleEmbedding(input_feat, wires, q_machine: pyvqnet.qnn.vqc.QMachine, rotation: str = "X")
 
     Encodes the :math:`N` feature into the rotation angle of the :math:`n` qubit, where :math:`N \leq n` in ``q_machine`` .
 
@@ -2893,7 +2772,7 @@ VQC_AmplitudeEmbedding
 VQC_IQPEmbedding
 --------------------------
 
-.. py:function:: pyvqnet.qnn.vqc.VQC_IQPEmbedding(input_feat, q_machine: QMachine, rep: int = 1)
+.. py:function:: pyvqnet.qnn.vqc.VQC_IQPEmbedding(input_feat, q_machine: pyvqnet.qnn.vqc.QMachine, rep: int = 1)
 
     Apply diagonal gates using IQP lines encode :math:`n` features into :math:`n` qubits of ``q_machine`` ..
 
@@ -3209,7 +3088,7 @@ VQC_UCCSD
 VQC_ZFeatureMap
 -----------------------------------------
 
-.. py:function:: pyvqnet.qnn.vqc.VQC_ZFeatureMap(input_feat, q_machine: QMachine, data_map_func=None, rep: int = 2)
+.. py:function:: pyvqnet.qnn.vqc.VQC_ZFeatureMap(input_feat, q_machine: pyvqnet.qnn.vqc.QMachine, data_map_func=None, rep: int = 2)
 
     First-order bubblegum Z-evolution circuit.
 
@@ -3251,7 +3130,7 @@ VQC_ZFeatureMap
 VQC_ZZFeatureMap
 -----------------------------------------
 
-.. py:function:: pyvqnet.qnn.vqc.VQC_ZZFeatureMap(input_feat, q_machine: QMachine, data_map_func=None, entanglement: Union[str, List[List[int]],Callable[[int], List[int]]] = "full",rep: int = 2)
+.. py:function:: pyvqnet.qnn.vqc.VQC_ZZFeatureMap(input_feat, q_machine: pyvqnet.qnn.vqc.QMachine, data_map_func=None, entanglement: Union[str, List[List[int]],Callable[[int], List[int]]] = "full",rep: int = 2)
 
     Second-order Pauli-Z evolution circuits.
 
@@ -3298,7 +3177,7 @@ VQC_ZZFeatureMap
 VQC_AllSinglesDoubles
 -----------------------------------------
 
-.. py:function:: pyvqnet.qnn.vqc.VQC_AllSinglesDoubles(weights, q_machine: QMachine, hf_state, wires, singles=None, doubles=None)
+.. py:function:: pyvqnet.qnn.vqc.VQC_AllSinglesDoubles(weights, q_machine: pyvqnet.qnn.vqc.QMachine, hf_state, wires, singles=None, doubles=None)
 
     Apply all ``SingleExcitation`` and ``DoubleExcitation`` operations on the ``q_machine`` to the initial Hartree-Fock state, preparing the molecular association state.
 
@@ -3337,7 +3216,7 @@ VQC_AllSinglesDoubles
 VQC_BasisRotation
 -----------------------------------------
 
-.. py:function:: pyvqnet.qnn.vqc.VQC_BasisRotation(q_machine: QMachine, wires, unitary_matrix: QTensor, check=False)
+.. py:function:: pyvqnet.qnn.vqc.VQC_BasisRotation(q_machine: pyvqnet.qnn.vqc.QMachine, wires, unitary_matrix: QTensor, check=False)
 
     Implement a circuit that provides a whole that can be used to perform precise monolithic base rotations.
 
@@ -3419,6 +3298,66 @@ VQC_QuantumPoolingCircuit
         m = MeasureAll(obs={"Z1": 1})
         exp = m(q_machine=qm)
         print(exp)
+
+
+
+ExpressiveEntanglingAnsatz
+---------------------------------------------------------------
+
+.. py:class:: pyvqnet.qnn.vqc.ExpressiveEntanglingAnsatz(type: int, num_wires: int, depth: int, name: str = "")
+
+    19 different ansatz from the paper `Expressibility and entangling capability of parameterized quantum circuits for hybrid quantum-classical algorithms <https://arxiv.org/pdf/1905.10876.pdf>`_.
+
+    :param type: Circuit type from 1 to 19, a total of 19 wires.
+    :param num_wires: Number of qubits.
+    :param depth: Circuit depth.
+    :param name: Name, default "".
+
+    :return:
+        An ExpressiveEntanglingAnsatz instance
+
+    Example::
+
+        from pyvqnet.qnn.vqc  import *
+        import pyvqnet
+        pyvqnet.utils.set_random_seed(42)
+        from pyvqnet.nn import Module
+        class QModel(Module):
+            def __init__(self, num_wires, dtype,grad_mode=""):
+                super(QModel, self).__init__()
+
+                self._num_wires = num_wires
+                self._dtype = dtype
+                self.qm = QMachine(num_wires, dtype=dtype,grad_mode=grad_mode,save_ir=True)
+                self.c1 = ExpressiveEntanglingAnsatz(13,3,2)
+                self.measure = MeasureAll(obs = {
+                    'wires': [1],
+                    'observables': ['z'],
+                    'coefficient': [1]
+                })
+
+            def forward(self, x, *args, **kwargs):
+                self.qm.reset_states(x.shape[0])
+                self.c1(q_machine = self.qm)
+                rlt = self.measure(q_machine=self.qm)
+                return rlt
+            
+
+        input_x = tensor.QTensor([[0.1, 0.2, 0.3]])
+
+        #input_x = tensor.broadcast_to(input_x,[2,3])
+
+        input_x.requires_grad = True
+
+        qunatum_model = QModel(num_wires=3, dtype=pyvqnet.kcomplex64)
+
+        batch_y = qunatum_model(input_x)
+        z = vqc_to_originir_list(qunatum_model)
+        for zi in z:
+            print(zi)
+        batch_y.backward()
+        print(batch_y)
+
 
 
 
@@ -3694,7 +3633,8 @@ VQC_Purity
     Example::
 
         from pyvqnet.qnn.vqc import VQC_Purity, rx, ry, cnot, QMachine
-        from pyvqnet.tensor import kfloat64, QTensor
+        from pyvqnet.tensor import QTensor
+        from pyvqnet import kfloat64
         x = QTensor([[0.7, 0.4], [1.7, 2.4]], requires_grad=True)
         qm = QMachine(3)
         qm.reset_states(2)
@@ -3749,7 +3689,8 @@ VQC_DensityMatrixFromQstate
     Example::
 
         from pyvqnet.qnn.vqc import VQC_DensityMatrixFromQstate,rx,ry,cnot,QMachine
-        from pyvqnet.tensor import kfloat64, QTensor
+        from pyvqnet.tensor import QTensor
+        from pyvqnet import kfloat64
         x = QTensor([[0.7,0.4],[1.7,2.4]],requires_grad=True)
 
         qm = QMachine(3)
@@ -3807,7 +3748,8 @@ Probability
     Example::
 
         from pyvqnet.qnn.vqc import Probability,rx,ry,cnot,QMachine,rz
-        from pyvqnet.tensor import kfloat64, QTensor
+        from pyvqnet.tensor import QTensor
+        from pyvqnet import kfloat64
         x = QTensor([[0.56, 0.1],[0.56, 0.1]],requires_grad=True)
         qm = QMachine(4)
         qm.reset_states(2)
@@ -3859,7 +3801,8 @@ MeasureAll
     Example::
 
         from pyvqnet.qnn.vqc import MeasureAll,rx,ry,cnot,QMachine,rz
-        from pyvqnet.tensor import kfloat64, QTensor
+        from pyvqnet.tensor import QTensor
+        from pyvqnet import kfloat64
         x = QTensor([[0.56, 0.1],[0.56, 0.1]],requires_grad=True)
         qm = QMachine(4)
         qm.reset_states(2)
@@ -3912,7 +3855,8 @@ Samples
     Example::
 
         from pyvqnet.qnn.vqc import Samples,rx,ry,cnot,QMachine,rz
-        from pyvqnet.tensor import kfloat64, QTensor
+        from pyvqnet.tensor import QTensor
+        from pyvqnet import kfloat64
         x = QTensor([[0.56, 0.1],[0.56, 0.1]],requires_grad=True)
 
         qm = QMachine(4)
@@ -4119,17 +4063,18 @@ Commonly used quantum variation circuit templates
 VQC_HardwareEfficientAnsatz
 -----------------------------------------
 
-.. py:class:: pyvqnet.qnn.vqc.VQC_HardwareEfficientAnsatz(n_qubits,single_rot_gate_list,entangle_gate="CNOT",entangle_rules='linear',depth=1)
+.. py:class:: pyvqnet.qnn.vqc.VQC_HardwareEfficientAnsatz(n_qubits,single_rot_gate_list,entangle_gate="CNOT",entangle_rules='linear',depth=1,initial=None,dtype=None)
 
     The implementation of Hardware Efficient Ansatz introduced in the paper:`Hardware-efficient Variational Quantum Eigensolver for Small Molecules <https://arxiv.org/pdf/1704.05018.pdf>`__.
 
-    :param n_qubits: number of qubits.
-    :param single_rot_gate_list: A single-qubit turnstile list consists of one or more turnstiles that act on each qubit. Rx, Ry, Rz are currently supported.
-    :param entangle_gate: Nonparametric entanglement gates. Support CNOT, CZ. Default: CNOT.
-    :param entangle_rules: How to use entanglement gates in circuits. ``linear`` means that the entanglement gate will act on every adjacent qubit. 
-        ``all`` means that the entanglement gate will act on any two qbuits. Default: ``linear``.
-    :param depth: Ansatz depth, default: 1.
-    :return: A VQC_HardwareEfficientAnsatz instance.
+    :param n_qubits: Number of qubits.
+    :param single_rot_gate_list: A single qubit rotation gate list is constructed by one or several rotation gate that act on every qubit.Currently support Rx, Ry, Rz.
+    :param entangle_gate: The non parameterized entanglement gate.CNOT,CZ is supported.default:CNOT.
+    :param entangle_rules: How entanglement gate is used in the circuit. 'linear' means the entanglement gate will be act on every neighboring qubits. 'all' means the entanglment gate will be act on any two qbuits. Default:linear.
+    :param depth: The depth of ansatz, default:1.
+    :param initial: initial one same value for paramaters,default:None,this module will initialize parameters randomly.
+    :param dtype: data dtype of parameters.
+    :return: a VQC_HardwareEfficientAnsatz instance.
 
     Example::
 
@@ -4178,10 +4123,12 @@ VQC_BasicEntanglerTemplate
 
     A CNOT gate ring connects each qubit to its neighbors, with the last qubit considered to be a neighbor of the first qubit.
 
-    :param num_layer: The number of qubit circuit layers.
-    :param num_qubits: The number of qubits, defaults to 1.
-    :param rotation: With single-parameter single-qubit gates, ``RX`` is used as the default.
-    :return: A VQC_BasicEntanglerTemplate instance.
+    :param num_layers: number of repeat layers, default: 1.
+    :param num_qubits: number of qubits, default: 1.
+    :param rotation: one-parameter single-qubit gate to use, default: `RX`
+    :param initial: initialized same value for all paramters. default:None,parameters will be initialized randomly.
+    :param dtype: data type of parameter, default:None,use float32.
+    :return: A VQC_BasicEntanglerTemplate instance
 
     Example::
 
@@ -4221,19 +4168,17 @@ VQC_BasicEntanglerTemplate
 VQC_StronglyEntanglingTemplate
 ------------------------------------
 
-.. py:class:: pyvqnet.qnn.vqc.VQC_StronglyEntanglingTemplate(weights=None, num_qubits=1, ranges=None)
+.. py:class:: pyvqnet.qnn.vqc.VQC_StronglyEntanglingTemplate(num_layers=1, num_qubits=1, ranges=None,initial=None, dtype=None)
 
     A layer consisting of a single qubit rotation and an entangler, see `circuit-centric classifier design <https://arxiv.org/abs/1804.00633>`__.
 
-    The parameter ``weights`` contains the weights for each layer. Thus it follows that the number of layers :math:`L` is equal to the first dimension of ``weights``.
-
-    It consists of 2-qubit CNOT gates acting on :math: `M` qubits, :math:`i = 1,...,M`. The second qubit label for each gate is given by the formula :math:`(i+r)\mod M`, where :math:`r` is a hyperparameter called ``range``, and :math: `0 < r < M`.
-
-    :param weights: Weight tensor of shape ``(L, M, 3)``, default: None, use a random tensor of shape ``(1,1,3)``.
-    :param num_qubits: The number of qubits, default: 1.
-    :param ranges: Sequence of hyperparameters that determine the ranges of each subsequent layer; default: None, use :math:`r=l \ mod M` as the value of ranges.
+    :param num_layers: number of repeat layers, default: 1.
+    :param num_qubits: number of qubits, default: 1.
+    :param ranges: sequence determining the range hyperparameter for each subsequent layer; default: None
+                                using :math: `r=l \mod M` for the :math:`l` th layer and :math:`M` qubits.
+    :param initial: initial value for all parameters.default: None,initialized randomly.
+    :param dtype: data type of parameter, default:None,use float32.
     :return: A VQC_StronglyEntanglingTemplate instance.
-
 
     Example::
 
@@ -4273,19 +4218,20 @@ VQC_StronglyEntanglingTemplate
 VQC_QuantumEmbedding
 --------------------------
 
-.. py:class:: pyvqnet.qnn.VQC_QuantumEmbedding(qubits, machine, num_repetitions_input, depth_input, num_unitary_layers, num_repetitions)
+.. py:class:: pyvqnet.qnn.VQC_QuantumEmbedding( num_repetitions_input, depth_input, num_unitary_layers, num_repetitions,initial=None, dtype=None)
 
     Use RZ,RY,RZ to create variational quantum circuits that encode classical data into quantum states.
     Reference `Quantum embeddings for machine learning <https://arxiv.org/abs/2001.03622>`_.
     After the class is initialized, its member function ``compute_circuit`` is a running function, which can be input as a parameter. 
     The ``QuantumLayerV2`` class constitutes a layer of the quantum machine learning model.
 
-    :param qubits: Qubits requested using pyqpanda.
-    :param machine: Quantum virtual machine requested by pyqpanda.
-    :param num_repetitions_input: Number of repetitions to encode input in submodules.
-    :param depth_input: The feature dimension of the input data.
-    :param num_unitary_layers: The number of repetitions of the variable quantum gates in each submodule.
-    :param num_repetitions: The number of repetitions for the submodule.
+    :param num_repetitions_input: number of repeat times to encode input in a submodule.
+    :param depth_input: number of input dimension .
+    :param num_unitary_layers: number of repeat times of variational quantum gates.
+    :param num_repetitions: number of repeat times of submodule.
+    :param initial: initial all parameters with same value, this argument must be QTensor with only one element, default:None.
+    :param dtype: data type of parameter, default:None,use float32.
+    :param name: name of this module.
     :return: A VQC_QuantumEmbedding instance.
 
     Example::
@@ -4343,152 +4289,9 @@ Other functions
 
 
 
-HybirdVQCQpandaQVMLayer
------------------------------------------------------------
-
-.. py:class:: pyvqnet.qnn.vqc.HybirdVQCQpandaQVMLayer(vqc_module: Module,qcloud_token: str,para_num: int,num_qubits: int,num_cubits: int,pauli_str_dict: Union[List[Dict], Dict, None] = None,shots: int = 1000,initializer: Callable = None,dtype: Union[int, None] = None,name: str = "",submit_kwargs: Dict = {},query_kwargs: Dict = {})
-    
-    Hybrid vqc and qpanda QVM layer. This layer converts quantum circuit computations defined by the user `forward` function into QPanda circuits, which can be run forward on a QPanda local VM or cloud service, and simulates circuit parameter gradients on the local CPU, reducing the time complexity of using the parameter drift method.
-
-    :param vqc_module: vqc_module with forward(), qmachine set up correctly.
-    :param qcloud_token: `str` - Type of quantum machine or cloud token for execution.
-    :param para_num: `int` - Number of parameters; parameters are one-dimensional.
-    :param num_qubits: `int` - Number of qubits in the quantum circuit.
-    :param num_cubits: `int` - Number of classical bits used for measurements in the quantum circuit.
-    :param pauli_str_dict: `dict|list` - Dictionary or list of dictionaries representing Pauli operators in the quantum circuit. Default is None.
-    :param shots: `int` - Number of measurement shots. Default is 1000.
-    :param initializer: Initializer for parameter values. Default is None.
-    :param dtype: Data type of the parameter. Default is None, i.e. use the default data type.
-    :param name: Module name. Default is the empty string.
-    :param submit_kwargs: Additional keyword parameters for submitting quantum circuits, default value:
-                {"chip_id":pyqpanda.real_chip_type.origin_72,"is_amend":True,"is_mapping":True,"is_optimization":True,"default_task_group_size":200,"test_qcloud_fake":True}.
-    :param query_kwargs: Additional keyword parameters for querying quantum results, default value:{"timeout":2,"print_query_info":True,"sub_circuits_split_size":1}。
-
-    :return: The module that can calculate quantum circuits.
-
-    .. note::
-
-        pauli_str_dict cannot be None and should be the same as obs in the vqc_module measurement function.
-        vqc_module should have attributes of type QMachine, and QMachine should set save_ir=True.
-
-    Example::
-
-        from pyvqnet.qnn.vqc  import *
-        import pyvqnet
-        from pyvqnet.nn import Module,Linear
-
-        class Hybird(Module):
-            def __init__(self):
-                self.cl1 = Linear(3,3)
-                self.ql = QModel(num_wires=6, dtype=pyvqnet.kcomplex64)
-                self.cl2 = Linear(1,2)
-            
-            def forward(self,x):
-                x = self.cl1(x)
-                x = self.ql(x)
-                x = self.cl2(x)
-                return x
-            
-        class QModel(Module):
-            def __init__(self, num_wires, dtype,grad_mode=""):
-                super(QModel, self).__init__()
-
-                self._num_wires = num_wires
-                self._dtype = dtype
-                self.qm = QMachine(num_wires, dtype=dtype,grad_mode=grad_mode,save_ir=True)
-                self.rx_layer = RX(has_params=True, trainable=False, wires=0)
-                self.ry_layer = RY(has_params=True, trainable=False, wires=1)
-                self.rz_layer = RZ(has_params=True, trainable=False, wires=1)
-                self.u1 = U1(has_params=True,trainable=True,wires=[2])
-                self.u2 = U2(has_params=True,trainable=True,wires=[3])
-                self.u3 = U3(has_params=True,trainable=True,wires=[1])
-                self.i = I(wires=[3])
-                self.s = S(wires=[3])
-                self.x1 = X1(wires=[3])
-                self.y1 = Y1(wires=[3])
-                self.z1 = Z1(wires=[3])
-                self.x = PauliX(wires=[3])
-                self.y = PauliY(wires=[3])
-                self.z = PauliZ(wires=[3])
-                self.swap = SWAP(wires=[2,3])
-                self.cz = CZ(wires=[2,3])
-                self.cr = CR(has_params=True,trainable=True,wires=[2,3])
-                self.rxx = RXX(has_params=True,trainable=True,wires=[2,3])
-                self.rzz = RYY(has_params=True,trainable=True,wires=[2,3])
-                self.ryy = RZZ(has_params=True,trainable=True,wires=[2,3])
-                self.rzx = RZX(has_params=True,trainable=False, wires=[2,3])
-                self.toffoli = Toffoli(wires=[2,3,4],use_dagger=True)
-                #self.rz_layer2 = RZ(has_params=True, trainable=True, wires=1)
-                self.h =Hadamard(wires=[1])
-    
-                self.iSWAP = iSWAP(True,True,wires=[0,2])
-                self.tlayer = T(wires=1)
-                self.cnot = CNOT(wires=[0, 1])
-                self.measure = MeasureAll(obs={'Z0':2,'Y3':3} 
-            )
-
-            def forward(self, x, *args, **kwargs):
-                self.qm.reset_states(x.shape[0])
-                self.i(q_machine=self.qm)
-                self.s(q_machine=self.qm)
-                self.swap(q_machine=self.qm)
-                self.cz(q_machine=self.qm)
-                self.x(q_machine=self.qm)
-                self.x1(q_machine=self.qm)
-                self.y(q_machine=self.qm)
-                self.y1(q_machine=self.qm)
-                self.z(q_machine=self.qm)
-                self.z1(q_machine=self.qm)
-                self.ryy(q_machine=self.qm)
-                self.rxx(q_machine=self.qm)
-                self.rzz(q_machine=self.qm)
-                self.rzx(q_machine=self.qm,params = x[:,[1]])
-                self.cr(q_machine=self.qm)
-                self.u1(q_machine=self.qm)
-                self.u2(q_machine=self.qm)
-                self.u3(q_machine=self.qm)
-                self.rx_layer(params = x[:,[0]], q_machine=self.qm)
-                self.cnot(q_machine=self.qm)
-                self.h(q_machine=self.qm)
-                self.iSWAP(q_machine=self.qm)
-                self.ry_layer(params = x[:,[1]], q_machine=self.qm)
-                self.tlayer(q_machine=self.qm)
-                self.rz_layer(params = x[:,[2]], q_machine=self.qm)
-                self.toffoli(q_machine=self.qm)
-                rlt = self.measure(q_machine=self.qm)
-
-                return rlt
-            
-
-        input_x = tensor.QTensor([[0.1, 0.2, 0.3]])
-
-        input_x = tensor.broadcast_to(input_x,[2,3])
-
-        input_x.requires_grad = True
-
-        qunatum_model = QModel(num_wires=6, dtype=pyvqnet.kcomplex64)
-
-        l = HybirdVQCQpandaQVMLayer(qunatum_model,
-                                "3047DE8A59764BEDAC9C3282093B16AF1",
-                    5,
-                    6,
-                    6,
-                    pauli_str_dict={'Z0':2,'Y3':3},
-                    shots = 1000,
-                    initializer=None,
-                    dtype=None,
-                    name="",
-            submit_kwargs={"test_qcloud_fake":True},
-                    query_kwargs={})
-    
-        y = l(input_x)
-        print(y)
-        y.backward()
-        print(input_x.grad)
-
 QuantumLayerAdjoint
 -----------------------------------------
-.. py:class:: pyvqnet.qnn.vqc.QuantumLayerAdjoint(general_module: pyvqnet.nn.Module, q_machine: QMachine,name="")
+.. py:class:: pyvqnet.qnn.vqc.QuantumLayerAdjoint(general_module: pyvqnet.nn.Module, q_machine: pyvqnet.qnn.vqc.QMachine,name="")
 
 
     An automatically differentiated QuantumLayer layer that uses adjoint matrix method for gradient calculation, refer to `Efficient calculation of gradients in classical simulations of variational quantum algorithms <https://arxiv.org/abs/2009.02823>`_.
@@ -4573,7 +4376,7 @@ QuantumLayerAdjoint
 QuantumLayerES
 ---------------------------------------------------------------
 
-.. py:class:: pyvqnet.qnn.vqc.QuantumLayerES(general_module: nn.Module, q_machine: QMachine, name="", sigma = np.pi / 24)
+.. py:class:: pyvqnet.qnn.vqc.QuantumLayerES(general_module: nn.Module, q_machine: pyvqnet.qnn.vqc.QMachine, name="", sigma = np.pi / 24)
 
    Automatically Differentiable QuantumLayer Layer for Gradient Calculation According to Evolutionary Strategies, refer to `Learning to learn with an evolutionary strategy Learning to learn with an evolutionary strategy <https://arxiv.org/abs/2310.17402>`_ .
 
@@ -4938,8 +4741,9 @@ model_summary
     Example::
 
         from pyvqnet.qnn.vqc import QMachine, RX, RY, CNOT, PauliX, qmatrix, PauliZ,MeasureAll
-        from pyvqnet.tensor import QTensor, tensor,kcomplex64
-        import pyvqnet
+        from pyvqnet.tensor import QTensor, tensor
+        from pyvqnet import kcomplex64
+        importpyvqnet
         from pyvqnet.nn import LSTM,Linear
         from pyvqnet import model_summary
         class QModel(pyvqnet.nn.Module):

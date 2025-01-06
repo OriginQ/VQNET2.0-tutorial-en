@@ -1122,6 +1122,339 @@ grad
         # [-0.09442394  0.09442394]
         # [-0.14409127  0.14409127]]
 
+
+
+HybirdVQCQpandaQVMLayer
+-----------------------------------------------------------
+
+.. py:class:: pyvqnet.qnn.HybirdVQCQpandaQVMLayer(vqc_module: Module,qcloud_token: str, int,num_qubits: int,num_cubits: int,pauli_str_dict: Union[List[Dict], Dict, None] = None,shots: int = 1000,name: str = "",submit_kwargs: Dict = {},query_kwargs: Dict = {})
+    
+    Hybrid vqc and qpanda QVM layer. This layer converts quantum circuit computations defined by the user `forward` function into QPanda circuits, which can be run forward on a QPanda local VM or cloud service, and simulates circuit parameter gradients on the local CPU, reducing the time complexity of using the parameter drift method.
+
+    :param vqc_module: vqc_module with forward(), qmachine set up correctly.
+    :param qcloud_token: `str` - Type of quantum machine or cloud token for execution.
+    :param num_qubits: `int` - Number of qubits in the quantum circuit.
+    :param num_cubits: `int` - Number of classical bits used for measurements in the quantum circuit.
+    :param pauli_str_dict: `dict|list` - Dictionary or list of dictionaries representing Pauli operators in the quantum circuit. Default is None.
+    :param shots: `int` - Number of measurement shots. Default is 1000.
+    :param name: Module name. Default is the empty string.
+    :param submit_kwargs: Additional keyword parameters for submitting quantum circuits, default value:
+                {"chip_id":pyqpanda.real_chip_type.origin_72,"is_amend":True,"is_mapping":True,"is_optimization":True,"default_task_group_size":200,"test_qcloud_fake":True}.
+    :param query_kwargs: Additional keyword parameters for querying quantum results, default value:{"timeout":2,"print_query_info":True,"sub_circuits_split_size":1}.
+
+    :return: The module that can calculate quantum circuits.
+
+    .. note::
+
+        pauli_str_dict cannot be None and should be the same as obs in the vqc_module measurement function.
+        vqc_module should have attributes of type QMachine, and QMachine should set save_ir=True.
+
+    Example::
+
+        from pyvqnet.qnn.vqc  import *
+        import pyvqnet
+        from pyvqnet.nn import Module,Linear
+
+        class Hybird(Module):
+            def __init__(self):
+                self.cl1 = Linear(3,3)
+                self.ql = QModel(num_wires=6, dtype=pyvqnet.kcomplex64)
+                self.cl2 = Linear(1,2)
+            
+            def forward(self,x):
+                x = self.cl1(x)
+                x = self.ql(x)
+                x = self.cl2(x)
+                return x
+            
+        class QModel(Module):
+            def __init__(self, num_wires, dtype,grad_mode=""):
+                super(QModel, self).__init__()
+
+                self._num_wires = num_wires
+                self._dtype = dtype
+                self.qm = QMachine(num_wires, dtype=dtype,grad_mode=grad_mode,save_ir=True)
+                self.rx_layer = RX(has_params=True, trainable=False, wires=0)
+                self.ry_layer = RY(has_params=True, trainable=False, wires=1)
+                self.rz_layer = RZ(has_params=True, trainable=False, wires=1)
+                self.u1 = U1(has_params=True,trainable=True,wires=[2])
+                self.u2 = U2(has_params=True,trainable=True,wires=[3])
+                self.u3 = U3(has_params=True,trainable=True,wires=[1])
+                self.i = I(wires=[3])
+                self.s = S(wires=[3])
+                self.x1 = X1(wires=[3])
+                self.y1 = Y1(wires=[3])
+                self.z1 = Z1(wires=[3])
+                self.x = PauliX(wires=[3])
+                self.y = PauliY(wires=[3])
+                self.z = PauliZ(wires=[3])
+                self.swap = SWAP(wires=[2,3])
+                self.cz = CZ(wires=[2,3])
+                self.cr = CR(has_params=True,trainable=True,wires=[2,3])
+                self.rxx = RXX(has_params=True,trainable=True,wires=[2,3])
+                self.rzz = RYY(has_params=True,trainable=True,wires=[2,3])
+                self.ryy = RZZ(has_params=True,trainable=True,wires=[2,3])
+                self.rzx = RZX(has_params=True,trainable=False, wires=[2,3])
+                self.toffoli = Toffoli(wires=[2,3,4],use_dagger=True)
+                #self.rz_layer2 = RZ(has_params=True, trainable=True, wires=1)
+                self.h =Hadamard(wires=[1])
+    
+                self.iSWAP = iSWAP(True,True,wires=[0,2])
+                self.tlayer = T(wires=1)
+                self.cnot = CNOT(wires=[0, 1])
+                self.measure = MeasureAll(obs={'Z0':2,'Y3':3} 
+            )
+
+            def forward(self, x, *args, **kwargs):
+                self.qm.reset_states(x.shape[0])
+                self.i(q_machine=self.qm)
+                self.s(q_machine=self.qm)
+                self.swap(q_machine=self.qm)
+                self.cz(q_machine=self.qm)
+                self.x(q_machine=self.qm)
+                self.x1(q_machine=self.qm)
+                self.y(q_machine=self.qm)
+                self.y1(q_machine=self.qm)
+                self.z(q_machine=self.qm)
+                self.z1(q_machine=self.qm)
+                self.ryy(q_machine=self.qm)
+                self.rxx(q_machine=self.qm)
+                self.rzz(q_machine=self.qm)
+                self.rzx(q_machine=self.qm,params = x[:,[1]])
+                self.cr(q_machine=self.qm)
+                self.u1(q_machine=self.qm)
+                self.u2(q_machine=self.qm)
+                self.u3(q_machine=self.qm)
+                self.rx_layer(params = x[:,[0]], q_machine=self.qm)
+                self.cnot(q_machine=self.qm)
+                self.h(q_machine=self.qm)
+                self.iSWAP(q_machine=self.qm)
+                self.ry_layer(params = x[:,[1]], q_machine=self.qm)
+                self.tlayer(q_machine=self.qm)
+                self.rz_layer(params = x[:,[2]], q_machine=self.qm)
+                self.toffoli(q_machine=self.qm)
+                rlt = self.measure(q_machine=self.qm)
+
+                return rlt
+            
+
+        input_x = tensor.QTensor([[0.1, 0.2, 0.3]])
+
+        input_x = tensor.broadcast_to(input_x,[2,3])
+
+        input_x.requires_grad = True
+
+        qunatum_model = QModel(num_wires=6, dtype=pyvqnet.kcomplex64)
+
+        l = HybirdVQCQpandaQVMLayer(qunatum_model,
+                                "3047DE8A59764BEDAC9C3282093B16AF1",
+                    6,
+                    6,
+                    pauli_str_dict={'Z0':2,'Y3':3},
+                    shots = 1000,
+                    name="",
+            submit_kwargs={"test_qcloud_fake":True},
+                    query_kwargs={})
+    
+        y = l(input_x)
+        print(y)
+        y.backward()
+        print(input_x.grad)
+
+
+DataParallelHybirdVQCQpandaQVMLayer 
+============================================================
+
+.. py:class:: pyvqnet.qnn.DataParallelHybirdVQCQpandaQVMLayer(vqc_module: Module,qcloud_token: str,num_qubits: int,num_cubits: int,pauli_str_dict: Union[List[Dict], Dict, None] = None,shots: int = 1000 ,dtype: Union[int, None] = None,name: str = "",submit_kwargs: Dict = {},query_kwargs: Dict = {}) A data parallel version of ``HybirdVQCQpandaQVMLayer``, where ``vqc_module`` is a user-defined quantum variational circuit model, and the QMachine setting ``save_ir= True``.
+
+    Use data parallelism to batch the first dimension of the input data The number of processes is divided according to the number of processes allocated in `CommController`, and data parallelism is performed in multiple processes based on `mpi` or `nccl`. Please note that one process corresponds to a GPU device on one node.
+    This module in each process Submit the quantum circuit generated by batch processing number/node number data in forward calculation, calculate the gradient contributed by batch processing number/node number data in reverse calculation, and calculate the average gradient of parameters on multiple nodes through all_reduce.
+
+    .. note::
+
+        This module splits the input internally and moves the data to the corresponding device. The 0th process calculates [0, batch number/node number] data, and the kth process calculates [(k-1) batch number/node number, k*batch number/node number]
+
+    :param vqc_module: with forward() of vqc_module.
+    :param qcloud_token: `str` - Type of quantum machine or cloud token to use for execution.
+    :param num_qubits: `int` - Number of qubits in the quantum circuit.
+    :param num_cubits: `int` - The number of classical bits used for measurement in the quantum circuit.
+    :param pauli_str_dict: `dict|list` - A dictionary or list of dictionaries representing the Pauli operators in the quantum circuit. Default is None.
+    :param shots: `int` - The number of shots in the quantum circuit. Number of line measurements. The default value is 1000.
+    :param name: Module name. The default value is an empty string.
+    :param submit_kwargs: Additional keyword parameters for submitting quantum circuits, default value:
+    
+    {"chip_id":pyqpanda.real_chip_type.origin_72,
+    "is_amend":True,"is_mapping":True,
+    "is_optimization":True,
+    "default_task_group_size":200 ,
+    "test_qcloud_fake":True}.
+    :param query_kwargs: Additional keyword parameters for querying quantum results, default value: {"timeout":2,"print_query_info":True,"sub_circuits_split_size":1}.
+
+    The following is calculated using cpu For example, the command for a single node and dual processes is as follows: mpirun -n 2 python xxx.py
+
+    Example::
+
+        from pyvqnet.distributed import *
+
+        Comm_OP = CommController("mpi")
+        from pyvqnet.qnn import *
+        from pyvqnet.qnn.vqc import *
+        import pyvqnet
+        from pyvqnet.nn import Module, Linear
+        from pyvqnet.device import DEV_GPU_0
+        pyvqnet.utils.set_random_seed(42)
+
+
+        class Hybird(Module):
+            def __init__(self):
+                self.cl1 = Linear(3, 3)
+                self.ql = QModel(num_wires=6, dtype=pyvqnet.kcomplex64)
+                self.cl2 = Linear(1, 2)
+
+            def forward(self, x):
+                x = self.cl1(x)
+                x = self.ql(x)
+                x = self.cl2(x)
+                return x
+
+
+        class QModel(Module):
+            def __init__(self, num_wires, dtype, grad_mode=""):
+                super(QModel, self).__init__()
+
+                self._num_wires = num_wires
+                self._dtype = dtype
+                self.qm = QMachine(num_wires,
+                                dtype=dtype,
+                                grad_mode=grad_mode,
+                                save_ir=True)
+                self.rx_layer = RX(has_params=True, trainable=False, wires=0)
+                self.ry_layer = RY(has_params=True, trainable=False, wires=1)
+                self.rz_layer = RZ(has_params=True, trainable=False, wires=1)
+                self.u1 = U1(has_params=True, trainable=True, wires=[2])
+                self.u2 = U2(has_params=True, trainable=True, wires=[3])
+                self.u3 = U3(has_params=True, trainable=True, wires=[1])
+                self.i = I(wires=[3])
+                self.s = S(wires=[3])
+                self.x1 = X1(wires=[3])
+                self.y1 = Y1(wires=[3])
+                self.z1 = Z1(wires=[3])
+                self.x = PauliX(wires=[3])
+                self.y = PauliY(wires=[3])
+                self.z = PauliZ(wires=[3])
+                self.swap = SWAP(wires=[2, 3])
+                self.cz = CZ(wires=[2, 3])
+                self.cr = CR(has_params=True, trainable=True, wires=[2, 3])
+                self.rxx = RXX(has_params=True, trainable=True, wires=[2, 3])
+                self.rzz = RYY(has_params=True, trainable=True, wires=[2, 3])
+                self.ryy = RZZ(has_params=True, trainable=True, wires=[2, 3])
+                self.rzx = RZX(has_params=True, trainable=False, wires=[2, 3])
+                self.toffoli = Toffoli(wires=[2, 3, 4], use_dagger=True)
+                #self.rz_layer2 = RZ(has_params=True, trainable=True, wires=1)
+                self.h = Hadamard(wires=[1])
+
+                self.iSWAP = iSWAP(True, True, wires=[0, 2])
+                self.tlayer = T(wires=1)
+                self.cnot = CNOT(wires=[0, 1])
+                self.measure = MeasureAll(obs={'Z0': 2, 'Y3': 3})
+
+            def forward(self, x, *args, **kwargs):
+                self.qm.reset_states(x.shape[0])
+                self.i(q_machine=self.qm)
+                self.s(q_machine=self.qm)
+                self.swap(q_machine=self.qm)
+                self.cz(q_machine=self.qm)
+                self.x(q_machine=self.qm)
+                self.x1(q_machine=self.qm)
+                self.y(q_machine=self.qm)
+                self.y1(q_machine=self.qm)
+                self.z(q_machine=self.qm)
+                self.z1(q_machine=self.qm)
+                self.ryy(q_machine=self.qm)
+                self.rxx(q_machine=self.qm)
+                self.rzz(q_machine=self.qm)
+                self.rzx(q_machine=self.qm, params=x[:, [1]])
+                self.cr(q_machine=self.qm)
+                self.u1(q_machine=self.qm)
+                self.u2(q_machine=self.qm)
+                self.u3(q_machine=self.qm)
+                self.rx_layer(params=x[:, [0]], q_machine=self.qm)
+                self.cnot(q_machine=self.qm)
+                self.h(q_machine=self.qm)
+                self.iSWAP(q_machine=self.qm)
+                self.ry_layer(params=x[:, [1]], q_machine=self.qm)
+                self.tlayer(q_machine=self.qm)
+                self.rz_layer(params=x[:, [2]], q_machine=self.qm)
+                self.toffoli(q_machine=self.qm)
+                rlt = self.measure(q_machine=self.qm)
+
+                return rlt
+
+        device = Comm_OP.get_rank
+        input_x = tensor.QTensor([[0.1, 0.2, 0.3]])
+        input_x = tensor.broadcast_to(input_x, [20, 3])
+        input_x.requires_grad = True
+
+
+
+        qunatum_model = QModel(num_wires=6, dtype=pyvqnet.kcomplex64)
+
+        l = DataParallelHybirdVQCQpandaQVMLayer(
+            Comm_OP,
+            qunatum_model,
+            "3047DE8A59764BEDAC9C3282093B16AF1",
+
+            num_qubits=6,
+            num_cubits=6,
+            pauli_str_dict={
+                'Z0': 2,
+                'Y3': 3
+            },
+            shots=1000,
+            name="",
+            submit_kwargs={"test_qcloud_fake": True},
+            query_kwargs={})
+
+        y = l(input_x)
+        print(y)
+        y.backward()
+        for p in qunatum_model.parameters():
+            print(p.grad)
+
+    The following is an example of nccl calculation using gpu. The command for single node dual process is as follows: mpirun -n 2 python xxx.py
+
+    Example::
+
+        from pyvqnet.distributed import *
+
+        Comm_OP = CommController("nccl")
+        #rest code not changed
+
+    The following is an example of multi-node multi-process parallel calculation. Please ensure that the script is run in the same path and the same python environment on different nodes, and write the ip address mapping file `hosts` on each node. The format refers to :ref:`hostfile`.
+
+    Example::
+
+        #hosts example
+        10.10.7.107 slots=2
+        10.10.7.109 slots=2
+
+    To use mpi for 2 nodes, 2 processes per node, and 4 processes in total, you can run `vqnetrun -np 4 -f hosts python xxx.py`
+    
+    Example::
+
+        from pyvqnet.distributed import *
+        Comm_OP = CommController("mpi")
+        #rest code not changed
+
+    To use nccl for 2 nodes, 2 processes per node, and 4 processes in total, you can run `vqnetrun -np 4 -f hosts python xxx.py`
+    
+    Example::
+
+        from pyvqnet.distributed import *
+        Comm_OP = CommController("nccl")
+        #rest code not changed
+
+
 Quantum Gates
 ***********************************
 
@@ -1955,7 +2288,7 @@ ComplexEntangelingTemplate
 
         from pyvqnet.qnn import ComplexEntangelingTemplate
         import pyqpanda as pq
-        from pyvqnet. tensor import *
+        from pyvqnet tensor import *
         depth=3
         num_qubits = 8
         shape = [depth, num_qubits, 3]

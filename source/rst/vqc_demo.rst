@@ -33,7 +33,8 @@ Import the necessary libraries and define the variational quantum circuit model 
     from pyvqnet.nn import Module,Parameter
     from pyvqnet.nn.loss import MeanSquaredError
     from pyvqnet.optim.adam import Adam
-    from pyvqnet.tensor.tensor import QTensor,kfloat32
+    from pyvqnet.tensor.tensor import QTensor
+    from pyvqnet import kfloat32
     from pyvqnet.device import DEV_GPU
     from pyvqnet.qnn.vqc import QMachine,QModule,rx,rz,ry,\
         MeasureAll
@@ -1514,7 +1515,8 @@ Load necessary libraries and define global variables
     from pyvqnet.nn import Module,Parameter
     from pyvqnet.nn.loss import MeanSquaredError
     from pyvqnet.optim.adam import Adam
-    from pyvqnet.tensor import tensor,QTensor,kfloat32
+    from pyvqnet.tensor import tensor,QTensor
+    from pyvqnet import kfloat32
     from pyvqnet.qnn.vqc import u3,cnot,rx,ry,rz,\
         QMachine,QModule,MeasureAll
     import matplotlib
@@ -2500,7 +2502,7 @@ which consists of 15 random You matrices corresponding to the classical Dense La
             self.weights_last = Parameter((4 ** 2 -1,1), dtype=7)
 
         def forward(self, input):
-
+            self.qm.reset_states(input.shape[0])
             return self.conv(self.qm, self.weights, self.weights_last, input)
 
 
