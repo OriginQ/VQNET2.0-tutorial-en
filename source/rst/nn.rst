@@ -3369,13 +3369,13 @@ To solve the problem of incompatibility between mpi4py and python versions, you 
 .. code-block::
 
     # Staging the compiler for the current python environment with the following code
-    pushd /root/anaconda3/envs/mpi39/compiler_compat && mv ld ld.bak && popd
+    pushd /root/anaconda3/envs/$CONDA_DEFAULT_ENV/compiler_compat && mv ld ld.bak && popd
 
     # Re-installation
     pip install mpi4py
 
     # reduction
-    pushd /root/anaconda3/envs/mpi39/compiler_compat && mv ld.bak ld && popd
+    pushd /root/anaconda3/envs/$CONDA_DEFAULT_ENV/compiler_compat && mv ld.bak ld && popd
 
 NCCL Installation
 ^^^^^^^^^^^^^^^^^^^^^^
