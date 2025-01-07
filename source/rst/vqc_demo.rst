@@ -2502,7 +2502,7 @@ which consists of 15 random You matrices corresponding to the classical Dense La
             self.weights_last = Parameter((4 ** 2 -1,1), dtype=7)
 
         def forward(self, input):
-
+            self.qm.reset_states(input.shape[0])
             return self.conv(self.qm, self.weights, self.weights_last, input)
 
 
@@ -3622,9 +3622,9 @@ Building quantum circuits
     def embedding(x, wires, qmachine):
         # Encodes the datum multiple times in the register,
         for i in wires:
-            ry(qmachine, i, tensor.asin(x[i]))
+            ry(qmachine, i, tensor.asin(x))
         for i in wires:
-            rz(qmachine, i, tensor.acos(x[i] ** 2))
+            rz(qmachine, i, tensor.acos(x ** 2))
 
 
     def var_ansatz(
