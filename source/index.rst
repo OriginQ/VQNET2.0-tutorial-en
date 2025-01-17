@@ -73,6 +73,12 @@ It can promote in a variety of applications such as the design of quantum algori
 
     rst/vqc.rst
 
+.. toctree::
+    :caption: Quantum Large Model Fine-Tuning
+    :maxdepth: 2
+
+    rst/llm.rst
+
 .. toctree:: 
     :caption: Others 
     :maxdepth: 2 
