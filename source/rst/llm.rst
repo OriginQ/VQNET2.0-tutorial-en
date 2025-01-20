@@ -18,7 +18,7 @@ The first step is to install the ``quantum-llm`` library.
 
 .. code-block::
     
-    git clone https://gitee.com/haoz1/quantum-llm.git
+    git clone https://gitee.com/craftsman_lei/quantum-llm.git
 
 
 Afterwards, install the other dependencies and files according to the ``README.md`` file in ``quantum-llm``.
