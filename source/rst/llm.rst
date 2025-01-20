@@ -44,16 +44,12 @@ Steps for fine-tuning training of quantum grand models
 
 After installing the requirements package, you can refer to scripts such as ``train.sh`` under the directory ``/quantum-llm/examples/qlora_single_gpu/``, and specify the parameters of the training base model, the selection of the fine-tuning module, and the path of the output of the fine-tuning module according to the scripts.
 
-The ``Qwen2.5-0.5B`` model is available for download at https://huggingface.co/Qwen/Qwen2.5-0.5B?clone=true, as are the other models: ``Qwen2.5-0.5B``.
+The ``Qwen2.5-0.5B`` model is available for download at https://huggingface.co/Qwen/Qwen2.5-0.5B?clone=true, as are the other models: ``Qwen2.5-0.5B`` If the download is not possible, you can download individual files from the URL and use them.
 
 .. code-block::
     
     # Download Qwen2.5-0.5B
     git clone https://huggingface.co/Qwen/Qwen2.5-0.5B
-
-    # Or download it over ssh
-    git clone git@hf.co:Qwen/Qwen2.5-0.5B
-
 
 The ``train.sh`` script sample is as follows, determining the baseline model, dataset, output path and other parameter information, where ``model_name_or_path`` is put into the specified model, or if it is not accessible, it is put into the absolute path of the baseline model after downloading the baseline model by itself.
 
