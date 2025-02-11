@@ -1,3 +1,5 @@
+.. _llm:
+
 Quantum Large Model Fine-Tuning demo
 ****************************************
 
@@ -12,7 +14,7 @@ Quantum Large Model Fine-Tuning Dependency Installation
 
 Introduction to the Module: Installing Dependencies for Quantum Circuit-Based Large Model Fine-Tuning
 
-To use quantum macromodel fine-tuning, you need the ``quantum-llm`` and ``pyvqnet`` packages, of which ``quantum-llm`` is currently an internal one, and ``pyvqnet`` requires a version of ``2.15.0`` or above.
+To use quantum macromodel fine-tuning, you need the ``quantum-llm`` and ``pyvqnet`` packages, ``pyvqnet`` requires a version of ``2.15.0`` or above.
 
 The first step is to install the ``quantum-llm`` library.
 
