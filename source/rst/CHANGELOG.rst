@@ -9,6 +9,7 @@ Added
 
 - Added `pyvqnet.backends.set_backend()` interface. When users install `torch`, `torch` can be used to perform matrix calculations and variational quantum circuit calculations of QTensor. For details, see the document :ref:`torch_api`.
 - Added `pyvqnet.nn.torch` to inherit the neural network interface and variational quantum circuit neural interface of `torch.nn.Module`. For details, see the document :ref:`torch_api`.
+- Add a section on fine-tuning large quantum models, with detailed steps available in the documentation :ref:`llm`.
 
 Changed
 ===================
