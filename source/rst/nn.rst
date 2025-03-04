@@ -4224,7 +4224,7 @@ PipelineParallelTrainingWrapper
 
         from pyvqnet.tensor import tensor
         from pyvqnet.distributed.pp import PipelineParallelTrainingWrapper
-        from pyvqnet.distributed.config import comm as dist
+        from pyvqnet.distributed.configs import comm as dist
         from pyvqnet.distributed import *
 
 
