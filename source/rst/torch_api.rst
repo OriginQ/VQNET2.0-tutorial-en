@@ -2122,16 +2122,475 @@ Optimizer module
 
 For classical and quantum circuit modules inherited from `TorchModule`, the parameters `model.paramters()` can continue to be optimized using optimizers other than `Rotosolve` under :ref:`Optimizer`.
 
-Variational quantum circuit module and interface based on automatic differentiation
-===============================================================================================
 
+
+Using pyqpanda to run quantum variational circuit
+-------------------------------------------------------------------------
+
+The following is the training variational quantum circuit interface for circuit calculation using pyqpanda and pyqpanda3.
+
+.. warning::
+
+    The quantum computing part of the following TorchQpandaQuantumLayer, TorchQcloudQuantumLayer uses pyqpanda2 https://pyqpanda-toturial.readthedocs.io/zh/latest/.
+
+    Due to the compatibility issues between pyqpanda2 and pyqpanda3, you need to install pyqpnda2 yourself, `pip install pyqpanda`
+
+TorchQpandaQuantumLayer
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+If you are more familiar with pyQPanda2 syntax, you can use the interface TorchQpandaQuantumLayer, add custom quantum bits ``qubits``, classical bits ``cbits``, and backend simulator ``machine`` to the parameter ``qprog_with_measure`` function of TorchQpandaQuantumLayer.
+
+.. py:class:: pyvqnet.qnn.vqc.torch.TorchQpandaQuantumLayer(qprog_with_measure,para_num,diff_method:str = "parameter_shift",delta:float = 0.01,dtype=None,name="")
+
+    Abstract computing module of variational quantum layer. Use pyQPanda2 to simulate a parameterized quantum circuit and get the measurement results. This variational quantum layer inherits the gradient calculation module of the VQNet framework. It can use parameter drift method to calculate the gradient of circuit parameters, train variational quantum circuit models or embed variational quantum circuits into hybrid quantum and classical models.
+
+    :param qprog_with_measure: Quantum circuit operation and measurement functions built with pyQPand.
+    :param para_num: `int` - number of parameters.
+    :param diff_method: Method for solving quantum circuit parameter gradients, "parameter shift" or "finite difference", default parameter shift.
+    :param delta: \delta when calculating gradients by finite difference.
+    :param dtype: Data type of parameter, defaults: None, use default data type: kfloat32, representing 32-bit floating point numbers.
+    :param name: The name of this module, default is "".
+
+    :return: A module that can calculate quantum circuits.
+
+    .. note::
+
+        qprog_with_measure is a quantum circuit function defined in pyQPanda2: https://pyqpanda-toturial.readthedocs.io/zh/latest/QCircuit.html.
+
+        This function must contain the following parameters as function input (even if a parameter is not actually used), otherwise it will not work properly in this function.
+
+        Compared with QuantumLayer. In the variational circuit running function passed in by this interface, the user should manually create quantum bits and simulators: https://pyqpanda-toturial.readthedocs.io/zh/latest/QuantumMachine.html,
+
+        If qprog_with_measure requires quantum measure, the user also needs to manually create and allocate cbits: https://pyqpanda-toturial.readthedocs.io/zh/latest/Measure.html
+
+        The use of the quantum circuit function qprog_with_measure (input, param, nqubits, ncubits) can refer to the following example.
+
+        `input`: Input one-dimensional classical data. If none, input None.
+
+        `param`: Input one-dimensional variational quantum circuit parameters to be trained.
+
+    Example::
+
+        import pyqpanda as pq
+        from pyvqnet.qnn import ProbsMeasure
+        import numpy as np
+        from pyvqnet.tensor import QTensor
+        import pyvqnet
+        pyvqnet.backends.set_backend("torch")
+        from pyvqnet.qnn.vqc.torch import TorchQpandaQuantumLayer
+        def pqctest (input,param):
+            num_of_qubits = 4
+
+            m_machine = pq.CPUQVM()# outside
+            m_machine.init_qvm()# outside
+            qubits = m_machine.qAlloc_many(num_of_qubits)
+
+            circuit = pq.QCircuit()
+            circuit.insert(pq.H(qubits[0]))
+            circuit.insert(pq.H(qubits[1]))
+            circuit.insert(pq.H(qubits[2]))
+            circuit.insert(pq.H(qubits[3]))
+
+            circuit.insert(pq.RZ(qubits[0],input[0]))
+            circuit.insert(pq.RZ(qubits[1],input[1]))
+            circuit.insert(pq.RZ(qubits[2],input[2]))
+            circuit.insert(pq.RZ(qubits[3],input[3]))
+
+            circuit.insert(pq.CNOT(qubits[0],qubits[1]))
+            circuit.insert(pq.RZ(qubits[1],param[0]))
+            circuit.insert(pq.CNOT(qubits[0],qubits[1]))
+
+            circuit.insert(pq.CNOT(qubits[1],qubits[2]))
+            circuit.insert(pq.RZ(qubits[2],param[1]))
+            circuit.insert(pq.CNOT(qubits[1],qubits[2]))
+
+            circuit.insert(pq.CNOT(qubits[2],qubits[3]))
+            circuit.insert(pq.RZ(qubits[3],param[2]))
+            circuit.insert(pq.CNOT(qubits[2],qubits[3]))
+
+            prog = pq.QProg()
+            prog.insert(circuit)
+
+            rlt_prob = ProbsMeasure([0,2],prog,m_machine,qubits)
+            return rlt_prob
+
+        pqc = TorchQpandaQuantumLayer(pqctest,3)
+
+        #classic data as input
+        input = QTensor([[1.0,2,3,4],[4,2,2,3],[3,3,2,2]],requires_grad=True)
+
+        #forward circuits
+        rlt = pqc(input)
+
+        print(rlt)
+
+        grad =  QTensor(np.ones(rlt.data.shape)*1000)
+        #backward circuits
+        rlt.backward(grad)
+
+        print(pqc.m_para.grad)
+        print(input.grad)
+
+TorchQcloudQuantumLayer
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+When you install the latest version of pyqpanda2, you can use this interface to define a variational circuit and submit it to the real chip of originqc for running.
+
+.. py:class:: pyvqnet.qnn.vqc.torch.TorchQcloudQuantumLayer(origin_qprog_func, qcloud_token, para_num, num_qubits, num_cubits, pauli_str_dict=None, shots = 1000, initializer=None, dtype=None, name="", diff_method="parameter_shift", submit_kwargs={}, query_kwargs={})
+    
+    An abstract computing module for the real chip of originqc using pyqpanda QCloud starting from version 3.8.2.2. It submits parameterized quantum circuits to the real chip and obtains measurement results.
+    If diff_method == "random_coordinate_descent" , the layer will randomly select a single parameter to calculate the gradient, and other parameters will remain zero. Reference: https://arxiv.org/abs/2311.00088
+
+    .. note::
+
+        qcloud_token is the api token you applied for at https://qcloud.originqc.com.cn/.
+
+        origin_qprog_func needs to return data of type pypqanda.QProg. If pauli_str_dict is not set, it is necessary to ensure that the measure has been inserted into the QProg.
+
+        origin_qprog_func must be in the following format:
+
+        origin_qprog_func(input,param,qubits,cbits,machine)
+
+        `input`: Input 1~2D classical data. In the case of 2D, the first dimension is the batch size.
+
+        `param`: Input the parameters to be trained for the 1D variational quantum circuit.
+
+        `machine`: The simulator QCloud created by QuantumBatchAsyncQcloudLayer, no user needs to define it in the function.
+
+        `qubits`: The quantum bits created by the simulator QCloud created by QuantumBatchAsyncQcloudLayer, the number is `num_qubits`, the type is pyQpanda.Qubits, no user needs to define it in the function.
+
+        `cbits`: The classical bits allocated by QuantumBatchAsyncQcloudLayer, the number is `num_cubits`, the type is pyQpanda.ClassicalCondition, no user needs to define it in the function. .
+
+    :param origin_qprog_func: The variational quantum circuit function constructed by QPanda, must return QProg.
+    :param qcloud_token: `str` - The type of quantum machine or the cloud token used for execution.
+    :param para_num: `int` - The number of parameters, the parameter is a QTensor of size [para_num].
+    :param num_qubits: `int` - The number of qubits in the quantum circuit.
+    :param num_cubits: `int` - The number of classical bits used for measurement in the quantum circuit.
+    :param pauli_str_dict: `dict|list` - A dictionary or list of dictionaries representing Pauli operators in the quantum circuit. The default is "None", which means measurement operations are performed. If a dictionary of Pauli operators is entered, a single expectation or multiple expectations are calculated.
+    :param shot: `int` - The number of measurements. The default value is 1000.
+    :param initializer: Initializer for parameter values. The default is "None", which uses a 0~2*pi normal distribution.
+    :param dtype: The data type of the parameter. The default value is None, which uses the default data type pyvqnet.kfloat32.
+    :param name: The name of the module. The default is an empty string.
+    :param diff_method: Differentiation method for gradient calculation. Default is "parameter_shift", "random_coordinate_descent".
+    :param submit_kwargs: Additional keyword parameters for submitting quantum circuits, default: {"chip_id":pyqpanda.real_chip_type.origin_72,"is_amend":True,"is_mapping":True,"is_optimization":True,"compile_level":3,"default_task_group_size":200,"test_qcloud_fake":False}, when test_qcloud_fake is set to True, local CPUQVM simulation.
+    :param query_kwargs: Additional keyword parameters for querying quantum results, default: {"timeout":2,"print_query_info":True,"sub_circuits_split_size":1}.
+    :return: A module that can calculate quantum circuits.
+
+
+    Example::
+
+        import pyqpanda as pq
+        import pyvqnet
+        from pyvqnet.qnn.vqc.torch import TorchQcloudQuantumLayer
+
+        pyvqnet.backends.set_backend("torch")
+        def qfun(input,param, m_machine, m_qlist,cubits):
+            measure_qubits = [0,2]
+            m_prog = pq.QProg()
+            cir = pq.QCircuit()
+            cir.insert(pq.RZ(m_qlist[0],input[0]))
+            cir.insert(pq.CNOT(m_qlist[0],m_qlist[1]))
+            cir.insert(pq.RY(m_qlist[1],param[0]))
+            cir.insert(pq.CNOT(m_qlist[0],m_qlist[2]))
+            cir.insert(pq.RZ(m_qlist[1],input[1]))
+            cir.insert(pq.RY(m_qlist[2],param[1]))
+            cir.insert(pq.H(m_qlist[2]))
+            m_prog.insert(cir)
+
+            for idx, ele in enumerate(measure_qubits):
+                m_prog << pq.Measure(m_qlist[ele], cubits[idx])  # pylint: disable=expression-not-assigned
+            return m_prog
+
+        l = TorchQcloudQuantumLayer(qfun,
+                        "3047DE8A59764BEDAC9C3282093B16AF1",
+                        2,
+                        6,
+                        6,
+                        pauli_str_dict=None,
+                        shots = 1000,
+                        initializer=None,
+                        dtype=None,
+                        name="",
+                        diff_method="parameter_shift",
+                        submit_kwargs={"test_qcloud_fake":True},
+                        query_kwargs={})
+        x = pyvqnet.tensor.QTensor([[0.56,1.2],[0.56,1.2],[0.56,1.2],[0.56,1.2],[0.56,1.2]],requires_grad= True)
+        y = l(x)
+        print(y)
+        y.backward()
+        print(l.m_para.grad)
+        print(x.grad)
+
+        def qfun2(input,param, m_machine, m_qlist,cubits):
+            measure_qubits = [0,2]
+            m_prog = pq.QProg()
+            cir = pq.QCircuit()
+            cir.insert(pq.RZ(m_qlist[0],input[0]))
+            cir.insert(pq.CNOT(m_qlist[0],m_qlist[1]))
+            cir.insert(pq.RY(m_qlist[1],param[0]))
+            cir.insert(pq.CNOT(m_qlist[0],m_qlist[2]))
+            cir.insert(pq.RZ(m_qlist[1],input[1]))
+            cir.insert(pq.RY(m_qlist[2],param[1]))
+            cir.insert(pq.H(m_qlist[2]))
+            m_prog.insert(cir)
+
+            return m_prog
+        l = TorchQcloudQuantumLayer(qfun2,
+                "3047DE8A59764BEDAC9C3282093B16AF",
+                2,
+                6,
+                6,
+                pauli_str_dict={'Z0 X1':10,'':-0.5,'Y2':-0.543},
+                shots = 1000,
+                initializer=None,
+                dtype=None,
+                name="",
+                diff_method="parameter_shift",
+                submit_kwargs={"test_qcloud_fake":True},
+                query_kwargs={})
+        x = pyvqnet.tensor.QTensor([[0.56,1.2],[0.56,1.2],[0.56,1.2],[0.56,1.2]],requires_grad= True)
+        y = l(x)
+        print(y)
+        y.backward()
+        print(l.m_para.grad)
+        print(x.grad)
+
+
+
+.. warning::
+
+    The quantum computing part of the following TorchQcloud3QuantumLayer and TorchQpanda3QuantumLayer interfaces uses pyqpanda3 https://qcloud.originqc.com.cn/document/qpanda-3/index.html.
+
+    If you use the QCloud function under this module, there will be errors when importing pyqpanda2 in the code or using pyvqnet's pyqpanda2 related package interfaces.
+
+TorchQcloud3QuantumLayer
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+When you install the latest version of pyqpanda3, you can use this interface to define a variational circuit and submit it to the real chip of originqc for operation.
+
+.. py:class:: pyvqnet.qnn.vqc.torch.TorchQcloud3QuantumLayer(origin_qprog_func, qcloud_token, para_num, pauli_str_dict=None, shots = 1000, initializer=None, dtype=None, name="", diff_method="parameter_shift", submit_kwargs={}, query_kwargs={})
+    
+    An abstract computation module for real chips using originqc of pyqpanda3. It submits parameterized quantum circuits to real chips and obtains measurement results.
+    If diff_method == "random_coordinate_descent" , the layer will randomly select a single parameter to calculate the gradient, and other parameters will remain zero. Reference: https://arxiv.org/abs/2311.00088
+
+    .. note::
+
+        qcloud_token is the api token you applied for at https://qcloud.originqc.com.cn/.
+
+        origin_qprog_func needs to return data of type pypqanda3.core.QProg. If pauli_str_dict is not set, it is necessary to ensure that the measure has been inserted into the QProg.
+
+        origin_qprog_func must be in the following format:
+
+        origin_qprog_func(input,param )
+
+        `input`: Input 1~2D classical data. In the case of 2D, the first dimension is the batch size.
+
+        `param`: Input the parameters to be trained of the 1D variational quantum circuit.
+
+    .. warning::
+
+        This class inherits from ``pyvqnet.nn.Module`` and ``torch.nn.Module``, and can be added to the torch model as a submodule of ``torch.nn.Module``.
+
+        The data in ``_buffers`` of this class is of ``torch.Tensor`` type.
+
+        The data in ``_parmeters`` of this class is of ``torch.nn.Parameter`` type.
+
+    :param origin_qprog_func: The variational quantum circuit function built by QPanda, which must return QProg.
+    :param qcloud_token: `str` - The type of quantum machine or cloud token for execution.
+    :param para_num: `int` - The number of parameters, the parameter is a QTensor of size [para_num].
+    :param pauli_str_dict: `dict|list` - Dictionary or list of dictionaries representing Pauli operators in quantum circuits. Defaults to "None", which means measurement operations are performed. If a dictionary of Pauli operators is entered, a single expectation or multiple expectations are calculated.
+    :param shot: `int` - Number of measurements. The default value is 1000.
+    :param initializer: Initializer for parameter values. The default value is "None", using a 0~2*pi normal distribution.
+    :param dtype: Data type of the parameter. The default value is None, which means using the default data type pyvqnet.kfloat32.
+    :param name: The name of the module. The default value is an empty string.
+    :param diff_method: Differentiation method for gradient calculation. The default value is "parameter_shift", "random_coordinate_descent".
+    :param submit_kwargs: Additional keyword parameters for submitting quantum circuits, default: {"chip_id":pyqpanda.real_chip_type.origin_72,"is_amend":True,"is_mapping":True,"is_optimization":True,"compile_level":3,"default_task_group_size":200,"test_qcloud_fake":False}, when test_qcloud_fake is set to True, local CPUQVM simulation is used.
+    :param query_kwargs: Additional keyword parameters for querying quantum results, default: {"timeout":2,"print_query_info":True,"sub_circuits_split_size":1}.
+    :return: A module that can calculate quantum circuits.
+
+
+    Example::
+
+        import pyqpanda3.core as pq
+        import pyvqnet
+        from pyvqnet.qnn.vqc.torch import TorchQcloud3QuantumLayer
+
+        pyvqnet.backends.set_backend("torch")
+        def qfun(input,param):
+
+            m_qlist = range(6)
+            cubits = range(6)
+            measure_qubits = [0,2]
+            m_prog = pq.QProg()
+            cir = pq.QCircuit()
+            cir<<pq.RZ(m_qlist[0],input[0])
+            cir<<pq.CNOT(m_qlist[0],m_qlist[1])
+            cir<<pq.RY(m_qlist[1],param[0])
+            cir<<pq.CNOT(m_qlist[0],m_qlist[2])
+            cir<<pq.RZ(m_qlist[1],input[1])
+            cir<<pq.RY(m_qlist[2],param[1])
+            cir<<pq.H(m_qlist[2])
+            m_prog<<cir
+
+            for idx, ele in enumerate(measure_qubits):
+                m_prog << pq.measure(m_qlist[ele], cubits[idx])  # pylint: disable=expression-not-assigned
+            return m_prog
+
+        l = TorchQcloud3QuantumLayer(qfun,
+                        "3047DE8A59764BEDAC9C3282093B16AF1",
+                        2,
+                        pauli_str_dict=None,
+                        shots = 1000,
+                        initializer=None,
+                        dtype=None,
+                        name="",
+                        diff_method="parameter_shift",
+                        submit_kwargs={"test_qcloud_fake":True},
+                        query_kwargs={})
+        x = pyvqnet.tensor.QTensor([[0.56,1.2],[0.56,1.2],[0.56,1.2],[0.56,1.2],[0.56,1.2]],requires_grad= True)
+        y = l(x)
+        print(y)
+        y.backward()
+        print(l.m_para.grad)
+        print(x.grad)
+
+        def qfun2(input,param ):
+
+            m_qlist = range(6)
+            cubits = range(6)
+            measure_qubits = [0,2]
+            m_prog = pq.QProg()
+            cir = pq.QCircuit()
+            cir<<pq.RZ(m_qlist[0],input[0])
+            cir<<pq.CNOT(m_qlist[0],m_qlist[1])
+            cir<<pq.RY(m_qlist[1],param[0])
+            cir<<pq.CNOT(m_qlist[0],m_qlist[2])
+            cir<<pq.RZ(m_qlist[1],input[1])
+            cir<<pq.RY(m_qlist[2],param[1])
+            cir<<pq.H(m_qlist[2])
+            m_prog<<cir
+
+            return m_prog
+        l = TorchQcloud3QuantumLayer(qfun2,
+                "3047DE8A59764BEDAC9C3282093B16AF",
+                2,
+
+                pauli_str_dict={'Z0 X1':10,'':-0.5,'Y2':-0.543},
+                shots = 1000,
+                initializer=None,
+                dtype=None,
+                name="",
+                diff_method="parameter_shift",
+                submit_kwargs={"test_qcloud_fake":True},
+                query_kwargs={})
+        x = pyvqnet.tensor.QTensor([[0.56,1.2],[0.56,1.2],[0.56,1.2],[0.56,1.2]],requires_grad= True)
+        y = l(x)
+        print(y)
+        y.backward()
+        print(l.m_para.grad)
+        print(x.grad)
+
+TorchQpanda3QuantumLayer
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+If you are more familiar with pyQPanda3 syntax, you can use the interface TorchQpanda3QuantumLayer.
+
+.. py:class:: pyvqnet.qnn.vqc.torch.TorchQpanda3QuantumLayer(qprog_with_measure,para_num,diff_method:str = "parameter_shift",delta:float = 0.01,dtype=None,name="")
+
+    Abstract computation module of variational quantum layer. Use pyQPanda3 to simulate a parameterized quantum circuit and get the measurement results. This variational quantum layer inherits the gradient computation module of the VQNet framework. You can use the parameter drift method to calculate the gradient of the circuit parameters, train the variational quantum circuit model, or embed the variational quantum circuit into a hybrid quantum and classical model.
+
+    :param qprog_with_measure: Quantum circuit operation and measurement functions built with pyQPand.
+    :param para_num: `int` - number of parameters.
+    :param diff_method: method for solving quantum circuit parameter gradients, "parameter shift" or "finite difference", default parameter shift.
+    :param delta: \delta when calculating gradients by finite difference.
+    :param dtype: data type of parameter, defaults: None, use default data type: kfloat32, representing 32-bit floating point numbers.
+    :param name: the name of this module, default is "".
+
+    :return: a module that can calculate quantum circuits.
+
+    .. note::
+
+        qprog_with_measure is a quantum circuit function defined in pyQPanda: https://qcloud.originqc.com.cn/document/qpanda-3/db/d6c/tutorial_circuit_and_program.html..
+
+        This function must include the following parameters as function inputs (even if a parameter is not actually used), otherwise it will not work properly in this function.
+
+        The use of the quantum circuit function qprog_with_measure (input,param,nqubits,ncubits) can refer to the following example.
+
+        `input`: Input one-dimensional classical data. If not, input None.
+
+        `param`: Input the parameters to be trained for the one-dimensional variational quantum circuit.
+
+    Example::
+
+        import pyqpanda3.core as pq
+        from pyvqnet.qnn.pq3 import ProbsMeasure
+        import numpy as np
+        from pyvqnet.tensor import QTensor
+        import pyvqnet
+        pyvqnet.backends.set_backend("torch")
+        from pyvqnet.qnn.vqc.torch import TorchQpanda3QuantumLayer
+        def pqctest (input,param):
+            num_of_qubits = 4
+
+            m_machine = pq.CPUQVM()# outside
+        
+            qubits =range(num_of_qubits)
+
+            circuit = pq.QCircuit()
+            circuit<<pq.H(qubits[0])
+            circuit<<pq.H(qubits[1])
+            circuit<<pq.H(qubits[2])
+            circuit<<pq.H(qubits[3])
+
+            circuit<<pq.RZ(qubits[0],input[0])
+            circuit<<pq.RZ(qubits[1],input[1])
+            circuit<<pq.RZ(qubits[2],input[2])
+            circuit<<pq.RZ(qubits[3],input[3])
+
+            circuit<<pq.CNOT(qubits[0],qubits[1])
+            circuit<<pq.RZ(qubits[1],param[0])
+            circuit<<pq.CNOT(qubits[0],qubits[1])
+
+            circuit<<pq.CNOT(qubits[1],qubits[2])
+            circuit<<pq.RZ(qubits[2],param[1])
+            circuit<<pq.CNOT(qubits[1],qubits[2])
+
+            circuit<<pq.CNOT(qubits[2],qubits[3])
+            circuit<<pq.RZ(qubits[3],param[2])
+            circuit<<pq.CNOT(qubits[2],qubits[3])
+
+            prog = pq.QProg()
+            prog<<circuit
+
+            rlt_prob = ProbsMeasure(m_machine,prog,[0,2])
+            return rlt_prob
+
+        pqc = TorchQpanda3QuantumLayer(pqctest,3)
+
+        #classic data as input
+        input = QTensor([[1.0,2,3,4],[4,2,2,3],[3,3,2,2]],requires_grad=True)
+
+        #forward circuits
+        rlt = pqc(input)
+
+        print(rlt)
+
+        grad =  QTensor(np.ones(rlt.data.shape)*1000)
+        #backward circuits
+        rlt.backward(grad)
+
+        print(pqc.m_para.grad)
+        print(input.grad)
+
+Variational quantum circuit module and interface based on automatic differentiation
+---------------------------------------------------------------------------------------------
 Base Class
----------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Writing a variational quantum circuit model requires inheriting from ``QModule``.
 
 QModule
-^^^^^^^^^^^^^^^^^^^
+""""""""""""""""""
 
 .. py:class:: pyvqnet.qnn.vqc.torch.QModule(name="")
 
@@ -2150,7 +2609,7 @@ QModule
 
 
 QMachine
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+""""""""""""""""""
 
 .. py:class:: pyvqnet.qnn.vqc.torch.QMachine(num_wires, dtype=pyvqnet.kcomplex64,grad_mode="",save_ir=False)
 
@@ -2189,7 +2648,7 @@ QMachine
         :param batchsize: Batch processing dimension.
 
 Variational quantum logic gate module
------------------------------------------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 The following function interfaces in ``pyvqnet.qnn.vqc`` directly support ``QTensor`` of ``torch`` backend for calculation.
 
@@ -2206,7 +2665,7 @@ The following quantum circuit modules inherit from ``pyvqnet.qnn.vqc.torch.QModu
     If these classes have parameter member variables ``_parmeters``, the data in them is of type ``torch.nn.Parameter``.
 
 I
-^^^^^^^^^^^^^^^^^^^^^^
+""""""""""""""""""
 
 .. py:class:: pyvqnet.qnn.vqc.torch.I(has_params: bool = False,trainable: bool = False,init_params=None,wires=None,dtype=pyvqnet.kcomplex64,use_dagger=False)
     
@@ -2237,7 +2696,7 @@ I
 
 
 Hadamard
-^^^^^^^^^^^^^^^^^^^^^^
+""""""""""""""""""
 
 .. py:class:: pyvqnet.qnn.vqc.torch.Hadamard(has_params: bool = False,trainable: bool = False,init_params=None,wires=None,dtype=pyvqnet.kcomplex64,use_dagger=False)
     
@@ -2268,7 +2727,7 @@ Hadamard
 
 
 T
-^^^^^^^^^^^^^^^^^^^^^^
+""""""""""""""""""
 
 .. py:class:: pyvqnet.qnn.vqc.torch.T(has_params: bool = False,trainable: bool = False,init_params=None,wires=None,dtype=pyvqnet.kcomplex64,use_dagger=False)
     
@@ -2300,7 +2759,7 @@ T
 
 
 S
-^^^^^^^^^^^^^^^^^^^^^^
+""""""""""""""""""
 
 .. py:class:: pyvqnet.qnn.vqc.torch.S(has_params: bool = False,trainable: bool = False,init_params=None,wires=None,dtype=pyvqnet.kcomplex64,use_dagger=False)
     
@@ -2331,7 +2790,7 @@ S
 
 
 PauliX
-^^^^^^^^^^^^^^^^^^^^^^
+""""""""""""""""""
 
 .. py:class:: pyvqnet.qnn.vqc.torch.PauliX(has_params: bool = False,trainable: bool = False,init_params=None,wires=None,dtype=pyvqnet.kcomplex64,use_dagger=False)
     
@@ -2363,7 +2822,7 @@ PauliX
 
 
 PauliY
-^^^^^^^^^^^^^^^^^^^^^^
+""""""""""""""""""
 
 .. py:class:: pyvqnet.qnn.vqc.torch.PauliY(has_params: bool = False,trainable: bool = False,init_params=None,wires=None,dtype=pyvqnet.kcomplex64,use_dagger=False)
     
@@ -2396,7 +2855,7 @@ PauliY
 
 
 PauliZ
-^^^^^^^^^^^^^^^^^^^^^^
+""""""""""""""""""
 
 .. py:class:: pyvqnet.qnn.vqc.torch.PauliZ(has_params: bool = False,trainable: bool = False,init_params=None,wires=None,dtype=pyvqnet.kcomplex64,use_dagger=False)
     
@@ -2429,7 +2888,7 @@ PauliZ
 
 
 X1
-^^^^^^^^^^^^^^^^^^^^^^
+""""""""""""""""""
 
 .. py:class:: pyvqnet.qnn.vqc.torch.X1(has_params: bool = False,trainable: bool = False,init_params=None,wires=None,dtype=pyvqnet.kcomplex64,use_dagger=False)
     
@@ -2460,7 +2919,7 @@ X1
 
 
 RX
-^^^^^^^^^^^^^^^^^^^^^^
+""""""""""""""""""
 
 .. py:class:: pyvqnet.qnn.vqc.torch.RX(has_params: bool = False,trainable: bool = False,init_params=None,wires=None,dtype=pyvqnet.kcomplex64,use_dagger=False)
     
@@ -2492,7 +2951,7 @@ RX
 
 
 RY
-^^^^^^^^^^^^^^^^^^^^^^
+""""""""""""""""""
 
 .. py:class:: pyvqnet.qnn.vqc.torch.RY(has_params: bool = False,trainable: bool = False,init_params=None,wires=None,dtype=pyvqnet.kcomplex64,use_dagger=False)
     
@@ -2523,7 +2982,7 @@ RY
 
 
 RZ
-^^^^^^^^^^^^^^^^^^^^^^
+""""""""""""""""""
 
 .. py:class:: pyvqnet.qnn.vqc.torch.RZ(has_params: bool = False,trainable: bool = False,init_params=None,wires=None,dtype=pyvqnet.kcomplex64,use_dagger=False)
     
@@ -2554,7 +3013,7 @@ RZ
 
 
 CRX
-^^^^^^^^^^^^^^^^^^^^^^
+""""""""""""""""""
 
 .. py:class:: pyvqnet.qnn.vqc.torch.CRX(has_params: bool = False,trainable: bool = False,init_params=None,wires=None,dtype=pyvqnet.kcomplex64,use_dagger=False)
     
@@ -2585,7 +3044,7 @@ CRX
 
 
 CRY
-^^^^^^^^^^^^^^^^^^^^^^
+""""""""""""""""""
 
 
 .. py:class:: pyvqnet.qnn.vqc.torch.CRY(has_params: bool = False,trainable: bool = False,init_params=None,wires=None,dtype=pyvqnet.kcomplex64,use_dagger=False)
@@ -2617,7 +3076,7 @@ CRY
 
 
 CRZ
-^^^^^^^^^^^^^^^^^^^^^^
+""""""""""""""""""
 
 
 .. py:class:: pyvqnet.qnn.vqc.torch.CRZ(has_params: bool = False,trainable: bool = False,init_params=None,wires=None,dtype=pyvqnet.kcomplex64,use_dagger=False)
@@ -2650,7 +3109,7 @@ CRZ
 
 
 U1
-^^^^^^^^^^^^^^^^^^^^^^
+""""""""""""""""""
 
 .. py:class:: pyvqnet.qnn.vqc.torch.U1(has_params: bool = False,trainable: bool = False,init_params=None,wires=None,dtype=pyvqnet.kcomplex64,use_dagger=False)
     
@@ -2680,7 +3139,7 @@ U1
         print(device.states)
 
 U2
-^^^^^^^^^^^^^^^^^^^^^^
+""""""""""""""""""
 
 
 .. py:class:: pyvqnet.qnn.vqc.torch.U2(has_params: bool = False,trainable: bool = False,init_params=None,wires=None,dtype=pyvqnet.kcomplex64,use_dagger=False)
@@ -2712,7 +3171,7 @@ U2
 
 
 U3
-^^^^^^^^^^^^^^^^^^^^^^
+""""""""""""""""""
 
 
 .. py:class:: pyvqnet.qnn.vqc.torch.U3(has_params: bool = False,trainable: bool = False,init_params=None,wires=None,dtype=pyvqnet.kcomplex64,use_dagger=False)
@@ -2745,7 +3204,7 @@ U3
 
 
 CNOT
-^^^^^^^^^^^^^^^^^^^^^^
+""""""""""""""""""
 
 .. py:class:: pyvqnet.qnn.vqc.torch.CNOT(has_params: bool = False,trainable: bool = False,init_params=None,wires=None,dtype=pyvqnet.kcomplex64,use_dagger=False)
     
@@ -2775,7 +3234,7 @@ CNOT
         print(device.states)
 
 CY
-^^^^^^^^^^^^^^^^^^^^^^
+""""""""""""""""""
 
 .. py:class:: pyvqnet.qnn.vqc.torch.CY(has_params: bool = False,trainable: bool = False,init_params=None,wires=None,dtype=pyvqnet.kcomplex64,use_dagger=False)
     
@@ -2806,7 +3265,7 @@ CY
 
 
 CZ
-^^^^^^^^^^^^^^^^^^^^^^
+""""""""""""""""""
 
 .. py:class:: pyvqnet.qnn.vqc.torch.CZ(has_params: bool = False,trainable: bool = False,init_params=None,wires=None,dtype=pyvqnet.kcomplex64,use_dagger=False)
     
@@ -2839,7 +3298,7 @@ CZ
 
 
 CR
-^^^^^^^^^^^^^^^^^^^^^^
+""""""""""""""""""
 
 .. py:class:: pyvqnet.qnn.vqc.torch.CR(has_params: bool = False,trainable: bool = False,init_params=None,wires=None,dtype=pyvqnet.kcomplex64,use_dagger=False)
     
@@ -2872,7 +3331,7 @@ CR
 
 
 SWAP
-^^^^^^^^^^^^^^^^^^^^^^
+""""""""""""""""""
 
 
 .. py:class:: pyvqnet.qnn.vqc.torch.SWAP(has_params: bool = False,trainable: bool = False,init_params=None,wires=None,dtype=pyvqnet.kcomplex64,use_dagger=False)
@@ -2904,7 +3363,7 @@ SWAP
 
 
 CSWAP
-^^^^^^^^^^^^^^^^^^^^^^
+""""""""""""""""""
 
 .. py:class:: pyvqnet.qnn.vqc.torch.CSWAP(has_params: bool = False,trainable: bool = False,init_params=None,wires=None,dtype=pyvqnet.kcomplex64,use_dagger=False)
     
@@ -2945,7 +3404,7 @@ CSWAP
         print(device.states)
 
 RXX
-^^^^^^^^^^^^^^^^^^^^^^
+""""""""""""""""""
 
 
 .. py:class:: pyvqnet.qnn.vqc.torch.RXX(has_params: bool = False,trainable: bool = False,init_params=None,wires=None,dtype=pyvqnet.kcomplex64,use_dagger=False)
@@ -2976,7 +3435,7 @@ RXX
         print(device.states)
 
 RYY
-^^^^^^^^^^^^^^^^^^^^^^
+""""""""""""""""""
 
 .. py:class:: pyvqnet.qnn.vqc.torch.RYY(has_params: bool = False,trainable: bool = False,init_params=None,wires=None,dtype=pyvqnet.kcomplex64,use_dagger=False)
     
@@ -3007,7 +3466,7 @@ RYY
 
 
 RZZ
-^^^^^^^^^^^^^^^^^^^^^^
+""""""""""""""""""
 
 .. py:class:: pyvqnet.qnn.vqc.torch.RZZ(has_params: bool = False,trainable: bool = False,init_params=None,wires=None,dtype=pyvqnet.kcomplex64,use_dagger=False)
     
@@ -3039,7 +3498,7 @@ RZZ
 
 
 RZX
-^^^^^^^^^^^^^^^^^^^^^^
+""""""""""""""""""
 
 .. py:class:: pyvqnet.qnn.vqc.torch.RZX(has_params: bool = False,trainable: bool = False,init_params=None,wires=None,dtype=pyvqnet.kcomplex64,use_dagger=False)
     
@@ -3069,8 +3528,7 @@ RZX
         print(device.states)
 
 Toffoli
-^^^^^^^^^^^^^^^^^^^^^^
-
+""""""""""""""""""
 
 .. py:class:: pyvqnet.qnn.vqc.torch.Toffoli(has_params: bool = False,trainable: bool = False,init_params=None,wires=None,dtype=pyvqnet.kcomplex64,use_dagger=False)
     
@@ -3100,7 +3558,7 @@ Toffoli
         print(device.states)
 
 IsingXX
-^^^^^^^^^^^^^^^^^^^^^^
+""""""""""""""""""
 
 
 .. py:class:: pyvqnet.qnn.vqc.torch.IsingXX(has_params: bool = False,trainable: bool = False,init_params=None,wires=None,dtype=pyvqnet.kcomplex64,use_dagger=False)
@@ -3132,7 +3590,7 @@ IsingXX
 
 
 IsingYY
-^^^^^^^^^^^^^^^^^^^^^^
+""""""""""""""""""
 
 
 .. py:class:: pyvqnet.qnn.vqc.torch.IsingYY(has_params: bool = False,trainable: bool = False,init_params=None,wires=None,dtype=pyvqnet.kcomplex64,use_dagger=False)
@@ -3164,7 +3622,7 @@ IsingYY
 
 
 IsingZZ
-^^^^^^^^^^^^^^^^^^^^^^
+""""""""""""""""""
 
 .. py:class:: pyvqnet.qnn.vqc.torch.IsingZZ(has_params: bool = False,trainable: bool = False,init_params=None,wires=None,dtype=pyvqnet.kcomplex64,use_dagger=False)
     
@@ -3195,7 +3653,7 @@ IsingZZ
 
 
 IsingXY
-^^^^^^^^^^^^^^^^^^^^^^
+""""""""""""""""""
 
 
 .. py:class:: pyvqnet.qnn.vqc.torch.IsingXY(has_params: bool = False,trainable: bool = False,init_params=None,wires=None,dtype=pyvqnet.kcomplex64,use_dagger=False)
@@ -3227,7 +3685,7 @@ IsingXY
 
 
 PhaseShift
-^^^^^^^^^^^^^^^^^^^^^^
+""""""""""""""""""
 
 
 .. py:class:: pyvqnet.qnn.vqc.torch.PhaseShift(has_params: bool = False,trainable: bool = False,init_params=None,wires=None,dtype=pyvqnet.kcomplex64,use_dagger=False)
@@ -3259,7 +3717,7 @@ PhaseShift
 
 
 MultiRZ
-^^^^^^^^^^^^^^^^^^^^^^
+""""""""""""""""""
 
 .. py:class:: pyvqnet.qnn.vqc.torch.MultiRZ(has_params: bool = False,trainable: bool = False,init_params=None,wires=None,dtype=pyvqnet.kcomplex64,use_dagger=False)
     
@@ -3291,7 +3749,7 @@ MultiRZ
 
 
 SDG
-^^^^^^^^^^^^^^^^^^^^^^
+""""""""""""""""""
 
 
 .. py:class:: pyvqnet.qnn.vqc.torch.SDG(has_params: bool = False,trainable: bool = False,init_params=None,wires=None,dtype=pyvqnet.kcomplex64,use_dagger=False)
@@ -3325,7 +3783,7 @@ SDG
 
 
 TDG
-^^^^^^^^^^^^^^^^^^^^^^
+""""""""""""""""""
 
 .. py:class:: pyvqnet.qnn.vqc.torch.TDG(has_params: bool = False,trainable: bool = False,init_params=None,wires=None,dtype=pyvqnet.kcomplex64,use_dagger=False)
     
@@ -3357,7 +3815,7 @@ TDG
 
 
 ControlledPhaseShift
-^^^^^^^^^^^^^^^^^^^^^^
+"""""""""""""""""""""""""""""""""""""""""""""
 
 
 .. py:class:: pyvqnet.qnn.vqc.torch.ControlledPhaseShift(has_params: bool = False,trainable: bool = False,init_params=None,wires=None,dtype=pyvqnet.kcomplex64,use_dagger=False)
@@ -3390,7 +3848,7 @@ ControlledPhaseShift
 
 
 MultiControlledX
-^^^^^^^^^^^^^^^^^^^^^^
+"""""""""""""""""""""""""""""""""""""""""""""
 
 .. py:class:: pyvqnet.qnn.vqc.torch.MultiControlledX(has_params: bool = False,trainable: bool = False,init_params=None,wires=None,dtype=pyvqnet.kcomplex64,use_dagger=False,control_values=None)
     
@@ -3427,10 +3885,10 @@ MultiControlledX
 
 
 Measurements API
---------------------------------------
+^^^^^^^^^^^^^^^^^^^^^^
 
 Probability
-^^^^^^^^^^^^^^^^^^^^^^
+"""""""""""""""""""""""""""""
 
 
 .. py:class:: pyvqnet.qnn.vqc.torch.Probability(wires=None, name="")
@@ -3465,7 +3923,7 @@ Probability
 
 
 MeasureAll
-^^^^^^^^^^^^^^^^^^^^^^
+"""""""""""""""""""""""""""""
 
 .. py:class:: pyvqnet.qnn.vqc.torch.MeasureAll(obs=None, name="")
 
@@ -3518,7 +3976,7 @@ MeasureAll
 
 
 Samples
-^^^^^^^^^^^^^^^^^^^^^^
+"""""""""""""""""""""""""""""
 
 .. py:class:: pyvqnet.qnn.vqc.torch.Samples(wires=None, obs=None, shots = 1,name="")
 
@@ -3560,7 +4018,7 @@ Samples
 
 
 SparseHamiltonian
-^^^^^^^^^^^^^^^^^^^^^^
+"""""""""""""""""""""""""""""
 
 .. py:class:: pyvqnet.qnn.vqc.torch.SparseHamiltonian(obs=None, name="")
 
@@ -3646,7 +4104,7 @@ SparseHamiltonian
 
 
 HermitianExpval
-^^^^^^^^^^^^^^^^^^^^^^
+"""""""""""""""""""""""""""""
 
 .. py:class:: pyvqnet.qnn.vqc.torch.HermitianExpval(obs=None, name="")
 
@@ -3714,10 +4172,11 @@ HermitianExpval
         print(batch_y)
 
 Common templates for quantum circuits
---------------------------------------------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 VQC_HardwareEfficientAnsatz
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+""""""""""""""""""""""""""""""""""""""""
+
 
 .. py:class:: pyvqnet.qnn.vqc.torch.VQC_HardwareEfficientAnsatz(n_qubits,single_rot_gate_list,entangle_gate="CNOT",entangle_rules='linear',depth=1,initial=None,dtype=None)
 
@@ -3778,7 +4237,7 @@ VQC_HardwareEfficientAnsatz
 
 
 VQC_BasicEntanglerTemplate
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+""""""""""""""""""""""""""""""""""""""""
 
 .. py:class:: pyvqnet.qnn.vqc.torch.VQC_BasicEntanglerTemplate(num_layer=1, num_qubits=1, rotation="RX", initial=None, dtype=None)
 
@@ -3833,7 +4292,7 @@ VQC_BasicEntanglerTemplate
 
 
 VQC_StronglyEntanglingTemplate
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+""""""""""""""""""""""""""""""""""""""""
 
 .. py:class:: pyvqnet.qnn.vqc.torch.VQC_StronglyEntanglingTemplate(num_layers=1, num_qubits=1, ranges=None,initial=None, dtype=None)
 
@@ -3888,11 +4347,11 @@ VQC_StronglyEntanglingTemplate
 
 
 VQC_QuantumEmbedding
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+""""""""""""""""""""""""""""""""""""""""
 
 
-.. py:class:: pyvqnet.qnn.vqc.torch.VQC_QuantumEmbedding( num_repetitions_input, depth_input, num_unitary_layers, num_repetitions,initial=None,dtype=None)
-
+.. py:class:: pyvqnet.qnn.vqc.torch.VQC_QuantumEmbedding(qubits, machine, num_repetitions_input, depth_input, num_unitary_layers, num_repetitions,initial = None,dtype = None,name= "")
+    
     Use RZ,RY,RZ to create variational quantum circuits to encode classical data into quantum states.
     Reference `Quantum embeddings for machine learning <https://arxiv.org/abs/2001.03622>`_.
 
@@ -3904,9 +4363,9 @@ VQC_QuantumEmbedding
     :param depth_input: number of input dimension .
     :param num_unitary_layers: number of repeat times of variational quantum gates.
     :param num_repetitions: number of repeat times of submodule.
-    :param initial: initial all parameters with same value, this argument must be QTensor with only one element, default:None.
-    :param dtype: data type of parameter, default:None,use float32.
-    :param name: name of this module.
+    :param initial: parameter initialization value, default is None
+    :param dtype: parameter type, default is None, use float32.
+    :param name: class name
     :return: A VQC_QuantumEmbedding instance.
 
     Example::
@@ -3932,8 +4391,7 @@ VQC_QuantumEmbedding
 
                 self.ansatz = VQC_QuantumEmbedding(num_repetitions_input, depth_input,
                                                 num_unitary_layers,
-                                                num_repetitions, pyvqnet.kfloat64,
-                                                initial=tensor.full([1],12.0))
+                                                num_repetitions,num_repetitions, initial=tensor.full([1],12.0),dtype=pyvqnet.kfloat64)
 
                 self.measure = MeasureAll(obs={f"Z{nq-1}":1})
                 self.device = QMachine(nq)
@@ -3951,7 +4409,7 @@ VQC_QuantumEmbedding
 
 
 ExpressiveEntanglingAnsatz
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+""""""""""""""""""""""""""""""""""""""""
 
 .. py:class:: pyvqnet.qnn.vqc.torch.ExpressiveEntanglingAnsatz(type: int, num_wires: int, depth: int, dtype=None, name: str = "")
 
@@ -4013,7 +4471,7 @@ ExpressiveEntanglingAnsatz
 
 
 vqc_basis_embedding
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+""""""""""""""""""""""""""""""""""""""""
 
 .. py:function:: pyvqnet.qnn.vqc.torch.vqc_basis_embedding(basis_state,q_machine)
 
@@ -4038,7 +4496,7 @@ vqc_basis_embedding
 
 
 vqc_angle_embedding
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+""""""""""""""""""""""""""""""""""""""""
 
 
 .. py:function:: pyvqnet.qnn.vqc.torch.vqc_angle_embedding(input_feat, wires, q_machine: pyvqnet.qnn.vqc.torch.QMachine, rotation: str = "X")
@@ -4078,7 +4536,7 @@ vqc_angle_embedding
 
 
 vqc_amplitude_embedding
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+""""""""""""""""""""""""""""""""""""""""
 
 .. py:function:: pyvqnet.qnn.vqc.torch.vqc_amplitude_embeddingVQC_AmplitudeEmbeddingCircuit(input_feature, q_machine)
 
@@ -4101,7 +4559,7 @@ vqc_amplitude_embedding
 
 
 vqc_iqp_embedding
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+""""""""""""""""""""""""""""""""""""""""
 
 .. py:function:: pyvqnet.qnn.vqc.vqc_iqp_embedding(input_feat, q_machine: pyvqnet.qnn.vqc.torch.QMachine, rep: int = 1)
 
@@ -4128,7 +4586,7 @@ vqc_iqp_embedding
 
 
 vqc_rotcircuit
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+""""""""""""""""""""""""""""""""""""""""
 
 .. py:function:: pyvqnet.qnn.vqc.torch.vqc_rotcircuit(q_machine, wire, params)
 
@@ -4156,7 +4614,7 @@ vqc_rotcircuit
 
 
 vqc_crot_circuit
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+""""""""""""""""""""""""""""""""""""""""
 
 
 .. py:function:: pyvqnet.qnn.vqc.torch.vqc_crot_circuit(para,control_qubits,rot_wire,q_machine)
@@ -4194,7 +4652,7 @@ vqc_crot_circuit
 
 
 vqc_controlled_hadamard
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+""""""""""""""""""""""""""""""""""""""""
 
 
 .. py:function:: pyvqnet.qnn.vqc.torch.vqc_controlled_hadamard(wires, q_machine)
@@ -4230,7 +4688,7 @@ vqc_controlled_hadamard
 
 
 vqc_ccz
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+""""""""""""""""""""""""""""""""""""""""
 
 .. py:function:: pyvqnet.qnn.vqc.torch.vqc_ccz(wires, q_machine)
 
@@ -4272,7 +4730,7 @@ vqc_ccz
 
 
 vqc_fermionic_single_excitation
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+""""""""""""""""""""""""""""""""""""""""
 
 .. py:function:: pyvqnet.qnn.vqc.torch.vqc_fermionic_single_excitation(weight, wires, q_machine)
 
@@ -4309,7 +4767,7 @@ vqc_fermionic_single_excitation
 
 
 vqc_fermionic_double_excitation
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+""""""""""""""""""""""""""""""""""""""""
 
 
 .. py:function:: pyvqnet.qnn.vqc.torch.vqc_fermionic_double_excitation(weight, wires1, wires2, q_machine)
@@ -4360,7 +4818,7 @@ vqc_fermionic_double_excitation
  
 
 vqc_uccsd
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+""""""""""""""""""""""""""""""""""""""""
 
 
 .. py:function:: pyvqnet.qnn.vqc.torch.vqc_uccsd(weights, wires, s_wires, d_wires, init_state, q_machine)
@@ -4411,7 +4869,7 @@ vqc_uccsd
 
 
 vqc_zfeaturemap
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+""""""""""""""""""""""""""""""""""""""""
 
 .. py:function:: pyvqnet.qnn.vqc.torch.vqc_zfeaturemap(input_feat, q_machine: pyvqnet.qnn.vqc.torch.QMachine, data_map_func=None, rep: int = 2)
 
@@ -4450,7 +4908,7 @@ vqc_zfeaturemap
  
 
 vqc_zzfeaturemap
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+""""""""""""""""""""""""""""""""""""""""
 
 .. py:function:: pyvqnet.qnn.vqc.torch.vqc_zzfeaturemap(input_feat, q_machine: pyvqnet.qnn.vqc.torch.QMachine, data_map_func=None, entanglement: Union[str, List[List[int]],Callable[[int], List[int]]] = "full",rep: int = 2)
 
@@ -4496,8 +4954,7 @@ vqc_zzfeaturemap
 
 
 vqc_allsinglesdoubles
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
+""""""""""""""""""""""""""""""""""""""""
 
 .. py:function:: pyvqnet.qnn.vqc.torch.vqc_allsinglesdoubles(weights, q_machine: pyvqnet.qnn.vqc.torch.QMachine, hf_state, wires, singles=None, doubles=None)
 
@@ -4535,7 +4992,7 @@ vqc_allsinglesdoubles
         print(qm.states)
 
 vqc_basisrotation
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+""""""""""""""""""""""""""""""""""""""""
 
 .. py:function:: pyvqnet.qnn.vqc.torch.vqc_basisrotation(q_machine: pyvqnet.qnn.vqc.torch.QMachine, wires, unitary_matrix: QTensor, check=False)
 
@@ -4579,7 +5036,7 @@ vqc_basisrotation
 
 
 vqc_quantumpooling_circuit
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+""""""""""""""""""""""""""""""""""""""""
 
 .. py:function:: pyvqnet.qnn.vqc.torch.vqc_quantumpooling_circuit(ignored_wires, sinks_wires, params, q_machine)
 
@@ -4610,20 +5067,17 @@ vqc_quantumpooling_circuit
         print(exp)
 
 
-Other quantum variational circuit training functions
---------------------------------------------------------------
-
 
 QuantumLayerAdjoint
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+""""""""""""""""""""""""""""""""""""""""
 
-.. py:class:: pyvqnet.qnn.vqc.torch.QuantumLayerAdjoint(general_module: pyvqnet.nn.Module, q_machine: pyvqnet.qnn.vqc.torch.QMachine,name="")
+.. py:class:: pyvqnet.qnn.vqc.torch.QuantumLayerAdjoint(general_module: pyvqnet.nn.Module, use_qpanda=False, name="")
 
 
     An automatically differentiable QuantumLayer layer that uses the adjoint matrix approach to calculate gradients, see `Efficient calculation of gradients in classical simulations of variational quantum algorithms <https://arxiv.org/abs/2009.02823>`_ .
 
     :param general_module: a `pyvqnet.nn.Module` instance built using only the quantum circuit interface under ``pyvqnet.qnn.vqc.torch``.
-    :param q_machine: The QMachine defined in general_module.
+    :param use_qpanda: Whether to use qpanda line for forward transmission, default: False.
     :param name: The name of the layer, defaults to "".
 
     .. note::
@@ -4692,230 +5146,10 @@ QuantumLayerAdjoint
         batch_y = adjoint_model(input_x)
         batch_y.backward()
 
-
-TorchQpandaQuantumLayer
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-If you are more familiar with pyQPanda syntax, you can use the interface TorchQpandaQuantumLayer, customize quantum bits ``qubits``, classical bits ``cbits``, and backend simulator ``machine`` and add them to the parameter ``qprog_with_measure`` function of TorchQpandaQuantumLayer.
-
-.. py:class:: pyvqnet.qnn.vqc.torch.TorchQpandaQuantumLayer(qprog_with_measure,para_num,diff_method:str = "parameter_shift",delta:float = 0.01,dtype=None,name="")
-
-    Abstract computation module of variational quantum layer. Use pyQPanda to simulate a parameterized quantum circuit and get the measurement results. This variational quantum layer inherits the gradient computation module of VQNet framework. It can use parameter drift method to calculate the gradient of circuit parameters, train variational quantum circuit model or embed variational quantum circuit into hybrid quantum and classical model.
-
-    :param qprog_with_measure: Quantum circuit operation and measurement function built with pyQPand.
-    :param para_num: `int` - number of parameters.
-    :param diff_method: Method for solving quantum circuit parameter gradient, "parameter shift" or "finite difference", default parameter shift.
-    :param delta: \delta when calculating gradient by finite difference.
-    :param dtype: Data type of parameter, defaults:None, use default data type: kfloat32, representing 32-bit floating point number.
-    :param name: Name of this module, default is "".
-
-    :return: a module that can compute quantum circuit.
-
-    .. note::
-
-        qprog_with_measure is a quantum circuit function defined in pyQPanda: https://pyqpanda-toturial.readthedocs.io/zh/latest/QCircuit.html.
-
-        This function must contain the following parameters as function input (even if a parameter is not actually used), otherwise it will not work properly in this function.
-
-        Compared with QuantumLayer. In the variational circuit running function passed in by this interface, users should manually create quantum bits and simulators: https://pyqpanda-toturial.readthedocs.io/zh/latest/QuantumMachine.html,
-
-        If qprog_with_measure requires quantum measure, users also need to manually create and allocate cbits: https://pyqpanda-toturial.readthedocs.io/zh/latest/Measure.html
-
-        The use of the quantum circuit function qprog_with_measure (input, param, nqubits, ncubits) can refer to the following example.
-
-        `input`: Input one-dimensional classical data. If none, input None.
-
-        `param`: Input one-dimensional variational quantum circuit parameters to be trained.
-
-    Example::
-
-        import pyqpanda as pq
-        from pyvqnet.qnn import ProbsMeasure
-        import numpy as np
-        from pyvqnet.tensor import QTensor
-        import pyvqnet
-        pyvqnet.backends.set_backend("torch")
-        from pyvqnet.qnn.vqc.torch import TorchQpandaQuantumLayer
-        def pqctest (input,param):
-            num_of_qubits = 4
-
-            m_machine = pq.CPUQVM()# outside
-            m_machine.init_qvm()# outside
-            qubits = m_machine.qAlloc_many(num_of_qubits)
-
-            circuit = pq.QCircuit()
-            circuit.insert(pq.H(qubits[0]))
-            circuit.insert(pq.H(qubits[1]))
-            circuit.insert(pq.H(qubits[2]))
-            circuit.insert(pq.H(qubits[3]))
-
-            circuit.insert(pq.RZ(qubits[0],input[0]))
-            circuit.insert(pq.RZ(qubits[1],input[1]))
-            circuit.insert(pq.RZ(qubits[2],input[2]))
-            circuit.insert(pq.RZ(qubits[3],input[3]))
-
-            circuit.insert(pq.CNOT(qubits[0],qubits[1]))
-            circuit.insert(pq.RZ(qubits[1],param[0]))
-            circuit.insert(pq.CNOT(qubits[0],qubits[1]))
-
-            circuit.insert(pq.CNOT(qubits[1],qubits[2]))
-            circuit.insert(pq.RZ(qubits[2],param[1]))
-            circuit.insert(pq.CNOT(qubits[1],qubits[2]))
-
-            circuit.insert(pq.CNOT(qubits[2],qubits[3]))
-            circuit.insert(pq.RZ(qubits[3],param[2]))
-            circuit.insert(pq.CNOT(qubits[2],qubits[3]))
-
-            prog = pq.QProg()
-            prog.insert(circuit)
-
-            rlt_prob = ProbsMeasure([0,2],prog,m_machine,qubits)
-            return rlt_prob
-
-        pqc = TorchQpandaQuantumLayer(pqctest,3)
-
-        #classic data as input
-        input = QTensor([[1.0,2,3,4],[4,2,2,3],[3,3,2,2]],requires_grad=True)
-
-        #forward circuits
-        rlt = pqc(input)
-
-        print(rlt)
-
-        grad =  QTensor(np.ones(rlt.data.shape)*1000)
-        #backward circuits
-        rlt.backward(grad)
-
-        print(pqc.m_para.grad)
-        print(input.grad)
-
-
-TorchQcloudQuantumLayer
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-When you install the latest version of pyqpanda, you can use this interface to define a variational circuit and submit it to run on originqc's real chip.
-
-.. py:class:: pyvqnet.qnn.vqc.torch.TorchQcloudQuantumLayer(origin_qprog_func, qcloud_token, para_num, num_qubits, num_cubits, pauli_str_dict=None, shots = 1000, initializer=None, dtype=None, name="", diff_method="parameter_shift", submit_kwargs={}, query_kwargs={})
-
-    An abstract computation module for originqc's real chip using pyqpanda QCLOUD starting from version 3.8.2.2. It submits the parameterized quantum circuit to the real chip and obtains the measurement results.
-    If diff_method == "random_coordinate_descent" , this layer will randomly select a single parameter to calculate the gradient, and other parameters will remain zero. Reference: https://arxiv.org/abs/2311.00088
-
-    .. note::
-
-        qcloud_token is the api token you applied for at https://qcloud.originqc.com.cn/.
-
-        origin_qprog_func needs to return data of type pypqanda.QProg. If pauli_str_dict is not set, it is necessary to ensure that the measure has been inserted into the QProg.
-
-        origin_qprog_func must be in the following format:
-
-        origin_qprog_func(input,param,qubits,cbits,machine)
-
-        `input`: Input 1~2D classical data. In the case of 2D, the ath dimension is the batch size.
-
-        `param`: Input the parameters to be trained for the 1D variational quantum circuit.
-
-        `machine`: The simulator QCloud created by QuantumBatchAsyncQcloudLayer, no user needs to define it in the function.
-
-        `qubits`: The quantum bits created by the simulator QCloud created by QuantumBatchAsyncQcloudLayer, the number is `num_qubits`, the type is pyQpanda.Qubits, no user needs to define it in the function.
-
-        `cbits`: The classical bits allocated by QuantumBatchAsyncQcloudLayer, the number is `num_cubits`, the type is pyQpanda.ClassicalCondition, no user needs to define it in the function..
-
-    :param origin_qprog_func: The variational quantum circuit function constructed by QPanda, must return QProg.
-    :param qcloud_token: `str` - The type of quantum machine or the cloud token used for execution.
-    :param para_num: `int` - The number of parameters, the parameter is a QTensor of size [para_num].
-    :param num_qubits: `int` - The number of qubits in the quantum circuit.
-    :param num_cubits: `int` - The number of classical bits used for measurement in the quantum circuit.
-    :param pauli_str_dict: `dict|list` - A dictionary or list of dictionaries representing Pauli operators in the quantum circuit. The default is "None", which means measurement operations are performed. If a dictionary of Pauli operators is entered, a single expectation or multiple expectations are calculated.
-    :param shot: `int` - The number of measurements. The default value is 1000.
-    :param initializer: Initializer for parameter values. The default is "None", which uses a 0~2*pi normal distribution.
-    :param dtype: The data type of the parameter. The default value is None, which uses the default data type pyvqnet.kfloat32.
-    :param name: The name of the module. The default is an empty string.
-    :param diff_method: Differentiation method for gradient calculation. Defaults to "parameter_shift", "random_coordinate_descent".
-    :param submit_kwargs: Additional keyword parameters for submitting quantum circuits, default: {"chip_id":pyqpanda.real_chip_type.origin_72,"is_amend":True,"is_mapping":True,"is_optimization":True,"compile_level":3,"default_task_group_size":200,"test_qcloud_fake":False}, when test_qcloud_fake is set to True, local CPUQVM simulation.
-    :param query_kwargs: Additional keyword parameters for querying quantum results, default: {"timeout":2,"print_query_info":True,"sub_circuits_split_size":1}.
-    :return: a module that can calculate quantum circuits.
-    
-    Example::
-
-        import pyqpanda as pq
-        import pyvqnet
-        from pyvqnet.qnn.vqc.torch import TorchQcloudQuantumLayer
-
-        pyvqnet.backends.set_backend("torch")
-        def qfun(input,param, m_machine, m_qlist,cubits):
-            measure_qubits = [0,2]
-            m_prog = pq.QProg()
-            cir = pq.QCircuit()
-            cir.insert(pq.RZ(m_qlist[0],input[0]))
-            cir.insert(pq.CNOT(m_qlist[0],m_qlist[1]))
-            cir.insert(pq.RY(m_qlist[1],param[0]))
-            cir.insert(pq.CNOT(m_qlist[0],m_qlist[2]))
-            cir.insert(pq.RZ(m_qlist[1],input[1]))
-            cir.insert(pq.RY(m_qlist[2],param[1]))
-            cir.insert(pq.H(m_qlist[2]))
-            m_prog.insert(cir)
-
-            for idx, ele in enumerate(measure_qubits):
-                m_prog << pq.Measure(m_qlist[ele], cubits[idx])  # pylint: disable=expression-not-assigned
-            return m_prog
-
-        l = TorchQcloudQuantumLayer(qfun,
-                        "3047DE8A59764BEDAC9C3282093B16AF1",
-                        2,
-                        6,
-                        6,
-                        pauli_str_dict=None,
-                        shots = 1000,
-                        initializer=None,
-                        dtype=None,
-                        name="",
-                        diff_method="parameter_shift",
-                        submit_kwargs={"test_qcloud_fake":True},
-                        query_kwargs={})
-        x = pyvqnet.tensor.QTensor([[0.56,1.2],[0.56,1.2],[0.56,1.2],[0.56,1.2],[0.56,1.2]],requires_grad= True)
-        y = l(x)
-        print(y)
-        y.backward()
-        print(l.m_para.grad)
-        print(x.grad)
-
-        def qfun2(input,param, m_machine, m_qlist,cubits):
-            measure_qubits = [0,2]
-            m_prog = pq.QProg()
-            cir = pq.QCircuit()
-            cir.insert(pq.RZ(m_qlist[0],input[0]))
-            cir.insert(pq.CNOT(m_qlist[0],m_qlist[1]))
-            cir.insert(pq.RY(m_qlist[1],param[0]))
-            cir.insert(pq.CNOT(m_qlist[0],m_qlist[2]))
-            cir.insert(pq.RZ(m_qlist[1],input[1]))
-            cir.insert(pq.RY(m_qlist[2],param[1]))
-            cir.insert(pq.H(m_qlist[2]))
-            m_prog.insert(cir)
-
-            return m_prog
-        l = TorchQcloudQuantumLayer(qfun2,
-                "3047DE8A59764BEDAC9C3282093B16AF",
-                2,
-                6,
-                6,
-                pauli_str_dict={'Z0 X1':10,'':-0.5,'Y2':-0.543},
-                shots = 1000,
-                initializer=None,
-                dtype=None,
-                name="",
-                diff_method="parameter_shift",
-                submit_kwargs={"test_qcloud_fake":True},
-                query_kwargs={})
-        x = pyvqnet.tensor.QTensor([[0.56,1.2],[0.56,1.2],[0.56,1.2],[0.56,1.2]],requires_grad= True)
-        y = l(x)
-        print(y)
-        y.backward()
-        print(l.m_para.grad)
-        print(x.grad)
-
-
+ 
 
 HybirdVQCQpandaQVMLayer
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+""""""""""""""""""""""""""""""""""""""""
 
 .. py:class:: pyvqnet.qnn.vqc.torch.HybirdVQCQpandaQVMLayer(vqc_module: Module,qcloud_token: str,num_qubits: int,num_cubits: int,pauli_str_dict: Union[List[Dict], Dict, None] = None,shots: int = 1000,dtype: Union[int, None] = None,name: str = "",submit_kwargs: Dict = {},query_kwargs: Dict = {})
 
@@ -5050,6 +5284,141 @@ HybirdVQCQpandaQVMLayer
         print(input_x.grad)
 
 
+TorchHybirdVQCQpanda3QVMLayer
+"""""""""""""""""""""""""""""""""""""""""""""""""""
+
+.. py:class:: pyvqnet.qnn.vqc.torch.TorchHybirdVQCQpanda3QVMLayer(vqc_module: Module,qcloud_token: str,pauli_str_dict: Union[List[Dict], Dict, None] = None,shots: int = 1000,dtype: Union[int, None] = None,name: str = "",submit_kwargs: Dict = {},query_kwargs: Dict = {})
+
+    Use torch backend, mix vqc and qpanda3 to simulate calculations. This layer converts quantum circuit calculations written in VQNet defined by the user `forward` function into QPanda OriginIR, runs forward on the QPanda3 local virtual machine or cloud service, and calculates the circuit parameter gradients based on automatic differentiation, reducing the time complexity of using the parameter drift method.
+
+    Where ``vqc_module`` is a user-defined quantum variational circuit model, in which QMachine sets ``save_ir= True``.
+
+    :param vqc_module: vqc_module with forward().
+    :param qcloud_token: `str` - The type of quantum machine or cloud token for execution.
+    :param pauli_str_dict: `dict|list` - A dictionary or list of dictionaries representing Pauli operators in a quantum circuit. The default value is None.
+    :param shots: `int` - The number of quantum circuit measurements. The default value is 1000.
+    :param name: The module name. The default value is an empty string.
+    :param submit_kwargs: Additional keyword parameters for submitting quantum circuits, default value:{"chip_id":pyqpanda.real_chip_type.origin_72,"is_amend":True,"is_mapping":True,"is_optimization":True,"default_task_group_size":200,"test_qcloud_fake":True}。
+    :param query_kwargs: Additional keyword parameters for querying quantum results, default value:{"timeout":2,"print_query_info":True,"sub_circuits_split_size":1}。
+
+    :return: Module that can calculate quantum circuits.
+
+    .. warning::
+
+        This class inherits from ``pyvqnet.nn.torch.TorchModule`` and ``pyvqnet.qnn.HybirdVQCQpandaQVMLayer`` and can be added to the torch model as a submodule of ``torch.nn.Module``.
+
+    .. note::
+
+        pauli_str_dict cannot be None and should be the same as obs in the vqc_module measurement function.
+        vqc_module should have attributes of QMachine type, and QMachine should set save_ir=True
+
+    Example::
+
+        import pyvqnet.backends
+        import numpy as np
+        from pyvqnet.qnn.vqc.torch import QMachine,QModule,RX,RY,\
+        RZ,U1,U2,U3,I,S,X1,PauliX,PauliY,PauliZ,SWAP,CZ,\
+        RXX,RYY,RZX,RZZ,CR,Toffoli,Hadamard,T,CNOT,MeasureAll
+        from pyvqnet.qnn.vqc.torch import HybirdVQCQpanda3QVMLayer
+        import pyvqnet
+
+        from pyvqnet import tensor
+
+        import pyvqnet.utils
+        pyvqnet.backends.set_backend("torch")
+        pyvqnet.utils.set_random_seed(42)
+
+        class QModel(QModule):
+            def __init__(self, num_wires, dtype,grad_mode=""):
+                super(QModel, self).__init__()
+
+                self._num_wires = num_wires
+                self._dtype = dtype
+                self.qm = QMachine(num_wires, dtype=dtype,grad_mode=grad_mode,save_ir=True)
+                self.rx_layer = RX(has_params=True, trainable=False, wires=0)
+                self.ry_layer = RY(has_params=True, trainable=False, wires=1)
+                self.rz_layer = RZ(has_params=True, trainable=False, wires=1)
+                self.u1 = U1(has_params=True,trainable=True,wires=[2])
+                self.u2 = U2(has_params=True,trainable=True,wires=[3])
+                self.u3 = U3(has_params=True,trainable=True,wires=[1])
+                self.i = I(wires=[3])
+                self.s = S(wires=[3])
+                self.x1 = X1(wires=[3])
+                
+                self.x = PauliX(wires=[3])
+                self.y = PauliY(wires=[3])
+                self.z = PauliZ(wires=[3])
+                self.swap = SWAP(wires=[2,3])
+                self.cz = CZ(wires=[2,3])
+                self.cr = CR(has_params=True,trainable=True,wires=[2,3])
+                self.rxx = RXX(has_params=True,trainable=True,wires=[2,3])
+                self.rzz = RYY(has_params=True,trainable=True,wires=[2,3])
+                self.ryy = RZZ(has_params=True,trainable=True,wires=[2,3])
+                self.rzx = RZX(has_params=True,trainable=False, wires=[2,3])
+                self.toffoli = Toffoli(wires=[2,3,4],use_dagger=True)
+                self.h =Hadamard(wires=[1])
+
+
+                self.tlayer = T(wires=1)
+                self.cnot = CNOT(wires=[0, 1])
+                self.measure = MeasureAll(obs={'Z0':2,'Y3':3} 
+            )
+
+            def forward(self, x, *args, **kwargs):
+                self.qm.reset_states(x.shape[0])
+                self.i(q_machine=self.qm)
+                self.s(q_machine=self.qm)
+                self.swap(q_machine=self.qm)
+                self.cz(q_machine=self.qm)
+                self.x(q_machine=self.qm)
+                self.x1(q_machine=self.qm)
+                self.y(q_machine=self.qm)
+
+                self.z(q_machine=self.qm)
+
+                self.ryy(q_machine=self.qm)
+                self.rxx(q_machine=self.qm)
+                self.rzz(q_machine=self.qm)
+                self.rzx(q_machine=self.qm,params = x[:,[1]])
+                self.cr(q_machine=self.qm)
+                self.u1(q_machine=self.qm)
+                self.u2(q_machine=self.qm)
+                self.u3(q_machine=self.qm)
+                self.rx_layer(params = x[:,[0]], q_machine=self.qm)
+                self.cnot(q_machine=self.qm)
+                self.h(q_machine=self.qm)
+
+                self.ry_layer(params = x[:,[1]], q_machine=self.qm)
+                self.tlayer(q_machine=self.qm)
+                self.rz_layer(params = x[:,[2]], q_machine=self.qm)
+                self.toffoli(q_machine=self.qm)
+                rlt = self.measure(q_machine=self.qm)
+
+                return rlt
+            
+
+        input_x = tensor.QTensor([[0.1, 0.2, 0.3]])
+
+        input_x = tensor.broadcast_to(input_x,[2,3])
+
+        input_x.requires_grad = True
+
+        qunatum_model = QModel(num_wires=6, dtype=pyvqnet.kcomplex64)
+
+        l = HybirdVQCQpanda3QVMLayer(qunatum_model,
+                                "3047DE8A59764BEDAC9C3282093B16AF1",
+
+                    pauli_str_dict={'Z0':2,'Y3':3},
+                    shots = 1000,
+                    name="",
+            submit_kwargs={"test_qcloud_fake":True},
+                    query_kwargs={})
+
+        y = l(input_x)
+        print(y)
+
+        y.backward()
+        print(input_x.grad)
 
 
 

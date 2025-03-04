@@ -2378,7 +2378,7 @@ which consists of 15 random You matrices corresponding to the classical Dense La
     from pyvqnet.qnn.vqc.qmachine import QMachine
     from pyvqnet.qnn.vqc.utils import probs
     from pyvqnet.nn import Module, Parameter
-    from pyvqnet.tensor import tensor,kfloat32
+    from pyvqnet.tensor import tensor
     from pyvqnet.tensor import QTensor
     from pyvqnet.dtype import *
     from pyvqnet.optim import Adam
@@ -2387,7 +2387,9 @@ which consists of 15 random You matrices corresponding to the classical Dense La
 
     seed = 0
     rng = np.random.default_rng(seed=seed)
-
+    n_reps = 10
+    n_test = 10
+    n_epochs = 10
 
     def convolutional_layer(qm, weights, wires, skip_first_layer=True):
 
@@ -2427,7 +2429,7 @@ which consists of 15 random You matrices corresponding to the classical Dense La
 
     def dense_layer(qm, weights, wires):
         """Apply an arbitrary unitary gate to a specified set of wires."""
-        
+
         rzz(q_machine=qm,params=weights[0], wires=wires)
         rxx(q_machine=qm,params=weights[1], wires=wires)
         ryy(q_machine=qm,params=weights[2], wires=wires)
@@ -2506,7 +2508,7 @@ which consists of 15 random You matrices corresponding to the classical Dense La
             return self.conv(self.qm, self.weights, self.weights_last, input)
 
 
-    from tqdm import tqdm  
+    from tqdm import tqdm
 
 
     def train_qcnn(n_train, n_test, n_epochs):
@@ -2562,9 +2564,7 @@ which consists of 15 random You matrices corresponding to the classical Dense La
             test_acc=test_acc_epochs,
         )
 
-    n_reps = 100
-    n_test = 100
-    n_epochs = 100
+
 
     def run_iterations(n_train):
         results_df = pd.DataFrame(
@@ -2573,7 +2573,7 @@ which consists of 15 random You matrices corresponding to the classical Dense La
 
         for _ in tqdm(range(n_reps)):
             results = train_qcnn(n_train=n_train, n_test=n_test, n_epochs=n_epochs)
-            # np.save('test_qcnn.npy', results)
+
             results_df = pd.concat(
                 [results_df, pd.DataFrame.from_dict(results)], axis=0, ignore_index=True
             )
@@ -2588,8 +2588,8 @@ which consists of 15 random You matrices corresponding to the classical Dense La
     for n_train in train_sizes[1:]:
         results_df = pd.concat([results_df, run_iterations(n_train=n_train)])
 
-    save = 0
-    draw = 0 
+    save = 0 # 保存数据
+    draw = 0 # 绘图
 
     if save:
         results_df.to_csv('test_qcnn.csv', index=False)
@@ -2647,11 +2647,11 @@ which consists of 15 random You matrices corresponding to the classical Dense La
         ax.set_ylim(0.5, 1.05)
 
         legend_elements = [
-                              mpl.lines.Line2D([0], [0], label=f'N={n}', color=colors[i]) for i, n in enumerate(train_sizes)
-                          ] + [
-                              mpl.lines.Line2D([0], [0], marker='o', ls='-', label='Train', color='Black'),
-                              mpl.lines.Line2D([0], [0], marker='x', ls='--', label='Test', color='Black')
-                          ]
+                                mpl.lines.Line2D([0], [0], label=f'N={n}', color=colors[i]) for i, n in enumerate(train_sizes)
+                            ] + [
+                                mpl.lines.Line2D([0], [0], marker='o', ls='-', label='Train', color='Black'),
+                                mpl.lines.Line2D([0], [0], marker='x', ls='--', label='Test', color='Black')
+                            ]
 
         axes[0].legend(handles=legend_elements, ncol=3)
         axes[2].legend(handles=legend_elements, ncol=3)
@@ -2827,9 +2827,9 @@ The specific code implementation is as follows:
                 VQC_ZZFeatureMap(x, qm, data_map_func=custom_data_map_func, entanglement="linear")
 
                 return (
-                    [expval(qm, i, PauliX(init_params=QTensor(1.0))).to_numpy() for i in range(N)]
-                    + [expval(qm, i, PauliY(init_params=QTensor(1.0))).to_numpy() for i in range(N)]
-                    + [expval(qm, i, PauliZ(init_params=QTensor(1.0))).to_numpy() for i in range(N)]
+                    [expval(qm, i, PauliX(  )).to_numpy() for i in range(N)]
+                    + [expval(qm, i, PauliY( )).to_numpy() for i in range(N)]
+                    + [expval(qm, i, PauliZ()).to_numpy() for i in range(N)]
                 )
 
             # build the gram matrix
