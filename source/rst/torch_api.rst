@@ -4391,7 +4391,7 @@ VQC_QuantumEmbedding
 
                 self.ansatz = VQC_QuantumEmbedding(num_repetitions_input, depth_input,
                                                 num_unitary_layers,
-                                                num_repetitions,num_repetitions, initial=tensor.full([1],12.0),dtype=pyvqnet.kfloat64)
+                                                num_repetitions, initial=tensor.full([1],12.0),dtype=pyvqnet.kfloat64)
 
                 self.measure = MeasureAll(obs={f"Z{nq-1}":1})
                 self.device = QMachine(nq)
@@ -5146,142 +5146,7 @@ QuantumLayerAdjoint
         batch_y = adjoint_model(input_x)
         batch_y.backward()
 
- 
 
-HybirdVQCQpandaQVMLayer
-""""""""""""""""""""""""""""""""""""""""
-
-.. py:class:: pyvqnet.qnn.vqc.torch.HybirdVQCQpandaQVMLayer(vqc_module: Module,qcloud_token: str,num_qubits: int,num_cubits: int,pauli_str_dict: Union[List[Dict], Dict, None] = None,shots: int = 1000,dtype: Union[int, None] = None,name: str = "",submit_kwargs: Dict = {},query_kwargs: Dict = {})
-
-    Hybrid vqc and qpanda QVM layer. This layer converts quantum circuit calculations written in VQNet defined by the user's `forward` function into QPanda OriginIR, which can be run forward on the QPanda local virtual machine or cloud service, and simulates the calculation of circuit parameter gradients on the local CPU, reducing the time complexity of using the parameter drift method.
-    Among them, ``vqc_module`` is a user-defined quantum variational circuit model, in which QMachine sets ``save_ir= True``.
-
-    :param vqc_module: vqc_module with forward().
-    :param qcloud_token: `str` - The type of quantum machine or cloud token used for execution.
-    :param num_qubits: `int` - The number of quantum bits in the quantum circuit.
-    :param num_cubits: `int` - The number of classical bits used for measurement in the quantum circuit.
-    :param pauli_str_dict: `dict|list` - Dictionary or list of dictionaries representing Pauli operators in quantum circuits. Default value is None.
-    :param shots: `int` - number of quantum circuit measurements. Default value is 1000.
-    :param name: module name. Default value is an empty string.
-    :param submit_kwargs: additional keyword parameters for submitting quantum circuits, default value:{"chip_id":pyqpanda.real_chip_type.origin_72,"is_amend":True,"is_mapping":True,"is_optimization":True,"default_task_group_size":200,"test_qcloud_fake":True}.
-    :param query_kwargs: additional keyword parameters for querying quantum results, default value: {"timeout":2,"print_query_info":True,"sub_circuits_split_size":1}.
-
-    :return: module that can calculate quantum circuits.
-
-    .. note::
-
-        ``pauli_str_dict`` cannot be None and should be the same as obs in the ``vqc_module`` measurement function.
-        ``vqc_module`` should have attributes of type ``pyvqnet.qnn.vqc.torch.QMachine``, ``pyvqnet.qnn.vqc.torch.QMachine`` should set save_ir=True
-
-    Example::
-
-        import pyvqnet.backends
-        import numpy as np
-        from pyvqnet.qnn.vqc.torch import QMachine,QModule,RX,RY,\
-        RZ,U1,U2,U3,I,S,X1,PauliX,PauliY,PauliZ,SWAP,CZ,\
-        RXX,RYY,RZX,RZZ,CR,Toffoli,Hadamard,T,CNOT,MeasureAll,\
-        TorchHybirdVQCQpandaQVMLayer
-        import pyvqnet
-        
-        from pyvqnet import tensor
-
-        import pyvqnet.utils
-        pyvqnet.backends.set_backend("torch")
-        pyvqnet.utils.set_random_seed(42)
-
-        class QModel(QModule):
-            def __init__(self, num_wires, dtype,grad_mode=""):
-                super(QModel, self).__init__()
-
-                self._num_wires = num_wires
-                self._dtype = dtype
-                self.qm = QMachine(num_wires, dtype=dtype,grad_mode=grad_mode,save_ir=True)
-                self.rx_layer = RX(has_params=True, trainable=False, wires=0)
-                self.ry_layer = RY(has_params=True, trainable=False, wires=1)
-                self.rz_layer = RZ(has_params=True, trainable=False, wires=1)
-                self.u1 = U1(has_params=True,trainable=True,wires=[2])
-                self.u2 = U2(has_params=True,trainable=True,wires=[3])
-                self.u3 = U3(has_params=True,trainable=True,wires=[1])
-                self.i = I(wires=[3])
-                self.s = S(wires=[3])
-                self.x1 = X1(wires=[3])
-                
-                self.x = PauliX(wires=[3])
-                self.y = PauliY(wires=[3])
-                self.z = PauliZ(wires=[3])
-                self.swap = SWAP(wires=[2,3])
-                self.cz = CZ(wires=[2,3])
-                self.cr = CR(has_params=True,trainable=True,wires=[2,3])
-                self.rxx = RXX(has_params=True,trainable=True,wires=[2,3])
-                self.rzz = RYY(has_params=True,trainable=True,wires=[2,3])
-                self.ryy = RZZ(has_params=True,trainable=True,wires=[2,3])
-                self.rzx = RZX(has_params=True,trainable=False, wires=[2,3])
-                self.toffoli = Toffoli(wires=[2,3,4],use_dagger=True)
-                self.h =Hadamard(wires=[1])
-
-
-                self.tlayer = T(wires=1)
-                self.cnot = CNOT(wires=[0, 1])
-                self.measure = MeasureAll(obs={'Z0':2,'Y3':3} 
-            )
-
-            def forward(self, x, *args, **kwargs):
-                self.qm.reset_states(x.shape[0])
-                self.i(q_machine=self.qm)
-                self.s(q_machine=self.qm)
-                self.swap(q_machine=self.qm)
-                self.cz(q_machine=self.qm)
-                self.x(q_machine=self.qm)
-                self.x1(q_machine=self.qm)
-                self.y(q_machine=self.qm)
-
-                self.z(q_machine=self.qm)
-
-                self.ryy(q_machine=self.qm)
-                self.rxx(q_machine=self.qm)
-                self.rzz(q_machine=self.qm)
-                self.rzx(q_machine=self.qm,params = x[:,[1]])
-                self.cr(q_machine=self.qm)
-                self.u1(q_machine=self.qm)
-                self.u2(q_machine=self.qm)
-                self.u3(q_machine=self.qm)
-                self.rx_layer(params = x[:,[0]], q_machine=self.qm)
-                self.cnot(q_machine=self.qm)
-                self.h(q_machine=self.qm)
-
-                self.ry_layer(params = x[:,[1]], q_machine=self.qm)
-                self.tlayer(q_machine=self.qm)
-                self.rz_layer(params = x[:,[2]], q_machine=self.qm)
-                self.toffoli(q_machine=self.qm)
-                rlt = self.measure(q_machine=self.qm)
-
-                return rlt
-            
-
-        input_x = tensor.QTensor([[0.1, 0.2, 0.3]])
-
-        input_x = tensor.broadcast_to(input_x,[2,3])
-
-        input_x.requires_grad = True
-
-        qunatum_model = QModel(num_wires=6, dtype=pyvqnet.kcomplex64)
-
-        l = TorchHybirdVQCQpandaQVMLayer(qunatum_model,
-                                "3047DE8A59764BEDAC9C3282093B16AF1",
-                    6,
-                    6,
-                    pauli_str_dict={'Z0':2,'Y3':3},
-                    shots = 1000,
-                    name="",
-            submit_kwargs={"test_qcloud_fake":True},
-                    query_kwargs={})
-
-        y = l(input_x)
-        print(y)
-
-
-        y.backward()
-        print(input_x.grad)
 
 
 TorchHybirdVQCQpanda3QVMLayer

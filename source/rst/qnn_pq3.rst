@@ -155,17 +155,17 @@ QuantumLayerV3
             cir<<pq.RZ(m_qlist[0], input[0])
             cir<<pq.RX(m_qlist[2], input[2])
             
-            qcir = pq.RX(m_qlist[1], param[1]).add_control(m_qlist[0])
+            qcir = pq.RX(m_qlist[1], param[1]).control(m_qlist[0])
         
             cir<<qcir
 
-            qcir = pq.RY(m_qlist[0], param[2]).add_control(m_qlist[1])
+            qcir = pq.RY(m_qlist[0], param[2]).control(m_qlist[1])
         
             cir<<qcir
 
             cir<<pq.RY(m_qlist[0], input[1])
 
-            qcir = pq.RZ(m_qlist[0], param[3]).add_control(m_qlist[1])
+            qcir = pq.RZ(m_qlist[0], param[3]).control(m_qlist[1])
         
             cir<<qcir
             m_prog<<cir
@@ -353,53 +353,96 @@ grad
         print(exp)
 
 
-Qconv
-==========================
 
-Qconv is a quantum convolution algorithm interface.
-Quantum convolution operation uses quantum circuits to perform convolution operations on classical data. It does not need to calculate multiplication and addition operations. It only needs to encode the data into quantum states, and then perform evolution operations and measurements through quantum circuits to obtain the final convolution results.
-Apply for the same number of quantum bits according to the number of input data in the range of the convolution kernel, and then build quantum circuits for calculation.
 
-.. image:: ./images/qcnn.png
 
-The quantum circuit is encoded by first inserting :math:`RY` and :math:`RZ` gates on each qubit, and then using :math:`Z` and :math:`U3` on any two qubits to entangle and exchange information. The following is an example of 4 qubits
 
-.. image:: ./images/qcnn_cir.png
+QLinear
+==============
 
-.. py:class:: pyvqnet.qnn.qcnn.qconv.QConv(input_channels,output_channels,quantum_number,stride=(1, 1),padding=(0, 0),kernel_initializer=normal,machine:str = "CPU", dtype=None, name ="")
+QLinear implements a quantum full-connection algorithm. First, the data is encoded into a quantum state, and then the evolution operation and measurement are performed through quantum circuits to obtain the final full-connection result.
 
-Quantum convolution module. Replace the Conv2D kernel with a quantum circuit. The input of the conv module is of shape (batch size, input channels, height, width) `Samuel et al. (2020) <https://arxiv.org/abs/2012.12177>`_ .
+.. image:: ./images/qlinear_cir.png
+
+.. py:class:: pyvqnet.qnn.qlinear.QLinear(input_channels,output_channels,machine: str = "CPU"))
+
+    Quantum fully connected module. The input to the fully connected module is of shape (input channels, output channels). Note that this layer does not take variational quantum parameters.
 
     :param input_channels: `int` - Number of input channels.
     :param output_channels: `int` - Number of output channels.
-    :param quantum_number: `int` - The size of a single kernel.
-    :param stride: `tuple` - The stride, defaults to (1,1).
-    :param padding: `tuple` - Padding, defaults to (0,0).
-    :param kernel_initializer: `callable` - Defaults to normal distribution.
-    :param machine: `str` - The virtual machine to use, defaults to CPU simulation.
-    :param dtype: The data type of the parameter, defaults: None, use the default data type: kfloat32, representing 32-bit floating point numbers.
-    :param name: The name of this module, defaults to "".
+    :param machine: `str` - The virtual machine to use, CPU simulation is used by default.
+    :return: Quantum fully connected layer.
 
-    :return: Quantum convolution layer.
+    Exmaple::
+
+        from pyvqnet.tensor import QTensor
+        from pyvqnet.qnn.qlinear import QLinear
+        params = [[0.37454012, 0.95071431, 0.73199394, 0.59865848, 0.15601864, 0.15599452], 
+        [1.37454012, 0.95071431, 0.73199394, 0.59865848, 0.15601864, 0.15599452],
+        [1.37454012, 1.95071431, 0.73199394, 0.59865848, 0.15601864, 0.15599452],
+        [1.37454012, 1.95071431, 1.73199394, 1.59865848, 0.15601864, 0.15599452]]
+        m = QLinear(6, 2)
+        input = QTensor(params, requires_grad=True)
+        output = m(input)
+        output.backward()
+        print(output)
+
+        #[
+        #[0.0568473, 0.1264389],
+        #[0.1524036, 0.1264389],
+        #[0.1524036, 0.1442845],
+        #[0.1524036, 0.1442845]
+        #]
 
 
-    Example::
 
-        from pyvqnet.tensor import tensor
-        from pyvqnet.qnn.qcnn.qconv import QConv
-        x = tensor.ones([1,3,4,4])
-        layer = QConv(input_channels=3, output_channels=2, quantum_number=4, stride=(2, 2))
-        y = layer(x)
-        print(y)
+Qconv
+==========================
 
-        # [
-        # [[[-0.0889078, -0.0889078],
-        #  [-0.0889078, -0.0889078]],
-        # [[0.7992646, 0.7992646],
-        #  [0.7992646, 0.7992646]]]
-        # ]
+    Qconv is a quantum convolution algorithm interface.
+    Quantum convolution operation uses quantum circuits to perform convolution operations on classical data. It does not need to calculate multiplication and addition operations. It only needs to encode the data into quantum states, and then perform evolution operations and measurements through quantum circuits to obtain the final convolution results.
+    Apply for the same number of quantum bits according to the number of input data in the range of the convolution kernel, and then build quantum circuits for calculation.
 
-Quantum logic gate
+    .. image:: ./images/qcnn.png
+
+    The quantum circuit is encoded by first inserting :math:`RY` and :math:`RZ` gates on each qubit, and then using :math:`Z` and :math:`U3` on any two qubits to entangle and exchange information. The following is an example of 4 qubits
+
+    .. image:: ./images/qcnn_cir.png
+
+.. py:class:: pyvqnet.qnn.qcnn.qconv.QConv(input_channels,output_channels,quantum_number,stride=(1, 1),padding=(0, 0),kernel_initializer=normal,machine:str = "CPU", dtype=None, name ="")
+
+    Quantum convolution module. Replace the Conv2D kernel with a quantum circuit. The input of the conv module is of shape (batch size, input channels, height, width) `Samuel et al. (2020) <https://arxiv.org/abs/2012.12177>`_ .
+
+        :param input_channels: `int` - Number of input channels.
+        :param output_channels: `int` - Number of output channels.
+        :param quantum_number: `int` - The size of a single kernel.
+        :param stride: `tuple` - The stride, defaults to (1,1).
+        :param padding: `tuple` - Padding, defaults to (0,0).
+        :param kernel_initializer: `callable` - Defaults to normal distribution.
+        :param machine: `str` - The virtual machine to use, defaults to CPU simulation.
+        :param dtype: The data type of the parameter, defaults: None, use the default data type: kfloat32, representing 32-bit floating point numbers.
+        :param name: The name of this module, defaults to "".
+
+        :return: Quantum convolution layer.
+
+
+        Example::
+
+            from pyvqnet.tensor import tensor
+            from pyvqnet.qnn.qcnn.qconv import QConv
+            x = tensor.ones([1,3,4,4])
+            layer = QConv(input_channels=3, output_channels=2, quantum_number=4, stride=(2, 2))
+            y = layer(x)
+            print(y)
+
+            # [
+            # [[[-0.0889078, -0.0889078],
+            #  [-0.0889078, -0.0889078]],
+            # [[0.7992646, 0.7992646],
+            #  [0.7992646, 0.7992646]]]
+            # ]
+
+Quantum logic gates
 ************************************
 
 The way to process quantum bits is quantum logic gate. Using quantum logic gate, we consciously evolve quantum states. Quantum logic gate is the basis of quantum algorithm.
@@ -407,7 +450,7 @@ The way to process quantum bits is quantum logic gate. Using quantum logic gate,
 Basic quantum logic gate
 =============================
 
-In VQNet, we use the various logic gates of `pyqpanda3 <https://qcloud.originqc.com.cn/document/qpanda-3/index.html>`_ developed by Origin Quantum to build quantum circuits and perform quantum simulation.
+In this section, we use the various logic gates of `pyqpanda3 <https://qcloud.originqc.com.cn/document/qpanda-3/index.html>`_ developed by Origin Quantum to build quantum circuits and perform quantum simulation.
 The logic gates currently supported by pyQPanda3 can refer to the definition of pyQPanda3 `Quantum logic gate <https://qcloud.originqc.com.cn/document/qpanda-3/da/dd5/tutorial_quantum_gate.html>`_.
 In addition, VQNet also encapsulates some commonly used quantum logic gate combinations in quantum machine learning:
 
@@ -845,6 +888,9 @@ HardwareEfficientAnsatz
     :param entangle_rules: How the entanglement gate is used in the circuit. ``linear`` means that the entanglement gate will act on every adjacent qubit. ``all`` means that the entanglement gate will act on any two qbuits. Default: ``linear``.
     :param depth: Depth in ansatz, default: 1.
 
+    :return:
+        A HardwareEfficientAnsatz instance
+
     Example::
 
         import pyqpanda3.core as pq
@@ -868,14 +914,14 @@ BasicEntanglerTemplate
 .. py:class:: pyvqnet.qnn.pq3.template.BasicEntanglerTemplate(weights=None, num_qubits=1, rotation=pyqpanda3.RX)
     
     A layer consisting of single-parameter single-qubit rotations on each qubit, followed by multiple CNOT gates combined in a closed chain or ring.
-
     The ring of CNOT gates connects each qubit to its neighbors, with the last qubit considered a neighbor of the first.
-
     The number of layers :math:`L` is determined by the first dimension of the parameter ``weights``.
 
     :param weights: A weight tensor of shape `(L, len(qubits))`. Each weight is used as a parameter in a quantum parametric gate. The default value is: ``None``, then `(1,1)` normally distributed random numbers are used as weights.
     :param num_qubits: The number of qubits, default is 1.
     :param rotation: Use a single-parameter single-qubit gate, ``pyqpanda3.RX`` is used as the default value.
+    :return:
+        A BasicEntanglerTemplate instance
 
     Example::
 
@@ -895,20 +941,21 @@ BasicEntanglerTemplate
         result = circuit.compute_circuit()
         circuit.print_circuit(qubits)
 
+
 StronglyEntanglingTemplate
 ============================
 
 .. py:class:: pyvqnet.qnn.pq3.template.StronglyEntanglingTemplate(weights=None, num_qubits=1, ranges=None)
 
     Layers consisting of single qubit rotations and entanglers, as in `circuit-centric classifier design <https://arxiv.org/abs/1804.00633>`__ .
-
     The parameter ``weights`` contains the weights of each layer. So the number of layers :math:`L` is equal to the first dimension of ``weights``.
-
     It contains 2-qubit CNOT gates acting on :math:`M` qubits, :math:`i = 1,...,M`. The second qubit number of each gate is given by the formula :math:`(i+r)\mod M`, where :math:`r` is a hyperparameter called ``range``, and :math:`0 < r < M`.
 
     :param weights: Weight tensor of shape ``(L, M, 3)``, default value: None, use a random tensor of shape ``(1,1,3)``.
     :param num_qubits: Number of qubits, default value: 1.
     :param ranges: Sequence that determines the range hyperparameters for each subsequent layer; default value: None, use :math:`r=l \ mod M` as the value of ranges.
+    :return:
+        A StronglyEntanglingTemplate instance
 
     Example::
 
@@ -942,6 +989,8 @@ ComplexEntangelingTemplate
     :param weights: parameters, shape [depth,num_qubits,3]
     :param num_qubits: number of qubits.
     :param depth: depth of the subcircuit.
+    :return:
+        A ComplexEntangelingTemplate instance
 
     Example::
 
@@ -977,6 +1026,8 @@ Quantum_Embedding
     :param depth_input: The feature dimension of the input data.
     :param num_unitary_layers: The number of repetitions of the variational quantum gate in each submodule.
     :param num_repetitions: The number of repetitions of the submodule.
+    :return:
+        A Quantum_Embedding instance
 
     Example::
 
@@ -1006,6 +1057,7 @@ Quantum_Embedding
         y = qlayer.forward(data_in)
         y.backward()
         print(data_in.grad)
+
 
 Measure quantum circuits
 ************************************
@@ -1195,7 +1247,7 @@ Purity
 
     Examples::
 
-        from pyvqnet.qnn.qp3.measure import Purity
+        from pyvqnet.qnn.pq3.measure import Purity
         qstate = [(0.9306699299765968 + 0j), (0.18865613455240968 + 0j),
         (0.1886561345524097 + 0j), (0.03824249173404786 + 0j),
         -0.048171819846746615j, -0.00976491131165138j, -0.23763904794287155j,

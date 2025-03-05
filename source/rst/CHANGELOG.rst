@@ -8,9 +8,7 @@ Added
 ===================
 
 - Added an interface for quantum circuit calculation using pyqpanda3.
-
 - The MeasureAll interface supports compound Pauli operators.
-
 - Added DataParallelVQCAdjointLayer and DataParallelVQCLayer interfaces.
 
 Changed

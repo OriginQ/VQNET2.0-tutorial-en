@@ -291,7 +291,7 @@ ModuleList
             circuit.insert(pq.CNOT(qubits[2],qubits[3]))
             circuit.insert(pq.RZ(qubits[3],param[2]))
             circuit.insert(pq.CNOT(qubits[2],qubits[3]))
-            #print(circuit)
+
 
             prog = pq.QProg()
             prog.insert(circuit)

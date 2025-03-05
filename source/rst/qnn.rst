@@ -110,7 +110,7 @@ It is theoretically possible to calculate the gradient of parameters about Hamil
             circuit.insert(pq.CNOT(qubits[2],qubits[3]))
             circuit.insert(pq.RZ(qubits[3],param[2]))
             circuit.insert(pq.CNOT(qubits[2],qubits[3]))
-            #print(circuit)
+
 
             prog = pq.QProg()
             prog.insert(circuit)
@@ -208,7 +208,7 @@ If you are more familiar with pyQPanda2 syntax, please using QuantumLayerV2 clas
             circuit.insert(pq.CNOT(qubits[2],qubits[3]))
             circuit.insert(pq.RZ(qubits[3],param[2]))
             circuit.insert(pq.CNOT(qubits[2],qubits[3]))
-            #print(circuit)
+
 
             prog = pq.QProg()
             prog.insert(circuit)
@@ -697,7 +697,7 @@ DataParallelHybirdVQCQpandaQVMLayer
                 self.ryy = RZZ(has_params=True, trainable=True, wires=[2, 3])
                 self.rzx = RZX(has_params=True, trainable=False, wires=[2, 3])
                 self.toffoli = Toffoli(wires=[2, 3, 4], use_dagger=True)
-                #self.rz_layer2 = RZ(has_params=True, trainable=True, wires=1)
+
                 self.h = Hadamard(wires=[1])
 
                 self.iSWAP = iSWAP(True, True, wires=[0, 2])
@@ -851,7 +851,7 @@ AmplitudeEmbeddingCircuit
 
 
 
-Quantum Machine Learning Algorithm Interface using pyQPanda2
+Quantum Machine Learning APIs using pyQPanda2
 ***************************************************************************
 
 Quantum Generative Adversarial Networks for learning and loading random distributions

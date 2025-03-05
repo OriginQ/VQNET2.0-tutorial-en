@@ -177,7 +177,7 @@ The following is the neural network related code:
     import matplotlib
     try:
         matplotlib.use("TkAgg")
-    except:  #pylint:disable=bare-except
+    except:  
         print("Can not use matplot TkAgg")
         pass
     try:
@@ -438,7 +438,7 @@ Import the library and define the quantum neural network model:
     from pyvqnet.data import data_generator as get_minibatch_data
     try:
         matplotlib.use("TkAgg")
-    except:  #pylint:disable=bare-except
+    except:  
         print("Can not use matplot TkAgg")
         pass
     np.random.seed(42)
@@ -623,7 +623,7 @@ In this case, we encode the binary input into the corresponding order of qubits.
                     CNOT(wires = [nqubits[i], nqubits[i + 1]])(q_machine = qm)
                 CNOT(wires = [nqubits[len(nqubits) - 1], nqubits[0]])(q_machine = qm)
             def build_circult(weights, xx, nqubits,qm):
-                def Rot(weights_j, nqubits,qm):#pylint:disable=invalid-name
+                def Rot(weights_j, nqubits,qm):
                     VQC_RotCircuit(qm,nqubits,weights_j)
                 def basisstate(qm,xx, nqubits):
                     for i in nqubits:
@@ -692,7 +692,7 @@ Data loading, model training process code:
         model = QModel(4,pyvqnet.kcomplex64)
         optimizer = sgd.SGD(model.parameters(), lr=0.5)
         epoch = 25
-        #loss = CategoricalCrossEntropy()
+
         print("start training..............")
         model.train()
         datas, labels = vqc_get_data("train")
@@ -782,7 +782,7 @@ Define the variational quantum circuit model:
     from pyvqnet.nn import Parameter
     try:
         matplotlib.use("TkAgg")
-    except:  #pylint:disable=bare-except
+    except:  
         print("Can not use matplot TkAgg")
         pass
     try:
@@ -797,7 +797,7 @@ Define the variational quantum circuit model:
             self.w = Parameter(( (depth + 1) * 3 * n_qsc,))
             pauli_str_list =[]
         def forward(self,x):
-            def get_pauli_str(n_start, n_qsc):#pylint:disable=redefined-outer-name
+            def get_pauli_str(n_start, n_qsc):
                 D = {}
                 D['wires']= [i for i in range(n_start, n_start + n_qsc)]
                 D["observables"] = ["X" for i in range(n_start, n_start + n_qsc)]
@@ -807,7 +807,7 @@ Define the variational quantum circuit model:
             self.qm.reset_states(x.shape[0])
             weights = self.w.reshape([depth + 1, 3, n_qsc])
             
-            def subcir(qm, weights, qlist, depth, n_qsc, n_start):#pylint:disable=redefined-outer-name
+            def subcir(qm, weights, qlist, depth, n_qsc, n_start):
                 for i in range(n_qsc):
                     rx(qm,qlist[n_start + i], weights[0,0,i])
                     ry(qm,qlist[n_start + i], weights[0,1,i])
@@ -976,7 +976,7 @@ Define the data loading and training process code:
                 optimizer.zero_grad()
                 try:
                     x = x.reshape(batch_size, 1024)
-                except:  #pylint:disable=bare-except
+                except:  
                     x = x.reshape(-1, 1024)
                 output = model(x)
                 cceloss = CategoricalCrossEntropy()
@@ -1384,8 +1384,8 @@ The following code is the training data loading and training process code:
         """
         Select data from mnist dataset.
         """
-        x_train, y_train = load_mnist("training_data")  #pylint:disable=redefined-outer-name
-        x_test, y_test = load_mnist("testing_data")  #pylint:disable=redefined-outer-name
+        x_train, y_train = load_mnist("training_data")  
+        x_test, y_test = load_mnist("testing_data")  
         idx_train = np.append(
             np.where(y_train == 0)[0][:train_num],
             np.where(y_train == 1)[0][:train_num])
@@ -1961,7 +1961,7 @@ Below, we first use a classical neural network CNN to train a classification mod
     import matplotlib
     try:
         matplotlib.use("TkAgg")
-    except:  #pylint:disable=bare-except
+    except:  
         print("Can not use matplot TkAgg")
         pass
     try:
@@ -2208,7 +2208,7 @@ Quantum transfer learning model training, replace the model's `fc3` with the qua
 .. code-block::
 
     def quantum_cnn_transferlearning():
-        class Q_DressedQuantumNet(Module):#pylint:disable=invalid-name
+        class Q_DressedQuantumNet(Module):
             def __init__(self):
                 """
                 Definition of the *dressed* layout.

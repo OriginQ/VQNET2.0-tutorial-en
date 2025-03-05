@@ -47,7 +47,7 @@ We can use VQC operators to form complex neural networks like other `Modules`. T
     qlayer = QM()
     #Prequel
     y = qlayer(inputx)
-    #reversepass
+
     y.backward()
     print(y)
 
@@ -1407,7 +1407,7 @@ iswap
         from pyvqnet.qnn.vqc import iswap,QMachine
         from pyvqnet.tensor import QTensor
         qm  = QMachine(4)
-        iswap(q_machine=qm,wires=[1,0],params=QTensor([0.5]))
+        iswap(q_machine=qm,wires=[1,0] )
         print(qm.states)
         # [[[[[1.+0.j 0.+0.j]
         #     [0.+0.j 0.+0.j]]
@@ -1922,15 +1922,15 @@ Toffoli
     :param use_dagger: Whether to use the transposed conjugate version of this gate, the default is False.
     :return: A Module that can be used to train the model.
 
-     Example::
+    Example::
 
-         from pyvqnet.qnn.vqc import Toffoli,QMachine
-         device = QMachine(4)
-         layer = Toffoli( wires=[0,2,1])
-         batchsize = 2
-         device.reset_states(batchsize)
-         layer(q_machine = device)
-         print(device.states)
+        from pyvqnet.qnn.vqc import Toffoli,QMachine
+        device = QMachine(4)
+        layer = Toffoli( wires=[0,2,1])
+        batchsize = 2
+        device.reset_states(batchsize)
+        layer(q_machine = device)
+        print(device.states)
 
 
 isingxx
@@ -1984,15 +1984,15 @@ IsingXX
     :param use_dagger: Whether to use the transposed conjugate version of this gate, the default is False.
     :return: A Module that can be used to train the model.
 
-     Example::
+    Example::
 
-         from pyvqnet.qnn.vqc import IsingXX,QMachine
-         device = QMachine(4)
-         layer = IsingXX(has_params= True, trainable= True, wires=[0,2])
-         batchsize = 2
-         device.reset_states(batchsize)
-         layer(q_machine = device)
-         print(device.states)
+        from pyvqnet.qnn.vqc import IsingXX,QMachine
+        device = QMachine(4)
+        layer = IsingXX(has_params= True, trainable= True, wires=[0,2])
+        batchsize = 2
+        device.reset_states(batchsize)
+        layer(q_machine = device)
+        print(device.states)
 
 isingyy
 -------------------
@@ -2045,15 +2045,15 @@ IsingYY
     :param use_dagger: Whether to use the transposed conjugate version of this gate, the default is False.
     :return: A Module that can be used to train the model.
 
-     Example::
+    Example::
 
-         from pyvqnet.qnn.vqc import IsingYY,QMachine
-         device = QMachine(4)
-         layer = IsingYY(has_params= True, trainable= True, wires=[0,2])
-         batchsize = 2
-         device.reset_states(batchsize)
-         layer(q_machine = device)
-         print(device.states)
+        from pyvqnet.qnn.vqc import IsingYY,QMachine
+        device = QMachine(4)
+        layer = IsingYY(has_params= True, trainable= True, wires=[0,2])
+        batchsize = 2
+        device.reset_states(batchsize)
+        layer(q_machine = device)
+        print(device.states)
 
 isingzz
 ---------------------
@@ -2107,15 +2107,15 @@ IsingZZ
     :param use_dagger: Whether to use the transposed conjugate version of this gate, the default is False.
     :return: A Module that can be used to train the model.
 
-     Example::
+    Example::
 
-         from pyvqnet.qnn.vqc import IsingZZ,QMachine
-         device = QMachine(4)
-         layer = IsingZZ(has_params= True, trainable= True, wires=[0,2])
-         batchsize = 2
-         device.reset_states(batchsize)
-         layer(q_machine = device)
-         print(device.states)
+        from pyvqnet.qnn.vqc import IsingZZ,QMachine
+        device = QMachine(4)
+        layer = IsingZZ(has_params= True, trainable= True, wires=[0,2])
+        batchsize = 2
+        device.reset_states(batchsize)
+        layer(q_machine = device)
+        print(device.states)
 
 isingxy
 ---------------------
@@ -3345,7 +3345,6 @@ ExpressiveEntanglingAnsatz
 
         input_x = tensor.QTensor([[0.1, 0.2, 0.3]])
 
-        #input_x = tensor.broadcast_to(input_x,[2,3])
 
         input_x.requires_grad = True
 
@@ -3430,9 +3429,7 @@ vqc_qft_add_two_register
 
         import numpy as np
         from pyvqnet.qnn.vqc import QMachine,Samples, vqc_qft_add_two_register
-        wires_m = [0, 1, 2]           # qubits needed to encode m
-        wires_k = [3, 4, 5]           # qubits needed to encode k
-        wires_solution = [6, 7, 8, 9, 10]  # qubits needed to encode the solution
+
 
         wires_m = [0, 1, 2]             # qubits needed to encode m
         wires_k = [3, 4, 5]             # qubits needed to encode k
@@ -4334,6 +4331,7 @@ QDRL
 
     Example::
 
+        import numpy as np
         from pyvqnet.dtype import kfloat32
         from pyvqnet.qnn.qdrl_vqc import QDRL
         import pyvqnet.tensor as tensor
@@ -4492,7 +4490,7 @@ QRLModel
 
 .. py:class:: pyvqnet.qnn.qrl.QRLModel(num_qubits, n_layers)
 
-    Quantum deep reinforcement learning model using variational quantum circuits in  :ref:`QDRL_DEMO`.
+    Quantum deep reinforcement learning model using variational quantum circuits in :ref:`QDRL_DEMO`.
 
     :param num_qubits: The number of qubits used in the quantum circuit.
     :param n_layers: The number of layers in the variational quantum circuit.
@@ -4548,7 +4546,8 @@ QRNN
 
         output, h_t = qrnn(x)
 
-        print("Output shape:", output.shape) print("h_t shape:", h_t.shape)
+        print("Output shape:", output.shape)
+        print("h_t shape:", h_t.shape)
 
 
 TTOLayer
@@ -5064,7 +5063,7 @@ vqc_to_originir_list
                                                     entangle_rules="linear",
                                                     depth=5)
 
-                self.iSWAP = iSWAP(True,True,wires=[0,2])
+                self.iSWAP = iSWAP( wires=[0,2])
                 self.tlayer = T(wires=1)
                 self.cnot = CNOT(wires=[0, 1])
                 self.measure = MeasureAll(obs = {
@@ -5149,7 +5148,7 @@ vqc_to_originir_list
         # RX q[0],(0.10000000149011612)
         # CNOT q[0],q[1]
         # H q[1]
-        # ISWAPTHETA q[0],q[2],(0.6857681274414062)
+        # ISWAP q[0],q[2]
         # RY q[1],(0.20000000298023224)
         # T q[1]
         # RZ q[1],(0.30000001192092896)
@@ -5181,7 +5180,7 @@ vqc_to_originir_list
         # RX q[0],(0.10000000149011612)
         # CNOT q[0],q[1]
         # H q[1]
-        # ISWAPTHETA q[0],q[2],(0.6857681274414062)
+        # ISWAP q[0],q[2]
         # RY q[1],(0.20000000298023224)
         # T q[1]
         # RZ q[1],(0.30000001192092896)
@@ -5252,10 +5251,11 @@ model_summary
 
     Example::
 
+        import pyvqnet
         from pyvqnet.qnn.vqc import QMachine, RX, RY, CNOT, PauliX, qmatrix, PauliZ,MeasureAll
         from pyvqnet.tensor import QTensor, tensor
         from pyvqnet import kcomplex64
-        importpyvqnet
+        
         from pyvqnet.nn import LSTM,Linear
         from pyvqnet import model_summary
         class QModel(pyvqnet.nn.Module):
@@ -5384,7 +5384,7 @@ QNG
 
                 self.l_train1(q_machine=self.qm)
                 self.l_train2(q_machine=self.qm)
-                #rx(q_machine=self.qm, wires=2, params=x[:, [3]])
+
                 rz(q_machine=self.qm, wires=1, params=x[:, [2]])
                 ry(q_machine=self.qm, wires=0, params=np.pi / 7)
                 rz(q_machine=self.qm, wires=1, params=x[:, [2]])
@@ -5423,7 +5423,6 @@ wrapper_single_qubit_op_fuse
     Example::
 
         from pyvqnet import tensor
-        from pyvqnet.qnn.vqc import QMachine, Operation, apply_unitary_bmm
         from pyvqnet import kcomplex128
         from pyvqnet.tensor import adjoint
         import numpy as np
