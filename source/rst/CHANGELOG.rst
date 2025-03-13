@@ -1,6 +1,33 @@
 VQNet Changelog
 ###############################
 
+[v2.16.0] - 2025-1-15
+***************************
+
+Added
+===================
+
+- Added an interface for quantum circuit calculation using pyqpanda3.
+- The MeasureAll interface supports compound Pauli operators.
+- Added DataParallelVQCAdjointLayer and DataParallelVQCLayer interfaces.
+
+Changed
+===================
+
+- Removed outdated ONNX functions, removed most of the interfaces that integrated pyqpanda, and retained some interfaces used in the sample code.
+- VQC_QuantumEmbedding interface modification
+- When installing this package, pyqpanda is no longer installed at the same time, but pyqpanda3 is installed at the same time.
+- The VQC interface supports the use of `x[,:2]` as input parameters, which originally only supported the `x[:,[2]]` format.
+- This software supports Python 3.9, 3.10, 3.11, and no longer supports Python 3.8
+
+Fixed
+====================
+- Solve the memory leak problem found;
+- Solve the GPU random number problem found;
+- For reduce related operations, the maximum dimension of the supported array is increased from 8 to 30;
+- Optimize the code and improve the running speed of Python code in some cases;
+  
+  
 [v2.15.0] - 2024-11-19
 ***************************
 

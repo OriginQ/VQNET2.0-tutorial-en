@@ -1,7 +1,14 @@
-Quantum Machine Learning Using Qpanda
+Quantum Machine Learning Using Qpanda2
 ###############################################
 
-The following are some examples of quantum machine learning algorithms.  
+We use VQNet and pyQPanda2 to implement multiple quantum machine learning examples.
+
+.. warning::
+
+    The quantum computing part of the following interface uses pyqpanda2 https://pyqpanda-toturial.readthedocs.io/zh/latest/.
+
+    Due to the compatibility issues between pyqpanda2 and pyqpanda3, you need to install pyqpnda2 yourself, `pip install pyqpanda`
+
 
 Application of Parameterized Quantum Circuit in Classification Task
 *****************************************************************************************************
@@ -92,7 +99,7 @@ We define a Model class, which inherits from the abstract class ``Module``.
 The model uses the :ref:`QuantumLayer` class, which is a quantum computing layer that can be automatically differentiated. 
 ``qvc_circuits`` is the quantum circuit we want to run,
 24 is the number of all quantum circuit parameters that need to be trained, 
-"cpu" means that pyQPanda's full amplitude simulator is used here, 
+"cpu" means that pyQPanda2's full amplitude simulator is used here, 
 and 4 means that 4 qubits need to be applied for.
 In the ``forward()`` function, the user defines the logic of the model to run forward.
 
@@ -279,7 +286,7 @@ transformations :math:`U(\theta_1,\theta_2,\theta_3)`.However, in the Quantum Da
     from pyvqnet.data import data_generator as get_minibatch_data
     try:
         matplotlib.use("TkAgg")
-    except:  #pylint:disable=bare-except
+    except:  
         print("Can not use matplot TkAgg")
         pass
 
@@ -455,7 +462,7 @@ Following figures show the local quantum circuits structure on each qubits:
     import matplotlib
     try:
         matplotlib.use("TkAgg")
-    except:  #pylint:disable=bare-except
+    except:  
         print("Can not use matplot TkAgg")
         pass
 
@@ -508,13 +515,13 @@ Following figures show the local quantum circuits structure on each qubits:
         pass
 
 
-    def circuits_of_vsql(x, weights, qlist, clist, machine):  #pylint:disable=unused-argument
+    def circuits_of_vsql(x, weights, qlist, clist, machine):  
         """
         VSQL model of quantum circuits
         """
         weights = weights.reshape([depth + 1, 3, n_qsc])
 
-        def subcir(weights, qlist, depth, n_qsc, n_start):  #pylint:disable=redefined-outer-name
+        def subcir(weights, qlist, depth, n_qsc, n_start):  
             cir = pq.QCircuit()
 
             for i in range(n_qsc):
@@ -530,7 +537,7 @@ Following figures show the local quantum circuits structure on each qubits:
 
             return cir
 
-        def get_pauli_str(n_start, n_qsc):  #pylint:disable=redefined-outer-name
+        def get_pauli_str(n_start, n_qsc):  
             pauli_str = ",".join("X" + str(i)
                                 for i in range(n_start, n_start + n_qsc))
             return {pauli_str: 1.0}
@@ -687,7 +694,7 @@ Following figures show the local quantum circuits structure on each qubits:
                 optimizer.zero_grad()
                 try:
                     x = x.reshape(batch_size, 1024)
-                except:  #pylint:disable=bare-except
+                except:  
                     x = x.reshape(-1, 1024)
 
                 output = model(x)
@@ -806,7 +813,7 @@ Mnist dataset definition
     import matplotlib
     try:
         matplotlib.use("TkAgg")
-    except:  #pylint:disable=bare-except
+    except:  
         print("Can not use matplot TkAgg")
         pass
 
@@ -966,7 +973,7 @@ Module definition and process function's definition
                 optimizer.zero_grad()
                 try:
                     x = x.reshape(batch_size, 1, 28, 28)
-                except:  #pylint:disable=bare-except
+                except:  
                     x = x.reshape(-1, 1, 28, 28)
 
                 output = model(x)
@@ -1325,7 +1332,7 @@ The approach here is that this set of optimal quantum logic gates should make th
     import matplotlib
     try:
         matplotlib.use("TkAgg")
-    except:  #pylint:disable=bare-except
+    except:  
         print("Can not use matplot TkAgg")
         pass
 
@@ -1370,7 +1377,7 @@ The approach here is that this set of optimal quantum logic gates should make th
         return 0.5 * y + 0.8 * z - 0.2 * x
 
 
-    def rotosolve(d, params, generators, cost, M_0):#pylint:disable=invalid-name
+    def rotosolve(d, params, generators, cost, M_0):
         """
         rotosolve algorithm implementation
         """
@@ -1497,7 +1504,7 @@ These samples are divided into training data training_data and testing data test
     import matplotlib
     try:
         matplotlib.use("TkAgg")
-    except:  #pylint:disable=bare-except
+    except:  
         print("Can not use matplot TkAgg")
         pass
 
@@ -1628,7 +1635,7 @@ These samples are divided into training data training_data and testing data test
 Construct Quantum Circuits
 ---------------------------------
 
-In this example, we use the `pyQPanda <https://pyqpanda-tutorial-en.readthedocs.io/en/latest/chapter2/index.html#quantum-circuit>`__ , A simple quantum circuit of 1 qubit is defined. The circuit takes the output of the classical neural network layer as input,encodes quantum data through ``H`` , ``RY``  quantum logic gates, and calculates the expected value of Hamiltonian in the z direction as output.
+In this example, we use the `pyQPanda2 <https://pyqpanda-tutorial-en.readthedocs.io/en/latest/chapter2/index.html#quantum-circuit>`__ , A simple quantum circuit of 1 qubit is defined. The circuit takes the output of the classical neural network layer as input,encodes quantum data through ``H`` , ``RY``  quantum logic gates, and calculates the expected value of Hamiltonian in the z direction as output.
 
 .. code-block::
 
@@ -1637,12 +1644,12 @@ In this example, we use the `pyQPanda <https://pyqpanda-tutorial-en.readthedocs.
     import numpy as np
     def circuit(weights):
         num_qubits = 1
-        #Use pyQPanda to create a simulator 
+        #Use pyQPanda2 to create a simulator 
         machine = pq.CPUQVM()
         machine.init_qvm()
-        #Use pyQPanda to alloc qubits
+        #Use pyQPanda2 to alloc qubits
         qubits = machine.qAlloc_many(num_qubits)
-        #Use pyQPanda to alloc classic bits
+        #Use pyQPanda2 to alloc classic bits
         cbits = machine.cAlloc_many(num_qubits)
         #Construct circuits
         circuit = pq.QCircuit()
@@ -1897,7 +1904,7 @@ The visualization curve of data loss function and accuracy on train and test dat
 2.Hybrid quantum classical transfer learning model
 =======================================================================================================================
 We apply a machine learning method called transfer learning to image classifier based on hybrid classical quantum
-network. We will write a simple example of integrating PyQPanda with VQNet.Transfer learning is based on general intuition,
+network. We will write a simple example of integrating pyQPanda2 with VQNet.Transfer learning is based on general intuition,
 that is, if the pre-trained network is good at solving a given problem, it can also be used to solve a different
 but related problem with only some additional training.
 
@@ -2609,7 +2616,7 @@ it is to give a picture and classify each pixel on the picture. Separate the pix
 to different objects. `Unet <https://arxiv.org/abs/1505.04597>`_ is a classical image segmentation algorithm.
 
 Here, we explore how to partially quantify the classical neural network to create a hybrid quantum classical
-`QUnet`  neural network. We will write a simple example of integrating `pyQPanda <https://pyqpanda-tutorial-en.readthedocs.io/en/latest/>`__ with `VQNet` .
+`QUnet`  neural network. We will write a simple example of integrating `pyQPanda2 <https://pyqpanda-tutorial-en.readthedocs.io/en/latest/>`__ with `VQNet` .
 Qunet is mainly used to solve the technology of image segmentation.
 
 
@@ -2628,7 +2635,7 @@ into training data training_data and test data testing_data.
 
 Constructing quantum circuits
 -------------------------------------------
-In this example, we define a quantum circuit using pyqpanda of the source quantum. The input 3-channel color
+In this example, we define a quantum circuit using pyqpanda2. The input 3-channel color
 image data is compressed into a single channel gray image and stored, and then the feature of the data is
 extracted and dimensionality reduced by quantum convolution operation.
 
@@ -3155,7 +3162,7 @@ Run classification on test set
 
 We introduce and analyze a proposed quantum multilayer perceptron (QMLP) architecture featuring fault-tolerant input embeddings, rich nonlinearities, and enhanced variational circuit simulations with parameterized two-qubit entanglement gates.
 `QMLP: An Error-Tolerant Nonlinear Quantum MLP Architecture using Parameterized Two-Qubit Gates <https://arxiv.org/pdf/2206.01345.pdf>`_ .
-We will write a simple example of integrating `pyQPanda <https://pyqpanda-toturial.readthedocs.io/zh/latest/>`_ with `VQNet`.
+We will write a simple example of integrating `pyQPanda2 <https://pyqpanda-toturial.readthedocs.io/zh/latest/>`_ with `VQNet`.
 
 
 Building Hybrid Classical-Quantum Neural Networks
@@ -3270,8 +3277,8 @@ Building Hybrid Classical-Quantum Neural Networks
         """
         Select data from mnist dataset.
         """
-        x_train, y_train = load_mnist("training_data")  #pylint:disable=redefined-outer-name
-        x_test, y_test = load_mnist("testing_data")  #pylint:disable=redefined-outer-name
+        x_train, y_train = load_mnist("training_data")  
+        x_test, y_test = load_mnist("testing_data")  
         idx_train = np.append(
             np.where(y_train == 0)[0][:train_num],
             np.where(y_train == 1)[0][:train_num])
@@ -3517,12 +3524,14 @@ Loss situation on the training set.
 |
 
 
+.. _QDRL_DEMO:
+
 5.Hybrid quantum-classical QDRL network model
 ===============================================================================
 
 We introduce and analyze a proposed quantum reinforcement learning network (QDRL), whose features reshape classical deep reinforcement learning algorithms such as experience replay and target networks into representations of variational quantum circuits.
 Furthermore, we use a quantum information encoding scheme to reduce the number of model parameters compared to classical neural networks. `QDRL: Variational Quantum Circuits for Deep Reinforcement Learning <https://arxiv.org/pdf/1907.00397.pdf>`_.
-We will write a simple example of integrating `pyQPanda <https://pyqpanda-toturial.readthedocs.io/zh/latest/>`_ with `VQNet`.
+We will write a simple example of integrating `pyQPanda2 <https://pyqpanda-toturial.readthedocs.io/zh/latest/>`_ with `VQNet`.
 
 
 
@@ -3574,27 +3583,7 @@ Requires ``gym`` == 0.23.0 , ``pygame`` == 2.1.2 .
     STATE_NT = 3
     DONE = 4
     def RotCircuit(para, qlist):
-        r"""
-        Arbitrary single qubit rotation.Number of qlist should be 1,and number of parameters should
-        be 3
-        .. math::
-            R(\phi,\theta,\omega) = RZ(\omega)RY(\theta)RZ(\phi)= \begin{bmatrix}
-            e^{-i(\phi+\omega)/2}\cos(\theta/2) & -e^{i(\phi-\omega)/2}\sin(\theta/2) \\
-            e^{-i(\phi-\omega)/2}\sin(\theta/2) & e^{i(\phi+\omega)/2}\cos(\theta/2)
-            \end{bmatrix}.
-        :param para: numpy array which represents paramters [\phi, \theta, \omega]
-        :param qlist: qubits allocated by pyQpanda.qAlloc_many()
-        :return: quantum circuits
-        Example::
-            m_machine = pq.init_quantum_machine(pq.QMachineType.CPU)
-            m_clist = m_machine.cAlloc_many(2)
-            m_prog = pq.QProg()
-            m_qlist = m_machine.qAlloc_many(1)
-            param = np.array([3,4,5])
-            c = RotCircuit(param,m_qlist)
-            print(c)
-            pq.destroy_quantum_machine(m_machine)
-        """
+        
         if isinstance(para, QTensor):
             para = QTensor._to_numpy(para)
         if para.ndim > 1:
@@ -3816,7 +3805,7 @@ The data is randomly generated by make_blobs under SciPy, and the function is de
     import matplotlib
     try:
         matplotlib.use("TkAgg")
-    except:  #pylint:disable=bare-except
+    except:  
         print("Can not use matplot TkAgg")
         pass
 
@@ -5359,7 +5348,7 @@ The following is the application of the QVC classification example using the gra
     qvc_test_data = [0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 1, 0, 1, 0, 0, 1, 1, 0]
 
 
-    def qvc_circuits(x, weights, qlist, clist, machine):#pylint:disable=unused-argument
+    def qvc_circuits(x, weights, qlist, clist, machine):
         """
         Quantum circuits run function
         """
@@ -5371,7 +5360,7 @@ The following is the application of the QVC classification example using the gra
             return cir
 
         def build_circult(weights, xx, nqubits):
-            def Rot(weights_j, qubits):#pylint:disable=invalid-name
+            def Rot(weights_j, qubits):
                 circult = pq.QCircuit()
                 circult.insert(pq.RZ(qubits, weights_j[0]))
                 circult.insert(pq.RY(qubits, weights_j[1]))
@@ -5412,7 +5401,7 @@ The following is the application of the QVC classification example using the gra
         return prob
 
 
-    def qvc_circuits2(x, weights, qlist, clist, machine):#pylint:disable=unused-argument
+    def qvc_circuits2(x, weights, qlist, clist, machine):
         """
         Quantum circuits run function
         """
@@ -5440,7 +5429,6 @@ The following is the application of the QVC classification example using the gra
         def __init__(self):
             super(Model, self).__init__()
             self.qvc = QuantumLayer(qvc_circuits, 24, "cpu", 4)
-            #self.qvc2 = QuantumLayer(qvc_circuits2, 3, "cpu", 4)
 
         def forward(self, x):
             y = self.qvc(x)
@@ -5568,7 +5556,7 @@ Run the ``step`` function of ``Gradient_Prune_Instance``.
 Model training using quantum computing layer in VQNet
 *******************************************************************
 
-The following are some examples of using VQNet inrerface for quantum machine learning ``QuantumLayer`` ,``NoiseQuantumLayer`` ,``VQCLayer``.
+The following are some examples of using VQNet inrerface for quantum machine learning ``QuantumLayer`` , ``NoiseQuantumLayer`` .
 
 Model training using quantumlayer in VQNet
 ===============================================================================
@@ -5770,7 +5758,7 @@ Loss and accuracy results of the run:
 Model training using NoiseQuantumLayer in VQNet
 ==============================================================================
 
-Using ``NoiseQuantumLayer`` to build and train noisy quantum circuits using QPanda's noise virtual machine.
+Using ``NoiseQuantumLayer`` to build and train noisy quantum circuits using pyQPanda2's noise virtual machine.
 
 An example of a complete noisy quantum machine learning model is as follows:
 
@@ -6083,217 +6071,4 @@ the loss change log and acc change log are as follows:
     Eval Accuracy: 1.0
 
 |
-
-Model training using VQCLayer in VQNet
-===============================================================================
-
-In the Origin Quantum's qpanda provides `VariationalQuantumCircuit <https://qpanda-tutorial.readthedocs.io/zh/latest/VQC.html#id1>`_ .
-In the circuit, only the doors with variable parameters and constant structure can be composed of ``VariationalQuantumGate``.
-VQNet provides the a class ``VQC_wrapper`` , you can use ordinary logic gates in the
-function ``build_common_circuits`` refers to the local lines with uncertain line structure in the construction model,
-
-Use vqg in ``build_vqc_circuits`` construct local circuits with unchanged structure and variable parameters.
-Use the ``run`` function to define the line operation mode and measurement.
-
-
-.. code-block::
-
-    """
-    using pyqpanda VQC api to build model and train VQNet model demo.
-
-    """
-    import sys,os
-    import time
-    from pyvqnet.data import data_generator as dataloader
-    from pyvqnet.nn.module import Module
-    from pyvqnet.optim import sgd
-    import numpy as np
-    import os
-    from pyvqnet.nn.loss import CategoricalCrossEntropy
-
-    from pyvqnet.tensor.tensor import QTensor
-    import random
-
-    from pyvqnet.qnn.quantumlayer import VQCLayer,VQC_wrapper,_array2var
-    from pyqpanda import *
-    import pyqpanda as pq
-
-    random.seed(1234)
-    qvc_train_data = [
-        0, 1, 0, 0, 1, 0, 1, 0, 1, 0, 0, 1, 1, 0, 0, 0, 1, 1, 1, 1, 1, 0, 0, 0, 1,
-        1, 0, 0, 1, 0, 1, 0, 1, 0, 0, 1, 0, 1, 1, 1, 1, 1, 0, 0, 0, 1, 1, 0, 1, 1,
-        1, 1, 1, 0, 1, 1, 1, 1, 1, 0
-    ]
-    qvc_test_data = [0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 1, 0, 1, 0, 0, 1, 1, 0]
-
-    class QVC_demo(VQC_wrapper):
-
-        def __init__(self):
-            super(QVC_demo, self).__init__()
-
-        def build_common_circuits(self,input,qlists,):
-            qc = pq.QCircuit()
-            for i in range(len(qlists)):
-                if input[i]==1:
-                    qc.insert(pq.X(qlists[i]))
-            return qc
-
-        def build_vqc_circuits(self,input,weights,machine,qlists,clists):
-
-            def get_cnot(qubits):
-                vqc = VariationalQuantumCircuit()
-                for i in range(len(qubits)-1):
-                    vqc.insert(pq.VariationalQuantumGate_CNOT(qubits[i],qubits[i+1]))
-                vqc.insert(pq.VariationalQuantumGate_CNOT(qubits[len(qubits)-1],qubits[0]))
-                return vqc
-
-            def build_circult(weights, xx, qubits,vqc):
-
-                def Rot(weights_j, qubits):
-                    vqc = VariationalQuantumCircuit()
-                    vqc.insert(pq.VariationalQuantumGate_RZ(qubits, weights_j[0]))
-                    vqc.insert(pq.VariationalQuantumGate_RY(qubits, weights_j[1]))
-                    vqc.insert(pq.VariationalQuantumGate_RZ(qubits, weights_j[2]))
-                    return vqc
-
-                for i in range(2):
-                    weights_i = weights[i,:,:]
-                    for j in range(len(qubits)):
-                        weights_j = weights_i[j]
-                        vqc.insert(Rot(weights_j,qubits[j]))
-                    cnots = get_cnot(qubits)
-                    vqc.insert(cnots)
-                vqc.insert(pq.VariationalQuantumGate_Z(qubits[0]))  # pauli z(0)
-                return vqc
-
-            weights = weights.reshape([2,4,3])
-            vqc = VariationalQuantumCircuit()
-            return build_circult(weights, input,qlists,vqc)
-
-        def run(self,vqc,input,machine,qlists,clists):
-            """
-            a function to get hamilton observable or measurment
-            """
-            prog = QProg()
-            vqc_all = VariationalQuantumCircuit()
-            # add encode circuits
-            vqc_all.insert(self.build_common_circuits(input,qlists))
-            vqc_all.insert(vqc)
-            qcir = vqc_all.feed()
-            prog.insert(qcir)
-            prob = machine.prob_run_dict(prog, qlists[0], -1)
-            prob = list(prob.values())
-
-            return prob
-
-    class Model(Module):
-        def __init__(self,qvc_vqc):
-            super(Model, self).__init__()
-            self.qvc = VQCLayer(qvc_vqc,24,"cpu",4)
-
-        def forward(self, x):
-            return self.qvc(x)
-
-    def get_data(dataset_str):
-        """
-        Tranform data to valid form
-        """
-        if dataset_str == "train":
-            datasets = np.array(qvc_train_data)
-
-        else:
-            datasets = np.array(qvc_test_data)
-
-        datasets = datasets.reshape([-1, 5])
-        data = datasets[:, :-1]
-        label = datasets[:, -1].astype(int)
-        label = np.eye(2)[label].reshape(-1, 2)
-        return data, label
-
-
-    def get_accuary(result,label):
-        result,label = np.array(result.data), np.array(label.data)
-        score = np.sum(np.argmax(result,axis=1)==np.argmax(label,1))
-        return score
-
-    def Run():
-        ### create class for VQC
-        qvc_vqc = QVC_demo()
-        model = Model(qvc_vqc)
-
-        optimizer = sgd.SGD(model.parameters(),lr =0.5)
-        batch_size = 3
-        epoch = 20
-        loss = CategoricalCrossEntropy()
-        print("start training..............")
-        model.train()
-        PATH = os.path.abspath('train')
-        datas,labels = get_data(PATH)
-        for i in range(epoch):
-            count=0
-            sum_loss = 0
-            accuary = 0
-
-            for data,label in dataloader(datas,labels,batch_size,False):
-                optimizer.zero_grad()
-                data,label = QTensor(data), QTensor(label)
-                result = model(data)
-                loss_b = loss(label,result)
-                loss_b.backward()
-                optimizer._step()
-                sum_loss += loss_b.item()
-                count+=batch_size
-                accuary += get_accuary(result,label)
-
-            print(f"epoch:{i}, #### loss:{sum_loss/count} #####accuray:{accuary/count}")
-        print("start testing..............")
-        model.eval()
-        count = 0
-        test_data, test_label = get_data("test")
-        test_batch_size = 1
-        accuary = 0
-        sum_loss = 0
-        for testd,testl in dataloader(test_data,test_label,test_batch_size):
-            testd = QTensor(testd)
-            test_result = model(testd)
-            test_loss = loss(testl,test_result)
-            sum_loss += test_loss
-            count+=test_batch_size
-            accuary += get_accuary(test_result,testl)
-        print(f"test:--------------->loss:{sum_loss/count} #####accuray:{accuary/count}")
-
-    if __name__=="__main__":
-
-        Run()
-
-Loss and accuracy results of the run:
-
-.. code-block::
-
-    start training..............
-    epoch:0, #### loss:0.22664549748102825 #####accuray:0.5333333333333333
-    epoch:1, #### loss:0.20315084457397461 #####accuray:0.6666666666666666
-    epoch:2, #### loss:0.1644243836402893 #####accuray:1.0
-    epoch:3, #### loss:0.12654326359430948 #####accuray:1.0
-    epoch:4, #### loss:0.11026077469189961 #####accuray:1.0
-    epoch:5, #### loss:0.10584278305371603 #####accuray:1.0
-    epoch:6, #### loss:0.10476383566856384 #####accuray:1.0
-    epoch:7, #### loss:0.10450373888015747 #####accuray:1.0
-    epoch:8, #### loss:0.10444082617759705 #####accuray:1.0
-    epoch:9, #### loss:0.10442551374435424 #####accuray:1.0
-    epoch:10, #### loss:0.10442176461219788 #####accuray:1.0
-    epoch:11, #### loss:0.10442084868748983 #####accuray:1.0
-    epoch:12, #### loss:0.10442061225573222 #####accuray:1.0
-    epoch:13, #### loss:0.10442055265108745 #####accuray:1.0
-    epoch:14, #### loss:0.10442055265108745 #####accuray:1.0
-    epoch:15, #### loss:0.10442055265108745 #####accuray:1.0
-    epoch:16, #### loss:0.10442055265108745 #####accuray:1.0
-    epoch:17, #### loss:0.10442055265108745 #####accuray:1.0
-    epoch:18, #### loss:0.10442055265108745 #####accuray:1.0
-    epoch:19, #### loss:0.10442055265108745 #####accuray:1.0
-    start testing..............
-    [0.3132616580]
-    test:--------------->loss:QTensor(0.3132616580, requires_grad=True) #####accuray:1.0
-
-
-
+ 

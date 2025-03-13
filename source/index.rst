@@ -66,6 +66,7 @@ It can promote in a variety of applications such as the design of quantum algori
     :maxdepth: 2
 
     rst/qnn.rst
+    rst/qnn_pq3.rst
 
 .. toctree::
     :caption: Autograd QNN API
