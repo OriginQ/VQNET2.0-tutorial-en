@@ -1,6 +1,16 @@
 VQNet Changelog
 ###############################
 
+[v2.17.0] - 2025-4-22
+***************************
+
+Added
+===================
+
+- Added tensor network backend implementation for quantum circuit module, including support for basic logic gates, measurement, and complex quantum circuits.
+- Added tensor network backend implementation for constructing large-bit quantum circuits。
+
+
 [v2.16.0] - 2025-1-15
 ***************************
 
