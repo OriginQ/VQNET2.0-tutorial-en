@@ -9,7 +9,20 @@ Added
 
 - Added tensor network backend implementation for quantum circuit module, including support for basic logic gates, measurement, and complex quantum circuits.
 - Added tensor network backend implementation for constructing large-bit quantum circuits。
+- Added QTensor.swapaxes interface, another name is swapaxis。
 
+Changed
+===================
+- Matrix operations using openblas.
+- Use sleef for CPU SIMD operations.
+- Remove qnn.MeasurePauliSum.
+- Throw warning when using torch backend calculations when torch is below version 2.4.
+
+Fixed
+====================
+- Solve the problem of QMachine states when saving model.
+- Solve the problem of layernorm, groupnorm when affine=False.
+- Solve the problem of QuantumLayerAdjoint in eval mode.
 
 [v2.16.0] - 2025-1-15
 ***************************
