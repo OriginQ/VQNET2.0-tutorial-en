@@ -1470,6 +1470,8 @@ SDPA
     
         from pyvqnet.nn.torch import SDPA
         from pyvqnet import tensor
+        import pyvqnet
+        pyvqnet.backends.set_backend("torch")
         model = SDPA(tensor.QTensor([1.]))
 
    .. py:method:: forward(query,key,value)
@@ -5295,6 +5297,11 @@ TNQMachine
 
     This class can be added to the torch model as a submodule of ``torch.nn.Module``.
 
+    .. warning::
+        
+        In the quantum circuit of the tensor network, the ``vmap`` function will be enabled by default, and the batch dimension will be discarded in the logic gate parameters on the line.
+        When using the call parameter, if the dimension is [batch_size, *], the first batch_size dimension is discarded, and the following dimensions are used directly, e.g., for the input data x[:,1] -> x[1], and for the trainable parameter as well, see the following example for the usage of xx, weights.
+
     .. note::
 
         Before each run of the complete quantum circuit, you must use `pyvqnet.qnn.vqc.QMachine.reset_states(batchsize)` to reinitialize the initial state in the simulator and broadcast it to
@@ -7890,7 +7897,7 @@ vqc_angle_embedding
 vqc_amplitude_embedding
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. py:function:: pyvqnet.qnn.vqc.tn.vqc_amplitude_embeddingVQC_AmplitudeEmbeddingCircuit(input_feature, q_machine)
+.. py:function:: pyvqnet.qnn.vqc.tn.vqc_amplitude_embedding(input_feature, q_machine)
 
     Encodes a :math:`2^n` feature into an amplitude vector of :math:`n` qubits. This function is aliased as `VQC_AmplitudeEmbedding`.
 
