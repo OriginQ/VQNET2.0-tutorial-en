@@ -10,6 +10,8 @@ Use pyQPanda3 quantum machine learning module
 Quantum computing layer
 ***********************************
 
+.. _QuantumLayer_pq3:
+
 QuantumLayer
 ============================
 

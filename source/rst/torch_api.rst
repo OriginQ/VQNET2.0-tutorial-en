@@ -5300,7 +5300,7 @@ TNQMachine
     .. warning::
         
         In the quantum circuit of the tensor network, the ``vmap`` function will be enabled by default, and the batch dimension will be discarded in the logic gate parameters on the line.
-        When using the call parameter, if the dimension is [batch_size, *], the first batch_size dimension is discarded, and the following dimensions are used directly, e.g., for the input data x[:,1] -> x[1], and for the trainable parameter as well, see the following example for the usage of xx, weights.
+        When using the call parameter, if the dimension is [batch_size, \*], the first batch_size dimension is discarded, and the following dimensions are used directly, e.g., for the input data x[:,1] -> x[1], and for the trainable parameter as well, see the following example for the usage of xx, weights.
 
     .. note::
 
@@ -8400,7 +8400,7 @@ Distributed related functions, when using the ``torch`` computing backend, encap
 
 .. note::
 
-    Please refer to <https://pytorch.org/docs/stable/distributed.html7>`__ to start the distributed method.
+    Please refer to `torch distributed <https://pytorch.org/docs/stable/distributed.html>`_ to start the distributed method.
     When using CPU for distribution, please use ``gloo`` instead of ``mpi``.
     When using GPU for distribution, please use ``nccl``.
 
