@@ -5204,6 +5204,22 @@ TorchHybirdVQCQpanda3QVMLayer
 Tensor Network Backend Variational Quantum Circuit Module
 ==========================================================================================
 
+Tensor Network (TN) significantly reduces computational complexity by decomposing a complex tensor into a network of multiple low-dimensional tensors.
+
+Matrix Product State (MPS) is a special form of Tensor Network. MPS represents a quantum state as the product of a series of matrices, thus effectively reducing the number of parameters and the computational complexity.
+
+The following interface is based on the ``torch`` backend, which provides functional support for constructing quantum circuits in tensor networks, including the construction of quantum circuit base classes, quantum logic gates, quantum circuits, and measurements, as well as calculating parameter gradients by automatic differential simulation instead of parameter drift method.
+
+Constructing quantum lines in the MPS way makes up for the support for large-bit quantum line construction.
+
+.. warning::
+        
+        Enables MPS to build quantum lines via the ``use_mps`` parameter in ``TNQMachine``, which supports large-bit (100 and above) quantum line implementations.
+
+.. warning::
+        
+        Batching is used differently than under classic modules, based on the vmap approach, where the data and parameter construction lines need to be entered in one dimension down, as shown in the sample interface below, and the batching execution must be based on both ``TNQMachine`` and ``TNQModule``.
+
 Base Class
 ------------------------------------------------
 
