@@ -2705,7 +2705,7 @@ The specific code implementation is as follows:
     from pyvqnet.tensor.tensor import QTensor
     from pyvqnet.qnn.vqc.qcircuit import PauliZ, VQC_ZZFeatureMap,PauliX,PauliY,hadamard,crz,rz
     from pyvqnet.qnn.vqc import QMachine
-    from pyvqnet.qnn.vqc.qmeasure import expval
+    from pyvqnet.qnn.vqc.qmeasure import MeasureAll
     from pyvqnet import tensor
     import functools as ft
 
@@ -2760,16 +2760,16 @@ The specific code implementation is as follows:
 
             for i in range(N):
                 hadamard(q_machine=qm, wires=i)
-                rz(q_machine=qm,params=QTensor(2 * x1[i],dtype=kcomplex128), wires=i)
+                rz(q_machine=qm,params=QTensor(2 * x1[i],dtype=kfloat64), wires=i)
             for i in range(N):
                 for j in range(i + 1, N):
-                    crz(q_machine=qm,params=QTensor(2 * (np.pi - x1[i]) * (np.pi - x1[j]),dtype=kcomplex128), wires=[i, j])
+                    crz(q_machine=qm,params=QTensor(2 * (np.pi - x1[i]) * (np.pi - x1[j]),dtype=kfloat64), wires=[i, j])
 
             for i in range(N):
                 for j in range(i + 1, N):
-                    crz(q_machine=qm,params=QTensor(2 * (np.pi - x2[i]) * (np.pi - x2[j]),dtype=kcomplex128), wires=[i, j],use_dagger=True)        
+                    crz(q_machine=qm,params=QTensor(2 * (np.pi - x2[i]) * (np.pi - x2[j]),dtype=kfloat64), wires=[i, j],use_dagger=True)        
             for i in range(N):
-                rz(q_machine=qm,params=QTensor(2 * x2[i],dtype=kcomplex128), wires=i,use_dagger=True)
+                rz(q_machine=qm,params=QTensor(2 * x2[i],dtype=kfloat64), wires=i,use_dagger=True)
                 hadamard(q_machine=qm, wires=i,use_dagger=True)
 
             states_1 = qm.states.reshape((1,-1))
@@ -2827,9 +2827,9 @@ The specific code implementation is as follows:
                 VQC_ZZFeatureMap(x, qm, data_map_func=custom_data_map_func, entanglement="linear")
 
                 return (
-                    [expval(qm, i, PauliX(  )).to_numpy() for i in range(N)]
-                    + [expval(qm, i, PauliY( )).to_numpy() for i in range(N)]
-                    + [expval(qm, i, PauliZ()).to_numpy() for i in range(N)]
+                    [MeasureAll(obs={f"X{i}":1})(qm) for i in range(N)]
+                    + [MeasureAll(obs={f"Y{i}":1})(qm) for i in range(N)]
+                    + [MeasureAll(obs={f"Z{i}":1})(qm) for i in range(N)]
                 )
 
             # build the gram matrix
@@ -2844,13 +2844,13 @@ The specific code implementation is as follows:
         # build the gram matrix
 
         gamma = params[0]
-        gram = tensor.zeros(shape=[X_1.shape[0], X_2.shape[0]],dtype=7)
+        gram = tensor.zeros(shape=[X_1.shape[0], X_2.shape[0]],dtype=kfloat64)
 
         for i in range(len(X_1_proj)):
             for j in range(len(X_2_proj)):
                 result = [a - b for a,b in zip(X_1_proj[i], X_2_proj[j])]
                 result = [a**2 for a in result]
-                value = tensor.exp(-gamma * sum(result))
+                value = tensor.exp(-gamma * sum(result).squeeze(0))
                 gram[i,j] = value
         return gram
 
@@ -3589,7 +3589,6 @@ import the appropriate package
     from pyvqnet.qnn.vqc import *
     import numpy as np
     from pyvqnet import tensor
-    from pyvqnet.qnn.vqc.qmeasure import expval
     from sklearn.model_selection import train_test_split
     from matplotlib import ticker
     import matplotlib.pyplot as plt
@@ -3668,7 +3667,7 @@ Building quantum circuits
                 keep_rotation=keep_rotation,
             )
         
-        return expval(qm, 0, PauliZ()) 
+        return qm
 
 Generate a dropout list to randomly dropout the logic gates in the quantum line based on the dropout list
 
@@ -3722,11 +3721,12 @@ Adding quantum lines to a quantum neural network module
             super(QNN, self).__init__()
             self.qm = QMachine(n_qubits, dtype=pyvqnet.kcomplex64)
             self.para = Parameter((params_per_layer * layers,))
-            
+            self.ma = MeasureAll(obs={"Z0":1})
+
         def forward(self, x:QTensor, keep_rot):
             self.qm.reset_states(x.shape[0])
-            x = qnn_circuit(x, self.para, keep_rot, n_qubits, layers, self.qm)
-            
+            qm = qnn_circuit(x, self.para, keep_rot, n_qubits, layers, self.qm)
+            x = self.ma(qm)
             return x
 
 Making the sin dataset

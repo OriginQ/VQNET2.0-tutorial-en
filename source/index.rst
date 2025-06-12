@@ -6,39 +6,30 @@
 VQNet
 =================================
 
+Core Features of VQNet
+------------------------
 
-**A fully functional and efficient quantum software development kit**
+Multi-platform compatibility and cross-environment support
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-VQNet is a quantum machine learning computing framework developed by Origin Quantum, which can be used to build, run and optimize quantum algorithms.
-This documentation is the VQNet API and samples' documentation. Chinese api document link reference: `VQNet API DOC <https://vqnet20-tutorial.readthedocs.io/en/main/index.html>`_ .
+VQNet supports users to conduct research and development of quantum machine learning in a variety of hardware and operating system environments. Whether using CPU or GPU for quantum computing simulation or calling real quantum chips through Benyuan Quantum Cloud Service, VQNet can provide seamless support. Currently, VQNet is compatible with python3.9, python3.10, and python3.11 versions of Windows, Linux, and macOS systems.
 
+Perfect interface design and ease of use
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-**What is Quantum Machine Learning?**
+VQNet uses Python as the front-end language, provides a function interface similar to PyTorch, and can freely choose a variety of computing backends to implement the automatic differentiation function of classical quantum machine learning models. The framework has built-in: 100+ commonly used Tensor computing interfaces, 100+ quantum variational circuit computing interfaces, and 50+ classical neural network interfaces. These interfaces cover the complete development process from classical machine learning to quantum machine learning, and will be continuously updated.
 
-Quantum machine learning is a research field that explores the interaction between quantum computing and machine learning ideas.
-For example, we might want to find out whether quantum computers can speed up the time it takes to train or evaluate a machine learning model. On the other hand, we can leverage techniques from machine learning to help us uncover quantum error-correcting codes, estimate the properties of quantum systems, or develop new quantum algorithms.
+Efficient computing performance and expansion capabilities
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-**Quantum computers as AI accelerators**
- 
-The limits of what machines can learn have always been defined by the computer hardware we run our algorithms on—for example, the success of modern-day deep learning with neural networks is enabled by parallel GPU clusters.
-Quantum machine learning extends the pool of hardware for machine learning by an entirely new type of computing device—the quantum computer. Information processing with quantum computers relies on substantially different laws of physics known as quantum theory.
-In the modern viewpoint, quantum computers can be used and trained like neural networks. We can systematically adapt the physical control parameters, such as an electromagnetic field strength or a laser pulse frequency, to solve a problem.
-For example, a trained circuit can be used to classify the content of images, by encoding the image into the physical state of the device and taking measurements.
+- **Real quantum chip experiment support**: For users who need real quantum chip experiments, VQNet integrates the original pyQPanda interface, and combines the efficient scheduling capabilities of the original Sinan to achieve fast quantum circuit simulation calculations and real chip operation.
+- **Local computing optimization**: For local computing needs, VQNet provides a quantum machine learning programming interface based on CPU or GPU, and uses automatic differentiation technology to perform quantum variational circuit gradient calculations, which is significantly faster than traditional parameter drift methods (such as Qiskit).
+- **Distributed computing support**: VQNet supports MPI-based distributed computing, which can realize the function of training large-scale hybrid quantum-classical neural network models on multiple nodes.
 
-**The bigger picture: differentiable programming**
+Rich application scenarios and example support
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-But our goal is not just to use quantum computers to solve machine learning problems. Quantum circuits are differentiable, and a quantum computer itself can compute the change in control parameters needed to become better at a given task.
-Differentiable programming is the very basis of deep learning, Differentiable programming is more than deep learning: it is a programming paradigm where the algorithms are not hand-coded, but self-learned. `VQNet` is also implemented based on `autograd`.
-Similarly, the significance of training quantum computers is larger than quantum machine learning. Trainable quantum circuits can be leveraged in other fields like quantum chemistry or quantum optimization.
-It can promote in a variety of applications such as the design of quantum algorithms, the discovery of quantum error correction schemes, and the understanding of physical systems.
-
-**VQNet characteristics**
- 
-•	Unity. We propose the first new-generation machine learning framework, which not only realizes the unification of classical and quantum machine learning but also supports deployment on classical and quantum computers.
-•	Practicality. The proposed VQNet accomplishes the necessary features of a new generation machine learning framework, such as friendly interface, automatic differentiation, and dynamic computational graph, under the design concept with practicability.
-•	Efficiency. In the implementation with high performance, VQNet designs a unified structure and uses QPanda to improve the efficiency of interaction between classical and quantum machine learning algorithms, between classic and quantum computers.
-•	Numerous application examples. We provide a number of quantum machine learning examples for quick learning and using.
-
+VQNet is not only a powerful development tool, but also widely used in multiple projects within the company, including power optimization, medical data analysis, image processing and other fields. In order to help users get started quickly, VQNet provides a variety of scenarios ranging from basic tutorials to advanced applications in the official website and API online documentation. These resources enable users to easily understand how to use VQNet to solve practical problems and quickly build their own quantum machine learning applications.
 
 .. toctree::
     :caption: Installation Guide

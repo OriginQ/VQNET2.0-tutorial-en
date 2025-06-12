@@ -3012,7 +3012,8 @@ iterations meets the preset value.If ``PREPROCESS`` is False，the code will ski
     test_y = test_labels
 
     trainset = MyDataset(train_x, train_y)
-
+    testset = MyDataset(test_x, test_y)
+    
     x_train = []
     y_label = []
     model = UNet()
@@ -5018,7 +5019,7 @@ VQNet implements an example of this algorithm: solving the ground state energy o
     H = np.array([[8, 4, 0, -6], [4, 0, 4, 0], [0, 4, 8, 0], [-6, 0, 0, 0]])
     init_params = np.random.uniform(low=0,
                                     high=2 * np.pi,
-                                    size=param_shape)
+                                    size=param_shape).astype(np.float32)
     # some basic Pauli matrices
     I = np.eye(2)
     X = np.array([[0, 1], [1, 0]])

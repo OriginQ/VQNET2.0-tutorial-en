@@ -4665,7 +4665,7 @@ QuantumLayerAdjoint
                             grad_mode="adjoint")
 
         adjoint_model = QuantumLayerAdjoint(qunatum_model)
-
+        adjoint_model.train()
         batch_y = adjoint_model(input_x)
         batch_y.backward()
         print(batch_y)
@@ -4914,7 +4914,7 @@ Example::
         Comm_OP,
         qunatum_model,
     )
-
+    l.train()
     y = l(input_x)
 
     y.backward()
