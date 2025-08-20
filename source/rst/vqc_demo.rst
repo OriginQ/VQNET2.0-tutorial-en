@@ -2588,8 +2588,8 @@ which consists of 15 random You matrices corresponding to the classical Dense La
     for n_train in train_sizes[1:]:
         results_df = pd.concat([results_df, run_iterations(n_train=n_train)])
 
-    save = 0 # 保存数据
-    draw = 0 # 绘图
+    save = 0 # 
+    draw = 0 # 
 
     if save:
         results_df.to_csv('test_qcnn.csv', index=False)
@@ -2726,7 +2726,7 @@ The specific code implementation is as follows:
         custom data map function
         """
         coeff = x[0] if x.shape[0] == 1 else ft.reduce(lambda m, n: m * n, x)
-        return coeff
+        return coeff.reshape([1])
 
     def vqnet_quantum_kernel(X_1, X_2=None):
         """
@@ -3416,9 +3416,7 @@ Finally, through the `op_history_summary` interface, the `op_history` informatio
             self.rz = RZ(has_params=True, wires=1, dtype=dtype)
 
             self.measure = MeasureAll(obs={
-                'wires': [0],
-                'observables': ['z'],
-                'coefficient': [1]
+                "Z0":1
             })
 
         def forward(self, x, *args, **kwargs):
@@ -3480,9 +3478,7 @@ Finally, through the `op_history_summary` interface, the `op_history` informatio
             self.rz = RZ(has_params=True, wires=1, dtype=dtype)
 
             self.measure = MeasureAll(obs={
-                'wires': [0],
-                'observables': ['z'],
-                'coefficient': [1]
+                "Z0":1
             })
 
         @partial(wrapper_compile)
@@ -3876,3 +3872,408 @@ Model training code
 
 Overfitting can be prevented by randomly dropping out the parameters of the model during training, but the probability of dropping out needs to be designed appropriately, otherwise it can also lead to poor model training results.
 
+
+Quantum Circuit Boltzmann Machine
+===================================
+
+
+Quantum Circuit Boltzmann Machine Boltzmann machines have shown promise in unsupervised generative modeling, aiming to learn and represent probability distributions over classical datasets using purely quantum states. They have gained popularity due to their high expressive power. Boltzmann machines exploit the probabilistic interpretation of quantum wave functions, representing probability distributions using purely quantum states rather than thermal distributions (as in Boltzmann machines). This enables Boltzmann machines to directly generate samples by projecting measurements on qubits, offering a faster alternative to Gibbs sampling.
+Given a dataset :math:`\mathcal{D} = \{x\}` containing independent and identically distributed samples from an unknown target distribution :math:`\pi(x)`, QCBM is used to generate samples that are highly similar to the target distribution. QCBM transforms the input product state :math:`|\textbf{0} \rangle` into a parameterized quantum state :math:`|\psi_\boldsymbol{\theta}\rangle`. Measuring this output state in a computational basis produces a bit sample :math:`x \sim p_\theta(x)`.
+
+.. math::
+   p_\boldsymbol{\theta}(x) = |\langle x | \psi_\boldsymbol{\theta} \rangle|^2.
+
+The goal is to align the model probability distribution :math:`p_\boldsymbol{\theta}` with the target distribution :math:`\pi`.
+
+In this example, we will implement a gradient-based QCBM algorithm using VQNet. We will describe the model and learning algorithm, then apply it to a dataset of 3x3 stripes and lattices, as well as a double Gaussian peak.
+
+To train the QCBM, we use the squared maximum mean discrepancy (MMD) as the loss function:
+
+.. math::
+    \mathcal{L}(\boldsymbol{\theta}) = \left|\sum_{x} p_\boldsymbol{\theta}(x) \phi(x)- \sum_{x} \pi(x) \phi(x)  \right|^2,
+
+where :math:`\phi(x)` maps :math:`x` to a larger feature space. Using the kernel function :math:`K(x,y) = \phi(x)^T\phi(y)` allows us to work in a lower-dimensional space.
+We use the radial basis function (RBF) kernel for this purpose, which is defined as:
+
+.. math::
+    K(x,y) = \frac{1}{c}\sum_{i=1}^c \exp \left( \frac{|x-y|^2}{2\sigma_i^2} \right).
+
+Here, :math:`\sigma_i` is the bandwidth parameter that controls the width of the Gaussian kernel. :math:`\mathcal{L}` approaches zero if and only if :math:`p_\boldsymbol{\theta}` approaches :math:`\pi`.
+The loss function of the :math:`K(x,y)` is as follows:
+
+.. math::
+    \mathcal{L} = \underset{x, y \sim p_\boldsymbol{\theta}}{\mathbb{E}}[{K(x,y)}]-2\underset{x\sim p_\boldsymbol{\theta},y\sim \pi}{\mathbb{E}}[K(x,y)]+\underset{x, y \sim \pi}{\mathbb{E}}[K(x, y)]
+
+
+.. code-block::
+
+    import matplotlib.pyplot as plt
+    import numpy as np
+    import pyvqnet
+    from pyvqnet import tensor
+    from pyvqnet.qnn.vqc import VQC_StronglyEntanglingTemplate,QMachine,Probability,QModule
+    from pyvqnet.optim import Adam
+    # this definition of MMD, QCBM and QC
+    class MMD:
+        def __init__(self, scales, space):
+            gammas = 1 / (2 * (scales**2))
+            sq_dists = tensor.abs(space.reshape([-1,1]) - space.reshape([1,-1])) ** 2
+            tl = [tensor.exp(-gamma * sq_dists) for gamma in gammas]
+            self.K = sum(tl) / len(scales)
+            self.scales = scales
+        def k_expval(self, px, py):
+            # Kernel expectation value
+            d1 = px @ self.K
+    
+            d1 = d1.reshape([d1.shape[0],1,-1])
+            py = py.reshape([py.shape[0],-1,1])
+            d2  = d1 @ py
+            #(b,1,1)
+            return d2.reshape((d2.shape[0],1))
+        def __call__(self, px, py):
+            pxy = px - py
+            #(b,2**n)
+            return self.k_expval(pxy, pxy)
+    
+    class QCBM(QModule):
+        def __init__(self, circ, mmd, py):
+            super().__init__()
+            self.circ = circ
+            self.mmd = mmd
+            self.py = py  # target distribution π(x)
+        def forward(self):
+            px = self.circ()
+            return self.mmd(px, self.py), px
+    class QC(QModule):
+        def __init__(self,n_qubits,cir):
+            super().__init__()
+            self.n_qubits = n_qubits
+            self.cir =cir
+            self.qm = QMachine(n_qubits)
+        def forward(self):
+            self.qm.reset_states(1)
+            self.cir(self.qm)
+            p = Probability(range(n_qubits))
+            px = p(self.qm)
+            return px
+    def get_bars_and_stripes(n):
+        bitstrings = [list(np.binary_repr(i, n))[::-1] for i in range(2**n)]
+        bitstrings = np.array(bitstrings, dtype=int)
+        stripes = bitstrings.copy()
+        stripes = np.repeat(stripes, n, 0)
+        stripes = stripes.reshape(2**n, n * n)
+        bars = bitstrings.copy()
+        bars = bars.reshape(2**n * n, 1)
+        bars = np.repeat(bars, n, 1)
+        bars = bars.reshape(2**n, n * n)
+        return np.vstack((stripes[0 : stripes.shape[0] - 1], bars[1 : bars.shape[0]]))
+    n = 3
+    size = n**2
+    data = get_bars_and_stripes(n)
+    sample = data[1].reshape(n, n)
+   
+    bitstrings = []
+    nums = []
+    for d in data:
+        bitstrings += ["".join(str(int(i)) for i in d)]
+        nums += [int(bitstrings[-1], 2)]
+    print(nums)
+    
+    bitstrings = []
+    nums = []
+    for d in data:
+        bitstrings += ["".join(str(int(i)) for i in d)]
+        nums += [int(bitstrings[-1], 2)]
+    probs = np.zeros([2**size])
+    probs[nums] = 1 / len(data)
+    n_qubits = size
+    
+    n_layers = 6
+    ser_cir = VQC_StronglyEntanglingTemplate(n_layers,n_qubits)
+    bandwidth = tensor.QTensor([0.25, 0.5, 1])
+    space = tensor.arange(0,2**n_qubits,dtype=pyvqnet.kfloat32)
+    mmd = MMD(bandwidth, space)
+   
+    qc =QC(n_qubits,ser_cir)
+    qcbm = QCBM(qc, mmd, tensor.QTensor(probs,dtype=pyvqnet.kfloat32))
+   
+    opt = Adam(qcbm.parameters(),lr=0.1)
+    
+    def update_step(qmodel):
+        opt.zero_grad()
+        loss_val, qcbm_probs = qmodel()
+        loss_val.backward()
+        opt.step()
+        qcbm_probs = qcbm_probs.numpy()
+        py =  qmodel.py.numpy()
+        kl_div = -np.sum(py * np.nan_to_num(np.log(qcbm_probs /py)))
+        return   loss_val, kl_div
+    history = []
+    divs = []
+    #start train with optim and qcbm
+    n_iterations = 100
+    for i in range(n_iterations):
+        loss_val, kl_div = update_step(qcbm)
+        if i % 10 == 0:
+            print(f"Step: {i} Loss: {loss_val} KL-div: {kl_div}")
+        history.append(loss_val.numpy().flatten())
+        divs.append(kl_div)
+    
+    
+    fig, ax = plt.subplots(1, 2, figsize=(12, 5))
+    ax[0].plot(history)
+    ax[0].set_xlabel("Iteration")
+    ax[0].set_ylabel("MMD Loss")
+    ax[1].plot(divs, color="green")
+    ax[1].set_xlabel("Iteration")
+    ax[1].set_ylabel("KL Divergence")
+    plt.show()
+    qcbm_probs = qcbm.circ().numpy()
+    plt.figure(figsize=(12, 5))
+    plt.bar(
+        np.arange(2**size),
+        probs,
+        width=2.0,
+        label=r"$\pi(x)$",
+        alpha=0.4,
+        color="tab:blue",
+    )
+    plt.bar(
+        np.arange(2**size),
+        qcbm_probs.reshape(qcbm_probs.shape[1]),
+        width=2.0,
+        label=r"$p_\theta(x)$",
+        alpha=0.9,
+        color="tab:green",
+    )
+    plt.xlabel("Samples")
+    plt.ylabel("Prob. Distribution")
+    plt.xticks(nums, bitstrings, rotation=80)
+    plt.legend(loc="upper right")
+    plt.subplots_adjust(bottom=0.3)
+    plt.show()
+    """
+    Step: 0 Loss: 
+    [[0.0692388]]
+    <QTensor [1, 1] DEV_CPU kfloat32> KL-div: 4.307866096496582
+    Step: 10 Loss: 
+    [[0.0442727]]
+    <QTensor [1, 1] DEV_CPU kfloat32> KL-div: 2.081686496734619
+    Step: 20 Loss: 
+    [[0.0350034]]
+    <QTensor [1, 1] DEV_CPU kfloat32> KL-div: 1.391021490097046
+    Step: 30 Loss: 
+    [[0.0269803]]
+    <QTensor [1, 1] DEV_CPU kfloat32> KL-div: 1.0231478214263916
+    Step: 40 Loss: 
+    [[0.0193367]]
+    <QTensor [1, 1] DEV_CPU kfloat32> KL-div: 0.7527393102645874
+    Step: 50 Loss: 
+    [[0.0114549]]
+    <QTensor [1, 1] DEV_CPU kfloat32> KL-div: 0.5251109600067139
+    Step: 60 Loss: 
+    [[0.0079325]]
+    <QTensor [1, 1] DEV_CPU kfloat32> KL-div: 0.38522785902023315
+    Step: 70 Loss: 
+    [[0.0051147]]
+    <QTensor [1, 1] DEV_CPU kfloat32> KL-div: 0.2812555432319641
+    Step: 80 Loss: 
+    [[0.0036854]]
+    <QTensor [1, 1] DEV_CPU kfloat32> KL-div: 0.22650760412216187
+    Step: 90 Loss: 
+    [[0.0026104]]
+    <QTensor [1, 1] DEV_CPU kfloat32> KL-div: 0.21417859196662903
+    """
+
+Compare the target probability distribution with the QCBM prediction results, as shown below:
+
+.. image:: ./images/qcbm.png
+   :width: 600 px
+   :align: center
+
+|
+
+Time Series Data Prediction Based on QGRU
+====================================================
+The paper <https://ieeexplore.ieee.org/abstract/document/10806779> implements a novel QRNN model, which serves as a typical QRNN model.
+The quantum recurrent blocks (QRBs) are constructed in a hardware-efficient manner, and the QRNN is constructed by interleaving and stacking QRBs. This significantly reduces the algorithm's requirement for quantum device coherence time.
+The following example builds a QGRU model for time series data prediction using the Torch backend (Torch installation required). You will also need to download the sample data :download:`ba.csv <images/ba.csv>` to your local computer.
+
+
+.. code-block::
+    
+    import pyvqnet.qnn.vqc as vqc
+    from pyvqnet.nn import ParameterList,Parameter, ParameterDict
+    import numpy as np
+    from typing import Tuple, List, Iterator
+
+    def pqc_circuit(q_machine, n_qubits, params, wires):
+        
+        for wire in wires:
+            vqc.hadamard(q_machine, wires=wire)
+        for i in range(n_qubits-1):
+            vqc.cnot(q_machine, wires=[wires[i], wires[i+1]])
+        vqc.cnot(q_machine,  wires=[wires[-1], wires[0]])
+        if n_qubits == 2:
+            vqc.cnot(q_machine, wires=[1, 0])
+            vqc.cnot(q_machine, wires=[0, 1])
+        else:
+            for i in range(n_qubits):
+                vqc.cnot(q_machine, wires=[wires[(i+2)%n_qubits], wires[i]])
+        param_idx = 0
+        for wire in wires:
+            vqc.rx(q_machine,  wires=wire, params = params[param_idx])
+            param_idx += 1
+            vqc.rz(q_machine,  wires=wire, params = params[param_idx])
+            param_idx += 1
+            vqc.rx(q_machine, wires=wire, params = params[param_idx])
+            param_idx += 1
+
+    def gru_circuit(q_machine, qubits, encoder_params, pqc_params):
+        vqc.ry(q_machine, wires=qubits[1], params = encoder_params)
+        vqc.ry(q_machine, wires=qubits[3] , params = encoder_params)
+        vqc.ry(q_machine,  wires=qubits[6], params = encoder_params)
+        pqc_circuit(q_machine, 2, pqc_params['a'], [qubits[1], qubits[2]])
+        pqc_circuit(q_machine,2, pqc_params['b'], [qubits[3], qubits[4]])
+        pqc_circuit(q_machine,2,  pqc_params['c'], [qubits[0], qubits[1]])
+        pqc_circuit(q_machine,2, pqc_params['d'], [qubits[4], qubits[5]])
+        pqc_circuit(q_machine,2, pqc_params['e'], [qubits[5], qubits[6]])
+        pqc_circuit(q_machine, 2, pqc_params['f'], [qubits[2], qubits[5]])
+        pqc_circuit(q_machine, 4, pqc_params['g'], [qubits[0], qubits[1], qubits[2], qubits[5]])
+
+    #Since the bits of the QGRU overlap between adjacent time steps, we construct a function to generate the qubits used by the QGRU at different times. Note that for a sequence of length x_length, a total of 4 + 3 * x_length qubits are required.
+    #We first define the four bits encoding the hidden state at the initial time as q_0\sim q_3, and continuously add the remaining bits as "auxiliary bits."
+
+    def get_apply_qubits(x_length):
+        
+        qubits = []
+        aux_qubits = list(range(4, 4 + 3 * x_length))
+        j = 3 
+        qubits = [[0, 4, 1, 5, 2, 3, 6]]
+        for i in range(x_length - 1):
+            tem = [qubits[-1][0], aux_qubits[j], qubits[-1][1], aux_qubits[j+1], 
+                qubits[-1][2], qubits[-1][5], aux_qubits[j+2]]
+            qubits.append(tem)
+            j += 3
+        return qubits
+
+    def qgrnn_circuit(qm, x, pqc_params):
+        
+        x_length = x.shape[1]
+        qubit_sets = get_apply_qubits(x_length)
+        
+        for i in range(x_length):
+           
+            gru_circuit(qm,qubit_sets[i], 
+                    encoder_params=x[:,i],
+                    pqc_params=pqc_params)
+
+    class NumpyDataset:
+        def __init__(self, data: Tuple[np.ndarray, np.ndarray], batch_size: int = 1, shuffle: bool = False):
+            
+            self.x, self.y = data
+            self.batch_size = batch_size
+            self.shuffle = shuffle
+            self.num_samples = len(self.x)
+            self.indices = np.arange(self.num_samples)
+            
+            if self.shuffle:
+                np.random.shuffle(self.indices)
+        
+        def __iter__(self) -> Iterator[Tuple[np.ndarray, np.ndarray]]:
+            self.current = 0
+            return self
+        
+        def __next__(self) -> Tuple[np.ndarray, np.ndarray]:
+            if self.current >= self.num_samples:
+                raise StopIteration
+            
+            end = min(self.current + self.batch_size, self.num_samples)
+            batch_indices = self.indices[self.current:end]
+            
+            batch_x = self.x[batch_indices]
+            batch_y = self.y[batch_indices]
+            
+            self.current = end
+            return batch_x, batch_y
+        
+        def __len__(self) -> int:
+            return (self.num_samples + self.batch_size - 1) // self.batch_size
+    def get_dataset_numpy(file_name: str = 'ba', x_length: int = 5, rate: float = 0.8, batch_size: int = 4) -> Tuple[NumpyDataset, NumpyDataset, NumpyDataset]:
+
+        data = np.loadtxt(f'{file_name}.csv', delimiter=',', skiprows=1, usecols=[4])
+
+        min_val, max_val = data.min(), data.max()
+        scaled_data = 2 * ((data - min_val) / (max_val - min_val)) - 1
+
+        x, y = [], []
+        size = len(data)
+        for i in range(size - x_length):
+            x.append(scaled_data[i:i + x_length])
+            y.append(scaled_data[i + x_length])
+        
+        x = np.array(x)
+        y = np.array(y).reshape([-1,1])
+
+        point1 = int(rate * size)
+
+        train_data = (x[:point1], y[:point1])
+
+        test_data = (x[point1:], y[point1:])
+
+        train_dataset = NumpyDataset(train_data, batch_size=batch_size, shuffle=True)
+        
+        test_dataset = NumpyDataset(test_data, batch_size=8)
+        
+        return train_dataset,   test_dataset
+    ##################################################
+    file_name = 'ba'
+    x_length = 4
+    rate = 0.8
+    batch_size = 16
+    epoch = 1
+    nq = 16
+    train_dataset, test_dataset = get_dataset_numpy(file_name, x_length, rate, batch_size)
+    pqc_params = ParameterDict({
+            'a': Parameter([6]),  # 2-qubit PQC
+            'b': Parameter([6]),
+            'c': Parameter([6]),
+            'd': Parameter([6]),
+            'e': Parameter([6]),
+            'f': Parameter([6]),
+            'g': Parameter([12])  # 4-qubit PQC
+        })
+    """
+    Next, we assemble and train the model, including the circuit, simulator, Hamiltonian, network layers, optimizer, and loss function. This article uses the expected value of $q_3$ as the prediction basis, so the Hamiltonian is set to $Z_3$.
+    """
+    class QM(vqc.QModule):
+        def __init__(self, nq = 4, name=""):
+            super().__init__(name)
+            self.qm = vqc.QMachine(nq)
+            
+            self.pqc_params = pqc_params
+            self.w = Parameter([1])
+            self.ma = vqc.MeasureAll({"Z3":1})
+        def forward(self,x):
+            self.qm.reset_states(x.shape[0]
+            )
+            qgrnn_circuit(self.qm, x, pqc_params)
+            y =self.ma(self.qm)
+            return y*self.w
+
+    model =QM(nq)
+
+    from pyvqnet.optim import Adam
+    from pyvqnet.nn import MeanSquaredError
+    from pyvqnet import QTensor,kfloat32
+    mse = MeanSquaredError()
+    optim = Adam(model.parameters())
+    for e in range(epoch):
+        for i, (batch_x, batch_y) in enumerate(train_dataset):
+            optim.zero_grad()
+            pred = model(QTensor(batch_x,dtype=kfloat32))
+            loss = mse(QTensor(batch_y,dtype=kfloat32),pred)
+            loss.backward()
+            optim.step()
+            print("i")
+            print(loss)

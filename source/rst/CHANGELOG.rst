@@ -1,6 +1,29 @@
 VQNet Changelog
 ###############################
 
+[v2.17.1] - 2025-8-22
+***************************
+
+Added
+===================
+
+- Added the quantum natural gradient SPSA algorithm (qnspsa) interface, quantum circuit born machine (QBM), the quantum natural gradient interface with momentum, and a pure quantum qgru example.
+- Added the ``torch_native`` backend.
+- Added a bit-parallel interface to support bit-parallel quantum circuits, and added a bit reordering function to reduce the number of bit swaps.
+- Added the ``split_group`` method.
+
+Changed
+==================
+- Changed the Linear layer implementation from `:math:`y = Ax + b` to `:math:`y = x@A.T + b`
+- Modified the ``obs`` parameter in the `MeasureAll` interface.
+- Removed the ``QuantumLayerES`` interface. - Changed parameter names from ControllComm to ControlComm, `allgather_group`, `allreduce_group`, `reduce_group`, `broadcast_group`, and other interfaces.
+- Removed the `ncclsplitGroup` interface.
+
+Fixed
+===================
+- Resolved synchronization delay issues with distributed communication interfaces.
+- Modified distributed communication interface definitions.
+- Resolved an issue where adjoint gradient calculations did not support `PauliX`, `PauliY`, and `PauliZ`.
 [v2.17.0] - 2025-4-22
 ***************************
 
