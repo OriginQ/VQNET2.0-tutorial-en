@@ -26,8 +26,12 @@ set_backend
 
     Sets the backend for current computations and data storage. The default is "pyvqnet", but it can be set to "torch".
     
-    After calling ``pyvqnet.backends.set_backend("torch")``, the interface remains unchanged, but the ``data`` member of VQNet's ``QTensor`` will store data in the form of ``torch.Tensor`` 
-    and computations will be done using Torch.
+    After calling ``pyvqnet.backends.set_backend("torch")``, the interface remains unchanged. VQNet's ``QTensor`` ``data`` member variable all uses ``torch.Tensor`` to store data.
+    :ref:`qtensor_api` , :ref:`vqc_api` , and ``pyvqnet.nn.torch`` interfaces accept ``QTensor`` as input and ``QTensor`` as output.
+
+    After calling ``pyvqnet.backends.set_backend("torch-native")``, the interfaces remain unchanged: :ref:`qtensor_api`, :ref:`vqc_api`, and the `pyvqnet.nn.torch` interface.
+    Inputs can directly accept ``torch.Tensor`` or ``QTensor`` types, and outputs are ``torch.Tensor``, eliminating the need for conversion to ``QTensor``, thus reducing data conversion.
+    
     After calling ``pyvqnet.backends.set_backend("pyvqnet")``, the ``data`` member of VQNet's ``QTensor`` will store data using ``pyvqnet._core.Tensor`` , and computations will use the pyvqnet C++ library.
 
     .. note::
@@ -332,7 +336,7 @@ Linear
 
 .. py:class:: pyvqnet.nn.torch.Linear(input_channels, output_channels, weight_initializer=None, bias_initializer=None, use_bias=True, dtype=None, name: str = "")
 
-    A linear module (fully connected layer), :math:`y = Ax + b`.
+    A linear module (fully connected layer), :math:`y = x@A.T + b`.
     This class inherits from ``pyvqnet.nn.Module`` and ``torch.nn.Module`` and can be used as a submodule of a torchmodel.
 
     The data in the class's ``_buffers`` is of type ``torch.Tensor``.
@@ -1476,13 +1480,13 @@ SDPA
 
    .. py:method:: forward(query,key,value)
 
-        进行前向计算,如果输入为cpu下的QTensor,则使用数学公式计算, 如果输入在gpu下QTensor,则使用flash-attention方法计算.
+        Performs forward computation. If the input is a QTensor on the CPU, the calculation is performed using a mathematical formula. If the input is a QTensor on the GPU, the calculation is performed using the flash-attention method.
 
-        :param query: query输入QTensor.
-        :param key: key输入QTensor.
-        :param value: key输入QTensor.
-        :return: SDPA计算返回的QTensor.
-
+        :param query: The query input QTensor.
+        :param key: The key input QTensor.
+        :param value: The key input QTensor.
+        :return: The QTensor returned by the SDPA calculation.
+        
         Examples::
         
             from pyvqnet.nn.torch import SDPA
@@ -3865,7 +3869,7 @@ MultiControlledX
     :param wires: Bit index of the line effect, the default is None.
     :param dtype: The data precision of the internal matrix of the logic gate can be set to pyvqnet.kcomplex64 or pyvqnet.kcomplex128, corresponding to float input or double input respectively.
     :param use_dagger: whether to use the transposed conjugate version of the gate, the default is False.
-    :param control_values: 控制值,默认为None,当比特位为1时控制.
+    :param control_values: Control value, the default is None, when the bit is 1, it is controlled.
 
     :return: a ``pyvqnet.qnn.vqc.torch.QModule`` instance
 
@@ -3932,12 +3936,13 @@ MeasureAll
     Calculate the measurement results of quantum circuits, support input obs as multiple or single Pauli operators or Hamiltonians.
     For example:
 
-    {\'wires\': [0, 1], \'observables\': [\'x\', \'i\'],\'coefficient\':[0.23,-3.5]}
-    Or:
-    {\'X0\': 0.23}
-    Or:
-    [{\'wires\': [0, 2, 3],\'observables\': [\'X\', \'Y\', \'Z\'],\'coefficient\': [1, 0.5, 0.4]}, {\'wires\': [0, 1, 2],\'observables\': [\'X\', \'Y\', \'Z\'],\'coefficient\': [1, 0.5, 0.4]}]
+    {\'X0\': 0.23} indicates a PauliX effect on qubit 0, with a coefficient of 0.23.
 
+    {\'X1 Z2\': 2.4,\'Y2\': -0.5} corresponds to the observed value 2.4 * X1 @ Z2 - 0.5 * Y2.
+
+    [{\'X1 Z2\': 4,\'Z1 Z0\': 3},{\'X1 Y2 Z0\': 3.5}] corresponds to the two observed values 4 * X1 @ Z2 + 3 * Z1 @ Z0 and 3.5 * X1 @ Y2 @ Z0.
+        
+        
     This class inherits from ``pyvqnet.qnn.vqc.torch.QModule`` and ``torch.nn.Module``.
 
     This class can be added to the torch model as a submodule of ``torch.nn.Module``.
@@ -3963,13 +3968,9 @@ MeasureAll
         cnot(q_machine=qm,wires=[0,2])
         rz(q_machine=qm,wires=3,params=x[:,[1]])
         obs_list = [{
-            'wires': [0, 2, 3],
-            'observables': ['X', 'Y', 'Z'],
-            'coefficient': [1, 0.5, 0.4]
+            "Z0 Z1" :2
         }, {
-            'wires': [0, 1, 2],
-            'observables': ['X', 'Y', 'Z'],
-            'coefficient': [1, 0.5, 0.4]
+            "X0 Z2" :1
         }]
         ma = MeasureAll(obs = obs_list)
         y = ma(q_machine=qm)
@@ -4363,9 +4364,7 @@ ExpressiveEntanglingAnsatz
                 self.qm = QMachine(num_wires, dtype=dtype,grad_mode=grad_mode)
                 self.c1 = ExpressiveEntanglingAnsatz(1,3,2)
                 self.measure = MeasureAll(obs={
-                    'wires': [1],
-                    'observables': ['z'],
-                    'coefficient': [1]
+                    "Z1":1
                 })
 
             def forward(self, x, *args, **kwargs):
@@ -5031,9 +5030,7 @@ QuantumLayerAdjoint
                 self.tlayer = T(wires=1)
                 self.cnot = CNOT(wires=[0, 1])
                 self.measure = MeasureAll(obs={
-                    'wires': [1],
-                    'observables': ['x'],
-                    'coefficient': [1]
+                    "X1":1
                 })
 
             def forward(self, x, *args, **kwargs):
@@ -7394,14 +7391,15 @@ MeasureAll
 .. py:class:: pyvqnet.qnn.vqc.tn.MeasureAll(obs=None, name="")
 
     Calculate the measurement results of quantum circuits, support input obs as multiple or single Pauli operators or Hamiltonians.
+    
     For example:
 
-    {\'wires\': [0, 1], \'observables\': [\'x\', \'i\'],\'coefficient\':[0.23,-3.5]}
-    Or:
-    {\'X0\': 0.23}
-    Or:
-    [{\'wires\': [0, 2, 3],\'observables\': [\'X\', \'Y\', \'Z\'],\'coefficient\': [1, 0.5, 0.4]}, {\'wires\': [0, 1, 2],\'observables\': [\'X\', \'Y\', \'Z\'],\'coefficient\': [1, 0.5, 0.4]}]
+    {\'X0\': 0.23} indicates a PauliX effect on qubit 0, with a coefficient of 0.23.
 
+    {\'X1 Z2\': 2.4,\'Y2\': -0.5} corresponds to the observed value 2.4 * X1 @ Z2 - 0.5 * Y2.
+
+    [{\'X1 Z2\': 4,\'Z1 Z0\': 3},{\'X1 Y2 Z0\': 3.5}] corresponds to the two observed values 4 * X1 @ Z2 + 3 * Z1 @ Z0 and 3.5 * X1 @ Y2 @ Z0.
+        
     This class inherits from ``pyvqnet.qnn.vqc.tn.QModule`` and ``torch.nn.Module``.
 
     This class can be added to the torch model as a submodule of ``torch.nn.Module``.
@@ -7427,13 +7425,9 @@ MeasureAll
         cnot(q_machine=qm,wires=[0,2])
         rz(q_machine=qm,wires=3,params=x[:,[1]])
         obs_list = [{
-            'wires': [0, 2, 3],
-            'observables': ['X', 'Y', 'Z'],
-            'coefficient': [1, 0.5, 0.4]
+            "Z0 Z1" :2
         }, {
-            'wires': [0, 1, 2],
-            'observables': ['X', 'Y', 'Z'],
-            'coefficient': [1, 0.5, 0.4]
+            "X0 Z2" :1
         }]
         ma = MeasureAll(obs = obs_list)
         y = ma(q_machine=qm)
@@ -7824,9 +7818,7 @@ ExpressiveEntanglingAnsatz
                 self.qm = TNQMachine(num_wires, dtype=dtype)
                 self.c1 = ExpressiveEntanglingAnsatz(1,3,2)
                 self.measure = MeasureAll(obs={
-                    'wires': [1],
-                    'observables': ['z'],
-                    'coefficient': [1]
+                    "Z1":1
                 })
 
             def forward(self, x, *args, **kwargs):
@@ -8425,7 +8417,7 @@ Distributed related functions, when using the ``torch`` computing backend, encap
 CommController
 -------------------------
 
-.. py:class:: pyvqnet.distributed.ControllComm.CommController(backend,rank=None,world_size=None)
+.. py:class:: pyvqnet.distributed.ControlComm.CommController(backend,rank=None,world_size=None)
 
     CommController is used to control the data communication controller under cpu and gpu. It generates cpu (gloo) and gpu (nccl) controllers by setting the parameter `backend`.
     This class will call backend, rank, world_size to initialize ``torch.distributed.init_process_group(backend, rank, world_size)`` .
@@ -8600,8 +8592,10 @@ CommController
 
         Examples::
 
-            from pyvqnet.distributed import CommController
+            from pyvqnet.distributed import get_local_rank,CommController,init_group
             import pyvqnet
+            import numpy as np
+            from pyvqnet.tensor import tensor
             pyvqnet.backends.set_backend("torch")
             import os
             import multiprocessing as mp
@@ -8612,11 +8606,16 @@ CommController
                 os.environ['MASTER_ADDR'] = '127.0.0.1'
                 os.environ['MASTER_PORT'] = '29500'
                 os.environ['LOCAL_RANK'] = f"{rank}"
-                pp = CommController("gloo", rank=rank, world_size=size)
-                
-                local_rank = pp.split_group([[0,1],[2,3]])
-                print(local_rank )
+                Comm_OP = CommController("gloo", rank=rank, world_size=size)
 
+                group = Comm_OP.split_group([[1,3]])
+
+                num = tensor.to_tensor(np.random.rand(1, 5)+get_local_rank()*10)
+                print(f"before rank {Comm_OP.getRank()}  {num}\n")
+                
+                Comm_OP.reduce_group(num, 1,"sum",group[0])
+                print(f"after rank {Comm_OP.getRank()}  {num}\n")
+                
 
             if __name__ == "__main__":
                 world_size = 4
@@ -8745,8 +8744,6 @@ CommController
                 os.environ['LOCAL_RANK'] = f"{rank}"
                 Comm_OP = CommController("gloo", rank=rank, world_size=size)
 
-            
-
                 num = tensor.to_tensor(np.random.rand(1, 5))
                 print(f"before rank {Comm_OP.getRank()}  {num}")
                 
@@ -8792,7 +8789,6 @@ CommController
                 os.environ['LOCAL_RANK'] = f"{rank}"
                 Comm_OP = CommController("gloo", rank=rank, world_size=size)
 
-            
 
                 num = tensor.to_tensor(np.random.rand(1, 5))+ rank
                 print(f"before rank {Comm_OP.getRank()}  {num}")
@@ -8812,9 +8808,8 @@ CommController
 
                 for p in processes:
                     p.join()
-            
 
- 
+
     .. py:method:: allgather(tensor)
         
         Gather all the data from all processes together. This interface only supports the nccl backend.
@@ -8953,13 +8948,13 @@ CommController
                     p.join()
             
 
-    .. py:method:: allreduce_group(tensor, c_op = "avg", GroupComm = None)
+    .. py:method:: allreduce_group(tensor, c_op = "avg", group = None)
         
         Intra-group allreduce communication interface.
 
         :param tensor: Input data.
         :param c_op: Calculation method.
-        :param GroupComm: Communication group, only required for intra-group communication in MPI.
+        :param group: Communication group generated from `split_group` or `init_group` .
 
         Examples::
 
@@ -8979,19 +8974,20 @@ CommController
                 os.environ['LOCAL_RANK'] = f"{rank}"
                 Comm_OP = CommController("gloo", rank=rank, world_size=size)
 
-            
-                groups = Comm_OP.split_group([[0,2],[1,3]])
-                num = tensor.to_tensor(np.random.rand(1, 5)+get_local_rank()*1000)
-                print(f"rank {Comm_OP.getRank()}  {num}")
+                rankL = [[0,1],[2,3]]
+                groups = Comm_OP.split_group(rankL)
+                num = tensor.to_tensor(np.ones(5)+get_local_rank()*1000)
 
-                Comm_OP.all_reduce_group(num, "sum",groups[0])
+                print(f"before rank {Comm_OP.getRank()}  {num}")
+                if Comm_OP.getRank() in rankL[0]:
+                    Comm_OP.all_reduce_group(num, "sum", groups[0])
 
-                print(f"rank {Comm_OP.getRank()}  {num}")
-                num = tensor.to_tensor(np.random.rand(1, 5)-get_local_rank()*100)
-                print(f"rank {Comm_OP.getRank()}  {num}")
+                    print(f"after rank {Comm_OP.getRank()}  {num}")
 
-                Comm_OP.all_reduce_group(num, "sum",groups[0])
-                print(f"rank {Comm_OP.getRank()}  {num}")
+                if Comm_OP.getRank() in rankL[1]:
+                    Comm_OP.all_reduce_group(num, "sum", groups[1])
+
+                    print(f"after rank {Comm_OP.getRank()}  {num}")
 
             if __name__ == "__main__":
                 world_size = 4
@@ -9004,20 +9000,22 @@ CommController
 
                 for p in processes:
                     p.join()
+
+
  
 
-    .. py:method:: reduce_group(tensor, root = 0, c_op = "avg", GroupComm = None)
+    .. py:method:: reduce_group(tensor, root = 0, c_op = "avg", group = None)
         
         Intra-group reduce communication interface.
 
         :param tensor: Input data.
         :param root: Specify the process number.
         :param c_op: Calculation method.
-        :param GroupComm: Communication group, only required for intra-group communication in MPI.
+        :param group: Communication group generated from `split_group` or `init_group` .
 
         Examples::
-            
-            from pyvqnet.distributed import get_local_rank,CommController,init_group
+
+            from pyvqnet.distributed import get_local_rank,CommController
             import pyvqnet
             import numpy as np
             from pyvqnet.tensor import tensor
@@ -9032,15 +9030,17 @@ CommController
                 os.environ['MASTER_PORT'] = '29500'
                 os.environ['LOCAL_RANK'] = f"{rank}"
                 Comm_OP = CommController("gloo", rank=rank, world_size=size)
-
-                group = Comm_OP.split_group([1,3])
+                rankL = [[1,3],[0,2]]
+                group = Comm_OP.split_group([[1,3],[0,2]])
 
                 num = tensor.to_tensor(np.random.rand(1, 5)+get_local_rank()*10)
                 print(f"before rank {Comm_OP.getRank()}  {num}\n")
-                
-                Comm_OP.reduce_group(num, 1,"sum",group)
-                print(f"after rank {Comm_OP.getRank()}  {num}\n")
-                
+                if Comm_OP.getRank() in rankL[0]:
+                    Comm_OP.reduce_group(num, rankL[0][1],"sum",group[0])
+                    print(f"after rank {Comm_OP.getRank()}  {num}\n")
+                if Comm_OP.getRank() in rankL[1]:
+                    Comm_OP.reduce_group(num, rankL[1][1],"sum",group[1])
+                    print(f"after rank {Comm_OP.getRank()}  {num}\n")
 
             if __name__ == "__main__":
                 world_size = 4
@@ -9053,16 +9053,15 @@ CommController
 
                 for p in processes:
                     p.join()
-            
 
  
-    .. py:method:: broadcast_group(tensor, root = 0, GroupComm = None)
+    .. py:method:: broadcast_group(tensor, root = 0, group = None)
         
         Intra-group broadcast communication interface.
 
         :param tensor: Input data.
         :param root: Specify the process ID.
-        :param GroupComm: Communication group, only required for intra-group communication in MPI.
+        :param group: Communication group generated from `split_group` or `init_group` .
 
         Examples::
             
@@ -9082,14 +9081,19 @@ CommController
                 os.environ['LOCAL_RANK'] = f"{rank}"
                 Comm_OP = CommController("gloo", rank=rank, world_size=size)
 
-                group = Comm_OP.split_group([2,3])
+                rankL = [[2,3],[0,1,4]]
+                group = Comm_OP.split_group(rankL)
 
                 num = tensor.to_tensor(np.random.rand(1, 5))+ rank*1000
                 print(f"before rank {Comm_OP.getRank()}  {num}")
                 
-                Comm_OP.broadcast_group(num, 2,group)
-                print(f"after rank {Comm_OP.getRank()}  {num}")
-                
+                if Comm_OP.getRank() in rankL[0]:
+                    Comm_OP.broadcast_group(num, rankL[0][0],group[0])
+                    print(f"after rank {Comm_OP.getRank()}  {num}")
+
+                if Comm_OP.getRank() in rankL[1]:
+                    Comm_OP.broadcast_group(num, rankL[1][1],group[1])
+                    print(f"after rank {Comm_OP.getRank()}  {num}")
 
             if __name__ == "__main__":
                 world_size = 5
@@ -9102,15 +9106,14 @@ CommController
 
                 for p in processes:
                     p.join()
-            
 
  
-    .. py:method:: allgather_group(tensor, GroupComm = None)
+    .. py:method:: allgather_group(tensor, group = None)
         
         Allgather communication interface within the group.
 
         :param tensor: input data.
-        :param GroupComm: communication group, only required for mpi to communicate within the group.
+        :param group: Communication group generated from `split_group` or `init_group` .
 
         Examples::
             
@@ -9128,33 +9131,20 @@ CommController
                 os.environ['MASTER_ADDR'] = '127.0.0.1'
                 os.environ['MASTER_PORT'] = '29500'
                 os.environ['LOCAL_RANK'] = f"{rank}"
-                Comm_OP = CommController("gloo", rank=rank, world_size=size)
+                Comm_OP = CommController("nccl", rank=rank, world_size=size)
 
-                group = Comm_OP.split_group([0,2])
+                group = Comm_OP.split_group([[0,1]])
                 print(f"get_world_size {get_world_size()}")
 
-                num = tensor.QTensor(np.random.rand(5,4)+get_local_rank()*100)
+                num = tensor.QTensor(np.random.rand(5,4)+get_local_rank()*100,device=pyvqnet.DEV_GPU_0+get_local_rank())
                 print(f"before rank {Comm_OP.getRank()}  {num}\n")
 
-                num = Comm_OP.all_gather_group(num,group)
-                print(f"after rank {Comm_OP.getRank()}  {num}\n")
-
-
-                num = tensor.QTensor(np.random.rand(5)+get_local_rank()*100)
-                print(f"before rank {Comm_OP.getRank()}  {num}\n")
-
-                num = Comm_OP.all_gather_group(num,group)
-                print(f"after rank {Comm_OP.getRank()}  {num}\n")
-
-                num = tensor.QTensor(np.random.rand(3,5,4)+get_local_rank()*100)
-                print(f"before rank {Comm_OP.getRank()}  {num}\n")
-
-                num = Comm_OP.all_gather_group(num,group)
+                num = Comm_OP.all_gather_group(num,group[0])
                 print(f"after rank {Comm_OP.getRank()}  {num}\n")
 
 
             if __name__ == "__main__":
-                world_size = 3
+                world_size = 2
                 processes = []
                 mp.set_start_method("spawn")
                 for rank in range(world_size):
@@ -9164,5 +9154,4 @@ CommController
 
                 for p in processes:
                     p.join()
-            
 

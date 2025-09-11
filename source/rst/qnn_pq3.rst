@@ -308,6 +308,163 @@ When you install the latest version of pyqpanda3, you can use this interface to 
         print(l.m_para.grad)
         print(x.grad)
 
+
+QuantumLayerAdjoint
+============================
+
+.. py:class:: pyvqnet.qnn.pq3.quantumlayer.QuantumLayerAdjoint(pq3_vqc_circuit, param_num, pauli_dicts, dtype = None, name="")
+
+    This class uses the pyqpanda3 VQCircuit interface (https://qcloud.originqc.com.cn/document/qpanda-3/d8/d94/tutorial_variational_quantum_circuit.html) to compute the gradients of parameters in a quantum circuit with respect to the Hamiltonian using the adjoint method.
+
+    This class supports batch input and multiple Hamiltonian outputs.
+
+    .. note::
+
+        When using this interface, you must construct the circuit using logic gates from VQCircuit.
+
+        Currently, limited logic gates are supported; an exception will be thrown if unsupported.
+
+        The ``pq3_vqc_circuit`` input parameter can only contain two parameters, `x` and `param`, which must be a one-dimensional array or list.
+
+        In the ``pq3_vqc_circuit`` function, users must use ``pyqpanda3.vqcircuit.VQCircuit().set_Param`` to customize how inputs and parameters are handled.
+
+        In addition, users must pre-enter the number of parameters in ``param_num``. This interface will initialize a parameter ``m_para`` with a length of ``param_num``.
+
+        See the example below.
+
+    :param pq3_vqc_circuit: Customize the pyqpanda3 VQCircuit circuit.
+    :param param_num: Number of parameters. :param pauli_dicts: Expected observations, can be a list.
+    :param dtype: Parameter type, kfloat32 or kfloat64, default: None, use kfloat32.
+    :param name: The name of this interface.
+    :return: Returns a QuantumLayerAdjoint instance
+
+
+    Example::
+
+        from pyvqnet.qnn.pq3 import QuantumLayerAdjoint
+        from pyvqnet import tensor
+
+        from pyqpanda3.vqcircuit import VQCircuit
+        import pyqpanda3 as pq3
+
+        l = 3
+        n = 7
+        def pqctest(x,param):
+            vqc = VQCircuit()
+            vqc.set_Param([len(param) +len(x)])
+            w_offset = len(x)
+            for j in range(len(x)):
+                vqc << pq3.core.RX(j, vqc.Param([j  ]))
+            for j in range(l):
+                for i in range(n - 1):
+                    vqc << pq3.core.CNOT(i, i + 1)
+                for i in range(n):
+                    vqc << pq3.core.RX(i, vqc.Param([w_offset + 3 * n * j + i]))
+                        
+                    vqc << pq3.core.RZ(i, vqc.Param([w_offset + 3 * n * j + i + n]))
+                    vqc << pq3.core.RY(i, vqc.Param([w_offset + 3 * n * j + i + 2 * n]))
+            
+            return vqc
+
+        Xn_string = ' '.join([f'X{i}' for i in range(n)])
+        pauli_dict  = {Xn_string:1.}
+
+        layer = QuantumLayerAdjoint(pqctest,3*l*n,pauli_dict)
+
+        x = tensor.randn([2,5])
+        x.requires_grad = True
+        y = layer(x)
+        y.backward()
+        print(layer.m_para.grad)
+        print(x.grad)
+
+        Xn_string = ' '.join([f'X{i}' for i in range(n)])
+        Zn_string = ' '.join([f'Z{i}' for i in range(n)])
+        pauli_dict  = {Xn_string:1.,Zn_string:0.5}
+
+        layer = QuantumLayerAdjoint(pqctest,3*l*n,pauli_dict)
+
+        x = tensor.randn([2,5])
+        x.requires_grad = True
+        y = layer(x)
+        y.backward()
+        print(layer.m_para.grad)
+        print(x.grad)
+
+        Xn_string = ' '.join([f'X{i}' for i in range(n)])
+        Zn_string = ' '.join([f'Z{i}' for i in range(n)])
+        pauli_dict  = {Xn_string:1.,Zn_string:0.5}
+
+        layer = QuantumLayerAdjoint(pqctest,3*l*n,pauli_dict)
+
+        x = tensor.randn([1,5])
+        x.requires_grad = True
+        y = layer(x)
+        y.backward()
+        print(layer.m_para.grad)
+        print(x.grad)
+
+        Xn_string = ' '.join([f'X{i}' for i in range(n)])
+        Zn_string = ' '.join([f'Z{i}' for i in range(n)])
+        pauli_dict  = [{Xn_string:1.,Zn_string:0.5},{Xn_string:1.,Zn_string:0.5}]
+
+        layer = QuantumLayerAdjoint(pqctest,3*l*n,pauli_dict)
+
+        x = tensor.randn([1,5])
+        x.requires_grad = True
+        y = layer(x)
+        y.backward()
+        print(layer.m_para.grad)
+        print(x.grad)
+
+        Xn_string = ' '.join([f'X{i}' for i in range(n)])
+        Zn_string = ' '.join([f'Z{i}' for i in range(n)])
+        pauli_dict  = [{Xn_string:1.,Zn_string:0.5},{Xn_string:1.,Zn_string:0.5}]
+
+        layer = QuantumLayerAdjoint(pqctest,3*l*n,pauli_dict)
+
+        x = tensor.randn([2,5])
+        x.requires_grad = True
+        y = layer(x)
+        y.backward()
+        print(layer.m_para.grad)
+        print(x.grad)
+        """
+        [-0.1086438, 0.1805159, 0.2619071,..., 0.1508062, 0.0329617,-0.0043367]
+        <QTensor [63] DEV_CPU kfloat32>
+
+        [[-0.0425088, 0.0187212,-0.0326243, 0.1314874,-0.0729216],
+        [-0.0972663,-0.0371378,-0.0455299,-0.0170686,-0.0328533]]
+        <QTensor [2, 5] DEV_CPU kfloat32>
+
+        [ 0.0706403,-0.1070583, 0.0547093,...,-0.0183769,-0.0742296, 0.0026942]
+        <QTensor [63] DEV_CPU kfloat32>
+
+        [[-0.07577  ,-0.1364278, 0.0220043, 0.0690343, 0.0281384],
+        [ 0.0075356,-0.1627405,-0.0381604, 0.1185545, 0.1409108]]
+        <QTensor [2, 5] DEV_CPU kfloat32>
+
+        [-0.0634308,-0.0128268, 0.0396237,...,-0.0350691,-0.116307 , 0.0164972]
+        <QTensor [63] DEV_CPU kfloat32>
+
+        [[-0.0823639,-0.0418629, 0.0105356, 0.0699336, 0.041226 ]]
+        <QTensor [1, 5] DEV_CPU kfloat32>
+
+        [-0.1281752, 0.0852512, 0.0678721,...,-0.080481 , 0.0202518,-0.0348869]
+        <QTensor [63] DEV_CPU kfloat32>
+
+        [[-0.0339751,-0.0330053,-0.0651799, 0.2171837,-0.1267595]]
+        <QTensor [1, 5] DEV_CPU kfloat32>
+
+        [ 0.305574 , 0.2730191, 0.0605986,...,-0.2138517,-0.2475468, 0.174026 ]
+        <QTensor [63] DEV_CPU kfloat32>
+
+        [[ 0.1867954,-0.0704528,-0.0603823,-0.0123921,-0.0938597],
+        [-0.041001 ,-0.2520995, 0.0683114,-0.0986969, 0.1000023]]
+        <QTensor [2, 5] DEV_CPU kfloat32>
+        """
+        
+
 grad
 ===============
 .. py:function:: pyvqnet.qnn.pq3.quantumlayer.grad(quantum_prog_func, input_params, *args)

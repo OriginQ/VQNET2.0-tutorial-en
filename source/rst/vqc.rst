@@ -3331,9 +3331,7 @@ ExpressiveEntanglingAnsatz
                 self.qm = QMachine(num_wires, dtype=dtype,grad_mode=grad_mode,save_ir=True)
                 self.c1 = ExpressiveEntanglingAnsatz(13,3,2)
                 self.measure = MeasureAll(obs = {
-                    'wires': [1],
-                    'observables': ['z'],
-                    'coefficient': [1]
+                    "Z1":1
                 })
 
             def forward(self, x, *args, **kwargs):
@@ -3767,18 +3765,22 @@ MeasureAll
 
 .. py:class:: pyvqnet.qnn.vqc.MeasureAll(obs,name="")
 
-    Calculates the measurement results of quantum circuits. Supports input observables ``obs`` as a dictionary consisting of observables `observables`, wires `wires`, coefficients `coefficient` key-value pairs, or a list of key-value pair dictionaries.
+    Computes the measurement results of a quantum circuit. Supports input of observables ``obs``. This can be in dictionary format, representing an observable composed of multiple Pauli operators, or in list format, representing a list of observables with multiple expected values.
     For example:
 
-        {\'wires\': [0, 1], \'observables\': [\'x\', \'i\'],\'coefficient\':[0.23,-3.5]}
+        {\'X0\': 0.23} indicates a PauliX effect on qubit 0, with a coefficient of 0.23.
 
-        {\'X0\': 0.23}
+        {\'X1 Z2\': 2.4,\'Y2\': -0.5} corresponds to the observed value 2.4 * X1 @ Z2 - 0.5 * Y2.
 
-        [{\'wires\': [0, 2, 3],\'observables\': [\'X\', \'Y\', \'Z\'],\'coefficient\': [1, 0.5, 0.4]}, {\'wires\': [0, 1, 2],\'observables\': [\'X\', \'Y\', \'Z\'],\'coefficient\': [1, 0.5, 0.4]}]
+        [{\'X1 Z2\': 4,\'Z1 Z0\': 3},{\'X1 Y2 Z0\': 3.5}] corresponds to the two observed values 4 * X1 @ Z2 + 3 * Z1 @ Z0 and 3.5 * X1 @ Y2 @ Z0.
 
-        [{\'X1 Z2 I0\':4,\'Z1 Z0\':3},\{'wires\': [0, 1], \'observables\': [\'x\', \'i\'],\'coefficient\':[0.23,-3.5]}]
+    :param obs: observables  pauli operator string dict.
 
-        {\'X1 Z2 I0\':4,\'Z1 Z0\':3}
+    .. note::
+
+        If ``obs`` is a list, the measurement result calculated using this class is generally [b, obs list length], where b is the batch number b of q_machine.reset_states(b).
+
+        If ``obs`` is a dictionary, the measurement result calculated using this class is generally [b,1], where b is the batch number b of q_machine.reset_states(b).
 
     .. py:method:: forward(q_machine)
 
@@ -3787,11 +3789,6 @@ MeasureAll
         :param q_machine: quantum state vector simulator
         :return: measurement result, QTensor.
 
-    .. note::
-
-        If ``obs`` is a list, the measurement result calculated using this class is generally [b, obs list length], where b is the batch number b of q_machine.reset_states(b).
-
-        If ``obs`` is a dictionary, the measurement result calculated using this class is generally [b,1], where b is the batch number b of q_machine.reset_states(b).
 
 
     Example::
@@ -3809,20 +3806,14 @@ MeasureAll
         cnot(q_machine=qm,wires=[0,2])
         rz(q_machine=qm,wires=3,params=x[:,[1]])
         obs_list = [{
-            'wires': [0, 2, 3],
-            'observables': ['X', 'Y', 'Z'],
-            'coefficient': [1, 0.5, 0.4]
+            "Z0 X2":1
         }, {
-            'wires': [0, 1, 2],
-            'observables': ['X', 'Y', 'Z'],
-            'coefficient': [1, 0.5, 0.4]
+            "Z0 Y2":1
         }]
         ma = MeasureAll(obs=obs_list)
         y =ma(q_machine=qm)
         print(y)
-
-        # [[0.4000001 0.3980018]
-        #  [0.4000001 0.3980018]]
+ 
 
 Samples
 ----------------------------
@@ -4634,9 +4625,7 @@ QuantumLayerAdjoint
                 self.tlayer = T(wires=1)
                 self.cnot = CNOT(wires=[0, 1])
                 self.measure = MeasureAll(obs = {
-                    'wires': [1],
-                    'observables': ['x'],
-                    'coefficient': [1]
+                    "X1":1
                 })
 
             def forward(self, x, *args, **kwargs):
@@ -4673,128 +4662,6 @@ QuantumLayerAdjoint
         #  [-0.0778451],
         #  [-0.0778451],
         #  [-0.0778451]]
-
-
-QuantumLayerES
----------------------------------------------------------------
-
-.. py:class:: pyvqnet.qnn.vqc.QuantumLayerES(general_module: nn.Module, q_machine: pyvqnet.qnn.vqc.QMachine, name="", sigma = np.pi / 24)
-
-   Automatically Differentiable QuantumLayer Layer for Gradient Calculation According to Evolutionary Strategies, refer to `Learning to learn with an evolutionary strategy Learning to learn with an evolutionary strategy <https://arxiv.org/abs/2310.17402>`_ .
-
-    :param general_module: An instance of `pyvqnet.nn.QModule` built using only the quantum line interface under `pyvqnet.qnn.vqc`.
-    :param q_machine: The QMachine from the general_module definition.
-    :param name: The name of the layer, defaults to "".
-    :param sigma: The sampling variance of the multivariate sigma distribution.
-
-    .. note::
-
-        The QMachine for general_module should have grad_method = "ES".
-
-        Variable division lines consisting of the following parametric logic gates `RX`, `RY`, `RZ`, `PhaseShift`, `RXX`, `RYY`, `RZZ`, `RZX`, `U1`, `U2`, `U3`, 
-        and other non-parametric logic gates are supported at present.
-
-    Example::
-
-        from pyvqnet import tensor
-        from pyvqnet.qnn.vqc import QuantumLayerES, QMachine, RX, RY, CNOT, T, MeasureAll, RZ, VQC_HardwareEfficientAnsatz
-        import pyvqnet
-
-
-        class QModel(pyvqnet.nn.Module):
-            def __init__(self, num_wires, dtype, grad_mode=""):
-                super(QModel, self).__init__()
-
-                self._num_wires = num_wires
-                self._dtype = dtype
-                self.qm = QMachine(num_wires, dtype=dtype, grad_mode=grad_mode)
-                self.rx_layer = RX(has_params=True, trainable=False, wires=0)
-                self.ry_layer = RY(has_params=True, trainable=False, wires=1)
-                self.rz_layer = RZ(has_params=True, trainable=False, wires=1)
-                self.rz_layer2 = RZ(has_params=True, trainable=True, wires=1)
-
-                self.rot = VQC_HardwareEfficientAnsatz(6, ["rx", "RY", "rz"],
-                                                    entangle_gate="cnot",
-                                                    entangle_rules="linear",
-                                                    depth=5)
-                self.tlayer = T(wires=1)
-                self.cnot = CNOT(wires=[0, 1])
-                self.measure = MeasureAll(obs = {
-                    'wires': [1],
-                    'observables': ['x'],
-                    'coefficient': [1]
-                })
-
-            def forward(self, x, *args, **kwargs):
-                self.qm.reset_states(x.shape[0])
-
-                self.rx_layer(params=x[:, [0]], q_machine=self.qm)
-                self.cnot(q_machine=self.qm)
-                self.ry_layer(params=x[:, [1]], q_machine=self.qm)
-                self.tlayer(q_machine=self.qm)
-                self.rz_layer(params=x[:, [2]], q_machine=self.qm)
-                self.rz_layer2(q_machine=self.qm)
-                self.rot(q_machine=self.qm)
-                rlt = self.measure(q_machine=self.qm)
-
-                return rlt
-
-
-        input_x = tensor.QTensor([[0.1, 0.2, 0.3]])
-
-        input_x = tensor.broadcast_to(input_x, [40, 3])
-
-        input_x.requires_grad = True
-
-        qunatum_model = QModel(num_wires=6,
-                            dtype=pyvqnet.kcomplex64,
-                            grad_mode="ES")
-
-        ES_model = QuantumLayerES(qunatum_model, qunatum_model.qm)
-
-        batch_y = ES_model(input_x)
-        batch_y.backward()
-        print(batch_y)
-        # [[-0.1664365],
-        #  [-0.1664365],
-        #  [-0.1664365],
-        #  [-0.1664365],
-        #  [-0.1664365],
-        #  [-0.1664365],
-        #  [-0.1664365],
-        #  [-0.1664365],
-        #  [-0.1664365],
-        #  [-0.1664365],
-        #  [-0.1664365],
-        #  [-0.1664365],
-        #  [-0.1664365],
-        #  [-0.1664365],
-        #  [-0.1664365],
-        #  [-0.1664365],
-        #  [-0.1664365],
-        #  [-0.1664365],
-        #  [-0.1664365],
-        #  [-0.1664365],
-        #  [-0.1664365],
-        #  [-0.1664365],
-        #  [-0.1664365],
-        #  [-0.1664365],
-        #  [-0.1664365],
-        #  [-0.1664365],
-        #  [-0.1664365],
-        #  [-0.1664365],
-        #  [-0.1664365],
-        #  [-0.1664365],
-        #  [-0.1664365],
-        #  [-0.1664365],
-        #  [-0.1664365],
-        #  [-0.1664365],
-        #  [-0.1664365],
-        #  [-0.1664365],
-        #  [-0.1664365],
-        #  [-0.1664365],
-        #  [-0.1664365],
-        #  [-0.1664365]]
 
 
 DataParallelVQCAdjointLayer
@@ -5067,9 +4934,7 @@ vqc_to_originir_list
                 self.tlayer = T(wires=1)
                 self.cnot = CNOT(wires=[0, 1])
                 self.measure = MeasureAll(obs = {
-                    'wires': [1],
-                    'observables': ['x'],
-                    'coefficient': [1]
+                    "X1":1
                 })
 
             def forward(self, x, *args, **kwargs):
@@ -5300,7 +5165,7 @@ model_summary
 QNG
 ---------------------------------------------------------------
 
-.. py:class:: pyvqnet.qnn.vqc.qng.QNG(qmodel, stepsize=0.01)
+.. py:class:: pyvqnet.qnn.vqc.qng.QNG(qmodel, stepsize=0.01, momentum=0)
 
     Quantum machine learning models generally use the gradient descent method to optimize parameters in variable quantum logic circuits. The formula of the classic gradient descent method is as follows:
 
@@ -5319,7 +5184,7 @@ QNG
     This tensor converts the steepest descent in the quantum circuit parameter space to the steepest descent in the distribution space.
     The formula for the quantum natural gradient is as follows:
 
-    .. math:: \theta_{t+1} = \theta_t - \eta g^{+}(\theta_t)\nabla \mathcal{L}(\theta),
+    .. math:: \theta_{t+1} = \theta_t + momentum(x^{(t)} - x^{(t-1)}) - \eta g^{+}(\theta_t)\nabla \mathcal{L}(\theta)
 
     where :math:`g^{+}` is the pseudo-inverse.
 
@@ -5327,7 +5192,7 @@ QNG
 
     :param qmodel: Quantum variational circuit model, you need to use `wrapper_calculate_qng` as the decorator of the forward function.
     :param stepsize: The step size of the gradient descent method, the default is 0.01.
-
+    :param momentum: Momentum, default is 0.
 
     .. note::
 
@@ -5450,9 +5315,7 @@ wrapper_single_qubit_op_fuse
                 self.tlayer = T(wires=1)
                 self.cnot = CNOT(wires=[0, 1])
                 self.measure = MeasureAll(obs={
-                    'wires': [1],
-                    'observables': ['x'],
-                    'coefficient': [1]
+                    "X1":1
                 })
 
             @wrapper_single_qubit_op_fuse
@@ -5544,9 +5407,7 @@ wrapper_commute_controlled
                 self.t = T(wires=0)
                 self.rz = RZ(has_params=True, wires=1, dtype=dtype)
                 self.measure = MeasureAll(obs={
-                    'wires': [0],
-                    'observables': ['z'],
-                    'coefficient': [1]
+                                "Z0":1
                 })
 
             @partial(wrapper_commute_controlled, direction="left")
@@ -5643,9 +5504,7 @@ wrapper_merge_rotations
                 self.qm = QMachine(num_wires, dtype=dtype)
 
                 self.measure = MeasureAll(obs={
-                    'wires': [0],
-                    'observables': ['z'],
-                    'coefficient': [1]
+                                "Z0":1
                 })
 
             @wrapper_merge_rotations
@@ -5745,9 +5604,7 @@ wrapper_compile
                 self.rz = RZ(has_params=True, wires=1, dtype=dtype)
 
                 self.measure = MeasureAll(obs={
-                    'wires': [0],
-                    'observables': ['z'],
-                    'coefficient': [1]
+                                "Z0":1
                 })
 
             def forward(self, x, *args, **kwargs):
@@ -5809,9 +5666,7 @@ wrapper_compile
                 self.rz = RZ(has_params=True, wires=1, dtype=dtype)
 
                 self.measure = MeasureAll(obs={
-                    'wires': [0],
-                    'observables': ['z'],
-                    'coefficient': [1]
+                                "Z0":1
                 })
 
             @partial(wrapper_compile)
@@ -5896,3 +5751,86 @@ wrapper_compile
         # total parameter gates: 11
         # total parameters: 27
         # #################################################
+
+
+
+QNSPSAOptimizer
+---------------------------------------------------------------
+
+.. py:class:: pyvqnet.qnn.vqc.qng.QNSPSAOptimizer(stepsize=1e-3,regularization=1e-3,finite_diff_step=1e-2,resamplings=1,blocking=True,history_length=5,seed=None)
+
+    Quantum Natural SPSA (QNSPSA) Optimizer is a second-order stochastic optimizer for quantum circuits that combines gradient descent with Fubini-Study metric tensor information.
+    Gradient estimation using symmetric perturbations (similar to SPSA):
+
+    .. math::
+        \begin{equation}
+        \widehat{\nabla f}(\mathbf{x}) \approx \frac{f(\mathbf{x}+\epsilon \mathbf{h})-f(\mathbf{x}-\epsilon \mathbf{h})}{2\epsilon}
+        \end{equation}
+    
+    Compute the Fubini-Study metric from the state overlap measure:
+
+    .. math::
+        \begin{equation}
+        \widehat{\mathbf{g}}(\mathbf{x}) \approx \frac{\delta F}{8\epsilon^2}(\mathbf{h}_1\mathbf{h}_2^\intercal + \mathbf{h}_2\mathbf{h}_1^\intercal)
+        \end{equation}
+    .. math::
+        \begin{equation}
+        \delta F = F(\mathbf{x}+\epsilon\mathbf{h}_1+\epsilon\mathbf{h}_2) - F(\mathbf{x}+\epsilon\mathbf{h}_1) - F(\mathbf{x}-\epsilon\mathbf{h}_1+\epsilon\mathbf{h}_2) + F(\mathbf{x}-\epsilon\mathbf{h}_1)
+        \end{equation}
+    
+    where δF measures the overlap difference evaluations of the four circuits.
+
+    Update rule:
+
+    .. math::
+        \begin{equation}
+        \mathbf{x}^{(t+1)} = \mathbf{x}^{(t)} - \eta \widehat{\mathbf{g}}^{-1}(\mathbf{x}^{(t)})\widehat{\nabla f}(\mathbf{x}^{(t)})
+        \end{equation}
+    
+    :param stepsize: User-defined learning rate hyperparameter :math:`\eta` (default: 1e-3)
+    :param regularization: Regularization term :math:`\beta` used for the Fubini-Study metric tensor, for numerical stability (default: 1e-3)
+    :param finite_diff_step: Step size :math:`\epsilon` used to compute finite difference gradients and the Fubini-Study metric tensor (default: 1e-2)
+    :param resamplings: Average number of samples per parameter update (default: 1)
+    :param blocking: When True, only accept updates that result in a loss no greater than the sum of the previous loss values (to help convergence) (default: True)
+    :param history_length: When ``blocking`` is True, the tolerance is set to the average of the previous ``history_length`` cost values (default: 5)
+    :param seed: seed for random sampling (default: None)
+
+    .. py:method:: step(qmodel, *args, **kwargs)
+        Updates trainable parameters once using the optimizer.
+
+        :param qmodel: Trainable quantum model
+        :param args: Variable-length trainable QTensor for qmodel.
+        :param kwargs: Variable-length keyword arguments for qmodel.
+
+        :return: Updated parameters.
+
+        Examples::
+
+            from pyvqnet.tensor import QTensor,ones,randu
+            from pyvqnet.qnn.vqc import rx,cry,QMachine,MeasureAll,QModule
+
+            num_qubits = 2
+            class QModuleDemo(QModule):
+                def __init__(self, name=""):
+                    super().__init__(name)
+                    self.qm = QMachine(num_qubits)
+                    self.ma = MeasureAll({"Z1 Z0":1})
+                def forward(self,params):
+                    qm = self.qm
+                    qm.reset_states(1)
+                    rx(qm, 0, params[0])
+                    cry(qm, [0, 1], params[1])
+                    return self.ma(qm)
+
+            qmd = QModuleDemo()
+
+            from pyvqnet.qnn.vqc.qnspsa import QNSPSAOptimizer
+            params = QTensor([0.37454012, 0.95071431])
+
+            params.requires_grad = True
+            opt =  QNSPSAOptimizer(stepsize=5e-2,seed=1)
+            for i in range(51):
+                params = opt.step(qmd, params)
+                loss =qmd(params)
+                if i % 10 == 0:
+                    print(f"Step {i}: cost = {loss}")
