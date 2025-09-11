@@ -1052,7 +1052,7 @@ Linear
 .. py:class:: pyvqnet.nn.Linear(input_channels, output_channels, weight_initializer=None, bias_initializer=None,use_bias=True, dtype=None, name: str = "")
 
     Linear module (fully-connected layer).
-    :math:`y = Ax + b`
+    :math:`y = x@A.T + b`
 
     :param input_channels: `int` - number of inputs features
     :param output_channels: `int` - number of output features
@@ -1741,41 +1741,36 @@ Interpolate
     Example::
 
         from pyvqnet.nn import Interpolate
-        from pyvqnet.tensor import tensor 
+        from pyvqnet.tensor import tensor
         import pyvqnet
         pyvqnet.utils.set_random_seed(1)
 
         import numpy as np
         np.random.seed(0)
 
-        from time import time
         np_ = np.random.randn(36).reshape((1, 1, 6, 6)).astype(np.float32)
         mode_ = "bilinear"
         size_ = 3
 
-        class model_vqnet(pyvqnet.nn.Module):
+        class Model(pyvqnet.nn.Module):
 
             def __init__(self):
                 super().__init__()
                 self.inter = Interpolate(size = size_, mode=mode_)
                 self.ln = pyvqnet.nn.Linear(9, 1)
-                
+
             def forward(self, x):
                 x = self.inter(x).reshape((1,-1))
                 x = self.ln(x)
-                return 2 * x 
+                return 2 * x
 
-        input_vqnet = tensor.QTensor(np_,  dtype=pyvqnet.kfloat32, requires_grad=True).toGPU()
-        model = model_vqnet().toGPU()
+        input_vqnet = tensor.QTensor(np_,  dtype=pyvqnet.kfloat32, requires_grad=True)
         loss_pyvqnet = pyvqnet.nn.MeanSquaredError()
-        time3 = time()
-        output_vqnet = model(input_vqnet)
-        time4 = time()
-        print(f"output_vqnet {output_vqnet} time {time4 - time3}")
-
-        l = loss_pyvqnet(tensor.QTensor([[1.0]]).toGPU(), output_vqnet)
+        model_vqnet = Model()
+        output_vqnet = model_vqnet(input_vqnet)
+        l = loss_pyvqnet(tensor.QTensor([[1.0]]), output_vqnet)
         l.backward()
-        print(model.parameters()[0].grad)
+        print(model_vqnet.parameters()[0].grad)
 
 
 fuse_module
@@ -3628,7 +3623,7 @@ CommController
 
 __init__
 ^^^^^^^^^^^^^^^^^^^^^^
-.. py:class:: pyvqnet.distributed.ControllComm.CommController(backend,rank=None,world_size=None)
+.. py:class:: pyvqnet.distributed.ControlComm.CommController(backend,rank=None,world_size=None)
     
     CommController is used to control the controller of data communication under cpu and gpu, by setting the parameter `backend` to generate the controller for cpu(mpi) and gpu(nccl). (Currently, the distributed computing function only supports the use of linux operating system system )
 
@@ -3695,20 +3690,25 @@ __init__
             # vqnetrun -n 2 python test.py 
 
 
- 
-    .. py:method:: ncclSplitGroup(rankL)
-    
-        Used to divide communication groups on the gpu.
+    .. py:method:: split_group(rankL)
+        
+        Divide multiple communication groups according to the process number list set by the input parameter.
 
-        :param rankL: List of process groups.
+        :param rankL: A list of process group ranks.
+
+        :return: When the backend is `nccl`, a tuple of process group ranks is returned. 
+                 When the backend is `mpi`, returns a list whose length is equal to the number of groups; each element is a tuple (comm, rank), where comm is the MPI communicator of the group and rank is the sequence number within the group..
 
         Examples::
-
-            from pyvqnet.distributed import CommController
-            Comm_OP = CommController("nccl")
             
-            Comm_OP.ncclSplitGroup([[0, 1]])
-            # vqnetrun -n 2 python test.py 
+            from pyvqnet.distributed import CommController,get_rank,get_local_rank
+            from pyvqnet.tensor import tensor
+            import numpy as np
+            Comm_OP = CommController("mpi")
+
+            groups = Comm_OP.split_group([[0, 1],[2,3]])
+            print(groups)
+            #[[<mpi4py.MPI.Intracomm object at 0x7f53691f3230>, [0, 3]], [<mpi4py.MPI.Intracomm object at 0x7f53691f3010>, [2, 1]]]
 
  
     .. py:method:: barrier()
@@ -3725,7 +3725,7 @@ __init__
             Comm_OP.barrier()
 
  
-    .. py:method:: GetDeviceNum()
+    .. py:method:: get_device_num()
     
         Used to get the number of graphics cards on the current node, (only supported on gpu).
 
@@ -3736,7 +3736,7 @@ __init__
             from pyvqnet.distributed import CommController
             Comm_OP = CommController("nccl")
             
-            Comm_OP.GetDeviceNum()
+            Comm_OP.get_device_num()
             # python test.py
 
 
@@ -3884,13 +3884,13 @@ __init__
             # vqnetrun -n 2 python test.py
 
  
-    .. py:method:: allreduce_group(tensor, c_op = "avg", GroupComm = None)
+    .. py:method:: allreduce_group(tensor, c_op = "avg", group = None)
     
         The group allreduce communication interface.
 
         :param tensor: input.
         :param c_op: Calculation.
-        :param GroupComm: Communication group, only needed by mpi for intra-group communication.
+        :param group: Communication group. When using the mpi backend, enter the group generated by `init_group` or `split_group` corresponding to the communication group. When using the nccl backend, enter the group number generated by `split_group`.
 
 
         Examples::
@@ -3900,25 +3900,25 @@ __init__
             import numpy as np
             Comm_OP = CommController("nccl")
 
-            Comm_OP.ncclSplitGroup([[0, 1]])
+            groups = Comm_OP.split_group([[0, 1]])
 
             complex_data = tensor.QTensor([3+1j, 2, 1 + get_rank()],dtype=8).reshape((3,1)).toGPU(1000+ get_local_rank())
 
             print(f"allreduce_group before rank {get_rank()}: {complex_data}")
 
-            Comm_OP.allreduce_group(complex_data, c_op="sum")
+            Comm_OP.allreduce_group(complex_data, c_op="sum",group = groups[0])
             print(f"allreduce_group after rank {get_rank()}: {complex_data}")
             # vqnetrun -n 2 python test.py
 
  
-    .. py:method:: reduce_group(tensor, root = 0, c_op = "avg", GroupComm = None)
+    .. py:method:: reduce_group(tensor, root = 0, c_op = "avg", group = None)
     
-        Intra-group REDUCE communication interface.
+        Intra-group reduce communication interface.
 
         :param tensor: Input.
         :param root: Specify the process number.
         :param c_op: Calculation.
-        :param GroupComm: Communication group, only needed by mpi for intra-group communication.
+        :param group: Communication group. When using the mpi backend, enter the group generated by `init_group` or `split_group` corresponding to the communication group. When using the nccl backend, enter the group number generated by `split_group`.
 
         Examples::
             
@@ -3927,24 +3927,24 @@ __init__
             import numpy as np
             Comm_OP = CommController("nccl")
 
-            Comm_OP.ncclSplitGroup([[0, 1]])
+            groups = Comm_OP.split_group([[0, 1]])
 
             complex_data = tensor.QTensor([3+1j, 2, 1 + get_rank()],dtype=8).reshape((3,1)).toGPU(1000+ get_local_rank())
 
             print(f"reduce_group before rank {get_rank()}: {complex_data}")
 
-            Comm_OP.reduce_group(complex_data, c_op="sum")
+            Comm_OP.reduce_group(complex_data, c_op="sum",group = groups[0])
             print(f"reduce_group after rank {get_rank()}: {complex_data}")
             # vqnetrun -n 2 python test.py
 
  
-    .. py:method:: broadcast_group(tensor, root = 0, GroupComm = None)
+    .. py:method:: broadcast_group(tensor, root = 0, group = None)
     
         Intra-group broadcast communication interface.
 
         :param tensor: Input.
-        :param root: Specify the process number.
-        :param GroupComm: Communication group, only needed by mpi for intra-group communication.
+        :param root: Specify the process number to broadcast from, default:0.
+        :param group: Communication group. When using the mpi backend, enter the group generated by `init_group` or `split_group` corresponding to the communication group. When using the nccl backend, enter the group number generated by `split_group`.
 
         Examples::
             
@@ -3953,25 +3953,25 @@ __init__
             import numpy as np
             Comm_OP = CommController("nccl")
 
-            Comm_OP.ncclSplitGroup([[0, 1]])
+            groups = Comm_OP.split_group([[0, 1]])
 
             complex_data = tensor.QTensor([3+1j, 2, 1 + get_rank()],dtype=8).reshape((3,1)).toGPU(1000+ get_local_rank())
 
             print(f"broadcast_group before rank {get_rank()}: {complex_data}")
 
-            Comm_OP.broadcast_group(complex_data)
+            Comm_OP.broadcast_group(complex_data,group = groups[0])
             Comm_OP.barrier()
             print(f"broadcast_group after rank {get_rank()}: {complex_data}")
             # vqnetrun -n 2 python test.py
 
 
  
-    .. py:method:: allgather_group(tensor, GroupComm = None)
+    .. py:method:: allgather_group(tensor, group = None)
     
         The group allgather communication interface.
 
         :param tensor: Input.
-        :param GroupComm: Communication group, only needed by mpi for intra-group communication.
+        :param group: Communication group. When using the mpi backend, enter the group generated by `init_group` or `split_group` corresponding to the communication group. When using the nccl backend, enter the group number generated by `split_group`.
 
         Examples::
             
@@ -3980,13 +3980,13 @@ __init__
             import numpy as np
             Comm_OP = CommController("nccl")
 
-            Comm_OP.ncclSplitGroup([[0, 1]])
+            groups = Comm_OP.split_group([[0, 1]])
 
             complex_data = tensor.QTensor([3+1j, 2, 1 + get_rank()],dtype=8).reshape((3,1)).toGPU(1000+ get_local_rank())
 
             print(f"allgather_group before rank {get_rank()}: {complex_data}")
 
-            complex_data = Comm_OP.allgather_group(complex_data)
+            complex_data = Comm_OP.allgather_group(complex_data,group = groups[0])
             print(f"allgather_group after rank {get_rank()}: {complex_data}")
             # vqnetrun -n 2 python test.py
 
@@ -4131,7 +4131,7 @@ get_local_rank
 
 Use ``get_local_rank`` to get the process number on the current machine.
 
-.. py:function:: pyvqnet.distributed.ControllComm.get_local_rank()
+.. py:function:: pyvqnet.distributed.ControlComm.get_local_rank()
 
     Used to get the current process number on the current machine.
 
@@ -4139,7 +4139,7 @@ Use ``get_local_rank`` to get the process number on the current machine.
 
     Example::
 
-        from pyvqnet.distributed.ControllComm import get_local_rank
+        from pyvqnet.distributed.ControlComm import get_local_rank
 
         print(get_local_rank())
         # vqnetrun -n 2 python test.py
@@ -4148,7 +4148,7 @@ get_rank
 =================================
 Use ``get_rank`` to get the process number on the current machine.
 
-.. py:function:: pyvqnet.distributed.ControllComm.get_rank()
+.. py:function:: pyvqnet.distributed.ControlComm.get_rank()
 
     Used to get the process number of the current process.
 
@@ -4156,7 +4156,7 @@ Use ``get_rank`` to get the process number on the current machine.
 
     Example::
 
-        from pyvqnet.distributed.ControllComm import get_rank
+        from pyvqnet.distributed.ControlComm import get_rank
 
         print(get_rank())
         # vqnetrun -n 2 python test.py
@@ -4165,9 +4165,9 @@ init_group
 =================================
 Use ``init_group`` to initialise cpu-based process groups based on the given list of process numbers.
 
-.. py:function:: pyvqnet.distributed.ControllComm.init_group(rank_lists)
+.. py:function:: pyvqnet.distributed.ControlComm.init_group(rank_lists)
 
-    Used to initialise the process communication group.
+    Used to initialise the process communication group for `mpi` backend.
 
     :param rank_lists: List of communication process groups.
     :return: A list of initialised process groups.
@@ -4184,7 +4184,7 @@ Use ``init_group`` to initialise cpu-based process groups based on the given lis
 
         for comm_ in group_l:
             if Comm_OP.getRank() in comm_[1]:
-                Comm_OP.allreduce_group(num, "sum", GroupComm = comm_[0])
+                Comm_OP.allreduce_group(num, "sum", group = comm_[0])
                 print(f"rank {Comm_OP.getRank()}  {num} after")
         
         # vqnetrun -n 3 python test.py
@@ -4854,3 +4854,184 @@ RowParallelLinear
         time2 = time()
 
         print(f'Accuracy of the model on the 10000 Train images: {train_acc}% time cost {time2 - time1}')
+
+
+Bit Reordering
+=================================
+
+Qubit reordering is a technique in bit parallelism. Its core goal is to reduce the number of bit transformations required by bit parallelism by changing the order of quantum logic gates. The following modules are required for building large-bit quantum circuits based on bit parallelism. Refer to the paper `Lazy Qubit Reordering for Accelerating Parallel State-Vector-based Quantum Circuit Simulation <https://export.arxiv.org/abs/2410.04252>`__.
+
+The following interfaces require `mpi` to launch multiple processes for computation.
+
+DistributeQMachine
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.. py:class:: pyvqnet.distributed.qubits_reorder.DistributeQMachine(num_wires, dtype, grad_mode)
+    
+    A class for simulating bit-parallel variational quantum computations, including quantum states on a subset of bits on each node. Each node applies for a distributed quantum variational circuit simulation via MPI. The value of N must be equal to a power of 2 raised to the number of distributed parallel bits, `global_qubit`, and can be configured via `set_qr_config`.
+
+    :param num_wires: The number of bits in the complete quantum circuit.
+    :param dtype: The data type of the computation data. The default is pyvqnet.kcomplex64, corresponding to the parameter precision of pyvqnet.kfloat32.
+    :param grad_mode: Set to adjoint when backpropagating ``DistQuantumLayerAdjoint``.
+
+    .. note::
+
+        The number of bits input is the number of bits required for the entire quantum circuit. DistributeQMachine will build a quantum simulator based on the global number of bits, which is ``nums_wires - global_qubit``.
+
+        Backpropagation must be based on ``DistQuantumLayerAdjoint``.
+
+    .. warning::
+
+        This interface only supports running under Linux;
+
+        The bit-parallel parameters in ``DistributeQMachine`` must be configured, as shown in the example, including:
+
+        .. code-block::
+
+            qm.set_just_defined(True)
+            qm.set_save_op_history_flag(True) # open save op
+            qm.set_qr_config({'qubit': total qubits number, 'global_qubit':  distributed qubits number})
+    
+    
+    Examples::
+
+        from pyvqnet.distributed import get_rank
+        from pyvqnet import tensor
+        from pyvqnet.qnn.vqc import rx, ry, cnot, MeasureAll,rz
+        import pyvqnet
+        from pyvqnet.distributed.qubits_reorder import DistributeQMachine,DistQuantumLayerAdjoint
+        pyvqnet.utils.set_random_seed(123)
+
+
+        qubit = 10
+        batch_size = 5
+
+        class QModel(pyvqnet.nn.Module):
+            def __init__(self, num_wires, dtype, grad_mode=""):
+                super(QModel, self).__init__()
+
+                self._num_wires = num_wires
+                self._dtype = dtype
+                self.qm = DistributeQMachine(num_wires, dtype=dtype, grad_mode=grad_mode)
+                
+                self.qm.set_just_defined(True)
+                self.qm.set_save_op_history_flag(True) # open save op
+                self.qm.set_qr_config({"qubit": num_wires, # open qubit reordered, set config
+                                        "global_qubit": 1}) # global_qubit == log2(nproc)
+                
+                self.params = pyvqnet.nn.Parameter([qubit])
+
+                self.measure = MeasureAll(obs={
+                    "X5":1.0
+                })
+
+            def forward(self, x, *args, **kwargs):
+                self.qm.reset_states(x.shape[0])
+
+                for i in range(qubit):
+                    rx(q_machine=self.qm, params=self.params[i], wires=i)
+                    ry(q_machine=self.qm, params=self.params[3], wires=i)
+                    rz(q_machine=self.qm, params=self.params[4], wires=i)
+                cnot(q_machine=self.qm,  wires=[0, 1])
+                rlt = self.measure(q_machine=self.qm)
+                return rlt
+
+
+        input_x = tensor.QTensor([[0.1, 0.2, 0.3]], requires_grad=True).toGPU(pyvqnet.DEV_GPU_0+get_rank())
+
+        input_x = tensor.broadcast_to(input_x, [2, 3])
+
+        input_x.requires_grad = True
+
+        quantum_model = QModel(num_wires=qubit,
+                            dtype=pyvqnet.kcomplex64,
+                            grad_mode="adjoint").toGPU(pyvqnet.DEV_GPU_0+get_rank())
+
+        adjoint_model = DistQuantumLayerAdjoint(quantum_model)
+        adjoint_model.train()
+
+        batch_y = adjoint_model(input_x)
+        batch_y.backward()
+
+        print(batch_y)
+        # mpirun -n 2 python test.py
+
+DistQuantumLayerAdjoint
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.. py:class:: pyvqnet.distributed.qubits_reorder.DistQuantumLayerAdjoint(vqc_module,name)
+    
+    A DistQuantumLayer layer that computes gradients for parameters in bit-parallel computations using the adjoint matrix approach.
+
+    :param vqc_module: The input implicit ``DistributeQMachine`` module.
+    :param name: The module name.
+
+    .. note::
+
+        The input vqc_module module must contain ``DistributeQMachine``. Adjoint backpropagation gradient computations are performed based on ``DistributeQMachine`` in bit-parallel computations.
+
+    .. warning::
+
+        This interface is only supported on Linux;
+
+
+    Examples::
+
+        from pyvqnet.distributed import get_rank
+        from pyvqnet import tensor
+        from pyvqnet.qnn.vqc import rx, ry, cnot, MeasureAll,rz
+        import pyvqnet
+        from pyvqnet.distributed.qubits_reorder import DistributeQMachine,DistQuantumLayerAdjoint
+        pyvqnet.utils.set_random_seed(123)
+
+
+        qubit = 10
+        batch_size = 5
+
+        class QModel(pyvqnet.nn.Module):
+            def __init__(self, num_wires, dtype, grad_mode=""):
+                super(QModel, self).__init__()
+
+                self._num_wires = num_wires
+                self._dtype = dtype
+                self.qm = DistributeQMachine(num_wires, dtype=dtype, grad_mode=grad_mode)
+                
+                self.qm.set_just_defined(True)
+                self.qm.set_save_op_history_flag(True) # open save op
+                self.qm.set_qr_config({"qubit": num_wires, # open qubit reordered, set config
+                                            "global_qubit": 1}) # global_qubit == log2(nproc)
+                
+                self.params = pyvqnet.nn.Parameter([qubit])
+
+                self.measure = MeasureAll(obs={
+                    "X5":1.0
+                })
+
+            def forward(self, x, *args, **kwargs):
+                self.qm.reset_states(x.shape[0])
+
+                for i in range(qubit):
+                    rx(q_machine=self.qm, params=self.params[i], wires=i)
+                    ry(q_machine=self.qm, params=self.params[3], wires=i)
+                    rz(q_machine=self.qm, params=self.params[4], wires=i)
+                cnot(q_machine=self.qm,  wires=[0, 1])
+                rlt = self.measure(q_machine=self.qm)
+                return rlt
+
+
+        input_x = tensor.QTensor([[0.1, 0.2, 0.3]], requires_grad=True).toGPU(pyvqnet.DEV_GPU_0+get_rank())
+
+        input_x = tensor.broadcast_to(input_x, [2, 3])
+
+        input_x.requires_grad = True
+
+        quantum_model = QModel(num_wires=qubit,
+                            dtype=pyvqnet.kcomplex64,
+                            grad_mode="adjoint").toGPU(pyvqnet.DEV_GPU_0+get_rank())
+
+        adjoint_model = DistQuantumLayerAdjoint(quantum_model)
+        adjoint_model.train()
+
+        batch_y = adjoint_model(input_x)
+        batch_y.backward()
+
+        print(batch_y)
+        # mpirun -n 2 python test.py

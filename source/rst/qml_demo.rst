@@ -1689,6 +1689,7 @@ An automatic differentiation Model of convolution, quantum encoding, and measure
 .. code-block::
 
     #Quantum computing layer front pass and the definition of gradient calculation function, which need to be inherited from the abstract class Module
+    from pyvqnet.native.backprop_utils import AutoGradNode
     class Hybrid(Module):
         """ Hybrid quantum - Quantum layer definition """
         def __init__(self, shift):
@@ -1717,7 +1718,7 @@ An automatic differentiation Model of convolution, quantum encoding, and measure
 
             nodes = []
             if input.requires_grad:
-                nodes.append(QTensor.GraphNode(tensor=input, df=lambda g: _backward(g, input)))
+                nodes.append(AutoGradNode(tensor=input, df=lambda g: _backward(g, input)))
             return QTensor(data=result, requires_grad=requires_grad, nodes=nodes)
 
     #Model definition
@@ -5887,7 +5888,7 @@ is used to classify 0 and 1 handwritten digits in MNIST database.
 
 .. code-block::
 
-    def load_mnist(dataset="training_data", digits=np.arange(2), path="./"):         # 下载数据
+    def load_mnist(dataset="training_data", digits=np.arange(2), path="./"):         
         import os, struct
         from array import array as pyarray
         download_mnist(path)

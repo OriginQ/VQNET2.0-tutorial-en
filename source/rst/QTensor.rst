@@ -4026,6 +4026,52 @@ pack_pad_sequence
         print(data.batch_sizes)
         # [3, 2, 1, 1]
 
+
+functional_conv2d
+==============================
+.. py:function:: pyvqnet.nn.functional.functional_conv2d(x, weight, bias, stride=(1,1), padding=(0,0), dilation=(1,1), groups=1)
+    
+    Performs a 2D convolution on an input image consisting of multiple input planes.
+
+    :param x: 4D input tensor.
+    :param weight: 4D kernel tensor.
+    :param weight: 4D kernel tensor.
+
+    :param stride: `tuple` - stride, defaults to (1, 1)
+    :param padding: Padding, controls the amount of padding on the input. This can be a string {'valid', 'same'} or a tuple of integers specifying the amount of implicit padding to apply to the input, defaulting to (0,0).
+    :param dilation_rate: `tuple` - Spacing between kernel elements. Default: (0,0)
+    :param group: `int` - Number of groups. Default value: 1 
+
+    :return: qtensor 
+
+
+    Examples:: 
+
+        from pyvqnet.nn.functional import functional_conv2d 
+        from pyvqnet.tensor import arange,ones 
+        from pyvqnet import kfloat32 
+        from pyvqnet.nn import Module,Parameter 
+
+
+        classTM(Module): 
+            def __init__(self, *args, **kwargs): 
+                super().__init__(*args, **kwargs) 
+                self.w = ones([5,4,2,2]) 
+                self.w.requires_grad = True 
+                self.b = ones([5,]) 
+                self.b.requires_grad = True 
+
+            def forward(self,x): 
+                weight, bias, = self.w, self.b 
+                return functional_conv2d(x, weight, bias) 
+
+
+        x = arange(0,7*4*12*12,dtype=kfloat32).reshape([7,4,12,12]) 
+        l = TM() 
+        y = l(x) 
+
+        y.backward( )
+
 no_grad
 ==============================
 
