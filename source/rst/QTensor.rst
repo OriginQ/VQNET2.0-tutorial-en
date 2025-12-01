@@ -143,22 +143,7 @@ QTensor
             print(a.is_dense)
             #1
 
-    .. py:attribute:: is_csr
 
-        Whether it is a sparse 2-dimensional matrix in Compressed Sparse Row format.
-
-        :return: When the data is a sparse tensor in CSR format, it returns 1; otherwise it returns 0.
-
-        Example::
-
-            from pyvqnet.tensor import QTensor,dense_to_csr
-
-            a = QTensor([[2, 3, 4, 5]])
-            b = dense_to_csr(a)
-            print(b.is_csr)
-            #1
-
- 
 
     .. py:method:: zero_grad()
 
@@ -1366,8 +1351,8 @@ multinomial
     Returns a Tensor where each row contains num_samples indexed samples.
     From the multinomial probability distribution located in the corresponding row of the tensor input.
 
-    :param t: Input probability distribution。
-    :param num_samples: numbers of sample。
+    :param t: Input probability distribution.
+    :param num_samples: numbers of sample.
 
     :return:
         output sample index
@@ -2476,7 +2461,7 @@ log_softmax
     :param t: input QTensor .
     :param axis: The axis used to calculate softmax, the default is -1.
 
-    :return: Output QTensor。
+    :return: Output QTensor.
 
     Example::
 
@@ -3771,46 +3756,6 @@ broadcast_to
         print(b.shape)
         #[2, 3, 4]
 
-
-dense_to_csr
-==============================
-
-.. py:function:: pyvqnet.tensor.dense_to_csr(t)
-    
-    Convert dense matrix to CSR format sparse matrix, only supports 2 dimensions.
-
-    :param t: input dense QTensor
-    :return: CSR sparse matrix
-
-    Example::
-
-        from pyvqnet.tensor import QTensor,dense_to_csr
-
-        a = QTensor([[2, 3, 4, 5]])
-        b = dense_to_csr(a)
-        print(b.csr_members())
-        #([0,4], [0,1,2,3], [2,3,4,5])
-
-
-csr_to_dense
-==============================
-
-.. py:function:: pyvqnet.tensor.csr_to_dense(t)
-    
-    Convert CSR format sparse matrix to dense matrix, only supports 2 dimensions.
-
-    :param t: input CSR sparse matrix
-    :return: Dense QTensor
-
-    Example::
-
-        from pyvqnet.tensor import QTensor,dense_to_csr,csr_to_dense
-
-        a = QTensor([[2, 3, 4, 5]])
-        b = dense_to_csr(a)
-        c = csr_to_dense(b)
-        print(c)
-        #[[2,3,4,5]]
 
 
 Utility Functions

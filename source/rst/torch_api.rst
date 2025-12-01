@@ -6,8 +6,8 @@
 VQNet uses torch for low-level computation
 =============================================================
 
-Starting from version 2.15.0, this software supports using `torch <https://pytorch.org/docs/stable/index.html>`__ as the computational backend for low-level calculations, making it easier to integrate with popular large model training libraries for fine-tuning large models.
-
+Starting from version 2.15.0, this software supports using `torch` as the computing backend for low-level operations and can be integrated with models, codes, and third-party libraries based on `torch` for secondary development.
+    
     .. note::
 
         The variational quantum computation functions (with lowercase naming, such as `rx` , `ry` , `rz` , etc.) in :ref:`vqc_api`, as well as the basic computation functions of QTensor in :ref:`qtensor_api` ,
@@ -24,7 +24,7 @@ set_backend
 
 .. py:function:: pyvqnet.backends.set_backend(backend_name)
 
-    Sets the backend for current computations and data storage. The default is "pyvqnet", but it can be set to "torch".
+    Sets the backend for current computations and data storage. The default is "pyvqnet", but it can be set to "torch","torch-native", "pyvqnet-ad".
     
     After calling ``pyvqnet.backends.set_backend("torch")``, the interface remains unchanged. VQNet's ``QTensor`` ``data`` member variable all uses ``torch.Tensor`` to store data.
     :ref:`qtensor_api` , :ref:`vqc_api` , and ``pyvqnet.nn.torch`` interfaces accept ``QTensor`` as input and ``QTensor`` as output.
@@ -33,6 +33,9 @@ set_backend
     Inputs can directly accept ``torch.Tensor`` or ``QTensor`` types, and outputs are ``torch.Tensor``, eliminating the need for conversion to ``QTensor``, thus reducing data conversion.
     
     After calling ``pyvqnet.backends.set_backend("pyvqnet")``, the ``data`` member of VQNet's ``QTensor`` will store data using ``pyvqnet._core.Tensor`` , and computations will use the pyvqnet C++ library.
+
+    After calling ``pyvqnet.backends.set_backend("pyvqnet-ad")``, the ``data`` member of VQNet's ``QTensor`` will store data using ``pyvqnet._core.Tensor`` , and computations will use the pyvqnet C++ library with performance boosted.
+
 
     .. note::
 
@@ -5061,142 +5064,6 @@ QuantumLayerAdjoint
 
 
 
-TorchHybirdVQCQpanda3QVMLayer
-"""""""""""""""""""""""""""""""""""""""""""""""""""
-
-.. py:class:: pyvqnet.qnn.vqc.torch.TorchHybirdVQCQpanda3QVMLayer(vqc_module: Module,qcloud_token: str,pauli_str_dict: Union[List[Dict], Dict, None] = None,shots: int = 1000,dtype: Union[int, None] = None,name: str = "",submit_kwargs: Dict = {},query_kwargs: Dict = {})
-
-    Use torch backend, mix vqc and qpanda3 to simulate calculations. This layer converts quantum circuit calculations written in VQNet defined by the user `forward` function into QPanda OriginIR, runs forward on the QPanda3 local virtual machine or cloud service, and calculates the circuit parameter gradients based on automatic differentiation, reducing the time complexity of using the parameter drift method.
-
-    Where ``vqc_module`` is a user-defined quantum variational circuit model, in which QMachine sets ``save_ir= True``.
-
-    :param vqc_module: vqc_module with forward().
-    :param qcloud_token: `str` - The type of quantum machine or cloud token for execution.
-    :param pauli_str_dict: `dict|list` - A dictionary or list of dictionaries representing Pauli operators in a quantum circuit. The default value is None.
-    :param shots: `int` - The number of quantum circuit measurements. The default value is 1000.
-    :param name: The module name. The default value is an empty string.
-    :param submit_kwargs: Additional keyword parameters for submitting quantum circuits, default value:{"chip_id":pyqpanda.real_chip_type.origin_72,"is_amend":True,"is_mapping":True,"is_optimization":True,"default_task_group_size":200,"test_qcloud_fake":True}。
-    :param query_kwargs: Additional keyword parameters for querying quantum results, default value:{"timeout":2,"print_query_info":True,"sub_circuits_split_size":1}。
-
-    :return: Module that can calculate quantum circuits.
-
-    .. warning::
-
-        This class inherits from ``pyvqnet.nn.torch.TorchModule`` and ``pyvqnet.qnn.HybirdVQCQpandaQVMLayer`` and can be added to the torch model as a submodule of ``torch.nn.Module``.
-
-    .. note::
-
-        pauli_str_dict cannot be None and should be the same as obs in the vqc_module measurement function.
-        vqc_module should have attributes of QMachine type, and QMachine should set save_ir=True
-
-    Example::
-
-        import pyvqnet.backends
-        import numpy as np
-        from pyvqnet.qnn.vqc.torch import QMachine,QModule,RX,RY,\
-        RZ,U1,U2,U3,I,S,X1,PauliX,PauliY,PauliZ,SWAP,CZ,\
-        RXX,RYY,RZX,RZZ,CR,Toffoli,Hadamard,T,CNOT,MeasureAll
-        from pyvqnet.qnn.vqc.torch import HybirdVQCQpanda3QVMLayer
-        import pyvqnet
-
-        from pyvqnet import tensor
-
-        import pyvqnet.utils
-        pyvqnet.backends.set_backend("torch")
-        pyvqnet.utils.set_random_seed(42)
-
-        class QModel(QModule):
-            def __init__(self, num_wires, dtype,grad_mode=""):
-                super(QModel, self).__init__()
-
-                self._num_wires = num_wires
-                self._dtype = dtype
-                self.qm = QMachine(num_wires, dtype=dtype,grad_mode=grad_mode,save_ir=True)
-                self.rx_layer = RX(has_params=True, trainable=False, wires=0)
-                self.ry_layer = RY(has_params=True, trainable=False, wires=1)
-                self.rz_layer = RZ(has_params=True, trainable=False, wires=1)
-                self.u1 = U1(has_params=True,trainable=True,wires=[2])
-                self.u2 = U2(has_params=True,trainable=True,wires=[3])
-                self.u3 = U3(has_params=True,trainable=True,wires=[1])
-                self.i = I(wires=[3])
-                self.s = S(wires=[3])
-                self.x1 = X1(wires=[3])
-                
-                self.x = PauliX(wires=[3])
-                self.y = PauliY(wires=[3])
-                self.z = PauliZ(wires=[3])
-                self.swap = SWAP(wires=[2,3])
-                self.cz = CZ(wires=[2,3])
-                self.cr = CR(has_params=True,trainable=True,wires=[2,3])
-                self.rxx = RXX(has_params=True,trainable=True,wires=[2,3])
-                self.rzz = RYY(has_params=True,trainable=True,wires=[2,3])
-                self.ryy = RZZ(has_params=True,trainable=True,wires=[2,3])
-                self.rzx = RZX(has_params=True,trainable=False, wires=[2,3])
-                self.toffoli = Toffoli(wires=[2,3,4],use_dagger=True)
-                self.h =Hadamard(wires=[1])
-
-
-                self.tlayer = T(wires=1)
-                self.cnot = CNOT(wires=[0, 1])
-                self.measure = MeasureAll(obs={'Z0':2,'Y3':3} 
-            )
-
-            def forward(self, x, *args, **kwargs):
-                self.qm.reset_states(x.shape[0])
-                self.i(q_machine=self.qm)
-                self.s(q_machine=self.qm)
-                self.swap(q_machine=self.qm)
-                self.cz(q_machine=self.qm)
-                self.x(q_machine=self.qm)
-                self.x1(q_machine=self.qm)
-                self.y(q_machine=self.qm)
-
-                self.z(q_machine=self.qm)
-
-                self.ryy(q_machine=self.qm)
-                self.rxx(q_machine=self.qm)
-                self.rzz(q_machine=self.qm)
-                self.rzx(q_machine=self.qm,params = x[:,[1]])
-                self.cr(q_machine=self.qm)
-                self.u1(q_machine=self.qm)
-                self.u2(q_machine=self.qm)
-                self.u3(q_machine=self.qm)
-                self.rx_layer(params = x[:,[0]], q_machine=self.qm)
-                self.cnot(q_machine=self.qm)
-                self.h(q_machine=self.qm)
-
-                self.ry_layer(params = x[:,[1]], q_machine=self.qm)
-                self.tlayer(q_machine=self.qm)
-                self.rz_layer(params = x[:,[2]], q_machine=self.qm)
-                self.toffoli(q_machine=self.qm)
-                rlt = self.measure(q_machine=self.qm)
-
-                return rlt
-            
-
-        input_x = tensor.QTensor([[0.1, 0.2, 0.3]])
-
-        input_x = tensor.broadcast_to(input_x,[2,3])
-
-        input_x.requires_grad = True
-
-        qunatum_model = QModel(num_wires=6, dtype=pyvqnet.kcomplex64)
-
-        l = HybirdVQCQpanda3QVMLayer(qunatum_model,
-                                "3047DE8A59764BEDAC9C3282093B16AF1",
-
-                    pauli_str_dict={'Z0':2,'Y3':3},
-                    shots = 1000,
-                    name="",
-            submit_kwargs={"test_qcloud_fake":True},
-                    query_kwargs={})
-
-        y = l(input_x)
-        print(y)
-
-        y.backward()
-        print(input_x.grad)
-
 
 Tensor Network Backend Variational Quantum Circuit Module
 ==========================================================================================
@@ -5386,7 +5253,7 @@ TNQMachine
 
     .. py:method:: get_states()
 
-        get tensornetwork qmachine states。
+        get tensornetwork qmachine states.
 
 Variational quantum logic gate module
 ------------------------------------------------
@@ -7214,7 +7081,7 @@ VQC_Purity
 
     .. note::
         
-        batch_size need TNQModule。
+        batch_size need TNQModule.
 
     Example::
 
@@ -8418,7 +8285,8 @@ CommController
 -------------------------
 
 .. py:class:: pyvqnet.distributed.ControlComm.CommController(backend,rank=None,world_size=None)
-
+    :no-index:
+    
     CommController is used to control the data communication controller under cpu and gpu. It generates cpu (gloo) and gpu (nccl) controllers by setting the parameter `backend`.
     This class will call backend, rank, world_size to initialize ``torch.distributed.init_process_group(backend, rank, world_size)`` .
 
@@ -8463,7 +8331,8 @@ CommController
  
 
     .. py:method:: getRank()
-        
+        :no-index:
+
         Used to get the process ID of the current process.
 
         :return: Returns the process ID of the current process.
@@ -8503,7 +8372,8 @@ CommController
 
 
     .. py:method:: getSize()
-    
+        :no-index:
+
         Used to get the total number of processes started.
 
         :return: Returns the total number of processes.
@@ -8543,7 +8413,8 @@ CommController
 
 
     .. py:method:: getLocalRank()
-        
+        :no-index:
+
         In each process, get the local process number of each machine through ``os.environ['LOCAL_RANK'] = rank``.
 
         The environment variable `LOCAL_RANK` needs to be set in advance.
@@ -8584,7 +8455,8 @@ CommController
 
  
     .. py:method:: split_group(rankL)
-        
+        :no-index:
+
         The process number list set according to the input parameter is used to divide multiple communication groups.
 
         :param rankL: process group list.
@@ -8633,7 +8505,8 @@ CommController
 
  
     .. py:method:: barrier()
-        
+        :no-index:
+
         Synchronization of different processes.
 
         :return: Synchronization operation.
@@ -8657,7 +8530,6 @@ CommController
                 pp.barrier()
 
 
-
             if __name__ == "__main__":
                 world_size = 4
                 processes = []
@@ -8671,7 +8543,8 @@ CommController
                     p.join()
 
     .. py:method:: allreduce(tensor, c_op = "avg")
-        
+        :no-index:
+
         Supports allreduce communication on data.
 
         :param tensor: Input data.
@@ -8695,14 +8568,11 @@ CommController
                 os.environ['LOCAL_RANK'] = f"{rank}"
                 Comm_OP = CommController("gloo", rank=rank, world_size=size)
 
-            
-
                 num = tensor.to_tensor(np.random.rand(1, 5))
                 print(f"rank {Comm_OP.getRank()}  {num}")
 
                 Comm_OP.all_reduce(num, "sum")
                 print(f"rank {Comm_OP.getRank()}  {num}")
-                
 
             if __name__ == "__main__":
                 world_size = 2
@@ -8715,11 +8585,10 @@ CommController
 
                 for p in processes:
                     p.join()
-            
 
- 
     .. py:method:: reduce(tensor, root = 0, c_op = "avg")
-        
+        :no-index:
+
         Supports reduce communication on data.
 
         :param tensor: Input data.
@@ -8765,7 +8634,8 @@ CommController
  
  
     .. py:method:: broadcast(tensor, root = 0)
-        
+        :no-index:
+
         Broadcast the data on the specified process root to all processes.
 
         :param tensor: Input data.
@@ -8811,7 +8681,8 @@ CommController
 
 
     .. py:method:: allgather(tensor)
-        
+        :no-index:
+
         Gather all the data from all processes together. This interface only supports the nccl backend.
 
         :param tensor: Input data.
@@ -8855,7 +8726,8 @@ CommController
 
 
     .. py:method:: send(tensor, dest)
-        
+        :no-index:
+
         p2p communication interface.
 
         :param tensor: input data.
@@ -8902,7 +8774,8 @@ CommController
  
  
     .. py:method:: recv(tensor, source)
-        
+        :no-index:
+
         p2p communication interface.
 
         :param tensor: input data.
@@ -8949,7 +8822,8 @@ CommController
             
 
     .. py:method:: allreduce_group(tensor, c_op = "avg", group = None)
-        
+        :no-index:
+
         Intra-group allreduce communication interface.
 
         :param tensor: Input data.
@@ -9002,10 +8876,10 @@ CommController
                     p.join()
 
 
- 
 
     .. py:method:: reduce_group(tensor, root = 0, c_op = "avg", group = None)
-        
+        :no-index:
+
         Intra-group reduce communication interface.
 
         :param tensor: Input data.
@@ -9056,7 +8930,8 @@ CommController
 
  
     .. py:method:: broadcast_group(tensor, root = 0, group = None)
-        
+        :no-index:
+
         Intra-group broadcast communication interface.
 
         :param tensor: Input data.
@@ -9109,6 +8984,7 @@ CommController
 
  
     .. py:method:: allgather_group(tensor, group = None)
+        :no-index:
         
         Allgather communication interface within the group.
 

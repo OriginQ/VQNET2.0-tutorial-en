@@ -62,10 +62,10 @@ QMachine
 
     A simulator class for variable quantum computing, including statevectors whose states attribute is a quantum circuit.
 
-    :param num_wires: number of qubits。
+    :param num_wires: number of qubits.
     :param dtype: the data type of the calculated data, the default is pyvqnet.kcomplex64, and the corresponding parameter precision is pyvqnet.kfloat32
 
-    :return: Output QMachine。
+    :return: Output QMachine.
 
     Example::
         
@@ -2682,7 +2682,7 @@ VQC_BasisEmbedding
     For example, for ``basis_state=([0, 1, 1])``, the ground state of the quantum system is :math:`|011 \rangle`.
 
     :param basis_state: binary input of size ``(n)``.
-    :param q_machine: quantum virtual machine device。
+    :param q_machine: quantum virtual machine device.
 
 
     Example::
@@ -2816,7 +2816,7 @@ VQC_RotCircuit
 
 
     :param q_machine: Quantum virtual machine device.
-    :param wire: Qubit idx。
+    :param wire: Qubit idx.
     :param params: Parameters :math:`[\phi, \theta, \omega]`.
     :return: Output QTensor.
 
@@ -3870,98 +3870,6 @@ Samples
         """
 
 
-SparseHamiltonian
----------------------------------------------------------------
-
-.. py:class:: pyvqnet.qnn.vqc.SparseHamiltonian(obs, name="")
-
-    Computes the sparse Hamiltonian of an observation  ``obs`` , for example {"observables":H,"wires":[0,2,3]}.
-
-    :param obs: Sparse Hamiltonian, use the `tensor.dense_to_csr()` function to obtain the sparse format of the dense function.
-    :param name: The name of the module, default: "".
-    :return: a Module.
-
-    .. py:method:: forward(q_machine)
-
-        Perform sparse Hamiltonian measurement.
-
-        :param q_machine: quantum state vector simulator
-        :return: measurement result, QTensor.
-
-    .. note::
-
-        The measurement result calculated using this class is generally [b,1], where b is the batch number b of q_machine.reset_states(b).
-
-
-    Example::
-
-            import pyvqnet
-            pyvqnet.utils.set_random_seed(42)
-            from pyvqnet import tensor
-            from pyvqnet.nn import Module
-            from pyvqnet.qnn.vqc import QMachine,CRX,PauliX,paulix,crx,SparseHamiltonian
-            H = tensor.QTensor(
-            [[ 0.+0.j,  0.+0.j,  0.+0.j,  0.+0.j,  0.+0.j,  0.+0.j,  0.+0.j,  0.+0.j,  0.+0.j,
-            0.+0.j,  0.+0.j,  0.+0.j,  0.+0.j,  0.+0.j,  0.+0.j, -1.+0.j,],
-            [ 0.+0.j,  0.+0.j,  0.+0.j,  0.+0.j,  0.+0.j,  0.+0.j,  0.+0.j,  0.+0.j,  0.+0.j,
-            0.+0.j,  0.+0.j,  0.+0.j,  0.+0.j,  0.+0.j,  1.+0.j,  0.+0.j,],
-            [ 0.+0.j,  0.+0.j,  0.+0.j,  0.+0.j,  0.+0.j,  0.+0.j,  0.+0.j,  0.+0.j,  0.+0.j,
-            0.+0.j,  0.+0.j,  0.+0.j,  0.+0.j,  1.+0.j,  0.+0.j,  0.+0.j,],
-            [ 0.+0.j,  0.+0.j,  0.+0.j,  0.+0.j,  0.+0.j,  0.+0.j,  0.+0.j,  0.+0.j,  0.+0.j,
-            0.+0.j,  0.+0.j,  0.+0.j, -1.+0.j,  0.+0.j,  0.+0.j,  0.+0.j,],
-            [ 0.+0.j,  0.+0.j,  0.+0.j,  0.+0.j,  0.+0.j,  0.+0.j,  0.+0.j,  0.+0.j,  0.+0.j,
-            0.+0.j,  0.+0.j, -1.+0.j,  0.+0.j,  0.+0.j,  0.+0.j,  0.+0.j,],
-            [ 0.+0.j,  0.+0.j,  0.+0.j,  0.+0.j,  0.+0.j,  0.+0.j,  0.+0.j,  0.+0.j,  0.+0.j,
-            0.+0.j,  1.+0.j,  0.+0.j,  0.+0.j,  0.+0.j,  0.+0.j,  0.+0.j,],
-            [ 0.+0.j,  0.+0.j,  0.+0.j,  0.+0.j,  0.+0.j,  0.+0.j,  0.+0.j,  0.+0.j,  0.+0.j,
-            1.+0.j,  0.+0.j,  0.+0.j,  0.+0.j,  0.+0.j,  0.+0.j,  0.+0.j,],
-            [ 0.+0.j,  0.+0.j,  0.+0.j,  0.+0.j,  0.+0.j,  0.+0.j,  0.+0.j,  0.+0.j, -1.+0.j,
-            0.+0.j,  0.+0.j,  0.+0.j,  0.+0.j,  0.+0.j,  0.+0.j,  0.+0.j,],
-            [ 0.+0.j,  0.+0.j,  0.+0.j,  0.+0.j,  0.+0.j,  0.+0.j,  0.+0.j, -1.+0.j,  0.+0.j,
-            0.+0.j,  0.+0.j,  0.+0.j,  0.+0.j,  0.+0.j,  0.+0.j,  0.+0.j,],
-            [ 0.+0.j,  0.+0.j,  0.+0.j,  0.+0.j,  0.+0.j,  0.+0.j,  1.+0.j,  0.+0.j,  0.+0.j,
-            0.+0.j,  0.+0.j,  0.+0.j,  0.+0.j,  0.+0.j,  0.+0.j,  0.+0.j,],
-            [ 0.+0.j,  0.+0.j,  0.+0.j,  0.+0.j,  0.+0.j,  1.+0.j,  0.+0.j,  0.+0.j,  0.+0.j,
-            0.+0.j,  0.+0.j,  0.+0.j,  0.+0.j,  0.+0.j,  0.+0.j,  0.+0.j,],
-            [ 0.+0.j,  0.+0.j,  0.+0.j,  0.+0.j, -1.+0.j,  0.+0.j,  0.+0.j,  0.+0.j,  0.+0.j,
-            0.+0.j,  0.+0.j,  0.+0.j,  0.+0.j,  0.+0.j,  0.+0.j,  0.+0.j,],
-            [ 0.+0.j,  0.+0.j,  0.+0.j, -1.+0.j,  0.+0.j,  0.+0.j,  0.+0.j,  0.+0.j,  0.+0.j,
-            0.+0.j,  0.+0.j,  0.+0.j,  0.+0.j,  0.+0.j,  0.+0.j,  0.+0.j,],
-            [ 0.+0.j,  0.+0.j,  1.+0.j,  0.+0.j,  0.+0.j,  0.+0.j,  0.+0.j,  0.+0.j,  0.+0.j,
-            0.+0.j,  0.+0.j,  0.+0.j,  0.+0.j,  0.+0.j,  0.+0.j,  0.+0.j,],
-            [ 0.+0.j,  1.+0.j,  0.+0.j,  0.+0.j,  0.+0.j,  0.+0.j,  0.+0.j,  0.+0.j,  0.+0.j,
-            0.+0.j,  0.+0.j,  0.+0.j,  0.+0.j,  0.+0.j,  0.+0.j,  0.+0.j,],
-            [-1.+0.j,  0.+0.j,  0.+0.j,  0.+0.j,  0.+0.j,  0.+0.j,  0.+0.j,  0.+0.j,  0.+0.j,
-            0.+0.j,  0.+0.j,  0.+0.j,  0.+0.j,  0.+0.j,  0.+0.j,  0.+0.j,]],dtype=pyvqnet.kcomplex64)
-            cpu_csr = tensor.dense_to_csr(H)
-            class QModel(Module):
-                def __init__(self, num_wires, dtype,grad_mode=""):
-                    super(QModel, self).__init__()
-
-                    self._num_wires = num_wires
-                    self._dtype = dtype
-                    self.qm = QMachine(num_wires)
-                    self.measure = SparseHamiltonian(obs = {"observables":cpu_csr, "wires":[2, 1, 3, 5]})
-
-
-                def forward(self, x, *args, **kwargs):
-                    self.qm.reset_states(x.shape[0])
-                    paulix(q_machine=self.qm, wires= 0)
-                    paulix(q_machine=self.qm, wires = 2)
-                    crx(q_machine=self.qm,wires=[0, 1],params=tensor.full((x.shape[0],1),0.1,dtype=pyvqnet.kcomplex64))
-                    crx(q_machine=self.qm,wires=[2, 3],params=tensor.full((x.shape[0],1),0.2,dtype=pyvqnet.kcomplex64))
-                    crx(q_machine=self.qm,wires=[1, 2],params=tensor.full((x.shape[0],1),0.3,dtype=pyvqnet.kcomplex64))
-                    crx(q_machine=self.qm,wires=[2, 4],params=tensor.full((x.shape[0],1),0.3,dtype=pyvqnet.kcomplex64))
-                    crx(q_machine=self.qm,wires=[5, 3],params=tensor.full((x.shape[0],1),0.3,dtype=pyvqnet.kcomplex64))
-                    
-                    rlt = self.measure(q_machine=self.qm)
-                    return rlt
-
-            model = QModel(6,pyvqnet.kcomplex64)
-            y = model(tensor.ones([1,1]))
-
-            print(y)
-            #[0.]
 
 
 HermitianExpval

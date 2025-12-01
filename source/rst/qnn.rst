@@ -366,104 +366,6 @@ When you install the latest version of pyqpanda, you can use this interface to d
 
  
 
-QuantumLayerMultiProcess
-=================================
-
-If you are more familiar with pyQPanda syntax, please using QuantumLayerMultiProcess class, you can define the quantum circuits function by using ``qubits``, ``cbits`` and ``machine``, then take it as a argument ``qprog_with_measure`` of QuantumLayerMultiProcess.
-
-.. py:class:: pyvqnet.qnn.quantumlayer.QuantumLayerMultiProcess(qprog_with_measure, para_num, machine_type_or_cloud_token, num_of_qubits: int, num_of_cbits: int = 1, diff_method: str = 'parameter_shift', delta: float = 0.01,dtype=None, name='')
-
-    Abstract calculation module for variational quantum circuits. This class uses multiprocess to accelerate quantum circuit simulation.
-    
-    It simulates a parameterized quantum circuit and gets the measurement result.
-    QuantumLayer inherits from Module ,so that it can calculate gradients of circuits parameters,and train variational quantum circuits model or embed variational quantum circuits into hybird quantum and classic model.
-
-    To use this module, you need to create your quantum virtual machine and allocate qubits and cbits.
-
-    :param qprog_with_measure: callable quantum circuits functions ,cosntructed by pyQPanda2.
-    :param para_num: `int` - Number of parameter
-    :param num_of_qubits: num of qubits.
-    :param num_of_cbits: num of classic bits.
-    :param diff_method: 'parameter_shift' or 'finite_diff'.
-    :param delta:  delta for diff.
-    :param dtype: The data type of the parameter, defaults: None, use the default data type kfloat32, which represents a 32-bit floating point number.
-    :param name: name of the output layer
-
-    :return: a module can calculate quantum circuits .
-
-    .. note::
-        qprog_with_measure is quantum circuits function defined in pyQPanda : https://github.com/OriginQ/QPanda-2.
-
-        This function should contains following parameters,otherwise it can not run properly in QuantumLayerMultiProcess.
-
-        Compare to QuantumLayer.you should allocate qubits and simulator,
-
-        you may also need to allocate cbits if qprog_with_measure needs quantum Measure.
-
-        qprog_with_measure (input,param)
-
-        `input`: array_like input 1-dim classic data
-
-        `param`: array_like input 1-dim quantum circuit's parameters
-
-
-    Example::
-
-        import pyqpanda as pq
-        from pyvqnet.qnn.measure import ProbsMeasure
-        from pyvqnet.qnn.quantumlayer import QuantumLayerMultiProcess
-        import numpy as np
-        from pyvqnet.tensor import QTensor
-
-        def pqctest (input,param,nqubits,ncubits):
-            machine = pq.CPUQVM()
-            machine.init_qvm()
-            qubits = machine.qAlloc_many(nqubits)
-            circuit = pq.QCircuit()
-            circuit.insert(pq.H(qubits[0]))
-            circuit.insert(pq.H(qubits[1]))
-            circuit.insert(pq.H(qubits[2]))
-            circuit.insert(pq.H(qubits[3]))
-
-            circuit.insert(pq.RZ(qubits[0],input[0]))
-            circuit.insert(pq.RZ(qubits[1],input[1]))
-            circuit.insert(pq.RZ(qubits[2],input[2]))
-            circuit.insert(pq.RZ(qubits[3],input[3]))
-
-            circuit.insert(pq.CNOT(qubits[0],qubits[1]))
-            circuit.insert(pq.RZ(qubits[1],param[0]))
-            circuit.insert(pq.CNOT(qubits[0],qubits[1]))
-
-            circuit.insert(pq.CNOT(qubits[1],qubits[2]))
-            circuit.insert(pq.RZ(qubits[2],param[1]))
-            circuit.insert(pq.CNOT(qubits[1],qubits[2]))
-
-            circuit.insert(pq.CNOT(qubits[2],qubits[3]))
-            circuit.insert(pq.RZ(qubits[3],param[2]))
-            circuit.insert(pq.CNOT(qubits[2],qubits[3]))
-
-            prog = pq.QProg()
-            prog.insert(circuit)
-
-            rlt_prob = ProbsMeasure([0,2],prog,machine,qubits)
-            return rlt_prob
-
-
-        pqc = QuantumLayerMultiProcess(pqctest,3,4,1)
-        #classic data as input
-        input = QTensor([[1.0,2,3,4],[4,2,2,3],[3,3,2,2]] )
-        #forward circuits
-        rlt = pqc(input)
-        grad = QTensor(np.ones(rlt.data.shape)*1000)
-        #backward circuits
-        rlt.backward(grad)
-        print(rlt)
-
-        # [
-        # [0.2500000, 0.2500000, 0.2500000, 0.2500000],
-        # [0.2500000, 0.2500000, 0.2500000, 0.2500000],
-        # [0.2500000, 0.2500000, 0.2500000, 0.2500000]
-        # ]
 
 NoiseQuantumLayer
 =================================
@@ -614,193 +516,518 @@ Here is an example of ``noise_set_config``, here we add the noise model BITFLIP_
 
 
 
-DataParallelHybirdVQCQpandaQVMLayer 
-============================================================
+QiskitLayer
+=================================
 
-.. py:class:: pyvqnet.qnn.DataParallelHybirdVQCQpandaQVMLayer(vqc_module: Module,qcloud_token: str,num_qubits: int,num_cubits: int,pauli_str_dict: Union[List[Dict], Dict, None] = None,shots: int = 1000 ,dtype: Union[int, None] = None,name: str = "",submit_kwargs: Dict = {},query_kwargs: Dict = {}) 
+.. py:class:: pyvqnet.qnn.QiskitLayer(qiskit_circuits,para_num)
+
+    A wrapper layer for implementing forward and backward propagation with Qiskit circuits in VQNet. QISKIT_VQC is a class that defines a Qiskit quantum circuit and its run function.
+    The following example demonstrates how it works. This layer only supports circuit inputs and weights as parameters.
     
-    A data parallel version of ``HybirdVQCQpandaQVMLayer``, where ``vqc_module`` is a user-defined quantum variational circuit model, and the QMachine setting ``save_ir= True``.
-    Use data parallelism to batch the first dimension of the input data The number of processes is divided according to the number of processes allocated in `CommController`, and data parallelism is performed in multiple processes based on `mpi` or `nccl`. Please note that one process corresponds to a GPU device on one node.
-    This module in each process Submit the quantum circuit generated by batch processing number/node number data in forward calculation, calculate the gradient contributed by batch processing number/node number data in reverse calculation, and calculate the average gradient of parameters on multiple nodes through all_reduce.
-
-    .. note::
-
-        This module splits the input internally and moves the data to the corresponding device. The 0th process calculates [0, batch number/node number] data, and the kth process calculates [(k-1) batch number/node number, k*batch number/node number]
-
-    :param vqc_module: with forward() of vqc_module.
-    :param qcloud_token: `str` - Type of quantum machine or cloud token to use for execution.
-    :param num_qubits: `int` - Number of qubits in the quantum circuit.
-    :param num_cubits: `int` - The number of classical bits used for measurement in the quantum circuit.
-    :param pauli_str_dict: `dict|list` - A dictionary or list of dictionaries representing the Pauli operators in the quantum circuit. Default is None.
-    :param shots: `int` - The number of shots in the quantum circuit. Number of line measurements. The default value is 1000.
-    :param name: Module name. The default value is an empty string.
-    :param submit_kwargs: Additional keyword parameters for submitting quantum circuits, default value:{"chip_id":pyqpanda.real_chip_type.origin_72,"is_amend":True,"is_mapping":True,"is_optimization":True,"default_task_group_size":200 ,"test_qcloud_fake":True}.
-    :param query_kwargs: Additional keyword parameters for querying quantum results, default value: {"timeout":2,"print_query_info":True,"sub_circuits_split_size":1}.
-
-    The following is calculated using cpu For example, the command for a single node and dual processes is as follows: mpirun -n 2 python xxx.py
+    :param cirq_vqc: A class that defines the definition, backend, and execution functions of a Qiskit circuit.
+    :param para_num: `int` - The number of para_num.
+    :return: A class capable of running qiskit quantum circuit models.
 
     Example::
 
-        from pyvqnet.distributed import *
 
-        Comm_OP = CommController("mpi")
-        from pyvqnet.qnn import *
-        from pyvqnet.qnn.vqc import *
+        """
+        
+
+        qiskit                        2.1.1
+        qiskit-aer                    0.17.2
+        opencv-python
+        """
+        import sys
+        sys.path.insert(0,"../")
+        import os
+        import os.path
+        import urllib
+        import gzip
+        import numpy as np
+        import random
+        import sys
+        sys.path.insert(0,"../../")
+        random.seed(42)
+        np.random.seed(42)
+        from pyvqnet.nn.module import Module
+        from pyvqnet.optim import Adam
         import pyvqnet
-        from pyvqnet.nn import Module, Linear
-        from pyvqnet.device import DEV_GPU_0
         pyvqnet.utils.set_random_seed(42)
+        from pyvqnet.nn.loss import MeanSquaredError
+        from pyvqnet.qnn.utils import QiskitLayer
+
+        import qiskit
+        from qiskit.quantum_info import Statevector
+        from qiskit import  QuantumRegister, ClassicalRegister
+
+        from qiskit.quantum_info.operators import  Pauli
+        max_parallel_threads = 24
+        gpu = False
+        method = "statevector"
+        backend_options = {
+            "method": method,
+            "precision": "double",
+            "max_parallel_threads": max_parallel_threads,
+            "fusion_enable": True,
+            "fusion_threshold": 14,
+            "fusion_max_qubit": 5,
+        }
+        from qiskit_aer import StatevectorSimulator
+        simulator = StatevectorSimulator()
+
+        simulator.set_options(**backend_options)
 
 
-        class Hybird(Module):
+        url_base = 'https://ossci-datasets.s3.amazonaws.com/mnist/'
+        key_file = {
+            'train_img':'train-images-idx3-ubyte.gz',
+            'train_label':'train-labels-idx1-ubyte.gz',
+            'test_img':'t10k-images-idx3-ubyte.gz',
+            'test_label':'t10k-labels-idx1-ubyte.gz'
+        }
+
+        def _download(dataset_dir,file_name):
+            file_path = dataset_dir + "/" + file_name
+
+            if os.path.exists(file_path):
+                with gzip.GzipFile(file_path) as f:
+                    file_path_ungz = file_path[:-3].replace('\\', '/')
+                    if not os.path.exists(file_path_ungz):
+                        open(file_path_ungz,"wb").write(f.read())
+                return
+
+            print("Downloading " + file_name + " ... ")
+            urllib.request.urlretrieve(url_base + file_name, file_path)
+            if os.path.exists(file_path):
+                    with gzip.GzipFile(file_path) as f:
+                        file_path_ungz = file_path[:-3].replace('\\', '/')
+                        file_path_ungz = file_path_ungz.replace('-idx', '.idx')
+                        if not os.path.exists(file_path_ungz):
+                            open(file_path_ungz,"wb").write(f.read())
+            print("Done")
+
+        def download_mnist(dataset_dir):
+            for v in key_file.values():
+                _download(dataset_dir,v)
+
+        def dataloader(data,label,batch_size, shuffle = True)->np:
+            if shuffle:
+                for _ in range(len(data)//batch_size):
+                    random_index = np.random.randint(0, len(data), (batch_size, 1))
+                    yield data[random_index].reshape(batch_size,-1),label[random_index].reshape(batch_size,-1)
+            else:
+                for i in range(0,len(data)-batch_size+1,batch_size):
+                    yield data[i:i+batch_size], label[i:i+batch_size]
+
+        def get_accuracy(result,label):
+            result,label = np.array(result.data), np.array(label.data)
+
+            is_correct = (np.abs(result - label) < 0.5)
+            is_correct = np.count_nonzero(is_correct)
+            acc = is_correct
+
+            return acc
+
+        def load_mnist_4_4(dataset="training_data", digits=np.arange(10),
+                        path="."):
+            import os, struct
+            from array import array as pyarray
+            download_mnist(path)
+            if dataset == "training_data":
+                fname_image = os.path.join(path, 'train-images.idx3-ubyte').replace('\\', '/')
+                fname_label = os.path.join(path, 'train-labels.idx1-ubyte').replace('\\', '/')
+            elif dataset == "testing_data":
+                fname_image = os.path.join(path, 't10k-images.idx3-ubyte').replace('\\', '/')
+                fname_label = os.path.join(path, 't10k-labels.idx1-ubyte').replace('\\', '/')
+            else:
+                raise ValueError("dataset must be 'training_data' or 'testing_data'")
+
+            flbl = open(fname_label, 'rb')
+            magic_nr, size = struct.unpack(">II", flbl.read(8))
+
+            lbl = pyarray("b", flbl.read())
+            flbl.close()
+
+            fimg = open(fname_image, 'rb')
+            magic_nr, size, rows, cols = struct.unpack(">IIII", fimg.read(16))
+            img = pyarray("B", fimg.read())
+            fimg.close()
+
+            ind = [k for k in range(size) if lbl[k] in digits]
+            N = len(ind)
+            images = np.zeros((N, rows, cols))
+            images_new = []# = np.zeros((N, 4, 4))
+            labels = np.zeros((N, 1), dtype=int)
+            import cv2
+            for i in range(len(ind)):
+                tmp1 = np.array(img[ind[i] * rows * cols: (ind[i] + 1) * rows * cols]).reshape((rows, cols))
+                tmp1 = tmp1[4:24,4:24]
+                tmp = cv2.resize(tmp1,(4,4))
+
+                if np.max(tmp) ==0:
+                    continue
+                images_new.append(tmp)
+                if lbl[ind[i]] ==digits[1]:
+                    labels[i] = 1
+                else:
+                    labels[i] = 0
+
+            return np.array(images_new), labels
+
+
+        class QISKIT_VQC:
+
+            def __init__(self, n_qubits, backend, shots):
+                # --- Circuit definition ---
+
+                qc = ClassicalRegister(1)
+                self.qc = qc
+                self.n_qubits = n_qubits
+
+                all_qubits = [i for i in range(n_qubits)]
+                self.all_qubits= all_qubits
+
+                self.backend = backend
+                self.shots = shots
+
+            def run(self,**kwargs):
+
+                x  = kwargs['x']
+                weights  = kwargs['w']
+
+                weights = weights.astype(np.float64)
+                x = x.astype(np.float64)
+
+                sum_feature = np.power(np.sum([t**2 for t in x]),0.5)
+                normalize_feat = x/sum_feature
+
+                self._circuit = qiskit.QuantumCircuit(QuantumRegister(4))
+
+                self.theta = weights.reshape([4,6])
+                self._circuit.initialize(normalize_feat, [0,1,2,3])
+
+
+                for i in range(self.n_qubits):
+                    self._circuit.rz(self.theta[i,0], i)
+                    self._circuit.ry(self.theta[i,1], i)
+                    self._circuit.rz(self.theta[i,2], i)
+
+                for d in range(3, 6):
+
+                    for i in range(self.n_qubits-1):
+                        self._circuit.cx(i, i + 1)
+                    self._circuit.cx(self.n_qubits-1, 0)
+
+                    for i in range(self.n_qubits):
+                        self._circuit.ry(self.theta[i,d], i)
+
+                statevec = Statevector(self._circuit)
+                Expectation = np.real(statevec.expectation_value(Pauli('ZIII')))
+                return Expectation
+
+        #define qiskit circuits class
+        circuit = QISKIT_VQC(4, simulator, 1000)
+
+        class Model_qiskit(Module):
             def __init__(self):
-                self.cl1 = Linear(3, 3)
-                self.ql = QModel(num_wires=6, dtype=pyvqnet.kcomplex64)
-                self.cl2 = Linear(1, 2)
+                super(Model_qiskit, self).__init__()
+                self.qvc = QiskitLayer(circuit,24)
 
             def forward(self, x):
-                x = self.cl1(x)
-                x = self.ql(x)
-                x = self.cl2(x)
-                return x
+
+                return self.qvc(x)*0.5 + 0.5
+
+        def Run_qiskit():
+
+            x_train, y_train = load_mnist_4_4("training_data",digits=[3,6])
+
+            y_train = y_train.reshape(-1, 1)
+
+            x_test, y_test = load_mnist_4_4("testing_data",digits=[3,6])
+
+            x_train = x_train.astype(np.float32)
+            x_test = x_test.astype(np.float32)
+            y_train = y_train.astype(np.float32)
+            y_test = y_test.astype(np.float32)
+            x_train = x_train *np.pi / 255
+            x_test = x_test *np.pi / 255
+            x_train = x_train[:100]
+            y_train = y_train[:100]
+
+            x_test = x_test[:50]
+            y_test = y_test[:50]
+
+            model = Model_qiskit()
+
+            optimizer = Adam(model.parameters(),lr =0.01)
+            batch_size = 10
+            epoch = 2
+
+            loss = MeanSquaredError()
+            print("start training..............")
+            model.train()
+
+            TL=[]
+
+            TA=[]
+
+            for i in range(epoch):
+                count=0
+                sum_loss = 0
+                accuracy = 0
+                t = 0
+                model.train()
+                for data,label in dataloader(x_train,y_train,batch_size,True):
+
+                    optimizer.zero_grad()
+
+                    result = model(data)
+
+                    loss_b = loss(label,result)
+
+                    loss_b.backward()
+                    optimizer._step()
+                    sum_loss += loss_b.item()
+                    count+=batch_size
+                    accuracy += get_accuracy(result,label)
+                    t = t + 1
+
+                    print(f"epoch:{i}, iter{t} #### loss:{sum_loss*batch_size/count} #####accuray:{accuracy/count}")
+                TL.append(sum_loss*batch_size/count)
+                TA.append(accuracy/count)
+            print(f"qiskit epoch {epoch}, accuracy {TA[-1]}")
+
+if __name__=="__main__":
+
+    Run_qiskit()
 
 
-        class QModel(Module):
-            def __init__(self, num_wires, dtype, grad_mode=""):
-                super(QModel, self).__init__()
+CirqLayer
+=================================
 
-                self._num_wires = num_wires
-                self._dtype = dtype
-                self.qm = QMachine(num_wires,
-                                dtype=dtype,
-                                grad_mode=grad_mode,
-                                save_ir=True)
-                self.rx_layer = RX(has_params=True, trainable=False, wires=0)
-                self.ry_layer = RY(has_params=True, trainable=False, wires=1)
-                self.rz_layer = RZ(has_params=True, trainable=False, wires=1)
-                self.u1 = U1(has_params=True, trainable=True, wires=[2])
-                self.u2 = U2(has_params=True, trainable=True, wires=[3])
-                self.u3 = U3(has_params=True, trainable=True, wires=[1])
-                self.i = I(wires=[3])
-                self.s = S(wires=[3])
-                self.x1 = X1(wires=[3])
-                self.y1 = Y1(wires=[3])
-                self.z1 = Z1(wires=[3])
-                self.x = PauliX(wires=[3])
-                self.y = PauliY(wires=[3])
-                self.z = PauliZ(wires=[3])
-                self.swap = SWAP(wires=[2, 3])
-                self.cz = CZ(wires=[2, 3])
-                self.cr = CR(has_params=True, trainable=True, wires=[2, 3])
-                self.rxx = RXX(has_params=True, trainable=True, wires=[2, 3])
-                self.rzz = RYY(has_params=True, trainable=True, wires=[2, 3])
-                self.ryy = RZZ(has_params=True, trainable=True, wires=[2, 3])
-                self.rzx = RZX(has_params=True, trainable=False, wires=[2, 3])
-                self.toffoli = Toffoli(wires=[2, 3, 4], use_dagger=True)
+.. py:class:: pyvqnet.qnn.CirqLayer(cirq_vqc,para_num)
 
-                self.h = Hadamard(wires=[1])
+    A cirq circuit encapsulation layer for implementing forward and backward propagation in vqnet. CIRQ_VQC is a class that requires users to define a cirq quantum circuit and its `run` function. The following example demonstrates its working principle.
+    This layer only supports circuit inputs and weights as parameters.
 
-                self.iSWAP = iSWAP(True, True, wires=[0, 2])
-                self.tlayer = T(wires=1)
-                self.cnot = CNOT(wires=[0, 1])
-                self.measure = MeasureAll(obs={'Z0': 2, 'Y3': 3})
-
-            def forward(self, x, *args, **kwargs):
-                self.qm.reset_states(x.shape[0])
-                self.i(q_machine=self.qm)
-                self.s(q_machine=self.qm)
-                self.swap(q_machine=self.qm)
-                self.cz(q_machine=self.qm)
-                self.x(q_machine=self.qm)
-                self.x1(q_machine=self.qm)
-                self.y(q_machine=self.qm)
-                self.y1(q_machine=self.qm)
-                self.z(q_machine=self.qm)
-                self.z1(q_machine=self.qm)
-                self.ryy(q_machine=self.qm)
-                self.rxx(q_machine=self.qm)
-                self.rzz(q_machine=self.qm)
-                self.rzx(q_machine=self.qm, params=x[:, [1]])
-                self.cr(q_machine=self.qm)
-                self.u1(q_machine=self.qm)
-                self.u2(q_machine=self.qm)
-                self.u3(q_machine=self.qm)
-                self.rx_layer(params=x[:, [0]], q_machine=self.qm)
-                self.cnot(q_machine=self.qm)
-                self.h(q_machine=self.qm)
-                self.iSWAP(q_machine=self.qm)
-                self.ry_layer(params=x[:, [1]], q_machine=self.qm)
-                self.tlayer(q_machine=self.qm)
-                self.rz_layer(params=x[:, [2]], q_machine=self.qm)
-                self.toffoli(q_machine=self.qm)
-                rlt = self.measure(q_machine=self.qm)
-
-                return rlt
-
-        device = Comm_OP.get_rank
-        input_x = tensor.QTensor([[0.1, 0.2, 0.3]])
-        input_x = tensor.broadcast_to(input_x, [20, 3])
-        input_x.requires_grad = True
-
-
-
-        qunatum_model = QModel(num_wires=6, dtype=pyvqnet.kcomplex64)
-
-        l = DataParallelHybirdVQCQpandaQVMLayer(
-            Comm_OP,
-            qunatum_model,
-            "3047DE8A59764BEDAC9C3282093B16AF1",
-
-            num_qubits=6,
-            num_cubits=6,
-            pauli_str_dict={
-                'Z0': 2,
-                'Y3': 3
-            },
-            shots=1000,
-            name="",
-            submit_kwargs={"test_qcloud_fake": True},
-            query_kwargs={})
-
-        y = l(input_x)
-        print(y)
-        y.backward()
-        for p in qunatum_model.parameters():
-            print(p.grad)
-
-    The following is an example of nccl calculation using gpu. The command for single node dual process is as follows: mpirun -n 2 python xxx.py
+    :param cirq_vqc: A class defining the definition, backend, and running functions of a Cirq circuit.
+    :param para_num: `int` - The number of para_nums.
+    :return: A class capable of running the Cirq quantum circuit model.
 
     Example::
 
-        from pyvqnet.distributed import *
+        import numpy as np
+        import random
+        random.seed(42)
+        np.random.seed(42)
+        from pyvqnet.nn.module import Module
+        import pyvqnet
+        pyvqnet.utils.set_random_seed(42)
+        from pyvqnet.optim import Adam
 
-        Comm_OP = CommController("nccl")
-        #rest code not changed
+        from pyvqnet.nn.loss import MeanSquaredError
+        from pyvqnet.qnn.utils import CirqLayer
 
-    The following is an example of multi-node multi-process parallel calculation. Please ensure that the script is run in the same path and the same python environment on different nodes, and write the ip address mapping file `hosts` on each node. The format refers to :ref:`hostfile`.
 
-    Example::
+        import cirq
+        import sympy
+        from pyvqnet.utils.utils import get_circuit_symbols
 
-        #hosts example
-        10.10.7.107 slots=2
-        10.10.7.109 slots=2
 
-    To use mpi for 2 nodes, 2 processes per node, and 4 processes in total, you can run `vqnetrun -np 4 -f hosts python xxx.py`
-    
-    Example::
+        def dataloader(data,label,batch_size, shuffle = True)->np:
+            if shuffle:
+                for _ in range(len(data)//batch_size):
+                    random_index = np.random.randint(0, len(data), (batch_size, 1))
+                    yield data[random_index].reshape(batch_size,-1),label[random_index].reshape(batch_size,-1)
+            else:
+                for i in range(0,len(data)-batch_size+1,batch_size):
+                    yield data[i:i+batch_size].reshape(batch_size,-1), label[i:i+batch_size].reshape(batch_size,-1)
 
-        from pyvqnet.distributed import *
-        Comm_OP = CommController("mpi")
-        #rest code not changed
+        def get_accuracy(result,label):
+            result,label = np.array(result.data), np.array(label.data)
 
-    To use nccl for 2 nodes, 2 processes per node, and 4 processes in total, you can run `vqnetrun -np 4 -f hosts python xxx.py`
-    
-    Example::
+            is_correct = (np.abs(result - label) < 0.5)
+            is_correct = np.count_nonzero(is_correct)
+            acc = is_correct
 
-        from pyvqnet.distributed import *
-        Comm_OP = CommController("nccl")
-        #rest code not changed
+            return acc
 
+        def load_mnist_4_4(dataset="training_data", digits=np.arange(10), 
+                        path=".",encoding = "raw" ):
+            import os, struct
+            from array import array as pyarray
+            if dataset == "training_data":
+                fname_image = os.path.join(path, 'train-images.idx3-ubyte').replace('\\', '/')
+                fname_label = os.path.join(path, 'train-labels.idx1-ubyte').replace('\\', '/')
+            elif dataset == "testing_data":
+                fname_image = os.path.join(path, 't10k-images.idx3-ubyte').replace('\\', '/')
+                fname_label = os.path.join(path, 't10k-labels.idx1-ubyte').replace('\\', '/')
+            else:
+                raise ValueError("dataset must be 'training_data' or 'testing_data'")
+
+            flbl = open(fname_label, 'rb')
+            magic_nr, size = struct.unpack(">II", flbl.read(8))
+
+            lbl = pyarray("b", flbl.read())
+            flbl.close()
+
+            fimg = open(fname_image, 'rb')
+            magic_nr, size, rows, cols = struct.unpack(">IIII", fimg.read(16))
+            img = pyarray("B", fimg.read())
+            fimg.close()
+
+            ind = [k for k in range(size) if lbl[k] in digits]
+            N = len(ind)
+
+            images_new = []# = np.zeros((N, 4, 4))
+            labels = np.zeros((N, 1), dtype=int)
+            import cv2
+            for i in range(len(ind)):
+                tmp1 = np.array(img[ind[i] * rows * cols: (ind[i] + 1) * rows * cols]).reshape((rows, cols))
+                tmp1 = tmp1[4:24,4:24]
+                tmp = cv2.resize(tmp1,(4,4))
+
+                if np.max(tmp) ==0:
+                    continue
+                if encoding == "normalized":
+                    sum_feature = np.power(np.sum([t**2 for t in tmp.flatten()]),0.5)
+                        
+                    normalize_feat = tmp/sum_feature
+                images_new.append(normalize_feat)
+                if lbl[ind[i]] ==digits[1]:
+                    labels[i] = 1
+                else:
+                    labels[i] = 0 
+
+            return np.array(images_new), labels
+
+
+
+        class CIRQ_VQC:
+
+            def __init__(self,simulator = cirq.Simulator ()):
+
+                self._circuit = cirq.Circuit()
+                n_qubits =4
+                ###define qubits
+                q0 = cirq.NamedQubit ('q0')
+                q1 = cirq.NamedQubit ('q1')
+                q2 = cirq.NamedQubit ('q2')
+                q3 = cirq.NamedQubit ('q3')
+                qubits = [q0,q1,q2,q3]
+                self.qubits = [q0,q1,q2,q3]
+                ###define varational parameters
+                param = sympy.symbols(f'theta(0:24)')
+                self.theta = np.asarray(param).reshape((4,6))
+
+                ###define circuits
+                circuit = cirq.Circuit()
+
+                for i ,q in enumerate(qubits):
+                    circuit.append(cirq.rz(self.theta[i][0])(q))
+                    circuit.append(cirq.ry(self.theta[i][1])(q))
+                    circuit.append(cirq.rz(self.theta[i][2])(q))
+                
+                for d in range(3, 6):
+                    for i in range(n_qubits-1):
+                        circuit.append(cirq.CNOT(qubits[i], qubits[i + 1]))
+                    circuit.append(cirq.CNOT(qubits[n_qubits-1], qubits[0]))
+
+                    for i ,q in enumerate(qubits):
+                        circuit.append(cirq.ry(self.theta[i][d])(q))
+
+                self._circuit = circuit
+                
+                ###define backend
+                self._backend = simulator
+
+                self._param_symbols_list,self._input_symbols_list = get_circuit_symbols(self._circuit)
+
+
+            def run(self,resolver,init_state):
+
+                rlt = self._backend.simulate(self._circuit,resolver,initial_state=init_state).final_state_vector
+                z0 = cirq.Z(self.qubits[0])
+
+                qubit_map={self.qubits[0]: 0}
+                
+                expectation = z0.expectation_from_state_vector(rlt, qubit_map).real
+
+                return expectation
+
+        #define cirq circuits class
+        circuit = CIRQ_VQC()
+
+        class Model_cirq(Module):
+            def __init__(self):
+                super(Model_cirq, self).__init__()
+                self.qvc = CirqLayer(circuit,24)
+
+            def forward(self, x):
+
+                y = self.qvc(x)*0.5 + 0.5
+                return y.astype(x.dtype)
+
+
+        def run_cirq():
+
+            x_train, y_train = load_mnist_4_4("training_data",digits=[3,6],encoding="normalized")
+            y_train = y_train.reshape(-1, 1) 
+
+            x_test, y_test = load_mnist_4_4("testing_data",digits=[3,6],encoding="normalized")
+
+            x_train = x_train.astype(np.float32)
+            x_test = x_test.astype(np.float32)
+            y_test = y_test.astype(np.float32)
+            y_train = y_train.astype(np.float32)
+            x_train = x_train[:100] 
+
+            y_train = y_train[:100] 
+
+            x_test = x_test[:50]
+
+            y_test = y_test[:50]  
+
+            model = Model_cirq()
+
+            optimizer = Adam(model.parameters(),lr =0.01)
+            batch_size = 10
+            epoch = 5
+
+            loss = MeanSquaredError()
+            print("start training..............")
+            model.train()
+
+            TL=[]
+            TA=[]
+
+            for i in range(epoch):
+                count=0
+                sum_loss = 0
+                accuracy = 0
+                t = 0
+                for data,label in dataloader(x_train,y_train,batch_size,False):
+
+                    optimizer.zero_grad()
+                    result = model(data)
+                    loss_b = loss(label,result)
+
+                    loss_b.backward()
+                    optimizer._step()
+                    sum_loss += loss_b.item()
+                    count+=batch_size
+                    accuracy += get_accuracy(result,label)
+                    t = t + 1
+
+                    print(f"epoch:{i},  #### loss:{sum_loss*batch_size/count} #####accuray:{accuracy/count}")
+                TL.append(sum_loss*batch_size/count)
+                TA.append(accuracy/count)
+            print(f"cirq epoch {epoch}, final accuracy {TA[-1]}")
+
+        if __name__=="__main__":
+        
+            run_cirq()
 
 Quantum Gates
 ***********************************

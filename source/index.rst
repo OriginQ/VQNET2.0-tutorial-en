@@ -12,7 +12,7 @@ Core Features of VQNet
 Multi-platform compatibility and cross-environment support
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-VQNet supports users to conduct research and development of quantum machine learning in a variety of hardware and operating system environments. Whether using CPU or GPU for quantum computing simulation or calling real quantum chips through Benyuan Quantum Cloud Service, VQNet can provide seamless support. Currently, VQNet is compatible with python3.9, python3.10, and python3.11 versions of Windows, Linux, and macOS systems.
+VQNet supports users to conduct research and development of quantum machine learning in a variety of hardware and operating system environments. Whether using CPU or GPU for quantum computing simulation or calling real quantum chips through Benyuan Quantum Cloud Service, VQNet can provide seamless support. Currently, VQNet is compatible with python3.10, python3.11, and python3.12 versions of Windows, Linux, and macOS systems.
 
 Perfect interface design and ease of use
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -23,7 +23,7 @@ Efficient computing performance and expansion capabilities
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 - **Real quantum chip experiment support**: For users who need real quantum chip experiments, VQNet integrates the original pyQPanda interface, and combines the efficient scheduling capabilities of the original Sinan to achieve fast quantum circuit simulation calculations and real chip operation.
-- **Local computing optimization**: For local computing needs, VQNet provides a quantum machine learning programming interface based on CPU or GPU, and uses automatic differentiation technology to perform quantum variational circuit gradient calculations, which is significantly faster than traditional parameter drift methods (such as Qiskit).
+- **Local computing optimization**: For local computing needs, VQNet provides a quantum machine learning programming interface based on CPU or GPU, and uses automatic differentiation technology to perform quantum variational circuit gradient calculations, which is significantly faster than parameter shift methods , Details can be found in  :ref:`benchmarks` .
 - **Distributed computing support**: VQNet supports MPI-based distributed computing, which can realize the function of training large-scale hybrid quantum-classical neural network models on multiple nodes.
 
 Rich application scenarios and example support
@@ -50,6 +50,7 @@ VQNet is not only a powerful development tool, but also widely used in multiple 
 
     rst/QTensor.rst
     rst/nn.rst
+    rst/vqnet_dist.rst
     rst/utils.rst
 
 .. toctree::
@@ -64,6 +65,7 @@ VQNet is not only a powerful development tool, but also widely used in multiple 
     :maxdepth: 2
 
     rst/vqc.rst
+    rst/benchmarks.rst
 
 .. toctree::
     :caption: Quantum Large Model Fine-Tuning
