@@ -27,7 +27,7 @@ Changed
 
 
 
-+Fixed
+Fixed
 ===================
 
 - Support the return values of the latest version of pyqpanda2QCloud;
