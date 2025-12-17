@@ -798,9 +798,9 @@ QiskitLayer
                 TA.append(accuracy/count)
             print(f"qiskit epoch {epoch}, accuracy {TA[-1]}")
 
-if __name__=="__main__":
+        if __name__=="__main__":
 
-    Run_qiskit()
+            Run_qiskit()
 
 
 CirqLayer
@@ -814,6 +814,11 @@ CirqLayer
     :param cirq_vqc: A class defining the definition, backend, and running functions of a Cirq circuit.
     :param para_num: `int` - The number of para_nums.
     :return: A class capable of running the Cirq quantum circuit model.
+
+
+    .. note::
+
+        The following example code requires `cirq==1.5.0, numpy <2`.
 
     Example::
 

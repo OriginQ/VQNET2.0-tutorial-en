@@ -50,7 +50,6 @@ VQNet is not only a powerful development tool, but also widely used in multiple 
 
     rst/QTensor.rst
     rst/nn.rst
-    rst/vqnet_dist.rst
     rst/utils.rst
 
 .. toctree::
@@ -65,7 +64,6 @@ VQNet is not only a powerful development tool, but also widely used in multiple 
     :maxdepth: 2
 
     rst/vqc.rst
-    rst/benchmarks.rst
 
 .. toctree::
     :caption: Quantum Large Model Fine-Tuning
@@ -78,6 +76,7 @@ VQNet is not only a powerful development tool, but also widely used in multiple 
     :maxdepth: 2 
     
     rst/torch_api.rst
+    rst/vqnet_dist.rst
     rst/FAQ.rst 
     rst/CHANGELOG.rst
 

@@ -7,7 +7,11 @@ VQNet uses torch for low-level computation
 =============================================================
 
 Starting from version 2.15.0, this software supports using `torch` as the computing backend for low-level operations and can be integrated with models, codes, and third-party libraries based on `torch` for secondary development.
-    
+
+    .. important::
+
+        To use the following features, please install torch>=2.4.0 yourself. This software does not automatically install torch during installation.
+
     .. note::
 
         The variational quantum computation functions (with lowercase naming, such as `rx` , `ry` , `rz` , etc.) in :ref:`vqc_api`, as well as the basic computation functions of QTensor in :ref:`qtensor_api` ,
