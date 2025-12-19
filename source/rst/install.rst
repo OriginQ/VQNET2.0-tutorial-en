@@ -10,6 +10,19 @@ We provide precompiled Python packages for installation on Linux, Windows, x86_6
 
     pip install pyvqnet --upgrade
 
+
+If you encounter the following GLBCXX problem on Linux:
+
+.. code-block::
+
+    ImportError: /lib/x86_64-linux-gnu/libstdc++.so.6: version `GLIBCXX_3.4.30' not found (required by /home/whc/miniforge3/envs/py310/lib/python3.10/site-packages/pyvqnet/libs/libvqnet.so)
+
+You can update the libstdcxx library, for example:
+
+.. code-block::
+
+    conda install -c conda-forge "libstdcxx-ng>=12"
+
 For Windows and Linux systems, the pyvqnet package includes built-in acceleration features for classic neural network computations based on Nvidia CUDA. The package is optimized for the following CUDA architectures: **sm_80** (NVIDIA A100, A30 series data center GPUs) and **sm_86** (NVIDIA GeForce RTX 30 series consumer GPUs). Please ensure you are using a GPU that supports these architectures; otherwise, the program may not function correctly.
 
 Validate VQNet's installation 
