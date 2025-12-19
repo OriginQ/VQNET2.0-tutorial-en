@@ -4,25 +4,26 @@ Steps of VQNet Installation
 VQNet python package Installation
 ----------------------------------
 
-We provide precompiled Python packages for installation on Linux, Windows, x86_64 OSX >=10.12, arm64 OSX >=13.0, supporting python3.9, 3.10, or 3.11.
-
-For Linux systems, pyvqnet offers accelerated computation for classic neural networks based on Nvidia GPU. If your computer's GPU is GTX10 series or later, you can build models with pyvqnet's GPU functionality by installing cuda11.8 following the official CUDA website.
+We provide precompiled Python packages for installation on Linux, Windows, x86_64 OSX >=10.12, arm64 OSX >=13.0, supporting python3.10, 3.11, or 3.12.
 
 .. code-block::
 
-    pip install pyvqnet
+    pip install pyvqnet --upgrade
 
-or:
 
-.. code-block::
-
-    pip install pyvqnet --index-url https://pypi.originqc.com.cn
-
-If you encounter network problems and cannot download, try increasing the timeout.
+If you encounter the following GLBCXX problem on Linux:
 
 .. code-block::
 
-    pip install pyvqnet --index-url https://pypi.originqc.com.cn --default-timeout=100
+    ImportError: /lib/x86_64-linux-gnu/libstdc++.so.6: version `GLIBCXX_3.4.30' not found (required by /home/whc/miniforge3/envs/py310/lib/python3.10/site-packages/pyvqnet/libs/libvqnet.so)
+
+You can update the libstdcxx library, for example:
+
+.. code-block::
+
+    conda install -c conda-forge "libstdcxx-ng>=12"
+
+For Windows and Linux systems, the pyvqnet package includes built-in acceleration features for classic neural network computations based on Nvidia CUDA. The package is optimized for the following CUDA architectures: **sm_80** (NVIDIA A100, A30 series data center GPUs) and **sm_86** (NVIDIA GeForce RTX 30 series consumer GPUs). Please ensure you are using a GPU that supports these architectures; otherwise, the program may not function correctly.
 
 Validate VQNet's installation 
 ----------------------------------
