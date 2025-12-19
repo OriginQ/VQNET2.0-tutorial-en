@@ -403,7 +403,7 @@ transformations :math:`U(\theta_1,\theta_2,\theta_3)`.However, in the Quantum Da
         train()
         test()
 
-The following picture illustrates the curve of model's accuracy：
+The following picture illustrates the curve of model's accuracy: 
 
 .. figure:: ./images/qdrl_accuracy.png
    :width: 600 px
@@ -750,7 +750,7 @@ Following figures show the local quantum circuits structure on each qubits:
 
         run_vsql()
 
-The following shows the curve of model's accuacy and loss：
+The following shows the curve of model's accuracy and loss: 
 
 .. figure:: ./images/vsql_cacc.PNG
    :width: 600 px
@@ -2938,7 +2938,7 @@ we also need to instantiate the model, define the loss function and optimizer, a
 testing process. For the hybrid neural network model as shown in the figure below, we calculate the loss value in
 forward function the gradient of each parameter in
 reverse calculation automatically, and use the optimizer to optimize the parameters until the number of
-iterations meets the preset value.If ``PREPROCESS`` is False，the code will skip the quantum data preprocessing.
+iterations meets the preset value.If ``PREPROCESS`` is False, the code will skip the quantum data preprocessing.
 
 .. code-block::
 
@@ -3182,7 +3182,7 @@ Building Hybrid Classical-Quantum Neural Networks
     from pyvqnet.optim.adam import Adam
     from pyvqnet.tensor.tensor import QTensor
     from pyvqnet.qnn.measure import expval
-    from pyvqnet.qnn.quantumlayer import QuantumLayer, QuantumLayerMultiProcess
+    from pyvqnet.qnn.quantumlayer import QuantumLayer
     from pyvqnet.nn.pooling import AvgPool2D
     from pyvqnet.nn.linear import Linear
     from pyvqnet.data.data import data_generator
@@ -3396,42 +3396,14 @@ Building Hybrid Classical-Quantum Neural Networks
 
         return exp_vals
 
-    def build_multiprocess_qmlp_circuit(x, weights, num_qubits, num_clist):
-        machine = pq.CPUQVM()
-        machine.init_qvm()
-        qubits = machine.qAlloc_many(num_qubits)
-        cir = pq.QCircuit()
-        for i in range(num_qubits):
-            cir.insert(pq.RX(qubits[i], x[i]))
-
-        cir.insert(build_RotCircuit(qubits, weights[0:48]))
-        cir.insert(build_CRotCircuit(qubits, weights[48:64]))
-
-        for i in range(num_qubits):
-            cir.insert(pq.RX(qubits[i], x[i]))
-
-        cir.insert(build_RotCircuit(qubits, weights[64:112]))
-        cir.insert(build_CRotCircuit(qubits, weights[112:128]))
-
-        prog = pq.QProg()
-        prog.insert(cir)
-        # print(prog)
-        # exit()
-
-        exp_vals = []
-        for position in range(num_qubits):
-            pauli_str = {"Z" + str(position): 1.0}
-            exp2 = expval(machine, prog, pauli_str, qubits)
-            exp_vals.append(exp2)
-
-        return exp_vals
+    
 
     class QMLPModel(Module):
         def __init__(self):
             super(QMLPModel, self).__init__()
             self.ave_pool2d = AvgPool2D([7, 7], [7, 7], "valid")
-            self.quantum_circuit = QuantumLayerMultiProcess(build_multiprocess_qmlp_circuit, 128, 
-                                                            16, 1, diff_method="finite_diff")
+            self.quantum_circuit = QuantumLayer(build_qmlp_circuit, 128, "CPU", 16, diff_method="finite_diff")
+            
             self.linear = Linear(16, 10)
 
         def forward(self, x):
@@ -3555,7 +3527,7 @@ Requires ``gym`` == 0.23.0 , ``pygame`` == 2.1.2 .
     from pyvqnet.optim.adam import Adam
     from pyvqnet.tensor.tensor import QTensor
     from pyvqnet import kfloat32
-    from pyvqnet.qnn.quantumlayer import QuantumLayerMultiProcess
+    from pyvqnet.qnn.quantumlayer import QuantumLayer
     from pyvqnet.tensor import tensor
     from pyvqnet.qnn.measure import expval
     from pyvqnet._core import Tensor as CoreTensor
@@ -3612,10 +3584,10 @@ Requires ``gym`` == 0.23.0 , ``pygame`` == 2.1.2 .
     def encoder(encodings):
         encodings = int(encodings[0])
         return [i for i, b in enumerate(f'{encodings:0{CIRCUIT_SIZE}b}') if b == '1']
-    def build_qc(x, weights, num_qubits, num_clist):
-        machine = pq.CPUQVM()
-        machine.init_qvm()
-        qubits = machine.qAlloc_many(num_qubits)
+
+    def build_qc(x, weights, qubits, cubits ,machine):
+
+
         cir = pq.QCircuit()
         if x:
             wires = encoder(x)
@@ -3630,7 +3602,7 @@ Requires ``gym`` == 0.23.0 , ``pygame`` == 2.1.2 .
         prog = pq.QProg()
         prog.insert(cir)
         exp_vals = []
-        for position in range(num_qubits):
+        for position in range(n_qubits):
             pauli_str = {"Z" + str(position): 1.0}
             exp2 = expval(machine, prog, pauli_str, qubits)
             exp_vals.append(exp2)
@@ -3638,8 +3610,8 @@ Requires ``gym`` == 0.23.0 , ``pygame`` == 2.1.2 .
     class DRLModel(Module):
         def __init__(self):
             super(DRLModel, self).__init__()
-            self.quantum_circuit = QuantumLayerMultiProcess(build_qc, 24,
-                                                            4, 1, diff_method="finite_diff")
+            self.quantum_circuit = QuantumLayer(build_qc, 24, "CPU", 4, diff_method="finite_diff")
+
         def forward(self, x):
             quanutum_result = self.quantum_circuit(x)
             return quanutum_result
@@ -3721,17 +3693,6 @@ Requires ``gym`` == 0.23.0 , ``pygame`` == 2.1.2 .
         end = time.time()
 
 
-data result
-------------------------
-
-The training results are shown in the figure below. It can be seen that the final position is reached after certain steps.
-
-.. image:: ./images/result_QDRL.gif
-   :width: 600 px
-   :align: center
-
-|
-
 
 Unsupervised learning
 ****************************
@@ -3770,7 +3731,7 @@ The Euclidean distance between two quantum states is as follows:
 
     Euclidean \ distance = \sqrt{(2 - 2|\langle x | y \rangle|)}
 
-Visible measurement qubit :math:`|1\rangle` ​ is positively correlated with Euclidean distance. The quantum circuit of this algorithm is as follows：
+Visible measurement qubit :math:`|1\rangle` ​ is positively correlated with Euclidean distance. The quantum circuit of this algorithm is as follows:
 
 .. figure:: ./images/Kmeans.jpg
    :width: 600 px
@@ -4445,7 +4406,7 @@ Make the input data, define the parallel quantum model, and build the training m
     from pyvqnet.tensor.tensor import QTensor
     import pyqpanda as pq
     from pyvqnet.qnn.measure import expval
-    from pyvqnet.qnn.quantumlayer import QuantumLayer, QuantumLayerMultiProcess
+    from pyvqnet.qnn.quantumlayer import QuantumLayer
     import matplotlib.pyplot as plt
     import matplotlib
     try:

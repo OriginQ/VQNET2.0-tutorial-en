@@ -1,6 +1,41 @@
 VQNet Changelog
 ###############################
 
+
+
+[v2.17.2] -2025-11-18
+***********************************
+
+
+Added
+===================
+
+- Add support for the `torch` backend through the quantum natural gradient QNG interface;
+- Add the `pyvqnet-ad` backend, which uses a C++ automatic differential backend similar to torch. The data structure still adopts the original _core.Tensor and supports the vast majority of current existing interfaces.
+- Add the "Benchmarking of Variational Quantum Circuit's Gradients for Batch Data" document;
+
+Changed
+===================
+
+- delete `HybirdVQCQpanda3QVMLayer`, `QuantumLayerMultiProcess`, `TorchHybirdVQCQpanda3QVMLayer`;
+- delete `is_csr`, `csr_members` , `SparseHamiltonian` , `csr_to_dense` , `dense_to_csr` ;
+- Add the `QiskitLayer` and `CirqLayer` interfaces;
+- for `QuantumBatchAsyncQcloudLayer` layer increased `if_print_qcloud_log` support print qcloud log;
+- Change the installation command to `pip install pyvqnet --upgrade`
+- The supported python versions are changed to `Python 3.10` , `Python 3.11` , and `Python 3.12` .
+- Modify the specified mpicxx installation command;
+
+
+
+Fixed
+===================
+
+- Support the return values of the latest version of pyqpanda2QCloud;
+- Add input data device checks for the dot product interface;
+- Fixed a bug in `TorchModule` ;
+
+
+
 [v2.17.1] - 2025-8-22
 ***************************
 
@@ -24,6 +59,8 @@ Fixed
 - Resolved synchronization delay issues with distributed communication interfaces.
 - Modified distributed communication interface definitions.
 - Resolved an issue where adjoint gradient calculations did not support `PauliX`, `PauliY`, and `PauliZ`.
+
+
 [v2.17.0] - 2025-4-22
 ***************************
 
@@ -31,8 +68,8 @@ Added
 ===================
 
 - Added tensor network backend implementation for quantum circuit module, including support for basic logic gates, measurement, and complex quantum circuits.
-- Added tensor network backend implementation for constructing large-bit quantum circuits。
-- Added QTensor.swapaxes interface, another name is swapaxis。
+- Added tensor network backend implementation for constructing large-bit quantum circuits.
+- Added QTensor.swapaxes interface, another name is swapaxis.
 
 Changed
 ===================
@@ -239,8 +276,8 @@ Added
 ===================
 - Added existing interfaces to support complex128, complex64, double, float, uint8, int8, bool, int16, int32, int64 and other types of computing (gpu).
 - Basic logic gates based on vqc: Hadamard, CNOT, I, RX, RY, PauliZ, PauliX, PauliY, S, RZ, RXX, RYY, RZZ, RZX, X1, Y1, Z1, U1, U2, U3, T, SWAP , P, TOFFOLI, CZ, CR, ISWAP.
-- Combined quantum circuit based on vqc: VQC_HardwareEfficientAnsatz、VQC_BasicEntanglerTemplate、VQC_StronglyEntanglingTemplate、VQC_QuantumEmbedding、VQC_RotCircuit、VQC_CRotCircuit、VQC_CSWAPcircuit、VQC_Controlled_Hadamard、VQC_CCZ、VQC_FermionicSingleExcitation、VQC_FermionicDoubleExcitation、VQC_UCCSD、VQC_QuantumPoolingCircuit、VQC_BasisEmbedding、VQC_AngleEmbedding、VQC_AmplitudeEmbedding、VQC_IQPEmbedding.
-- Measurement methods based on vqc: VQC_Purity, VQC_VarMeasure, VQC_DensityMatrixFromQstate, Probability, MeasureAll。
+- Combined quantum circuit based on vqc: VQC_HardwareEfficientAnsatz,VQC_BasicEntanglerTemplate,VQC_StronglyEntanglingTemplate,VQC_QuantumEmbedding,VQC_RotCircuit,VQC_CRotCircuit,VQC_CSWAPcircuit,VQC_Controlled_Hadamard,VQC_CCZ,VQC_FermionicSingleExcitation,VQC_FermionicDoubleExcitation,VQC_UCCSD,VQC_QuantumPoolingCircuit,VQC_BasisEmbedding,VQC_AngleEmbedding,VQC_AmplitudeEmbedding,VQC_IQPEmbedding.
+- Measurement methods based on vqc: VQC_Purity, VQC_VarMeasure, VQC_DensityMatrixFromQstate, Probability, MeasureAll.
 
 
 [v2.0.7] - 2023-07-03
