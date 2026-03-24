@@ -1,0 +1,427 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en-English" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Steps of VQNet Installation &mdash; VQNET v2.17.3 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../_static/documentation_options.js?v=1bafbd87"></script>
+      <script src="../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Quantum Machine Learning Demos Using Autograd" href="vqc_demo.html" />
+    <link rel="prev" title="VQNet" href="../index.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            VQNET
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Installation Guide</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Steps of VQNet Installation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#vqnet-python-package-installation">VQNet python package Installation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#validate-vqnet-s-installation">Validate VQNet’s installation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#a-simple-case-of-vqnet">A simple case of VQNet</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Hands-on Examples</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="vqc_demo.html">Quantum Machine Learning Demos Using Autograd</a></li>
+<li class="toctree-l1"><a class="reference internal" href="qml_demo.html">Quantum Machine Learning Using Qpanda</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Classic neural network API</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="QTensor.html">QTensor Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="nn.html">Classical Neural Network Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="utils.html">Other Utility Functions</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">QNN API integrated with pyqpanda</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="qnn.html">Quantum Machine Learning API using QPanda2</a></li>
+<li class="toctree-l1"><a class="reference internal" href="qnn_pq3.html">Use pyQPanda3 quantum machine learning module</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Autograd QNN API</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="vqc.html">Autograd Variational Quantum Circuits’ API</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Quantum Large Model Fine-Tuning</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="llm.html">Quantum Large Model Fine-Tuning demo</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Others</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="torch_api.html">VQNet uses torch for low-level computation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="vqnet_dist.html">VQNet Naive Distributed Computing Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="FAQ.html">Frequently Asked Questions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="CHANGELOG.html">VQNet Changelog</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">VQNET</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Steps of VQNet Installation</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/rst/install.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="steps-of-vqnet-installation">
+<h1>Steps of VQNet Installation<a class="headerlink" href="#steps-of-vqnet-installation" title="Link to this heading">¶</a></h1>
+<section id="vqnet-python-package-installation">
+<h2>VQNet python package Installation<a class="headerlink" href="#vqnet-python-package-installation" title="Link to this heading">¶</a></h2>
+<p>We provide precompiled Python packages for installation on Linux, Windows, macOS 13+ (arm64), supporting <strong>python3.10, python3.11, or python3.12</strong>.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">pip</span> <span class="n">install</span> <span class="n">pyvqnet</span> <span class="o">--</span><span class="n">upgrade</span>
+</pre></div>
+</div>
+<p>If you encounter the following GLBCXX problem on Linux:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>ImportError: /lib/x86_64-linux-gnu/libstdc++.so.6: version `GLIBCXX_3.4.30&#39; not found (required by /home/whc/miniforge3/envs/py310/lib/python3.10/site-packages/pyvqnet/libs/libvqnet.so)
+</pre></div>
+</div>
+<p>You can update the libstdcxx library, for example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">conda</span> <span class="n">install</span> <span class="o">-</span><span class="n">c</span> <span class="n">conda</span><span class="o">-</span><span class="n">forge</span> <span class="s2">&quot;libstdcxx-ng&gt;=12&quot;</span>
+</pre></div>
+</div>
+<p>For Windows and Linux systems, the pyvqnet package includes built-in acceleration features for classic neural network computations based on Nvidia CUDA, which depends on the specific version of NVIDIA CUDA 11.8 runtime libraries (automatically installed with the package).
+The package is optimized for the following CUDA architectures:
+<strong>sm_80</strong> (NVIDIA A100, A30 series data center GPUs) and <strong>sm_86</strong> (NVIDIA GeForce RTX 30 series consumer GPUs). Please ensure you are using a GPU that supports these architectures; otherwise, the program may not function correctly.</p>
+<blockquote>
+<div><div class="admonition important">
+<p class="admonition-title">Important</p>
+<p>Please note that since this package does not distinguish between CPU/GPU versions, it depends on NVIDIA CUDA runtime libraries under Windows and Linux, which are automatically installed with the package. This may cause conflicts with other software that depends on different versions of CUDA (such as torch based on CUDA 12).</p>
+<p>The relevant library versions are:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="s2">&quot;nvidia-cublas-cu11==11.11.3.6&quot;</span><span class="p">,</span>
+<span class="s2">&quot;nvidia-cuda-runtime-cu11==11.8.89&quot;</span><span class="p">,</span>
+<span class="s2">&quot;nvidia-nccl-cu11== 2.19.3&quot;</span><span class="p">,</span>
+<span class="s2">&quot;nvidia-cuda-cupti-cu11==11.8.87&quot;</span><span class="p">,</span>
+<span class="s2">&quot;nvidia-cuda-nvrtc-cu11==11.8.89&quot;</span><span class="p">,</span>
+<span class="s2">&quot;nvidia-cufft-cu11==10.9.0.58&quot;</span><span class="p">,</span>
+<span class="s2">&quot;nvidia-cusolver-cu11==11.4.1.48&quot;</span><span class="p">,</span>
+<span class="s2">&quot;nvidia-cusparse-cu11==11.7.5.86&quot;</span><span class="p">,</span>
+<span class="s2">&quot;nvidia-nvtx-cu11==11.8.86&quot;</span><span class="p">,</span>
+<span class="s2">&quot;nvidia-curand-cu11==10.3.0.86&quot;</span><span class="p">,</span>
+</pre></div>
+</div>
+</div>
+</div></blockquote>
+</section>
+<section id="validate-vqnet-s-installation">
+<h2>Validate VQNet’s installation<a class="headerlink" href="#validate-vqnet-s-installation" title="Link to this heading">¶</a></h2>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">pyvqnet</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pyvqnet.tensor</span><span class="w"> </span><span class="kn">import</span> <span class="o">*</span>
+<span class="n">a</span> <span class="o">=</span> <span class="n">arange</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">25</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">([</span><span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">])</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">a</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="a-simple-case-of-vqnet">
+<h2>A simple case of VQNet<a class="headerlink" href="#a-simple-case-of-vqnet" title="Link to this heading">¶</a></h2>
+<p>Here we introduced a case which consisted with classical neural network modules and quantum modules of VQNet to describing the workflow of quantum machine learning.
+It refers to <a class="reference external" href="https://arxiv.org/abs/1907.02085">Data re-uploading for a universal quantum classifier</a> .
+Generally, there are following parts of quantum computing module in quantum machine learning:</p>
+<p>(1)Encoder:encoding classical data into quantum state;</p>
+<p>(2)Ansats: training the parameters in Parameterized Quantum Gates;</p>
+<p>(3)Measurement: measuring the value of a qubit(projection of qubit’s quantum state in a specified axis).</p>
+<p>Quantum computing module is the theoretical basis of the hybrid model of quantum classical neural network, which is also differentiable like the module of classical neural network. VQNet supports quantum computing module and classical computing module to form a hybrid machine learning model, and provides a variety of optimization algorithm optimization parameters. (e.g. Convolution layer, pooling layer, full connection layer, activation function, etc.)</p>
+<figure class="align-default">
+<img alt="../_images/classic-quantum.PNG" src="../_images/classic-quantum.PNG" />
+</figure>
+<p>In the quantum computing module, VQNet supports the use of the efficient quantum software computing package <a class="reference external" href="https://qcloud.originqc.com.cn/document/qpanda-3/index.html">pyqpanda3</a> to build quantum modules.
+Using the various commonly used interfaces provided by pyqpanda3, users can quickly build quantum computing modules.</p>
+<p>The following example uses pyqpanda3 to build a quantum computing module. Through VQNet, this quantum module can be directly embedded into a hybrid machine learning model for quantum circuit parameter training.
+In this example, 1 qubit is used, multiple parameterized rotation gates <cite>RZ</cite>, <cite>RY</cite>, <cite>RZ</cite> are used to encode the input x, and the <cite>probs_measure</cite> function is used to observe the probability measurement result of the qubit as output.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">pyqpanda3.core</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pq</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pyvqnet.qnn.pq3</span><span class="w"> </span><span class="kn">import</span> <span class="n">probs_measure</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">qdrl_circuit</span><span class="p">(</span><span class="nb">input</span><span class="p">,</span><span class="n">weights</span><span class="p">):</span>
+    <span class="n">qlist</span> <span class="o">=</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">machine</span> <span class="o">=</span> <span class="n">pq</span><span class="o">.</span><span class="n">CPUQVM</span><span class="p">()</span>
+    <span class="n">x1</span> <span class="o">=</span> <span class="nb">input</span><span class="o">.</span><span class="n">squeeze</span><span class="p">()</span>
+    <span class="n">param1</span> <span class="o">=</span> <span class="n">weights</span><span class="o">.</span><span class="n">squeeze</span><span class="p">()</span>
+    <span class="c1"># Build quantum circuit instance using pyqpanda3 interface</span>
+    <span class="n">circult</span> <span class="o">=</span> <span class="n">pq</span><span class="o">.</span><span class="n">QCircuit</span><span class="p">()</span>
+    <span class="c1"># Insert RZ gate on the first qubit with parameter x1[0]</span>
+    <span class="n">circult</span> <span class="o">&lt;&lt;</span> <span class="n">pq</span><span class="o">.</span><span class="n">RZ</span><span class="p">(</span><span class="n">qlist</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">x1</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+    <span class="c1"># Insert RY gate on the first qubit with parameter x1[1]</span>
+    <span class="n">circult</span> <span class="o">&lt;&lt;</span> <span class="n">pq</span><span class="o">.</span><span class="n">RY</span><span class="p">(</span><span class="n">qlist</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">x1</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+    <span class="c1"># Insert RZ gate on the first qubit with parameter x1[2]</span>
+    <span class="n">circult</span> <span class="o">&lt;&lt;</span> <span class="n">pq</span><span class="o">.</span><span class="n">RZ</span><span class="p">(</span><span class="n">qlist</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">x1</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
+    <span class="c1"># Insert RZ gate on the first qubit with parameter param1[0]</span>
+    <span class="n">circult</span> <span class="o">&lt;&lt;</span> <span class="n">pq</span><span class="o">.</span><span class="n">RZ</span><span class="p">(</span><span class="n">qlist</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">param1</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+    <span class="c1"># Insert RY gate on the first qubit with parameter param1[1]</span>
+    <span class="n">circult</span> <span class="o">&lt;&lt;</span> <span class="n">pq</span><span class="o">.</span><span class="n">RY</span><span class="p">(</span><span class="n">qlist</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">param1</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+    <span class="c1"># Insert RZ gate on the first qubit with parameter param1[2]</span>
+    <span class="n">circult</span> <span class="o">&lt;&lt;</span> <span class="n">pq</span><span class="o">.</span><span class="n">RZ</span><span class="p">(</span><span class="n">qlist</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">param1</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
+    <span class="c1"># Insert RZ gate on the first qubit with parameter x1[0]</span>
+    <span class="n">circult</span> <span class="o">&lt;&lt;</span> <span class="n">pq</span><span class="o">.</span><span class="n">RZ</span><span class="p">(</span><span class="n">qlist</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">x1</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+    <span class="c1"># Insert RY gate on the first qubit with parameter x1[1]</span>
+    <span class="n">circult</span> <span class="o">&lt;&lt;</span> <span class="n">pq</span><span class="o">.</span><span class="n">RY</span><span class="p">(</span><span class="n">qlist</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">x1</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+    <span class="c1"># Insert RZ gate on the first qubit with parameter x1[2]</span>
+    <span class="n">circult</span> <span class="o">&lt;&lt;</span> <span class="n">pq</span><span class="o">.</span><span class="n">RZ</span><span class="p">(</span><span class="n">qlist</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">x1</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
+    <span class="c1"># Insert RZ gate on the first qubit with parameter param1[3]</span>
+    <span class="n">circult</span> <span class="o">&lt;&lt;</span> <span class="n">pq</span><span class="o">.</span><span class="n">RZ</span><span class="p">(</span><span class="n">qlist</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">param1</span><span class="p">[</span><span class="mi">3</span><span class="p">])</span>
+    <span class="c1"># Insert RY gate on the first qubit with parameter param1[4]</span>
+    <span class="n">circult</span> <span class="o">&lt;&lt;</span> <span class="n">pq</span><span class="o">.</span><span class="n">RY</span><span class="p">(</span><span class="n">qlist</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">param1</span><span class="p">[</span><span class="mi">4</span><span class="p">])</span>
+    <span class="c1"># Insert RZ gate on the first qubit with parameter param1[5]</span>
+    <span class="n">circult</span> <span class="o">&lt;&lt;</span> <span class="n">pq</span><span class="o">.</span><span class="n">RZ</span><span class="p">(</span><span class="n">qlist</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">param1</span><span class="p">[</span><span class="mi">5</span><span class="p">])</span>
+    <span class="c1"># Insert RZ gate on the first qubit with parameter x1[0]</span>
+    <span class="n">circult</span> <span class="o">&lt;&lt;</span> <span class="n">pq</span><span class="o">.</span><span class="n">RZ</span><span class="p">(</span><span class="n">qlist</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">x1</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+    <span class="c1"># Insert RY gate on the first qubit with parameter x1[1]</span>
+    <span class="n">circult</span> <span class="o">&lt;&lt;</span> <span class="n">pq</span><span class="o">.</span><span class="n">RY</span><span class="p">(</span><span class="n">qlist</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">x1</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+    <span class="c1"># Insert RZ gate on the first qubit with parameter x1[2]</span>
+    <span class="n">circult</span> <span class="o">&lt;&lt;</span> <span class="n">pq</span><span class="o">.</span><span class="n">RZ</span><span class="p">(</span><span class="n">qlist</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">x1</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
+    <span class="c1"># Insert RZ gate on the first qubit with parameter param1[6]</span>
+    <span class="n">circult</span> <span class="o">&lt;&lt;</span> <span class="n">pq</span><span class="o">.</span><span class="n">RZ</span><span class="p">(</span><span class="n">qlist</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">param1</span><span class="p">[</span><span class="mi">6</span><span class="p">])</span>
+    <span class="c1"># Insert RY gate on the first qubit with parameter param1[7]</span>
+    <span class="n">circult</span> <span class="o">&lt;&lt;</span> <span class="n">pq</span><span class="o">.</span><span class="n">RY</span><span class="p">(</span><span class="n">qlist</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">param1</span><span class="p">[</span><span class="mi">7</span><span class="p">])</span>
+    <span class="c1"># Insert RZ gate on the first qubit with parameter param1[8]</span>
+    <span class="n">circult</span> <span class="o">&lt;&lt;</span> <span class="n">pq</span><span class="o">.</span><span class="n">RZ</span><span class="p">(</span><span class="n">qlist</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">param1</span><span class="p">[</span><span class="mi">8</span><span class="p">])</span>
+    <span class="c1"># Build quantum program</span>
+    <span class="n">prog</span> <span class="o">=</span> <span class="n">pq</span><span class="o">.</span><span class="n">QProg</span><span class="p">()</span>
+    <span class="n">prog</span> <span class="o">&lt;&lt;</span> <span class="n">circult</span>
+    <span class="c1"># Get probability measurement</span>
+    <span class="n">prob</span> <span class="o">=</span> <span class="n">probs_measure</span><span class="p">(</span><span class="n">machine</span> <span class="p">,</span><span class="n">prog</span><span class="p">,</span>  <span class="n">qlist</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">prob</span>
+</pre></div>
+</div>
+<p>Our task is to classify these data which is generated randomly based on binary classification algorithm. In this task,
+0 is a circle’s center, points within radius by 1 colored in red are one category, the samples are labeled in blue are another category.</p>
+<figure class="align-default">
+<img alt="../_images/origin_circle.png" src="../_images/origin_circle.png" />
+</figure>
+<p>The pipeline of the training process</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># import required libraries and functions</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pyvqnet.qnn.pq3.quantumlayer</span><span class="w"> </span><span class="kn">import</span> <span class="n">QuantumLayer</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pyvqnet.optim</span><span class="w"> </span><span class="kn">import</span> <span class="n">adam</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pyvqnet.nn.loss</span><span class="w"> </span><span class="kn">import</span> <span class="n">CategoricalCrossEntropy</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pyvqnet.tensor</span><span class="w"> </span><span class="kn">import</span> <span class="n">QTensor</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pyvqnet.nn.module</span><span class="w"> </span><span class="kn">import</span> <span class="n">Module</span>
+</pre></div>
+</div>
+<p>Defining a model, where <code class="docutils literal notranslate"><span class="pre">__init__</span></code> function defines the internal neural network modules and quantum modules, and <code class="docutils literal notranslate"><span class="pre">forward</span></code> function defines the forward function, <code class="docutils literal notranslate"><span class="pre">QuantumLayer</span></code> is an abstract class
+that encapsulates quantum computing.
+VQNet will calculate the parameters’ gradient automatically with <cite>qdrl_circuit</cite>, <cite>param_num</cite>.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># number of parameters to be trained.</span>
+<span class="n">param_num</span> <span class="o">=</span> <span class="mi">9</span>
+<span class="c1"># qubit number.</span>
+<span class="n">qbit_num</span>  <span class="o">=</span> <span class="mi">1</span>
+<span class="c1">#define a model class inherits from Module.</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">Model</span><span class="p">(</span><span class="n">Module</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">Model</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="c1">#use QuantumLayer to embed quantum circuit into autodiff pipeline.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pqc</span> <span class="o">=</span> <span class="n">QuantumLayer</span><span class="p">(</span><span class="n">qdrl_circuit</span><span class="p">,</span><span class="n">param_num</span><span class="p">)</span>
+    <span class="c1">#define the forward function</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">pqc</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">x</span>
+</pre></div>
+</div>
+<p>Definiting some functions of training model</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># a function to generating the raw data randomly</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">circle</span><span class="p">(</span><span class="n">samples</span><span class="p">:</span><span class="nb">int</span><span class="p">,</span>  <span class="n">rads</span> <span class="o">=</span>  <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mi">2</span><span class="o">/</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">))</span> <span class="p">:</span>
+    <span class="n">data_x</span><span class="p">,</span> <span class="n">data_y</span> <span class="o">=</span> <span class="p">[],</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">samples</span><span class="p">):</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="mi">2</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span>
+        <span class="n">y</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">rads</span><span class="p">:</span>
+            <span class="n">y</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">data_x</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="n">data_y</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">y</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">data_x</span><span class="p">,</span><span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">data_y</span><span class="p">,</span><span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">)</span>
+
+<span class="c1"># a funntion to loading data</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">get_minibatch_data</span><span class="p">(</span><span class="n">x_data</span><span class="p">,</span> <span class="n">label</span><span class="p">,</span> <span class="n">batch_size</span><span class="p">):</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="n">x_data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">-</span><span class="n">batch_size</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span><span class="n">batch_size</span><span class="p">):</span>
+        <span class="n">idxs</span> <span class="o">=</span> <span class="nb">slice</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">i</span> <span class="o">+</span> <span class="n">batch_size</span><span class="p">)</span>
+        <span class="k">yield</span> <span class="n">x_data</span><span class="p">[</span><span class="n">idxs</span><span class="p">],</span> <span class="n">label</span><span class="p">[</span><span class="n">idxs</span><span class="p">]</span>
+
+<span class="c1"># a function to computing the accuracy</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">get_score</span><span class="p">(</span><span class="n">pred</span><span class="p">,</span> <span class="n">label</span><span class="p">):</span>
+    <span class="n">pred</span><span class="p">,</span> <span class="n">label</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">pred</span><span class="o">.</span><span class="n">data</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">label</span><span class="o">.</span><span class="n">data</span><span class="p">)</span>
+    <span class="n">pred</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">pred</span><span class="p">,</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">score</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">label</span><span class="p">,</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">score</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">pred</span> <span class="o">==</span> <span class="n">score</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">score</span>
+</pre></div>
+</div>
+<p>VQNet follows the general workflow of machine learning: loading the data iteratively, front propagation, calculating loss function, back propagation, updating the parameter.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># instantiating a model</span>
+<span class="n">model</span> <span class="o">=</span> <span class="n">Model</span><span class="p">()</span>
+<span class="c1"># using Adam to define a optimizer</span>
+<span class="n">optimizer</span> <span class="o">=</span> <span class="n">adam</span><span class="o">.</span><span class="n">Adam</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">parameters</span><span class="p">(),</span><span class="n">lr</span> <span class="o">=</span><span class="mf">0.6</span><span class="p">)</span>
+<span class="c1"># using cross-entropy to define a loss function</span>
+<span class="n">Closs</span> <span class="o">=</span> <span class="n">CategoricalCrossEntropy</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>A function to train the model</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">train</span><span class="p">():</span>
+
+    <span class="c1">#  generate data to be trained randomly</span>
+    <span class="n">x_train</span><span class="p">,</span> <span class="n">y_train</span> <span class="o">=</span> <span class="n">circle</span><span class="p">(</span><span class="mi">500</span><span class="p">)</span>
+    <span class="n">x_train</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">hstack</span><span class="p">((</span><span class="n">x_train</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">x_train</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="mi">1</span><span class="p">),</span><span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)))</span>
+    <span class="c1"># define the number of data about each batch</span>
+    <span class="n">batch_size</span> <span class="o">=</span> <span class="mi">32</span>
+    <span class="c1"># Maximum of training iteration times</span>
+    <span class="n">epoch</span> <span class="o">=</span> <span class="mi">10</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;start training...........&quot;</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">epoch</span><span class="p">):</span>
+        <span class="n">model</span><span class="o">.</span><span class="n">train</span><span class="p">()</span>
+        <span class="n">accuracy</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">count</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">loss</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">for</span> <span class="n">data</span><span class="p">,</span> <span class="n">label</span> <span class="ow">in</span> <span class="n">get_minibatch_data</span><span class="p">(</span><span class="n">x_train</span><span class="p">,</span> <span class="n">y_train</span><span class="p">,</span><span class="n">batch_size</span><span class="p">):</span>
+            <span class="c1"># clear the cache of optimizer</span>
+            <span class="n">optimizer</span><span class="o">.</span><span class="n">zero_grad</span><span class="p">()</span>
+            <span class="c1"># forward computing</span>
+            <span class="n">output</span> <span class="o">=</span> <span class="n">model</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+            <span class="c1"># calculating loss function</span>
+            <span class="n">losss</span> <span class="o">=</span> <span class="n">Closs</span><span class="p">(</span><span class="n">label</span><span class="p">,</span> <span class="n">output</span><span class="p">)</span>
+            <span class="c1"># anti-propagation</span>
+            <span class="n">losss</span><span class="o">.</span><span class="n">backward</span><span class="p">()</span>
+            <span class="c1"># update the parameter of optimizer</span>
+            <span class="n">optimizer</span><span class="o">.</span><span class="n">_step</span><span class="p">()</span>
+            <span class="c1"># calculate the accuracy</span>
+            <span class="n">accuracy</span> <span class="o">+=</span> <span class="n">get_score</span><span class="p">(</span><span class="n">output</span><span class="p">,</span><span class="n">label</span><span class="p">)</span>
+
+            <span class="n">loss</span> <span class="o">+=</span> <span class="n">losss</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>
+            <span class="n">count</span> <span class="o">+=</span> <span class="n">batch_size</span>
+
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;epoch:</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">, train_accuracy:</span><span class="si">{</span><span class="n">accuracy</span><span class="o">/</span><span class="n">count</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;epoch:</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">, train_loss:</span><span class="si">{</span><span class="n">loss</span><span class="o">/</span><span class="n">count</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>A function to validate the model</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">test</span><span class="p">():</span>
+
+    <span class="n">batch_size</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="n">model</span><span class="o">.</span><span class="n">eval</span><span class="p">()</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;start eval...................&quot;</span><span class="p">)</span>
+    <span class="n">xtest</span><span class="p">,</span> <span class="n">y_test</span> <span class="o">=</span> <span class="n">circle</span><span class="p">(</span><span class="mi">500</span><span class="p">)</span>
+    <span class="n">test_accuracy</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">count</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">x_test</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">hstack</span><span class="p">((</span><span class="n">xtest</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">xtest</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="mi">1</span><span class="p">),</span><span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)))</span>
+    <span class="n">predicted_test</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">test_data</span><span class="p">,</span> <span class="n">test_label</span> <span class="ow">in</span> <span class="n">get_minibatch_data</span><span class="p">(</span><span class="n">x_test</span><span class="p">,</span><span class="n">y_test</span><span class="p">,</span> <span class="n">batch_size</span><span class="p">):</span>
+
+        <span class="n">test_data</span><span class="p">,</span> <span class="n">test_label</span> <span class="o">=</span> <span class="n">QTensor</span><span class="p">(</span><span class="n">test_data</span><span class="p">),</span><span class="n">QTensor</span><span class="p">(</span><span class="n">test_label</span><span class="p">)</span>
+        <span class="n">output</span> <span class="o">=</span> <span class="n">model</span><span class="p">(</span><span class="n">test_data</span><span class="p">)</span>
+        <span class="n">test_accuracy</span> <span class="o">+=</span> <span class="n">get_score</span><span class="p">(</span><span class="n">output</span><span class="p">,</span> <span class="n">test_label</span><span class="p">)</span>
+        <span class="n">count</span> <span class="o">+=</span> <span class="n">batch_size</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;test_accuracy:</span><span class="si">{</span><span class="n">test_accuracy</span><span class="o">/</span><span class="n">count</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Training and testing results</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">start</span> <span class="n">training</span><span class="o">...........</span>
+<span class="n">epoch</span><span class="p">:</span><span class="mi">0</span><span class="p">,</span> <span class="n">train_accuracy</span><span class="p">:</span><span class="mf">0.6145833333333334</span>
+<span class="n">epoch</span><span class="p">:</span><span class="mi">0</span><span class="p">,</span> <span class="n">train_loss</span><span class="p">:</span><span class="mf">0.020432369535168013</span>
+
+<span class="n">epoch</span><span class="p">:</span><span class="mi">1</span><span class="p">,</span> <span class="n">train_accuracy</span><span class="p">:</span><span class="mf">0.6854166666666667</span>
+<span class="n">epoch</span><span class="p">:</span><span class="mi">1</span><span class="p">,</span> <span class="n">train_loss</span><span class="p">:</span><span class="mf">0.01872217481335004</span>
+
+<span class="n">epoch</span><span class="p">:</span><span class="mi">2</span><span class="p">,</span> <span class="n">train_accuracy</span><span class="p">:</span><span class="mf">0.8104166666666667</span>
+<span class="n">epoch</span><span class="p">:</span><span class="mi">2</span><span class="p">,</span> <span class="n">train_loss</span><span class="p">:</span><span class="mf">0.016634768371780715</span>
+
+<span class="n">epoch</span><span class="p">:</span><span class="mi">3</span><span class="p">,</span> <span class="n">train_accuracy</span><span class="p">:</span><span class="mf">0.7479166666666667</span>
+<span class="n">epoch</span><span class="p">:</span><span class="mi">3</span><span class="p">,</span> <span class="n">train_loss</span><span class="p">:</span><span class="mf">0.016975031544764835</span>
+
+<span class="n">epoch</span><span class="p">:</span><span class="mi">4</span><span class="p">,</span> <span class="n">train_accuracy</span><span class="p">:</span><span class="mf">0.7875</span>
+<span class="n">epoch</span><span class="p">:</span><span class="mi">4</span><span class="p">,</span> <span class="n">train_loss</span><span class="p">:</span><span class="mf">0.016502128106852372</span>
+
+<span class="n">epoch</span><span class="p">:</span><span class="mi">5</span><span class="p">,</span> <span class="n">train_accuracy</span><span class="p">:</span><span class="mf">0.8083333333333333</span>
+<span class="n">epoch</span><span class="p">:</span><span class="mi">5</span><span class="p">,</span> <span class="n">train_loss</span><span class="p">:</span><span class="mf">0.0163204787299037</span>
+
+<span class="n">epoch</span><span class="p">:</span><span class="mi">6</span><span class="p">,</span> <span class="n">train_accuracy</span><span class="p">:</span><span class="mf">0.8083333333333333</span>
+<span class="n">epoch</span><span class="p">:</span><span class="mi">6</span><span class="p">,</span> <span class="n">train_loss</span><span class="p">:</span><span class="mf">0.01634311651190122</span>
+
+<span class="n">epoch</span><span class="p">:</span><span class="mi">7</span><span class="p">,</span> <span class="n">train_loss</span><span class="p">:</span><span class="mf">0.016330583145221074</span>
+
+<span class="n">epoch</span><span class="p">:</span><span class="mi">8</span><span class="p">,</span> <span class="n">train_accuracy</span><span class="p">:</span><span class="mf">0.8125</span>
+<span class="n">epoch</span><span class="p">:</span><span class="mi">8</span><span class="p">,</span> <span class="n">train_loss</span><span class="p">:</span><span class="mf">0.01629052646458149</span>
+
+<span class="n">epoch</span><span class="p">:</span><span class="mi">9</span><span class="p">,</span> <span class="n">train_accuracy</span><span class="p">:</span><span class="mf">0.8083333333333333</span>
+<span class="n">epoch</span><span class="p">:</span><span class="mi">9</span><span class="p">,</span> <span class="n">train_loss</span><span class="p">:</span><span class="mf">0.016270687493185203</span>
+
+<span class="n">start</span> <span class="nb">eval</span><span class="o">...................</span>
+<span class="n">test_accuracy</span><span class="p">:</span><span class="mf">0.826</span>
+</pre></div>
+</div>
+<figure class="align-default">
+<img alt="../_images/qdrl_for_simple.png" src="../_images/qdrl_for_simple.png" />
+</figure>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="../index.html" class="btn btn-neutral float-left" title="VQNet" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="vqc_demo.html" class="btn btn-neutral float-right" title="Quantum Machine Learning Demos Using Autograd" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Original Quantum.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
