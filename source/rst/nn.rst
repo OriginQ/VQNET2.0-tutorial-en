@@ -1015,7 +1015,7 @@ GroupNorm
 
 .. py:class:: pyvqnet.nn.group_norm.GroupNorm(num_groups: int, num_channels: int, epsilon = 1e-5, affine = True, dtype = None, name = "")
 
-    Apply group normalization to a mini-batch of inputs. Input: :math:`(N, C, *)` where :math:`C=\text{num_channels}` , Output: :math:`(N, C, *)` .
+    Apply group normalization to a mini-batch of inputs. Input: :math:`(N, C, *)` where :math:`C=\mathrm{num\_channels}` , Output: :math:`(N, C, *)` .
 
     This layer implements the operation described in the paper `Group Normalization <https://arxiv.org/abs/1803.08494>`__
 
@@ -2542,10 +2542,10 @@ adagrad
     Implements Adagrad algorithm. reference: (https://databricks.com/glossary/adagrad)
 
     .. math::
-        \begin{align}
-        moment\_new &= moment + g * g\\param\_new 
+        \begin{aligned}
+        moment\_new &= moment + g * g\\param\_new
         &= param - \frac{lr * g}{\sqrt{moment\_new} + \epsilon}
-        \end{align}
+        \end{aligned}
 
     :param params: params of model which need to be optimized
     :param lr: learning_rate of model (default: 0.01)

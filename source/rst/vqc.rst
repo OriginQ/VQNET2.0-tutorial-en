@@ -5671,29 +5671,21 @@ QNSPSAOptimizer
     Gradient estimation using symmetric perturbations (similar to SPSA):
 
     .. math::
-        \begin{equation}
         \widehat{\nabla f}(\mathbf{x}) \approx \frac{f(\mathbf{x}+\epsilon \mathbf{h})-f(\mathbf{x}-\epsilon \mathbf{h})}{2\epsilon}
-        \end{equation}
-    
+
     Compute the Fubini-Study metric from the state overlap measure:
 
     .. math::
-        \begin{equation}
         \widehat{\mathbf{g}}(\mathbf{x}) \approx \frac{\delta F}{8\epsilon^2}(\mathbf{h}_1\mathbf{h}_2^\intercal + \mathbf{h}_2\mathbf{h}_1^\intercal)
-        \end{equation}
     .. math::
-        \begin{equation}
         \delta F = F(\mathbf{x}+\epsilon\mathbf{h}_1+\epsilon\mathbf{h}_2) - F(\mathbf{x}+\epsilon\mathbf{h}_1) - F(\mathbf{x}-\epsilon\mathbf{h}_1+\epsilon\mathbf{h}_2) + F(\mathbf{x}-\epsilon\mathbf{h}_1)
-        \end{equation}
-    
+
     where δF measures the overlap difference evaluations of the four circuits.
 
     Update rule:
 
     .. math::
-        \begin{equation}
         \mathbf{x}^{(t+1)} = \mathbf{x}^{(t)} - \eta \widehat{\mathbf{g}}^{-1}(\mathbf{x}^{(t)})\widehat{\nabla f}(\mathbf{x}^{(t)})
-        \end{equation}
     
     :param stepsize: User-defined learning rate hyperparameter :math:`\eta` (default: 1e-3)
     :param regularization: Regularization term :math:`\beta` used for the Fubini-Study metric tensor, for numerical stability (default: 1e-3)

@@ -891,7 +891,7 @@ GroupNorm
 
 .. py:class:: pyvqnet.nn.torch.GroupNorm(num_groups: int, num_channels: int, epsilon = 1e-5, affine = True, dtype = None, name = "")
 
-    Applies group normalization on mini-batch inputs. Input: :math:`(N, C, *)` where :math:`C=\text{num_channels}`, Output: :math:`(N, C, *)`.
+    Applies group normalization on mini-batch inputs. Input: :math:`(N, C, *)` where :math:`C=\mathrm{num\_channels}`, Output: :math:`(N, C, *)`.
 
     This layer implements the operation described in the paper `Group Normalization <https://arxiv.org/abs/1803.08494>`__.
 
