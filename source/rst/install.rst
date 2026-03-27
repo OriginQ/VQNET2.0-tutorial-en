@@ -45,14 +45,24 @@ The package is optimized for the following CUDA architectures:
             "nvidia-nvtx-cu11==11.8.86",
             "nvidia-curand-cu11==10.3.0.86",
 
-Validate VQNet's installation 
+Validate VQNet's installation
 ----------------------------------
 
 .. code-block::
 
-    import pyvqnet 
+    import pyvqnet
     from pyvqnet.tensor import *
     a = arange(1,25).reshape([2, 3, 4])
+    print(a)
+
+Testing GPU Functionality in VQNet
+----------------------------------
+
+.. code-block::
+
+    from pyvqnet import DEV_GPU_0
+    from pyvqnet.tensor import *
+    a = ones([4,5],device = DEV_GPU_0)
     print(a)
 
 A simple case of VQNet
@@ -265,7 +275,7 @@ A function to validate the model
         test_accuracy = 0
         count = 0
         x_test = np.hstack((xtest, np.zeros((xtest.shape[0], 1),dtype=np.float32)))
-        predicted_test = []
+
         for test_data, test_label in get_minibatch_data(x_test,y_test, batch_size):
 
             test_data, test_label = QTensor(test_data),QTensor(test_label)

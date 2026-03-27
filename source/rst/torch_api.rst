@@ -28,7 +28,7 @@ set_backend
 
 .. py:function:: pyvqnet.backends.set_backend(backend_name)
 
-    Sets the backend for current computations and data storage. The default is "pyvqnet", but it can be set to "torch","torch-native", "pyvqnet-ad".
+    Sets the backend for current computations and data storage. The default is "pyvqnet-ad", but it can be set to "torch","torch-native", "pyvqnet-ad".
     
     After calling ``pyvqnet.backends.set_backend("torch")``, the interface remains unchanged. VQNet's ``QTensor`` ``data`` member variable all uses ``torch.Tensor`` to store data.
     :ref:`qtensor_api` , :ref:`vqc_api` , and ``pyvqnet.nn.torch`` interfaces accept ``QTensor`` as input and ``QTensor`` as output.
@@ -79,7 +79,7 @@ After setting the backend to ``torch``:
 .. code-block::
 
     import pyvqnet
-    pyvqnet.backends.set_backend("pyvqnet")
+    pyvqnet.backends.set_backend("torch")
 
 All member functions, creation functions, mathematical functions, logical functions, matrix transformations, etc., under :ref:`qtensor_api` will use torchfor computation. The `QTensor.data` can be accessed to retrieve the torchdata.
 
