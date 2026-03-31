@@ -706,6 +706,7 @@ __init__
             from pyvqnet.nn.loss import MeanSquaredError
             from pyvqnet.optim import Adam
             from pyvqnet.nn import activation as F
+            import pyvqnet
             import numpy as np
             Comm_OP = CommController("nccl")
 
@@ -719,7 +720,7 @@ __init__
                 
             model = Net().toGPU(1000+ get_local_rank())
             opti = Adam(model.parameters(), lr=0.01)
-            actual = tensor.QTensor([1,1,1,1,1,0,0,0,0,0],dtype=6).reshape((10,1)).toGPU(1000+ get_local_rank())
+            actual = tensor.QTensor([1,1,1,1,1,0,0,0,0,0],dtype=pyvqnet.kfloat32).reshape((10,1)).toGPU(1000+ get_local_rank())
             x = tensor.randn((10, 5)).toGPU(1000+ get_local_rank())
             for i in range(10):
                 opti.zero_grad()

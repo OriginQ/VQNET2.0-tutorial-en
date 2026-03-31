@@ -896,7 +896,7 @@ LayerNormNd
 
         import numpy as np
         from pyvqnet.tensor import QTensor
-        form pyvqnet import kfloat32
+        from pyvqnet import kfloat32
         from pyvqnet.nn.layer_norm import LayerNormNd
         ic = 4
         test_conv = LayerNormNd([2,2])
@@ -1106,7 +1106,7 @@ Dropout
         from pyvqnet.tensor import QTensor
         b = 2
         ic = 2
-        x = QTensor(np.arange(-1*ic*2*2,(b-1)*ic*2*2).reshape([b,ic,2,2]),requires_grad=True)
+        x = QTensor(np.arange(-1*ic*2*2,(b-1)*ic*2*2.0).reshape([b,ic,2,2]),requires_grad=True)
         droplayer = Dropout(0.5)
         droplayer.train()
         y = droplayer(x)

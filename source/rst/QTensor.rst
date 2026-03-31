@@ -3151,9 +3151,9 @@ select
         from pyvqnet.tensor import tensor
         from pyvqnet.tensor import QTensor
         import numpy as np
-        t = QTensor(np.arange(1,25).reshape(2,3,4))
+        t = QTensor(np.arange(1,25.0).reshape(2,3,4))
               
-        indx = [":", "0", ":"]        
+        indx = [":", "0", ":"]
         t.requires_grad = True
         t.zero_grad()
         ts = tensor.select(t,indx)
@@ -4033,4 +4033,6 @@ no_grad
             x = tensor.QTensor([1.0, 2.0, 3.0],requires_grad=True)
             y = tensor.tan(x)
             y.backward()
-        #RuntimeError: output requires_grad is False.
+        """
+        RuntimeError: The output tensor does not require gradients (output.requires_grad == False). This may occur if you used a non-autograd function in the forward pass. To enable gradient computation, ensure that all operations are performed on tensors with requires_grad=True, or use autograd-compatible functions.
+        """

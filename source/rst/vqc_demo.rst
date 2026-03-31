@@ -3837,8 +3837,8 @@ Model training code
                 )
                 
                 
-                data_test, label_test = QTensor(X_test,requires_grad=True,dtype=6), QTensor(y_test,
-                                                    dtype=6,
+                data_test, label_test = QTensor(X_test,requires_grad=True,dtype=pyvqnet.kfloat32), QTensor(y_test,
+                                                    dtype=pyvqnet.kfloat32,
                                                     requires_grad=False)
                 result_test = model(data_test, keep_rot)
                 label_test = label_test.reshape((-1 ,1))
