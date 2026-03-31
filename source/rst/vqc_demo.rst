@@ -3818,8 +3818,8 @@ Model training code
                 rng = np.random.default_rng(tmp_seed)
                 
                 optimizer.zero_grad()
-                data, label = QTensor(X,requires_grad=True,dtype=6), QTensor(y,
-                                                    dtype=6,
+                data, label = QTensor(X,requires_grad=True,dtype=pyvqnet.kfloat32), QTensor(y,
+                                                    dtype=pyvqnet.kfloat32,
                                                     requires_grad=False)
 
                 result = model(data, keep_rot)

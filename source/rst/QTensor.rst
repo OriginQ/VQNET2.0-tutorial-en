@@ -58,7 +58,7 @@ QTensor
 
             from pyvqnet.tensor import QTensor
 
-            a = QTensor([2, 3, 4, 5], requires_grad=True)
+            a = QTensor([2.0, 3.0, 4.0, 5.0], requires_grad=True)
             print(a.ndim)
 
             # 1
@@ -73,7 +73,7 @@ QTensor
 
             from pyvqnet.tensor import QTensor
 
-            a = QTensor([2, 3, 4, 5], requires_grad=True)
+            a = QTensor([2.0, 3.0, 4.0, 5.0], requires_grad=True)
             print(a.shape)
 
             # [4]
@@ -88,7 +88,7 @@ QTensor
 
             from pyvqnet.tensor import QTensor
 
-            a = QTensor([2, 3, 4, 5], requires_grad=True)
+            a = QTensor([2.0, 3.0, 4.0, 5.0], requires_grad=True)
             print(a.size)
 
             # 4
@@ -103,7 +103,7 @@ QTensor
 
             from pyvqnet.tensor import QTensor
 
-            a = QTensor([2, 3, 4, 5], requires_grad=True)
+            a = QTensor([2.0, 3.0, 4.0, 5.0], requires_grad=True)
             print(a.numel())
 
             # 4
@@ -151,7 +151,7 @@ QTensor
 
             from pyvqnet.tensor import tensor
             from pyvqnet.tensor import QTensor
-            t3  =  QTensor([2,3,4,5],requires_grad = True)
+            t3  =  QTensor([2.0,3.0,4.0,5.0],requires_grad = True)
             t3.zero_grad()
             print(t3.grad)
 
@@ -192,7 +192,7 @@ QTensor
 
             from pyvqnet.tensor import tensor
             from pyvqnet.tensor import QTensor
-            t3  =  QTensor([2,3,4,5],requires_grad = True)
+            t3  =  QTensor([2.0,3.0,4.0,5.0],requires_grad = True)
             t4 = t3.to_numpy()
             print(t4)
 
@@ -3229,7 +3229,7 @@ concatenate
 
         from pyvqnet.tensor import tensor
         from pyvqnet.tensor import QTensor
-        x = QTensor([[1, 2, 3],[4,5,6]], requires_grad=True) 
+        x = QTensor([[1.0, 2, 3],[4,5,6]], requires_grad=True) 
         y = 1-x  
         x = tensor.concatenate([x,y],1)
         print(x)
