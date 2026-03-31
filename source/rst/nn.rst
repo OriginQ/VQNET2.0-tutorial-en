@@ -2923,7 +2923,7 @@ Rotosolve algorithm, which allows a direct jump to the optimal value of a single
 
         def ansatz1(params: QTensor, generators):
             circuit = pq.QCircuit()
-            params = params.getdata()
+
             prog = circuits(params, generators, circuit)
             return expval(machine, prog, {"Z0": 1},
                         nqbits), expval(machine, prog, {"Y1": 1}, nqbits)
@@ -2931,7 +2931,7 @@ Rotosolve algorithm, which allows a direct jump to the optimal value of a single
 
         def ansatz2(params: QTensor, generators):
             circuit = pq.QCircuit()
-            params = params.getdata()
+
             prog = circuits(params, generators, circuit)
             return expval(machine, prog, {"X0": 1}, nqbits)
 
