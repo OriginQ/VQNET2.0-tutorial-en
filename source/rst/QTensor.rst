@@ -29,10 +29,6 @@ QTensor
 
     :return: output QTensor
 
-    .. note::
-            QTensor internal data type dtype support: kbool,kuint8,kint8,kint16,kint32,kint64,kfloat32,kfloat64,kcomplex64,kcomplex128.
-
-            Representing C++ type: bool,uint8_t,int8_t,int16_t,int32_t,int64_t,float,double,complex<float>,complex<double>.
 
     Example::
 
@@ -116,8 +112,23 @@ QTensor
 
         Returns the data type of a tensor.
 
-        QTensor internal data type dtype supports kbool = 0, kuint8 = 1, kint8 = 2,kint16 = 3,kint32 = 4,kint64 = 5,
-        kfloat32 = 6, kfloat64 = 7, kcomplex64 = 8, kcomplex128 = 9 .
+        Supported data types are as follows:
+
+            =========================================  ===============================
+            dtype                                      description
+            =========================================  ===============================
+            ``pyvqnet.kbool``                          Boolean variable
+            ``pyvqnet.kuint8``                         8-bit integer (unsigned)
+            ``pyvqnet.kint8``                          8-bit integer (signed)
+            ``pyvqnet.kint16``                         16-bit integer (signed)
+            ``pyvqnet.kint32``                         32-bit integer (signed)
+            ``pyvqnet.kint64``                         64-bit integer (signed)
+            ``pyvqnet.kfloat32``                       32-bit floating point, see https://en.wikipedia.org/wiki/IEEE_754
+            ``pyvqnet.kfloat64``                       64-bit floating point, see https://en.wikipedia.org/wiki/IEEE_754
+            ``pyvqnet.kcomplex64``                     64-bit complex number, composed of two `float32`
+            ``pyvqnet.kcomplex128``                    128-bit complex number, composed of two `float64`
+            ``pyvqnet.kbfloat16``                      16-bit floating point, sometimes called Brain floating point format, with bit allocation of 1 sign bit, 8 exponent bits, and 7 mantissa bits
+            =========================================  ===============================
 
         :return: The data type of the tensor.
 
