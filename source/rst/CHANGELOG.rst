@@ -2,7 +2,7 @@ VQNet Changelog
 ###############################
 
 
-[v2.17.3] - 2026-03-24
+[v2.17.3] - 2026-03-31
 ***************************
 
 Added
@@ -23,6 +23,8 @@ Changed
 - QTensor data type in pyvqnet is no longer an integer, but a specific data type.
 - Modified QTensor pickle logic, no longer pickles grad.
 - Removed is_dense.
+- Removed pq2 ``QuantumBatchAsyncQcloudLayer``.
+- Change doc for pq3 ``QuantumBatchAsyncQcloudLayer``.
 
 Fixed
 ===================

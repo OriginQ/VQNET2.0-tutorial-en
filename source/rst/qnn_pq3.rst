@@ -217,6 +217,10 @@ When you install the latest version of pyqpanda3, you can use this interface to 
 
         `param`: Input the parameters to be trained for the 1D variational quantum circuit.
 
+    .. note::
+
+        In the current version, the default total timeout for a single circuit's submission to the QCloud  is 60 seconds. If a timeout occurs due to QCloud being busy, you can set the value of the `total_timeout` key in ``query_kwargs`` to the desired number of waiting seconds.
+
     :param origin_qprog_func: The variational quantum circuit function built by QPanda, which must return a QProg.
     :param qcloud_token: `str` - The type of quantum machine or the cloud token used for execution.
     :param para_num: `int` - The number of parameters, the parameter is a QTensor of size [para_num].
@@ -227,7 +231,7 @@ When you install the latest version of pyqpanda3, you can use this interface to 
     :param name: The name of the module. The default is an empty string.
     :param diff_method: Differentiation method for gradient calculation. The default is "parameter_shift", "random_coordinate_descent".
     :param submit_kwargs: Additional keyword parameters for submitting quantum circuits, default: {"chip_id":"origin_wukong","is_amend":True,"is_mapping":True,"is_optimization":True,"compile_level":3,"default_task_group_size":200,"test_qcloud_fake":False,"if_print_qcloud_log":False}, when test_qcloud_fake is set to True, local CPUQVM simulation.
-    :param query_kwargs: Additional keyword parameters for querying quantum results, default: {"timeout":2,"print_query_info":True,"sub_circuits_split_size":1}.
+    :param query_kwargs: Additional keyword parameters for querying quantum results, default: {"timeout":1,"total_timeout":60,"print_query_info":True,"sub_circuits_split_size":1}.
     :return: A module that can compute quantum circuits.
 
     Example::
