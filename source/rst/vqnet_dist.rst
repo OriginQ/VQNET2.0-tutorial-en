@@ -706,6 +706,7 @@ __init__
             from pyvqnet.nn.loss import MeanSquaredError
             from pyvqnet.optim import Adam
             from pyvqnet.nn import activation as F
+            import pyvqnet
             import numpy as np
             Comm_OP = CommController("nccl")
 
@@ -719,7 +720,7 @@ __init__
                 
             model = Net().toGPU(1000+ get_local_rank())
             opti = Adam(model.parameters(), lr=0.01)
-            actual = tensor.QTensor([1,1,1,1,1,0,0,0,0,0],dtype=6).reshape((10,1)).toGPU(1000+ get_local_rank())
+            actual = tensor.QTensor([1,1,1,1,1,0,0,0,0,0],dtype=pyvqnet.kfloat32).reshape((10,1)).toGPU(1000+ get_local_rank())
             x = tensor.randn((10, 5)).toGPU(1000+ get_local_rank())
             for i in range(10):
                 opti.zero_grad()
@@ -798,7 +799,153 @@ __init__
             Comm_OP.broadcast_model_params(model, 0)
             # model = model
             print(f"bcast after rank {get_rank()}: {model.parameters()}")
-        
+
+
+    .. py:method:: nccl_async_all_gather( output, input, group=None, async_op=False):
+
+        Use NCCL for asynchronous or synchronous all_gather on GPU data.
+
+        :param output: QTensor - The target QTensor for all_gather result.
+        :param input: QTensor - The QTensor to be gathered.
+        :param group: Communication process group, group is a tuple containing group indices. Default: None, no group is used.
+        :param async_op: Whether this operation is asynchronous, default: False.
+        :return: Work - An asynchronous communication handle. Use wait() to wait for this operation to complete.
+
+        Examples::
+
+            from pyvqnet import tensor
+            import pyvqnet
+            from pyvqnet.distributed import CommController,get_rank,get_local_rank
+            Comm_OP = CommController("nccl")
+
+            complex_data = tensor.QTensor([3+1j, 2, 1 + get_rank()],dtype=8).reshape((3,1)).toGPU(1000+ get_local_rank())
+
+            out_data = tensor.empty([2,3,1],dtype=pyvqnet.kcomplex64).toGPU(pyvqnet.DEV_GPU_0+ get_local_rank())
+            work = Comm_OP.nccl_async_all_gather(out_data, complex_data, group = None,async_op=True)
+            work.wait()
+
+    .. py:method:: nccl_async_all_reduce(tensor, c_op="avg",group=None, async_op=False):
+
+        Use NCCL for asynchronous or synchronous allreduce on GPU data.
+
+        :param tensor: QTensor - The QTensor that needs to be reduced.
+        :param c_op: Computation method, can be "sum" or "avg", default value is "avg".
+        :param group: Communication process group, group is a tuple containing group indices. Default: None, no group is used.
+        :param async_op: Whether this operation is asynchronous, default: False.
+        :return: Work - An asynchronous communication handle. Use wait() to wait for this operation to complete.
+
+        Examples::
+
+            import pyvqnet
+            from pyvqnet.tensor import tensor
+            from pyvqnet.distributed.ControlComm import CommController,get_local_rank
+
+            Comm_OP = CommController("nccl")
+            complex_data = tensor.ones([500,500],dtype=pyvqnet.kcomplex64).toGPU(pyvqnet.DEV_GPU_0 + get_local_rank())
+            work = Comm_OP.nccl_async_all_reduce(complex_data, "sum",group = None,async_op = True)
+            work.wait()
+
+    .. py:method:: nccl_async_reduce( tensor_, dest, c_op="avg", group=None, async_op=False ):
+
+        Use NCCL for asynchronous or synchronous reduce on GPU data.
+
+        :param tensor_: QTensor - The QTensor that needs to be reduced.
+        :param dest: The destination rank of the reduced QTensor.
+        :param c_op: Computation method, can be "sum" or "avg", default value is "avg".
+        :param group: Communication process group, group is a tuple containing group indices. Default: None, no group is used.
+        :param async_op: Whether this operation is asynchronous, default: False.
+        :return: Work - An asynchronous communication handle. Use wait() to wait for this operation to complete.
+
+        Examples::
+
+            from pyvqnet import tensor
+            import pyvqnet
+            from pyvqnet.distributed import CommController,get_rank,get_local_rank
+            Comm_OP = CommController("nccl")
+
+            complex_data = tensor.ones([500,500],dtype=pyvqnet.kcomplex64).toGPU(pyvqnet.DEV_GPU_0 + get_local_rank())
+            work = Comm_OP.nccl_async_reduce(complex_data, 0,"sum",group = None,async_op = True)
+            work.wait()
+
+    .. py:method:: nccl_async_broadcast(tensor, src, group=None, async_op=False )
+
+        Use NCCL for asynchronous or synchronous broadcast on GPU data.
+
+        :param tensor: QTensor - The QTensor that needs to be broadcast.
+        :param src: The source rank of the broadcast QTensor.
+        :param group: Communication process group, group is a tuple containing group indices. Default: None, no group is used.
+        :param async_op: Whether this operation is asynchronous, default: False.
+        :return: Work - An asynchronous communication handle. Use wait() to wait for this operation to complete.
+
+        Examples::
+
+            import pyvqnet
+            from pyvqnet.tensor import tensor
+            from pyvqnet.distributed.ControlComm import CommController,get_local_rank
+            Comm_OP = CommController("nccl")
+            if get_local_rank() == 1:
+                complex_data = tensor.ones([5,5],dtype=pyvqnet.kcomplex64).toGPU(pyvqnet.DEV_GPU_0+ get_local_rank())
+            else:
+                complex_data = tensor.zeros([5,5],dtype=pyvqnet.kcomplex64).toGPU(pyvqnet.DEV_GPU_0+ get_local_rank())
+            work = Comm_OP.nccl_async_broadcast(complex_data, 1, group = None,async_op=True)
+
+            work.wait()
+
+
+    .. py:method:: nccl_async_send( t, dest, async_op=False ):
+
+        Use NCCL for asynchronous or synchronous P2P send on GPU data.
+
+        :param t: QTensor - The QTensor that needs to be sent.
+        :param dest: The destination rank to send the QTensor to.
+        :param async_op: Whether this operation is asynchronous, default: False.
+        :return: Work - An asynchronous communication handle. Use wait() to wait for this operation to complete.
+
+        Examples::
+
+            import pyvqnet
+            from pyvqnet.tensor import tensor
+            from pyvqnet.distributed.ControlComm import CommController,get_local_rank
+            Comm_OP = CommController("nccl")
+
+            if get_local_rank() == 0:
+                complex_data = tensor.ones([5000,5000],dtype=pyvqnet.kcomplex64).toGPU(pyvqnet.DEV_GPU_0+ get_local_rank())*10
+            else:
+                complex_data = tensor.ones([5000,5000],dtype=pyvqnet.kcomplex64).toGPU(pyvqnet.DEV_GPU_0+ get_local_rank())
+
+            if get_local_rank() == 0:
+                work = Comm_OP.nccl_async_send(complex_data, 1 ,True)
+            else:
+                work = Comm_OP.nccl_async_recv(complex_data, 0 ,True)
+            work.wait()
+
+    .. py:method:: nccl_async_recv( t, src, async_op=False ):
+
+        Use NCCL for asynchronous or synchronous P2P receive on GPU data.
+
+        :param t: QTensor - The QTensor that receives the data.
+        :param src: The source rank of the received QTensor.
+        :param async_op: Whether this operation is asynchronous, default: False.
+        :return: Work - An asynchronous communication handle. Use wait() to wait for this operation to complete.
+
+        Examples::
+
+            import pyvqnet
+            from pyvqnet.tensor import tensor
+            from pyvqnet.distributed.ControlComm import CommController,get_local_rank
+            Comm_OP = CommController("nccl")
+
+            if get_local_rank() == 0:
+                complex_data = tensor.ones([5000,5000],dtype=pyvqnet.kcomplex64).toGPU(pyvqnet.DEV_GPU_0+ get_local_rank())*10
+            else:
+                complex_data = tensor.ones([5000,5000],dtype=pyvqnet.kcomplex64).toGPU(pyvqnet.DEV_GPU_0+ get_local_rank())
+
+            if get_local_rank() == 0:
+                work = Comm_OP.nccl_async_send(complex_data, 1 ,True)
+            else:
+                work = Comm_OP.nccl_async_recv(complex_data, 0 ,True)
+            work.wait()
+
 
 split_data
 ~~~~~~~~~~~~~~~~~~~~~~~~~~

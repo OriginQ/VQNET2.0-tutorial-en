@@ -627,9 +627,9 @@ In this case, we encode the binary input into the corresponding order of qubits.
                     VQC_RotCircuit(qm,nqubits,weights_j)
                 def basisstate(qm,xx, nqubits):
                     for i in nqubits:
-                        qcircuit.rz(q_machine=qm, wires=i, params=xx[:,[i]])
-                        qcircuit.ry(q_machine=qm, wires=i, params=xx[:,[i]])
-                        qcircuit.rz(q_machine=qm, wires=i, params=xx[:,[i]])
+                        qcircuit.rz(q_machine=qm, wires=i, params=xx[:,i])
+                        qcircuit.ry(q_machine=qm, wires=i, params=xx[:,i])
+                        qcircuit.rz(q_machine=qm, wires=i, params=xx[:,i])
                 basisstate(qm,xx,nqubits)
                 for i in range(weights.shape[0]):
                     weights_i = weights[i, :, :]
@@ -798,10 +798,10 @@ Define the variational quantum circuit model:
             pauli_str_list =[]
         def forward(self,x):
             def get_pauli_str(n_start, n_qsc):
-                D = {}
-                D['wires']= [i for i in range(n_start, n_start + n_qsc)]
-                D["observables"] = ["X" for i in range(n_start, n_start + n_qsc)]
-                D["coefficient"] = [1 for i in range(n_start, n_start + n_qsc)]
+                pauli_str =""
+                for position in range(n_start, n_start + n_qsc):
+                    pauli_str += "X" + str(position)+" "
+                D = {pauli_str:1}
                 return D
             #this reset states to shape of batchsize
             self.qm.reset_states(x.shape[0])
@@ -2536,7 +2536,7 @@ which consists of 15 random You matrices corresponding to the classical Dense La
             train_cost.backward()
             opti.step()
 
-            train_cost_epochs.append(train_cost.to_numpy()[0])
+            train_cost_epochs.append(train_cost.to_numpy())
             # compute accuracy on training data
 
             # print(tensor.sums(result[tensor.arange(0, len(y_train)), y_train] > 0.5))
@@ -2550,7 +2550,7 @@ which consists of 15 random You matrices corresponding to the classical Dense La
             test_acc = tensor.sums(test_out[tensor.arange(0, len(y_test)), y_test] > 0.5) / test_out.shape[0]
             test_acc_epochs.append(test_acc.to_numpy())
             test_cost = 1.0 - tensor.sums(test_out[tensor.arange(0, len(y_test)), y_test]) / len(y_test)
-            test_cost_epochs.append(test_cost.to_numpy()[0])
+            test_cost_epochs.append(test_cost.to_numpy())
 
             # print(f"step {step}, test_cost {test_cost}")
             # print(f"step {step}, test_acc {test_acc}")
@@ -3818,8 +3818,8 @@ Model training code
                 rng = np.random.default_rng(tmp_seed)
                 
                 optimizer.zero_grad()
-                data, label = QTensor(X,requires_grad=True,dtype=6), QTensor(y,
-                                                    dtype=6,
+                data, label = QTensor(X,requires_grad=True,dtype=pyvqnet.kfloat32), QTensor(y,
+                                                    dtype=pyvqnet.kfloat32,
                                                     requires_grad=False)
 
                 result = model(data, keep_rot)
@@ -3837,8 +3837,8 @@ Model training code
                 )
                 
                 
-                data_test, label_test = QTensor(X_test,requires_grad=True,dtype=6), QTensor(y_test,
-                                                    dtype=6,
+                data_test, label_test = QTensor(X_test,requires_grad=True,dtype=pyvqnet.kfloat32), QTensor(y_test,
+                                                    dtype=pyvqnet.kfloat32,
                                                     requires_grad=False)
                 result_test = model(data_test, keep_rot)
                 label_test = label_test.reshape((-1 ,1))
@@ -3878,19 +3878,19 @@ Quantum Circuit Boltzmann Machine
 
 
 Quantum Circuit Boltzmann Machine Boltzmann machines have shown promise in unsupervised generative modeling, aiming to learn and represent probability distributions over classical datasets using purely quantum states. They have gained popularity due to their high expressive power. Boltzmann machines exploit the probabilistic interpretation of quantum wave functions, representing probability distributions using purely quantum states rather than thermal distributions (as in Boltzmann machines). This enables Boltzmann machines to directly generate samples by projecting measurements on qubits, offering a faster alternative to Gibbs sampling.
-Given a dataset :math:`\mathcal{D} = \{x\}` containing independent and identically distributed samples from an unknown target distribution :math:`\pi(x)`, QCBM is used to generate samples that are highly similar to the target distribution. QCBM transforms the input product state :math:`|\textbf{0} \rangle` into a parameterized quantum state :math:`|\psi_\boldsymbol{\theta}\rangle`. Measuring this output state in a computational basis produces a bit sample :math:`x \sim p_\theta(x)`.
+Given a dataset :math:`\mathcal{D} = \{x\}` containing independent and identically distributed samples from an unknown target distribution :math:`\pi(x)`, QCBM is used to generate samples that are highly similar to the target distribution. QCBM transforms the input product state :math:`|\textbf{0} \rangle` into a parameterized quantum state :math:`|\psi_{\boldsymbol{\theta}}\rangle`. Measuring this output state in a computational basis produces a bit sample :math:`x \sim p_\theta(x)`.
 
 .. math::
-   p_\boldsymbol{\theta}(x) = |\langle x | \psi_\boldsymbol{\theta} \rangle|^2.
+   p_{\boldsymbol{\theta}}(x) = |\langle x | \psi_{\boldsymbol{\theta}} \rangle|^2.
 
-The goal is to align the model probability distribution :math:`p_\boldsymbol{\theta}` with the target distribution :math:`\pi`.
+The goal is to align the model probability distribution :math:`p_{\boldsymbol{\theta}}` with the target distribution :math:`\pi`.
 
 In this example, we will implement a gradient-based QCBM algorithm using VQNet. We will describe the model and learning algorithm, then apply it to a dataset of 3x3 stripes and lattices, as well as a double Gaussian peak.
 
 To train the QCBM, we use the squared maximum mean discrepancy (MMD) as the loss function:
 
 .. math::
-    \mathcal{L}(\boldsymbol{\theta}) = \left|\sum_{x} p_\boldsymbol{\theta}(x) \phi(x)- \sum_{x} \pi(x) \phi(x)  \right|^2,
+    \mathcal{L}(\boldsymbol{\theta}) = \left|\sum_{x} p_{\boldsymbol{\theta}}(x) \phi(x)- \sum_{x} \pi(x) \phi(x)  \right|^2,
 
 where :math:`\phi(x)` maps :math:`x` to a larger feature space. Using the kernel function :math:`K(x,y) = \phi(x)^T\phi(y)` allows us to work in a lower-dimensional space.
 We use the radial basis function (RBF) kernel for this purpose, which is defined as:
@@ -3898,11 +3898,11 @@ We use the radial basis function (RBF) kernel for this purpose, which is defined
 .. math::
     K(x,y) = \frac{1}{c}\sum_{i=1}^c \exp \left( \frac{|x-y|^2}{2\sigma_i^2} \right).
 
-Here, :math:`\sigma_i` is the bandwidth parameter that controls the width of the Gaussian kernel. :math:`\mathcal{L}` approaches zero if and only if :math:`p_\boldsymbol{\theta}` approaches :math:`\pi`.
+Here, :math:`\sigma_i` is the bandwidth parameter that controls the width of the Gaussian kernel. :math:`\mathcal{L}` approaches zero if and only if :math:`p_{\boldsymbol{\theta}}` approaches :math:`\pi`.
 The loss function of the :math:`K(x,y)` is as follows:
 
 .. math::
-    \mathcal{L} = \underset{x, y \sim p_\boldsymbol{\theta}}{\mathbb{E}}[{K(x,y)}]-2\underset{x\sim p_\boldsymbol{\theta},y\sim \pi}{\mathbb{E}}[K(x,y)]+\underset{x, y \sim \pi}{\mathbb{E}}[K(x, y)]
+    \mathcal{L} = \underset{x, y \sim p_{\boldsymbol{\theta}}}{\mathbb{E}}[{K(x,y)}]-2\underset{x\sim p_{\boldsymbol{\theta}},y\sim \pi}{\mathbb{E}}[K(x,y)]+\underset{x, y \sim \pi}{\mathbb{E}}[K(x, y)]
 
 
 .. code-block::

@@ -21,7 +21,7 @@ If you are familiar with pyQPanda3 syntax, you can use the interface QuantumLaye
 
     Abstract computation module of variational quantum layer. Use pyQPanda3 to simulate a parameterized quantum circuit and get the measurement results. This variational quantum layer inherits the gradient computation module of the VQNet framework. It can use parameter drift method to calculate the gradient of circuit parameters, train variational quantum circuit models or embed variational quantum circuits into hybrid quantum and classical models.
 
-    :param qprog_with_measure: Quantum circuit operation and measurement functions built with pyQPand.
+    :param qprog_with_measure: Quantum circuit operation and measurement functions built with pyQPanda.
     :param para_num: `int` - number of parameters.
     :param diff_method: Method for solving quantum circuit parameter gradients, "parameter shift" or "finite difference", default parameter offset.
     :param delta: \delta when calculating gradients by finite difference.
@@ -103,7 +103,7 @@ If you are familiar with pyQPanda3 syntax, you can use the interface QuantumLaye
 
         print(pqc.m_para.grad)
 
-QuantumLayerV3
+QpandaQProgVQCLayer
 =============================
 
 .. py:class:: pyvqnet.qnn.pq3.quantumlayer.QuantumLayerV3(origin_qprog_func,para_num,qvm_type="cpu", pauli_str_dict=None, shots=1000, initializer=None,dtype=None,name="")
@@ -121,7 +121,7 @@ QuantumLayerV3
     :param dtype: Data type of the parameter. Default is None, which means using the default data type.
     :param name: Name of the module. Default is the empty string.
 
-    :return: Returns a QuantumLayerV3 class
+    :return: Returns a QpandaQProgVQCLayer class
 
     .. note::
 
@@ -138,7 +138,7 @@ QuantumLayerV3
 
     .. note::
 
-        This class has an alias `QpandaQProgVQCLayer` .
+        This class has an alias `QuantumLayerV3` .
 
     Example::
 
@@ -207,7 +207,7 @@ When you install the latest version of pyqpanda3, you can use this interface to 
 
         qcloud_token is the api token you applied for at https://qcloud.originqc.com.cn/.
 
-        origin_qprog_func needs to return data of type pypqanda3.core.QProg. If pauli_str_dict is not set, it is necessary to ensure that the measure has been inserted into the QProg.
+        origin_qprog_func needs to return data of type pyqpanda3.core.QProg. If pauli_str_dict is not set, it is necessary to ensure that the measure has been inserted into the QProg.
 
         origin_qprog_func must be in the following format:
 
@@ -217,17 +217,21 @@ When you install the latest version of pyqpanda3, you can use this interface to 
 
         `param`: Input the parameters to be trained for the 1D variational quantum circuit.
 
+    .. note::
+
+        In the current version, the default total timeout for a single circuit's submission to the QCloud  is 60 seconds. If a timeout occurs due to QCloud being busy, you can set the value of the `total_timeout` key in ``query_kwargs`` to the desired number of waiting seconds.
+
     :param origin_qprog_func: The variational quantum circuit function built by QPanda, which must return a QProg.
     :param qcloud_token: `str` - The type of quantum machine or the cloud token used for execution.
     :param para_num: `int` - The number of parameters, the parameter is a QTensor of size [para_num].
     :param pauli_str_dict: `dict|list` - A dictionary or list of dictionaries representing the Pauli operators in the quantum circuit. The default is "None", which performs measurement operations. If a dictionary of Pauli operators is entered, a single expectation or multiple expectations will be calculated.
-    :param shot: `int` - The number of measurements. The default value is 1000.
+    :param shots: `int` - The number of measurements. The default value is 1000.
     :param initializer: Initializer for parameter values. The default is "None", which uses a 0~2*pi normal distribution.
     :param dtype: The data type of the parameter. The default value is None, which means using the default data type pyvqnet.kfloat32.
     :param name: The name of the module. The default is an empty string.
     :param diff_method: Differentiation method for gradient calculation. The default is "parameter_shift", "random_coordinate_descent".
     :param submit_kwargs: Additional keyword parameters for submitting quantum circuits, default: {"chip_id":"origin_wukong","is_amend":True,"is_mapping":True,"is_optimization":True,"compile_level":3,"default_task_group_size":200,"test_qcloud_fake":False,"if_print_qcloud_log":False}, when test_qcloud_fake is set to True, local CPUQVM simulation.
-    :param query_kwargs: Additional keyword parameters for querying quantum results, default: {"timeout":2,"print_query_info":True,"sub_circuits_split_size":1}.
+    :param query_kwargs: Additional keyword parameters for querying quantum results, default: {"timeout":1,"total_timeout":60,"print_query_info":True,"sub_circuits_split_size":1}.
     :return: A module that can compute quantum circuits.
 
     Example::
@@ -1234,7 +1238,7 @@ expval
     The expval api now supports the pyQPanda3 simulator.
 
     :param machine: The quantum machine created by pyQPanda3.
-    :param prog: The quantum project created by pyQPanda3.
+    :param prog: The quantum program created by pyQPanda3.
     :param pauli_str_dict: Hamiltonian observed value.
 
     :return: expected value.
@@ -1272,7 +1276,7 @@ QuantumMeasure
     The QuantumMeasure api currently only supports pyQPanda3 ``CPUQVM`` or ``QCloud`` .
 
     :param machine: The quantum virtual machine allocated by pyQPanda3.
-    :param prog: The quantum project created by pyQPanda3.
+    :param prog: The quantum program created by pyQPanda3.
     :param measure_qubits: List containing the measurement bit indices.
     :param shots: The number of measurements, the default value is 1000.
     :param qcloud_option: Set the qcloud configuration, the default value is "", you can pass in a QCloudOptions class, which is only useful when using qcloud.

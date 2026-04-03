@@ -2,6 +2,36 @@ VQNet Changelog
 ###############################
 
 
+[v2.17.3] - 2026-03-31
+***************************
+
+Added
+===================
+- Added bfloat16 data type.
+- Added asynchronous NCCL communication interfaces: ``nccl_async_all_gather``, ``nccl_async_all_reduce``, ``nccl_async_reduce``, ``nccl_async_broadcast``, ``nccl_async_send``, ``nccl_async_recv``.
+- Added support for the latest Origin Quantum chip with chip ID ``WK_C180``
+- Added ``data_ptr`` and other interfaces, experimentally added support for `triton <https://triton-lang.org/main/index.html>`_.
+- Added License file.
+
+Changed
+===================
+
+- Default backend changed to "pyvqnet-ad".
+- Computation on MacOS is implemented based on arm neon instructions.
+- The ``matmul`` interface supports data with more than 4 dimensions.
+- Reduced dependency on some cuda runtime libraries when installing the whl package.
+- QTensor data type in pyvqnet is no longer an integer, but a specific data type.
+- Modified QTensor pickle logic, no longer pickles grad.
+- Removed is_dense.
+- Removed pq2 ``QuantumBatchAsyncQcloudLayer``.
+- Change doc for pq3 ``QuantumBatchAsyncQcloudLayer``.
+
+Fixed
+===================
+- Fixed the error of ``Linear`` when ``use_bias=False``.
+- Fixed the MAX_GPUS issue, current maximum number of GPUs is 16.
+- Fixed import error on windows jupyter.
+
 
 [v2.17.2] -2025-11-18
 ***********************************

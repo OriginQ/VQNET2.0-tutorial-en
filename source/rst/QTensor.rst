@@ -29,10 +29,6 @@ QTensor
 
     :return: output QTensor
 
-    .. note::
-            QTensor internal data type dtype support: kbool,kuint8,kint8,kint16,kint32,kint64,kfloat32,kfloat64,kcomplex64,kcomplex128.
-
-            Representing C++ type: bool,uint8_t,int8_t,int16_t,int32_t,int64_t,float,double,complex<float>,complex<double>.
 
     Example::
 
@@ -62,7 +58,7 @@ QTensor
 
             from pyvqnet.tensor import QTensor
 
-            a = QTensor([2, 3, 4, 5], requires_grad=True)
+            a = QTensor([2.0, 3.0, 4.0, 5.0], requires_grad=True)
             print(a.ndim)
 
             # 1
@@ -77,7 +73,7 @@ QTensor
 
             from pyvqnet.tensor import QTensor
 
-            a = QTensor([2, 3, 4, 5], requires_grad=True)
+            a = QTensor([2.0, 3.0, 4.0, 5.0], requires_grad=True)
             print(a.shape)
 
             # [4]
@@ -92,7 +88,7 @@ QTensor
 
             from pyvqnet.tensor import QTensor
 
-            a = QTensor([2, 3, 4, 5], requires_grad=True)
+            a = QTensor([2.0, 3.0, 4.0, 5.0], requires_grad=True)
             print(a.size)
 
             # 4
@@ -107,7 +103,7 @@ QTensor
 
             from pyvqnet.tensor import QTensor
 
-            a = QTensor([2, 3, 4, 5], requires_grad=True)
+            a = QTensor([2.0, 3.0, 4.0, 5.0], requires_grad=True)
             print(a.numel())
 
             # 4
@@ -116,8 +112,23 @@ QTensor
 
         Returns the data type of a tensor.
 
-        QTensor internal data type dtype supports kbool = 0, kuint8 = 1, kint8 = 2,kint16 = 3,kint32 = 4,kint64 = 5,
-        kfloat32 = 6, kfloat64 = 7, kcomplex64 = 8, kcomplex128 = 9 .
+        Supported data types are as follows:
+
+            =========================================  ===============================
+            dtype                                      description
+            =========================================  ===============================
+            ``pyvqnet.kbool``                          Boolean variable
+            ``pyvqnet.kuint8``                         8-bit integer (unsigned)
+            ``pyvqnet.kint8``                          8-bit integer (signed)
+            ``pyvqnet.kint16``                         16-bit integer (signed)
+            ``pyvqnet.kint32``                         32-bit integer (signed)
+            ``pyvqnet.kint64``                         64-bit integer (signed)
+            ``pyvqnet.kfloat32``                       32-bit floating point, see https://en.wikipedia.org/wiki/IEEE_754
+            ``pyvqnet.kfloat64``                       64-bit floating point, see https://en.wikipedia.org/wiki/IEEE_754
+            ``pyvqnet.kcomplex64``                     64-bit complex number, composed of two `float32`
+            ``pyvqnet.kcomplex128``                    128-bit complex number, composed of two `float64`
+            ``pyvqnet.kbfloat16``                      16-bit floating point, sometimes called Brain floating point format, with bit allocation of 1 sign bit, 8 exponent bits, and 7 mantissa bits
+            =========================================  ===============================
 
         :return: The data type of the tensor.
 
@@ -128,21 +139,6 @@ QTensor
             a = QTensor([2, 3, 4, 5])
             print(a.dtype)
             # 4
-
-    .. py:attribute:: is_dense
-
-        Whether it is a dense tensor.
-
-        :return: When the data is dense, it returns 1; otherwise it returns 0.
-
-        Example::
-
-            from pyvqnet.tensor import QTensor
-
-            a = QTensor([2, 3, 4, 5])
-            print(a.is_dense)
-            #1
-
 
 
     .. py:method:: zero_grad()
@@ -155,7 +151,7 @@ QTensor
 
             from pyvqnet.tensor import tensor
             from pyvqnet.tensor import QTensor
-            t3  =  QTensor([2,3,4,5],requires_grad = True)
+            t3  =  QTensor([2.0,3.0,4.0,5.0],requires_grad = True)
             t3.zero_grad()
             print(t3.grad)
 
@@ -188,11 +184,15 @@ QTensor
 
         :return: a new numpy.array contains QTensor data
 
+        .. note::
+
+            numpy does not support bfloat16 type, you need to convert to other numpy supported data types such as float32 first before calling this interface.
+
         Example::
 
             from pyvqnet.tensor import tensor
             from pyvqnet.tensor import QTensor
-            t3  =  QTensor([2,3,4,5],requires_grad = True)
+            t3  =  QTensor([2.0,3.0,4.0,5.0],requires_grad = True)
             t4 = t3.to_numpy()
             print(t4)
 
@@ -3151,9 +3151,9 @@ select
         from pyvqnet.tensor import tensor
         from pyvqnet.tensor import QTensor
         import numpy as np
-        t = QTensor(np.arange(1,25).reshape(2,3,4))
+        t = QTensor(np.arange(1,25.0).reshape(2,3,4))
               
-        indx = [":", "0", ":"]        
+        indx = [":", "0", ":"]
         t.requires_grad = True
         t.zero_grad()
         ts = tensor.select(t,indx)
@@ -3229,7 +3229,7 @@ concatenate
 
         from pyvqnet.tensor import tensor
         from pyvqnet.tensor import QTensor
-        x = QTensor([[1, 2, 3],[4,5,6]], requires_grad=True) 
+        x = QTensor([[1.0, 2, 3],[4,5,6]], requires_grad=True) 
         y = 1-x  
         x = tensor.concatenate([x,y],1)
         print(x)
@@ -4033,4 +4033,6 @@ no_grad
             x = tensor.QTensor([1.0, 2.0, 3.0],requires_grad=True)
             y = tensor.tan(x)
             y.backward()
-        #RuntimeError: output requires_grad is False.
+        """
+        RuntimeError: The output tensor does not require gradients (output.requires_grad == False). This may occur if you used a non-autograd function in the forward pass. To enable gradient computation, ensure that all operations are performed on tensors with requires_grad=True, or use autograd-compatible functions.
+        """

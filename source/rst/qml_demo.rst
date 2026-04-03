@@ -1,13 +1,13 @@
-Quantum Machine Learning Using Qpanda2
+Quantum Machine Learning Using Qpanda
 ###############################################
 
-We use VQNet and pyQPanda2 to implement multiple quantum machine learning examples.
+We use VQNet and pyqpanda2 or pyqpanda3 to implement multiple quantum machine learning examples.
 
 .. warning::
 
-    The quantum computing part of the following interface uses pyqpanda2 https://pyqpanda-toturial.readthedocs.io/zh/latest/.
+    The quantum computing part of the following interface may use pyqpanda2 https://pyqpanda-toturial.readthedocs.io/zh/latest/.
 
-    Due to the compatibility issues between pyqpanda2 and pyqpanda3, you need to install pyqpnda2 yourself, `pip install pyqpanda`
+    You need to install pyqpanda additionally, `pip install pyqpanda`
 
 
 Application of Parameterized Quantum Circuit in Classification Task
@@ -37,86 +37,87 @@ In this example, we encode the binary input onto the qubits in the corresponding
 
 |
 
+This example uses pyqpanda3.
+
 .. code-block::
 
-    import pyqpanda as pq
+    import pyqpanda3.core as pq
+    from pyvqnet.nn.module import Module
+    from pyvqnet.optim.sgd import SGD
+    from pyvqnet.nn.loss import CategoricalCrossEntropy
+    from pyvqnet.tensor.tensor import QTensor
+    from pyvqnet.data import data_generator as dataloader
 
-    def qvc_circuits(input,weights,qlist,clist,machine):
+    from pyvqnet.qnn.pq3.quantumlayer import QuantumLayer
+    from pyvqnet.qnn.pq3.measure import probs_measure
+    qnum = 4
+    def qvc_circuits(input,weights):
 
+        qlist = range(qnum)
+        machine =pq.CPUQVM()
         def get_cnot(nqubits):
             cir = pq.QCircuit()
             for i in range(len(nqubits)-1):
-                cir.insert(pq.CNOT(nqubits[i],nqubits[i+1]))
-            cir.insert(pq.CNOT(nqubits[len(nqubits)-1],nqubits[0]))
+                cir << pq.CNOT(nqubits[i],nqubits[i+1])
+            cir << pq.CNOT(nqubits[len(nqubits)-1],nqubits[0])
             return cir
 
         def build_circult(weights, xx, nqubits):
 
             def Rot(weights_j, qubits):
                 circult = pq.QCircuit()
-                circult.insert(pq.RZ(qubits, weights_j[0]))
-                circult.insert(pq.RY(qubits, weights_j[1]))
-                circult.insert(pq.RZ(qubits, weights_j[2]))
+                circult << pq.RZ(qubits, weights_j[0])
+                circult << pq.RY(qubits, weights_j[1])
+                circult << pq.RZ(qubits, weights_j[2])
                 return circult
             def basisstate():
                 circult = pq.QCircuit()
                 for i in range(len(nqubits)):
                     if xx[i] == 1:
-                        circult.insert(pq.X(nqubits[i]))
+                        circult << pq.X(nqubits[i])
                 return circult
 
             circult = pq.QCircuit()
-            circult.insert(basisstate())
+            circult << basisstate()
 
             for i in range(weights.shape[0]):
 
                 weights_i = weights[i,:,:]
                 for j in range(len(nqubits)):
                     weights_j = weights_i[j]
-                    circult.insert(Rot(weights_j,nqubits[j]))
+                    circult << Rot(weights_j,nqubits[j])
                 cnots = get_cnot(nqubits)
-                circult.insert(cnots)
+                circult << cnots
 
-            circult.insert(pq.Z(nqubits[0]))
+            circult << pq.Z(nqubits[0])
 
             prog = pq.QProg()
-            prog.insert(circult)
+            prog << circult
             return prog
 
         weights = weights.reshape([2,4,3])
         prog = build_circult(weights,input,qlist)
-        prob = machine.prob_run_dict(prog, qlist[0], -1)
-        prob = list(prob.values())
+        prob = probs_measure(machine,prog,qlist[0])
 
         return prob
 
+
 Model building
 -----------------------
-We have defined variable quantum circuits ``qvc_circuits`` . 
-We hope to use it in our VQNet's automatic differentiation framework, 
-to take advantage of VQNet's optimization fucntions for model training. 
+We have defined variable quantum circuits ``qvc_circuits`` .
+We hope to use it in our VQNet's automatic differentiation framework,
+to take advantage of VQNet's optimization fucntions for model training.
 We define a Model class, which inherits from the abstract class ``Module``.
-The model uses the :ref:`QuantumLayer` class, which is a quantum computing layer that can be automatically differentiated. 
+The model uses the ``pyvqnet.qnn.pq3.QuantumLayer`` class, which is a quantum computing layer that can be automatically differentiated.
 ``qvc_circuits`` is the quantum circuit we want to run,
-24 is the number of all quantum circuit parameters that need to be trained, 
-"cpu" means that pyQPanda2's full amplitude simulator is used here, 
-and 4 means that 4 qubits need to be applied for.
-In the ``forward()`` function, the user defines the logic of the model to run forward.
+24 is the number of all quantum circuit parameters that need to be trained.
 
 .. code-block::
 
-    from pyvqnet.nn.module import Module
-    from pyvqnet.optim.sgd import SGD
-    from pyvqnet.nn.loss import CategoricalCrossEntropy
-    from pyvqnet.tensor.tensor import QTensor
-    from pyvqnet.data import data_generator as dataloader
-    import pyqpanda as pq
-    from pyvqnet.qnn.quantumlayer import QuantumLayer
-    from pyqpanda import *
-    class Model(Module):
+     class Model(Module):
         def __init__(self):
             super(Model, self).__init__()
-            self.qvc = QuantumLayer(qvc_circuits,24,"cpu",4)
+            self.qvc = QuantumLayer(qvc_circuits,24)
 
         def forward(self, x):
             return self.qvc(x)

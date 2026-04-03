@@ -28,7 +28,7 @@ set_backend
 
 .. py:function:: pyvqnet.backends.set_backend(backend_name)
 
-    Sets the backend for current computations and data storage. The default is "pyvqnet", but it can be set to "torch","torch-native", "pyvqnet-ad".
+    Sets the backend for current computations and data storage. The default is "pyvqnet-ad", but it can be set to "torch","torch-native", "pyvqnet-ad".
     
     After calling ``pyvqnet.backends.set_backend("torch")``, the interface remains unchanged. VQNet's ``QTensor`` ``data`` member variable all uses ``torch.Tensor`` to store data.
     :ref:`qtensor_api` , :ref:`vqc_api` , and ``pyvqnet.nn.torch`` interfaces accept ``QTensor`` as input and ``QTensor`` as output.
@@ -79,7 +79,7 @@ After setting the backend to ``torch``:
 .. code-block::
 
     import pyvqnet
-    pyvqnet.backends.set_backend("pyvqnet")
+    pyvqnet.backends.set_backend("torch")
 
 All member functions, creation functions, mathematical functions, logical functions, matrix transformations, etc., under :ref:`qtensor_api` will use torchfor computation. The `QTensor.data` can be accessed to retrieve the torchdata.
 
@@ -891,7 +891,7 @@ GroupNorm
 
 .. py:class:: pyvqnet.nn.torch.GroupNorm(num_groups: int, num_channels: int, epsilon = 1e-5, affine = True, dtype = None, name = "")
 
-    Applies group normalization on mini-batch inputs. Input: :math:`(N, C, *)` where :math:`C=\text{num_channels}`, Output: :math:`(N, C, *)`.
+    Applies group normalization on mini-batch inputs. Input: :math:`(N, C, *)` where :math:`C=\mathrm{num\_channels}`, Output: :math:`(N, C, *)`.
 
     This layer implements the operation described in the paper `Group Normalization <https://arxiv.org/abs/1803.08494>`__.
 
@@ -2274,6 +2274,11 @@ When you install the latest version of pyqpanda2, you can use this interface to 
 
         `cbits`: The classical bits allocated by QuantumBatchAsyncQcloudLayer, the number is `num_cubits`, the type is pyQpanda.ClassicalCondition, no user needs to define it in the function. .
 
+    .. note::
+
+        In the current version, the default total timeout for a single circuit's submission to the QCloud is 60 seconds. If a timeout occurs due to QCloud being busy, you can set the value of the `total_timeout` key in ``query_kwargs`` to the desired number of waiting seconds.
+
+
     :param origin_qprog_func: The variational quantum circuit function constructed by QPanda, must return QProg.
     :param qcloud_token: `str` - The type of quantum machine or the cloud token used for execution.
     :param para_num: `int` - The number of parameters, the parameter is a QTensor of size [para_num].
@@ -2285,8 +2290,8 @@ When you install the latest version of pyqpanda2, you can use this interface to 
     :param dtype: The data type of the parameter. The default value is None, which uses the default data type pyvqnet.kfloat32.
     :param name: The name of the module. The default is an empty string.
     :param diff_method: Differentiation method for gradient calculation. Default is "parameter_shift", "random_coordinate_descent".
-    :param submit_kwargs: Additional keyword parameters for submitting quantum circuits, default: {"chip_id":pyqpanda.real_chip_type.origin_72,"is_amend":True,"is_mapping":True,"is_optimization":True,"compile_level":3,"default_task_group_size":200,"test_qcloud_fake":False}, when test_qcloud_fake is set to True, local CPUQVM simulation.
-    :param query_kwargs: Additional keyword parameters for querying quantum results, default: {"timeout":2,"print_query_info":True,"sub_circuits_split_size":1}.
+    :param submit_kwargs: Additional keyword parameters for submitting quantum circuits, default: {"chip_id":"origin_wukong","is_amend":True,"is_mapping":True,"is_optimization":True,"compile_level":3,"default_task_group_size":200,"test_qcloud_fake":False}, when test_qcloud_fake is set to True, local CPUQVM simulation.
+    :param query_kwargs: Additional keyword parameters for querying quantum results, default: {"timeout":1,"total_timeout":60,"print_query_info":True,"sub_circuits_split_size":1}.
     :return: A module that can calculate quantum circuits.
 
 
@@ -2417,7 +2422,7 @@ When you install the latest version of pyqpanda3, you can use this interface to 
     :param dtype: Data type of the parameter. The default value is None, which means using the default data type pyvqnet.kfloat32.
     :param name: The name of the module. The default value is an empty string.
     :param diff_method: Differentiation method for gradient calculation. The default value is "parameter_shift", "random_coordinate_descent".
-    :param submit_kwargs: Additional keyword parameters for submitting quantum circuits, default: {"chip_id":pyqpanda.real_chip_type.origin_72,"is_amend":True,"is_mapping":True,"is_optimization":True,"compile_level":3,"default_task_group_size":200,"test_qcloud_fake":False}, when test_qcloud_fake is set to True, local CPUQVM simulation is used.
+    :param submit_kwargs: Additional keyword parameters for submitting quantum circuits, default: {"chip_id":"origin_wukong","is_amend":True,"is_mapping":True,"is_optimization":True,"compile_level":3,"default_task_group_size":200,"test_qcloud_fake":False}, when test_qcloud_fake is set to True, local CPUQVM simulation is used.
     :param query_kwargs: Additional keyword parameters for querying quantum results, default: {"timeout":2,"print_query_info":True,"sub_circuits_split_size":1}.
     :return: A module that can calculate quantum circuits.
 
@@ -4314,7 +4319,7 @@ VQC_QuantumEmbedding
 
                 self.ansatz = VQC_QuantumEmbedding(num_repetitions_input, depth_input,
                                                 num_unitary_layers,
-                                                num_repetitions, initial=tensor.full([1],12.0),dtype=pyvqnet.kfloat64)
+                                                num_repetitions, initial=tensor.full([1],12.0),dtype=pyvqnet.kfloat32)
 
                 self.measure = MeasureAll(obs={f"Z{nq-1}":1})
                 self.device = QMachine(nq)
@@ -7633,7 +7638,7 @@ VQC_QuantumEmbedding
 
                 self.ansatz = VQC_QuantumEmbedding(num_repetitions_input, depth_input,
                                                 num_unitary_layers,
-                                                num_repetitions, initial=tensor.full([1],12.0),dtype=pyvqnet.kfloat64)
+                                                num_repetitions, initial=tensor.full([1],12.0),dtype=pyvqnet.kfloat32)
 
                 self.measure = MeasureAll(obs={f"Z{nq-1}":1})
                 self.device = TNQMachine(nq)
