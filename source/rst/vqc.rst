@@ -52,6 +52,62 @@ We can use VQC operators to form complex neural networks like other `Modules`. T
     print(y)
 
 
+The following example demonstrates variational quantum computing on GPU (including data encoding and parameterized variational circuits):
+
+.. code-block::
+
+    from pyvqnet.nn import Module,Linear,ModuleList
+    from pyvqnet.qnn.vqc.qcircuit import VQC_HardwareEfficientAnsatz,RZZ,RZ,rz,ry,cnot
+    from pyvqnet.qnn.vqc import Probability,QMachine
+    from pyvqnet import tensor
+    from pyvqnet import DEV_GPU
+    class QM(Module):
+        def __init__(self, name=""):
+            super().__init__(name)
+            self.linearx = Linear(4,2)
+            self.ansatz = VQC_HardwareEfficientAnsatz(4, ["rx", "RY", "rz"],
+                                        entangle_gate="cnot",
+                                        entangle_rules="linear",
+                                        depth=2)
+            #VQC based RZ on 0 bits
+            self.encode1 = RZ(wires=0)
+            #VQC based RZ on 1 bit
+            self.encode2 = RZ(wires=1)
+            #RZ with trainable parameters has_params = True, trainable = True
+            self.vqc = RZ(has_params = True,trainable = True,wires=1)
+            #VQC-based probability measurement on 0, 2 bits
+            self.measure = Probability(wires=[0,2])
+            #Quantum device QMachine, uses 4 bits.
+            self.device = QMachine(4)
+        def forward(self, x, *args, **kwargs):
+            #States must be reset to the same batchsize as the input.
+            self.device.reset_states(x.shape[0])
+            y = self.linearx(x)
+            #Encode the input to the RZ gate. Note that the input must be of shape [batchsize,1]
+            self.encode1(params = y[:, 0],q_machine = self.device,)
+            #Encode the input to the RZ gate. Note that the input must be of shape [batchsize,1]
+            self.encode2(params = y[:, 1],q_machine = self.device,)
+            #Variational circuit composed of RZ gates, will be included in training.
+            self.vqc(q_machine =self.device)
+            self.ansatz(q_machine =self.device)
+            return self.measure(q_machine =self.device)
+
+    bz =3
+    #create tensor on GPU
+    inputx = tensor.arange(1.0,bz*4+1,device=DEV_GPU).reshape([bz,4])
+    inputx.requires_grad= True
+    #Define like other Modules
+    qlayer = QM()
+    #move module to GPU
+    qlayer = qlayer.to(DEV_GPU)
+    #Forward
+    y = qlayer(inputx)
+    #Backward
+    y.backward()
+    print(y)
+
+
+
 Simulator
 =======================================
 
@@ -4184,12 +4240,12 @@ Quantum machine learning model interface
 Quanvolution
 ---------------------------------------------------------------
 
-.. py:class:: pyvqnet.qnn.qcnn.Quanvolution(params_shape, strides=(1, 1), kernel_initializer=quantum_uniform, machine_type_or_cloud_token: str = "cpu")
+.. py:class:: pyvqnet.qnn.qcnn.Quanvolution(params_shape, stride=(1, 1), kernel_initializer=quantum_uniform, machine_type_or_cloud_token: str = "cpu")
 
     Based on the quantum convolution implemented in "Quanvolutional Neural Networks: Powering Image Recognition with Quantum Circuits" (https://arxiv.org/abs/1904.04767), the classical convolution filter is replaced by a variational quantum circuit to obtain a quantum convolutional neural network with a quantum convolution filter.
 
     :param params_shape: The shape of the parameters, which should be two-dimensional.
-    :param strides: The step size of the slice window, the default is (1,1).
+    :param stride: The step size of the slice window, the default is (1,1).
     :param kernel_initializer: Convolution kernel initializer parameters.
     :param machine_type_or_cloud_token: Machine type string or Qcloud token, default is "cpu".
     :return: A Quanvolution instance.
@@ -5735,10 +5791,13 @@ QNSPSAOptimizer
 
 .. _benchmarks:
 
-Benchmarking of Variational Quantum Circuit's Gradients for Batch Data
+Quantum Machine Learning Batch Data Training Benchmarks
 ==================================================================================
 
-In quantum machine learning, gradient calculation is a key factor affecting the efficiency of variational quantum circuits. To evaluate the performance of quantum gradient calculation in different frameworks, this paper conducted benchmark tests on VQNet, Deepquantum, and Pennylane under the Linux system using GPU. The tests were carried out under different batch data sizes, circuit depths, and the number of qubits, and the average running time of each framework over 10 runs was recorded. Among them, Deepquantum and Pennylane are implemented based on the GPU backend of Torch, while VQNet uses a self-developed GPU acceleration scheme.
+Test 1: Batch Data Gradient Comparison (VQNet / DeepQuantum / Pennylane)
+------------------------------------------------------------------------------------
+
+In quantum machine learning, gradient calculation is a key factor affecting the efficiency of variational quantum circuits. To evaluate the performance of quantum gradient calculation in different frameworks, this paper conducted benchmark tests on VQNet, Deepquantum, and Pennylane under the Linux system using GPU. The tests were carried out under different batch data sizes (batch size 16, 32), circuit depths (layer 2, 4), and the number of qubits (qubit 4, 8, 12, 16). The circuit structure was CNOT + RX + RZ + RX encoding layers. The average running time of each framework over 10 runs was recorded. Deepquantum and Pennylane are implemented based on the GPU backend of Torch, while VQNet uses a self-developed GPU acceleration scheme.
 
 .. image:: ./images/grad-benchmarks.png
    :width: 600 px
@@ -5757,12 +5816,16 @@ In quantum machine learning, gradient calculation is a key factor affecting the 
     import pennylane as qml
 
     import matplotlib.pyplot as plt
-    def benchmark(f, *args, trials=10):
+    def benchmark(f, *args, trials=10, sync_fn=None):
         time0 = time.time()
         r = f(*args)
+        if sync_fn:
+            sync_fn(r)
         time1 = time.time()
         for _ in range(trials):
             r = f(*args)
+        if sync_fn:
+            sync_fn(r)
         time2 = time.time()
         if trials > 0:
             time21 = (time2 - time1) / trials
@@ -5770,6 +5833,7 @@ In quantum machine learning, gradient calculation is a key factor affecting the 
             time21 = 0
         ts = (time1 - time0, time21)
 
+        print('staging time: %.6f s' % ts[0])
         if trials > 0:
             print('running time: %.6f s' % ts[1])
         return r, ts[1]
@@ -5797,17 +5861,18 @@ In quantum machine learning, gradient calculation is a key factor affecting the 
             return params.grad
 
 
-        return benchmark(get_grad_dq, torch.ones([b,3 * n * l], requires_grad=True,device="cuda:0"))
+        return benchmark(get_grad_dq, torch.ones([b,3 * n * l], requires_grad=True,device="cuda:0"),
+                         sync_fn=lambda _: torch.cuda.synchronize())
 
 
     def grad_pl_torchlayer(b, n, l,t):
 
         dev = qml.device("default.qubit", wires=n)
-        
+
         @qml.qnode(dev, interface="torch")
         def circuit(inputs,weights):
             params = inputs
-            
+
             for j in range(l):
                 for i in range(n - 1):
                     qml.CNOT(wires=[i, i + 1])
@@ -5821,7 +5886,7 @@ In quantum machine learning, gradient calculation is a key factor affecting the 
             obs = reduce(lambda x, y: x @ y, [qml.PauliZ(i) for i in range(n)])
             y = qml.expval(obs)
             return y
-        
+
         def get_grad_pl(params):
             params.grad = None
             weight_shapes = {"weights": 1}
@@ -5829,10 +5894,11 @@ In quantum machine learning, gradient calculation is a key factor affecting the 
             qlayer = qml.qnn.TorchLayer(circuit, weight_shapes = weight_shapes)
             qlayer.to("cuda:0")
             y = qlayer(params)
-            
+
             y.backward(torch.ones_like(y))
             return params.grad
-        return benchmark(get_grad_pl, torch.ones([b,3 * n * l],device="cuda:0", requires_grad=True),trials=t)
+        return benchmark(get_grad_pl, torch.ones([b,3 * n * l],device="cuda:0", requires_grad=True),trials=t,
+                         sync_fn=lambda _: torch.cuda.synchronize())
 
     def grad_pyvqnet_vqc(b, n, l, t):
         from pyvqnet.qnn.vqc import QMachine,cnot,rx,rz,ry,MeasureAll
@@ -5871,7 +5937,8 @@ In quantum machine learning, gradient calculation is a key factor affecting the 
         input.requires_grad = True
         qm = QMachine(n)
         qm.toGPU(pyvqnet.DEV_GPU)
-        return benchmark(get_grad, qm, input, trials=t)
+        return benchmark(get_grad, qm, input, trials=t,
+                         sync_fn=lambda r: r.numpy())
 
 
 
@@ -5889,26 +5956,26 @@ In quantum machine learning, gradient calculation is a key factor affecting the 
 
                         dqr, ts1 = grad_pl_torchlayer(b,n, l, t)
                         results[str(b) + '-' + str(n) + '-' + str(l) + '-' + 'grad' + '-pl'] = ts1
-                        print(f'pennylane batch_size: {b} qubits_num{n} layers_depth: {l}  iter: {t}, The average time consumption of calculating grad {ts1:4f}seconds' )
+                        print(f'PL batch={b} qubits={n} layers={l} trials={t}, grad avg={ts1:.4f}s')
 
                         dqr, ts3 = grad_dq(b, n, l, t)
                         results[str(b) + '-' + str(n) + '-' + str(l) + '-' + 'grad' + '-dq'] = ts3
-                        print(f'dq batch_size: {b} qubits_num{n} layers_depth: {l}  iter: {t}, The average time consumption of calculating grad {ts3:4f}seconds' )
+                        print(f'DQ batch={b} qubits={n} layers={l} trials={t}, grad avg={ts3:.4f}s')
 
 
                         result, ts2 = grad_pyvqnet_vqc(b, n, l, t)
                         results[str(b) + '-' + str(n) + '-' + str(l) + '-' + 'grad' + '-pyvqnet'] = ts2
-                        print(f'pyvqnet batch_size: {b} qubits_num{n} layers_depth: {l}  iter: {t}, The average time consumption of calculating grad {ts2:4f}seconds' )
+                        print(f'pyVQNet batch={b} qubits={n} layers={l} trials={t}, grad avg={ts2:.4f}s')
 
 
         with open('gradient_results.data', 'w') as f:
             json.dump(results, f)
-        
+
         with open('gradient_results.data', 'r') as f:
             results = json.load(f)
-        
+
         data = results
-        
+
         sub_w  = 2
         sub_l = int(len(N_LIST)/2)
         assert len(N_LIST)%2==0
@@ -5920,7 +5987,7 @@ In quantum machine learning, gradient calculation is a key factor affecting the 
                 for b in B_LIST:
                     for t in [10,]:
                         config_key.append(str(b) + '-' + str(n) + '-' + str(l))
-            groups = config_key 
+            groups = config_key
             pl_times = [data[f'{group}-grad-pl'] for group in groups]
             dq_times = [data[f'{group}-grad-dq'] for group in groups]
             pyvqnet_times = [data[f'{group}-grad-pyvqnet'] for group in groups]
@@ -5933,7 +6000,7 @@ In quantum machine learning, gradient calculation is a key factor affecting the 
             ax_i +=1
             #fig, ax = plt.subplots(figsize=(10, 6))
 
-            
+
             rects2 = ax.bar(x , pyvqnet_times, width, label='pyvqnet')
             rects3 = ax.bar(x + width, dq_times, width, label='deepquantum')
             rects1 = ax.bar(x - width, pl_times, width, label='pennylane')
@@ -5965,20 +6032,658 @@ In quantum machine learning, gradient calculation is a key factor affecting the 
     test_1()
 
 
-+----------------+----------------+
-| Project        | Specification  |
-+================+================+
-| CPU            | i9-9900K       |
-+----------------+----------------+
-| GPU            | GTX3090        |
-+----------------+----------------+
-| RAM            | 64GB           |
-+----------------+----------------+
-| deepquantum    | 4.4.0          |
-+----------------+----------------+
-| pennylane      | 0.42.3         |
-+----------------+----------------+
-| torch          | 2.6.0          |
-+----------------+----------------+
-| pyvqnet        | 2.17.2         |
-+----------------+----------------+
+
+Test 2: 10-Qubit VQC Gradient Comparison (with TorchQuantum)
+------------------------------------------------------------------------------------
+
+This test is based on the 10-qubit, 10-layer VQC circuit used in the Origin Quantum large model paper. It compares the gradient computation performance of five frameworks: VQNet, TorchQuantum (TQ), DeepQuantum (DQ), Pennylane (PL), and MindQuantum (MQ). The circuit structure is:
+
+  RY(data) -> [RY(param) -> CRZ(param) -> RY(param) -> CRZ(param)] x L
+
+Each layer contains 40 parameters (4 groups x 10 qubits), for a total of 400 parameters. Batch sizes range from 1 to 1024. Trial counts: VQNet / TQ / DQ run 20 trials each, PL / MQ run 2 trials each (the latter two are slower under batch data and limited to 2 trials to save time).
+
+.. image:: ./images/grad_benchmarks_10q_ry_crz.png
+   :width: 600 px
+   :align: center
+
+|
+
+.. code-block:: python
+
+    from pyvqnet.tensor import tensor
+    from pyvqnet.qnn.vqc import RX, RY, RZ, crz, PauliX, PauliY, PauliZ, paulix, pauliy, pauliz, rx, ry, rz, MeasureAll, fused_multi_crz
+    from pyvqnet.nn import ParameterDict, Parameter
+    from pyvqnet.qnn.vqc import QModule, QMachine
+    import numpy as np
+    import pyvqnet
+    import time
+
+    QuantumDevice = QMachine
+    class Encoder(QModule):
+
+        def __init__(self):
+            super().__init__()
+            pass
+
+        def forward(self, x, qdev):
+            raise NotImplementedError
+
+    op_name_dict = {
+        "x": PauliX,
+        "y": PauliY,
+        "z": PauliZ,
+        "rx": RX,
+        "ry": RY,
+        "rz": RZ
+    }
+
+    func_name_dict = {
+        "x": paulix,
+        "y": pauliy,
+        "z": pauliz,
+        "rx": rx,
+        "ry": ry,
+        "rz": rz
+    }
+
+    class GeneralEncoder(Encoder):
+        """func_list list of dict
+
+        """
+
+        def __init__(self, func_list):
+            super().__init__()
+            self.func_list = func_list
+
+        def forward(self, x, qdev):
+            for info in self.func_list:
+                if op_name_dict[info["func"]].num_params > 0:
+                    params = x[:, info["input_idx"]]
+                else:
+                    params = None
+
+                func_name_dict[info["func"]](qdev,
+                                             wires=info["wires"],
+                                             params=params)
+
+        def __call__(self, *args, **kwargs):
+            return self.forward(*args, **kwargs)
+
+
+    class VQC_new(QModule):
+        """VQC using fused_multi_crz - one parameter vector per layer"""
+
+        def __init__(self, n_wires: int = 4, n_qlayers: int = 1):
+            super().__init__()
+            self.n_wires = n_wires
+            self.n_qlayers = n_qlayers
+            self.dev = QuantumDevice(self.n_wires)
+            enc_cnt = list()
+            for i in range(self.n_wires):
+                cnt = {'input_idx': [i], 'func': 'ry', 'wires': [i]}
+                enc_cnt.append(cnt)
+
+            self.encoder = GeneralEncoder(enc_cnt)
+            self._use_vqnet = True
+
+            self.params_ry1_dct = ParameterDict()
+            self.params_ry2_dct = ParameterDict()
+            self.params_crx1_dct = ParameterDict()
+            self.params_crx2_dct = ParameterDict()
+
+            for k in range(self.n_qlayers):
+                self.params_crx1_dct[str(k)] = Parameter([self.n_wires])
+                self.params_crx2_dct[str(k)] = Parameter([self.n_wires])
+                for i in range(self.n_wires):
+                    self.params_ry1_dct[str(i + k * self.n_wires)] = Parameter([1])
+                    self.params_ry2_dct[str(i + k * self.n_wires)] = Parameter([1])
+
+            self.use_pq3 = False
+
+            obs_list = []
+            for i in range(self.n_wires):
+                obs_list.append({f"Z{i}": 1})
+
+            self.measure = MeasureAll(obs=obs_list)
+
+        def forward(self, x):
+            q_device = self.dev
+            q_device.reset_states(x.shape[0])
+
+            self.encoder(x, q_device)
+
+            for k in range(self.n_qlayers):
+                for i in range(self.n_wires):
+                    ry(q_machine=q_device, wires=i, params=self.params_ry1_dct[str(i + k * self.n_wires)])
+
+                obj_qubits = [(i + 1) % self.n_wires for i in range(self.n_wires - 1, -1, -1)]
+                ctrls = list(range(self.n_wires - 1, -1, -1))
+                fused_multi_crz(
+                    q_machine=q_device,
+                    params=self.params_crx1_dct[str(k)],
+                    obj_qubits=obj_qubits,
+                    ctrls=ctrls)
+
+                for i in range(self.n_wires):
+                    ry(q_machine=q_device, params=self.params_ry2_dct[str(i + k * self.n_wires)], wires=i)
+
+                obj_qubits = [(i - 1) % self.n_wires for i in [self.n_wires - 1] + list(range(self.n_wires - 1))]
+                ctrls = [self.n_wires - 1] + list(range(self.n_wires - 1))
+                fused_multi_crz(
+                    q_machine=q_device,
+                    params=self.params_crx2_dct[str(k)],
+                    obj_qubits=obj_qubits,
+                    ctrls=ctrls)
+
+            if self.use_pq3:
+                return x
+            else:
+                return self.measure(q_device)
+
+
+    class VQC(QModule):
+        """VQC using individual crz gates - one parameter per gate"""
+
+        def __init__(self, n_wires: int = 4, n_qlayers: int = 1):
+            super().__init__()
+            self.n_wires = n_wires
+            self.n_qlayers = n_qlayers
+            self.dev = QuantumDevice(self.n_wires)
+            enc_cnt = list()
+            for i in range(self.n_wires):
+                cnt = {'input_idx': [i], 'func': 'ry', 'wires': [i]}
+                enc_cnt.append(cnt)
+
+            self.encoder = GeneralEncoder(enc_cnt)
+            self._use_vqnet = True
+
+            self.params_ry1_dct = ParameterDict()
+            self.params_ry2_dct = ParameterDict()
+            self.params_crx1_dct = ParameterDict()
+            self.params_crx2_dct = ParameterDict()
+
+            for k in range(self.n_qlayers):
+                for i in range(self.n_wires):
+                    self.params_crx1_dct[str(i + k * self.n_wires)] = Parameter([1])
+                    self.params_crx2_dct[str(i + k * self.n_wires)] = Parameter([1])
+                    self.params_ry1_dct[str(i + k * self.n_wires)] = Parameter([1])
+                    self.params_ry2_dct[str(i + k * self.n_wires)] = Parameter([1])
+
+            self.use_pq3 = False
+
+            obs_list = []
+            for i in range(self.n_wires):
+                obs_list.append({f"Z{i}": 1})
+
+            self.measure = MeasureAll(obs=obs_list)
+
+        def forward(self, x):
+            q_device = self.dev
+            q_device.reset_states(x.shape[0])
+
+            self.encoder(x, q_device)
+
+            for k in range(self.n_qlayers):
+                for i in range(self.n_wires):
+                    ry(q_machine=q_device, wires=i, params=self.params_ry1_dct[str(i + k * self.n_wires)])
+
+                for i in range(self.n_wires - 1, -1, -1):
+                    crz(
+                        q_machine=q_device,
+                        params=self.params_crx1_dct[str(i + k * self.n_wires)],
+                        wires=[i, (i + 1) % self.n_wires])
+
+                for i in range(self.n_wires):
+                    ry(q_machine=q_device, params=self.params_ry2_dct[str(i + k * self.n_wires)], wires=i)
+
+                for i in [self.n_wires - 1] + list(range(self.n_wires - 1)):
+                    crz(
+                        q_machine=q_device,
+                        params=self.params_crx2_dct[str(i + k * self.n_wires)],
+                        wires=[i, (i - 1) % self.n_wires])
+
+            if self.use_pq3:
+                return x
+            else:
+                return self.measure(q_device)
+
+
+    def benchmark(f, *args, trials=10, sync_fn=None):
+        time0 = time.time()
+        r = f(*args)
+        if sync_fn:
+            sync_fn(r)
+        time1 = time.time()
+        for _ in range(trials):
+            r = f(*args)
+        if sync_fn:
+            sync_fn(r)
+        time2 = time.time()
+        if trials > 0:
+            time21 = (time2 - time1) / trials
+        else:
+            time21 = 0
+        ts = (time1 - time0, time21)
+        print('staging time: %.6f s' % ts[0])
+        if trials > 0:
+            print('running time: %.6f s' % ts[1])
+        return r, ts
+
+
+    def grad_pyvqnet_vqc_new(b, n, l, trials=10):
+        """Test VQC_new (fused_multi_crz)"""
+        pyvqnet.utils.set_random_seed(42)
+        layer = VQC_new(n, l)
+        layer.toGPU(pyvqnet.DEV_GPU)
+
+        def get_grad(values):
+            r = layer(values)
+            r.backward()
+            return values.grad
+
+        input = tensor.ones([b, n], device=pyvqnet.DEV_GPU)
+        input.requires_grad = True
+        return benchmark(get_grad, input, trials=trials,
+                         sync_fn=lambda r: r.numpy())
+
+
+    def grad_pyvqnet_vqc(b, n, l, trials=10):
+        pyvqnet.utils.set_random_seed(42)
+        layer = VQC(n, l)
+        layer.toGPU(pyvqnet.DEV_GPU)
+
+        def get_grad(values):
+            r = layer(values)
+            r.backward()
+            return values.grad
+
+        input = tensor.ones([b, n], device=pyvqnet.DEV_GPU)
+        input.requires_grad = True
+        return benchmark(get_grad, input, trials=trials,
+                         sync_fn=lambda r: r.numpy())
+
+
+    def grad_tq_vqc_with_params(b, n, l, trials=10):
+        """TorchQuantum VQC benchmark"""
+        import torchquantum as tq
+        import torch
+        import torch.cuda
+
+        class VQC_TQ(tq.QuantumModule):
+            """TorchQuantum VQC matching VQNet's VQC structure"""
+
+            def __init__(self, n_wires: int = 4, n_qlayers: int = 1):
+                super().__init__()
+                self.n_wires = n_wires
+                self.n_qlayers = n_qlayers
+
+                enc_cnt = list()
+                for i in range(self.n_wires):
+                    cnt = {'input_idx': [i], 'func': 'ry', 'wires': [i]}
+                    enc_cnt.append(cnt)
+                self.encoder = tq.GeneralEncoder(enc_cnt)
+
+                self.params_ry1_dct = tq.QuantumModuleDict()
+                self.params_ry2_dct = tq.QuantumModuleDict()
+                self.params_crx1_dct = tq.QuantumModuleDict()
+                self.params_crx2_dct = tq.QuantumModuleDict()
+
+                for k in range(self.n_qlayers):
+                    for i in range(self.n_wires):
+                        self.params_ry1_dct[str(i + k * self.n_wires)] = tq.RY(has_params=True, trainable=True)
+                        self.params_crx1_dct[str(i + k * self.n_wires)] = tq.CRZ(has_params=True, trainable=True)
+                        self.params_ry2_dct[str(i + k * self.n_wires)] = tq.RY(has_params=True, trainable=True)
+                        self.params_crx2_dct[str(i + k * self.n_wires)] = tq.CRZ(has_params=True, trainable=True)
+
+                self.measure = tq.MeasureMultipleTimes([{'wires': range(self.n_wires), 'observables': ['z'] * self.n_wires}])
+
+                from torchquantum import QuantumDevice as TQQuantumDevice
+                self.dev = TQQuantumDevice(self.n_wires)
+
+            def forward(self, x: torch.Tensor):
+                q_device = self.dev
+                q_device.reset_states(x.shape[0])
+                self.encoder(q_device, x)
+
+                for k in range(self.n_qlayers):
+                    for i in range(self.n_wires):
+                        self.params_ry1_dct[str(i + k * self.n_wires)](q_device, wires=i)
+
+                    for i in range(self.n_wires - 1, -1, -1):
+                        self.params_crx1_dct[str(i + k * self.n_wires)](q_device, wires=[i, (i + 1) % self.n_wires])
+
+                    for i in range(self.n_wires):
+                        self.params_ry2_dct[str(i + k * self.n_wires)](q_device, wires=i)
+
+                    for i in [self.n_wires - 1] + list(range(self.n_wires - 1)):
+                        self.params_crx2_dct[str(i + k * self.n_wires)](q_device, wires=[i, (i - 1) % self.n_wires])
+
+                return self.measure(q_device)
+
+        torch.manual_seed(42)
+        layer = VQC_TQ(n, l)
+        layer.to("cuda:0")
+
+        def get_grad(values):
+            r = layer(values)
+            r.backward(torch.ones_like(r))
+            return values.grad
+
+        input = torch.ones([b, n], device="cuda:0")
+        input.requires_grad = True
+        return benchmark(get_grad, input, trials=trials,
+                         sync_fn=lambda _: torch.cuda.synchronize())
+
+    # ──────────────────────────────────────────────
+    # PennyLane benchmark
+    # ──────────────────────────────────────────────
+
+    def grad_pl_vqc(b, n, l, trials=1):
+        """PennyLane VQC (default.qubit) matching VQNet VQC structure."""
+        import pennylane as qml
+        from functools import reduce
+        import torch
+        dev = qml.device("default.qubit", wires=n)
+
+        @qml.qnode(dev, interface="torch")
+        def circuit(inputs, weights_ry1, weights_crz1, weights_ry2, weights_crz2):
+            for j in range(l):
+                for i in range(n):
+                    qml.RY(inputs[:, i], wires=i)
+                for i in range(n):
+                    qml.RY(weights_ry1[j, i], wires=i)
+                for i in range(n - 1, -1, -1):
+                    qml.CRZ(weights_crz1[j, i], wires=[i, (i + 1) % n])
+                for i in range(n):
+                    qml.RY(weights_ry2[j, i], wires=i)
+                for i in [n - 1] + list(range(n - 1)):
+                    qml.CRZ(weights_crz2[j, i], wires=[i, (i - 1) % n])
+
+            obs = reduce(lambda x, y: x @ y, [qml.PauliZ(i) for i in range(n)])
+            return qml.expval(obs)
+
+        weight_shapes = {
+            "weights_ry1": (l, n),
+            "weights_crz1": (l, n),
+            "weights_ry2": (l, n),
+            "weights_crz2": (l, n),
+        }
+
+        def get_grad_pl(inputs):
+            torch.manual_seed(42)
+            qlayer = qml.qnn.TorchLayer(circuit, weight_shapes=weight_shapes)
+            qlayer.to("cuda:0")
+            y = qlayer(inputs)
+            y.backward(torch.ones_like(y))
+            return inputs.grad
+
+        params = torch.ones([b, n], device="cuda:0", requires_grad=True)
+        return benchmark(get_grad_pl, params, trials=trials)
+
+
+    # ──────────────────────────────────────────────
+    # DeepQuantum benchmark
+    # ──────────────────────────────────────────────
+
+    def grad_dq_vqc(b, n, l, trials=10):
+        """DeepQuantum VQC matching VQNet VQC structure."""
+        import deepquantum as dq
+        import torch
+        import torch.cuda
+        def get_grad_dq(input_data):
+            cir = dq.QubitCircuit(n, reupload=True)
+            for j in range(l):
+                for i in range(n):
+                    cir.ry(wires=i, encode=True)
+                for i in range(n):
+                    cir.ry(wires=i)
+                for i in range(n - 1, -1, -1):
+                    cir.crz(control=i, target=(i + 1) % n)
+                for i in range(n):
+                    cir.ry(wires=i)
+                for i in [n - 1] + list(range(n - 1)):
+                    cir.crz(control=i, target=(i - 1) % n)
+            for w in range(n):
+                cir.observable(basis='z', wires=w)
+            cir.to("cuda:0")
+            cir(data=input_data)
+            exp = cir.expectation()
+            exp.backward(torch.ones_like(exp))
+            return input_data.grad
+
+        params = torch.ones([b, n], device="cuda:0", requires_grad=True)
+        return benchmark(get_grad_dq, params, trials=trials,
+                         sync_fn=lambda _: torch.cuda.synchronize())
+
+
+    # ──────────────────────────────────────────────
+    # MindQuantum benchmark
+    # ──────────────────────────────────────────────
+
+    def grad_mq_vqc(b, n, l, trials=1):
+        """MindQuantum VQC with mqvector_gpu (cuQuantum) backend."""
+        from mindquantum.core.circuit import Circuit
+        from mindquantum.core.gates import RY, RZ, X
+        from mindquantum.core.operators import Hamiltonian, QubitOperator
+        from mindquantum.simulator import Simulator
+
+        total_circuit = Circuit()
+        for j in range(l):
+            layer_enc = Circuit()
+            for i in range(n):
+                layer_enc += RY(f'enc_{j}_{i}').on(i)
+            layer_enc.as_encoder()
+
+            layer_ans = Circuit()
+            for i in range(n):
+                layer_ans += RY(f'ry1_{j}_{i}').on(i)
+            for i in range(n - 1, -1, -1):
+                tgt = (i + 1) % n
+                ctrl = i
+                p = f'crz1_{j}_{i}'
+                layer_ans += RZ({p: 0.5}).on(tgt)
+                layer_ans += X.on(tgt, ctrl)
+                layer_ans += RZ({p: -0.5}).on(tgt)
+                layer_ans += X.on(tgt, ctrl)
+            for i in range(n):
+                layer_ans += RY(f'ry2_{j}_{i}').on(i)
+            for i in [n - 1] + list(range(n - 1)):
+                tgt = (i - 1) % n
+                ctrl = i
+                p = f'crz2_{j}_{i}'
+                layer_ans += RZ({p: 0.5}).on(tgt)
+                layer_ans += X.on(tgt, ctrl)
+                layer_ans += RZ({p: -0.5}).on(tgt)
+                layer_ans += X.on(tgt, ctrl)
+            layer_ans.as_ansatz()
+
+            total_circuit += layer_enc + layer_ans
+
+        obs = ' '.join(f'Z{i}' for i in range(n))
+        ham = Hamiltonian(QubitOperator(obs))
+        sim = Simulator('mqvector_gpu', n)
+        grad_ops = sim.get_expectation_with_grad(ham, total_circuit)
+        n_ansatz_params = 4 * n * l
+        ansatz_data = np.ones(n_ansatz_params, dtype=np.float32)
+
+        def get_grad_mq(input_data):
+            encoder_data = np.tile(input_data, (1, l)).astype(np.float32)
+            _, g_enc, _ = grad_ops(encoder_data, ansatz_data)
+            return g_enc
+
+        def sync_mq(g_enc):
+            g_enc_real = np.asarray(g_enc.real, dtype=np.float32)
+            g = np.zeros((b, n), dtype=np.float32)
+            for j in range(l):
+                g += g_enc_real[:, 0, j * n : (j + 1) * n]
+            return g
+
+        input_data = np.ones((b, n), dtype=np.float32)
+        return benchmark(get_grad_mq, input_data, trials=trials,
+                         sync_fn=sync_mq)
+
+
+    # ──────────────────────────────────────────────
+    # Plotting
+    # ──────────────────────────────────────────────
+
+    def _parse_trials(results, fw):
+        """Extract trials count from results keys like '*-grad-{fw}-t{N}'."""
+        for k in results:
+            if f'-grad-{fw}-t' in k:
+                return k.split('-t')[-1]
+        return '?'
+
+
+    def plot_results(results, output_path="grad_benchmarks_10q_ry_crz.png"):
+        """
+        Line chart: x = batch size, y = running time (log scale).
+        Keys format: "{batch}-{n}-{l}-grad-{framework}-t{trials}".
+        """
+        import matplotlib.pyplot as plt
+
+        frameworks = ['pyvqnet', 'new', 'torchquantum', 'pl', 'dq', 'mq']
+        labels_base = {
+            'pyvqnet': 'pyVQNet',
+            'new': 'pyVQNet (fused CRZ)',
+            'torchquantum': 'TorchQuantum',
+            'pl': 'PennyLane',
+            'dq': 'DeepQuantum',
+            'mq': 'MindQuantum',
+        }
+        colors = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b']
+
+        batch_sizes = sorted({int(k.split('-')[0]) for k in results})
+        n_qubits = sorted({k.split('-')[1] for k in results})
+        n_layers = sorted({k.split('-')[2] for k in results})
+        n_q = int(n_qubits[0]) if n_qubits else 10
+        n_l = int(n_layers[0]) if n_layers else 10
+
+        fig, ax = plt.subplots(figsize=(10, 6))
+
+        for fw, color in zip(frameworks, colors):
+            trials_str = _parse_trials(results, fw)
+            label = f"{labels_base[fw]} (t={trials_str})"
+            times = []
+            for bs in batch_sizes:
+                candidates = [k for k in results if k.startswith(f'{bs}-{n_q}-{n_l}-grad-{fw}')]
+                if candidates:
+                    times.append(results[candidates[0]][1])
+                else:
+                    times.append(None)
+            valid = [(bs, t) for bs, t in zip(batch_sizes, times) if t is not None]
+            if valid:
+                xs, ys = zip(*valid)
+                ax.plot(xs, ys, marker='o', label=label, color=color, linewidth=2)
+
+        ax.set_xlabel('Batch Size', fontsize=13)
+        ax.set_ylabel('Running Time (s) — log scale', fontsize=13)
+        ax.set_title(f'VQC Gradient Benchmark (n_qubits={n_q}, n_layers={n_l})', fontsize=14)
+        ax.set_xticks(batch_sizes)
+        ax.set_yscale('log')
+        ax.legend(fontsize=11, loc='upper left', bbox_to_anchor=(0.02, 0.98))
+        ax.grid(True, alpha=0.3)
+
+        fig.tight_layout()
+        fig.savefig(output_path, dpi=150)
+
+    def test_3():
+        """
+        Run all benchmarks across multiple configs.
+        Fast frameworks (pyvqnet, TQ, DQ): trials=100
+        Slow frameworks (PL, MQ):         trials=2
+        JSON keys include trials count so results are distinguishable.
+        """
+        import os
+        import json
+        json_path = "compare_grad_calc_results.json"
+        if os.path.exists(json_path):
+            print(f"{json_path} already exists, loading and plotting directly...")
+            with open(json_path) as f:
+                results = json.load(f)
+            print()
+            print("=== Loaded Results ===")
+            for key, ts in results.items():
+                print(f"{key}: staging={ts[0]:.4f}s, running={ts[1]:.4f}s")
+            plot_results(results)
+            return
+
+        results = {}
+        n_list = [10,]
+        l_list = [10, ]
+        b_list = [1024,512,256,128,64]
+        t_fast, t_slow = 20, 2
+
+        for n in n_list:
+            for l in l_list:
+                for b in b_list:
+                    print(str(b) + '-' + str(n) + '-' + str(l) + '-' + 'grad')
+                    print("grad_pyvqnet_vqc")
+                    pyvqnet.utils.set_random_seed(42)
+                    result2, ts = grad_pyvqnet_vqc(b, n, l, trials=t_fast)
+                    results[str(b) + '-' + str(n) + '-' + str(l) + '-' + 'grad' + f'-pyvqnet-t{t_fast}'] = ts
+
+                    print(str(b) + '-' + str(n) + '-' + str(l) + '-' + 'grad')
+                    print("grad_pyvqnet_vqc_new")
+                    pyvqnet.utils.set_random_seed(42)
+                    result1, ts = grad_pyvqnet_vqc_new(b, n, l, trials=t_fast)
+                    results[str(b) + '-' + str(n) + '-' + str(l) + '-' + 'grad' + f'-new-t{t_fast}'] = ts
+
+                    print(str(b) + '-' + str(n) + '-' + str(l) + '-' + 'grad')
+                    print("grad_torchquantum_vqc")
+                    result_tq, ts = grad_tq_vqc_with_params(b, n, l, trials=t_fast)
+                    results[str(b) + '-' + str(n) + '-' + str(l) + '-' + 'grad' + f'-torchquantum-t{t_fast}'] = ts
+
+                    print(str(b) + '-' + str(n) + '-' + str(l) + '-' + 'grad')
+                    print("grad_pennylane_vqc")
+                    _, ts = grad_pl_vqc(b, n, l, trials=t_slow)
+                    results[f'{b}-{n}-{l}-grad-pl-t{t_slow}'] = ts
+
+                    print(str(b) + '-' + str(n) + '-' + str(l) + '-' + 'grad')
+                    print("grad_deepquantum_vqc")
+                    _, ts = grad_dq_vqc(b, n, l, trials=t_fast)
+                    results[f'{b}-{n}-{l}-grad-dq-t{t_fast}'] = ts
+
+                    print(str(b) + '-' + str(n) + '-' + str(l) + '-' + 'grad')
+                    print("grad_mindquantum_vqc")
+                    _, ts = grad_mq_vqc(b, n, l, trials=t_slow)
+                    results[f'{b}-{n}-{l}-grad-mq-t{t_slow}'] = ts
+
+        print("\n=== All Results ===")
+        for key, ts in results.items():
+            print(f"{key}: staging={ts[0]:.4f}s, running={ts[1]:.4f}s")
+
+        with open('compare_grad_calc_results.json', 'w') as f:
+            json.dump(results, f)
+        print("Results saved to compare_grad_calc_results.json")
+
+        # Also generate plot
+        plot_results(results)
+
+
+    test_3()
+
+
++------------------+----------------+
+| Project          | Specification  |
++==================+================+
+| CPU              | i9-9900K       |
++------------------+----------------+
+| GPU              | GTX3090        |
++------------------+----------------+
+| CUDA             | 12.6           |
++------------------+----------------+
+| RAM              | 64GB           |
++------------------+----------------+
+| deepquantum      | 4.5.0          |
++------------------+----------------+
+| mindquantum      | 0.12.0         |
++------------------+----------------+
+| pennylane        | 0.42.3         |
++------------------+----------------+
+| pyvqnet          | 2.18.0         |
++------------------+----------------+
+| torch            | 2.12.0         |
++------------------+----------------+
+| torchquantum     | 0.2.0          |
++------------------+----------------+

@@ -823,7 +823,7 @@ QTensor
 
         :param device: The device currently saving QTensor, default=DEV_GPU_0,
 
-        device = pyvqnet.DEV_GPU_0, stored in the first GPU, devcie = DEV_GPU_1,
+        device = pyvqnet.DEV_GPU_0, stored in the first GPU, device = DEV_GPU_1,
         stored in the second GPU, and so on.
 
         :return: Clone QTensor to GPU device.
@@ -865,7 +865,7 @@ QTensor
 
             QTensor cannot perform calculations on different GPUs. A Cuda error will be raised if you try to create a QTensor on a GPU whose ID exceeds the maximum number of verified GPUs.
 
-        :param device: The device currently saving QTensor, default=DEV_GPU_0. device = pyvqnet.DEV_GPU_0, stored in the first GPU, devcie = DEV_GPU_1, stored in the second GPU, and so on.
+        :param device: The device currently saving QTensor, default=DEV_GPU_0. device = pyvqnet.DEV_GPU_0, stored in the first GPU, device = DEV_GPU_1, stored in the second GPU, and so on.
         :return: QTensor moved to GPU device.
 
         Examples::
@@ -880,7 +880,7 @@ QTensor
     
     .. py:method:: toCPU()
 
-        Move QTensor to specific GPU device
+        Move QTensor to CPU
 
         :return: QTensor moved to CPU device.
 
@@ -1319,7 +1319,7 @@ randn
 
 binomial
 ==============================
-.. py:function:: pyvqnet.tensor.binomial(total_countst, probs)
+.. py:function:: pyvqnet.tensor.binomial(total_counts, probs)
     
     Creates a binomial distribution parameterized by :attr:total_count and :attr:probs.
 
@@ -3283,7 +3283,7 @@ permute
 
 .. py:function:: pyvqnet.tensor.permute(t: pyvqnet.tensor.QTensor, dim: list)
 
-    Reverse or permute the axes of an array.if dims = None, revsers the dim.
+    Reverse or permute the axes of an array.
 
     :param t: input QTensor
     :param dim: the new order of the dimensions (list of integers)
@@ -3980,12 +3980,11 @@ functional_conv2d
 
     :param x: 4D input tensor.
     :param weight: 4D kernel tensor.
-    :param weight: 4D kernel tensor.
 
     :param stride: `tuple` - stride, defaults to (1, 1)
     :param padding: Padding, controls the amount of padding on the input. This can be a string {'valid', 'same'} or a tuple of integers specifying the amount of implicit padding to apply to the input, defaulting to (0,0).
-    :param dilation_rate: `tuple` - Spacing between kernel elements. Default: (0,0)
-    :param group: `int` - Number of groups. Default value: 1 
+    :param dilation: `tuple` - Spacing between kernel elements. Default: (0,0)
+    :param groups: `int` - Number of groups. Default value: 1 
 
     :return: qtensor 
 

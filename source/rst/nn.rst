@@ -160,7 +160,7 @@ toGPU
     .. note::
         Module cannot be calculated on different GPUs. A Cuda error will be raised if you try to create a QTensor on a GPU whose ID exceeds the maximum number of verified GPUs.
 
-    :param device: The device currently saving QTensor, default=DEV_GPU_0. device = pyvqnet.DEV_GPU_0, stored in the first GPU, devcie = DEV_GPU_1, stored in the second GPU, and so on.
+    :param device: The device currently saving QTensor, default=DEV_GPU_0. device = pyvqnet.DEV_GPU_0, stored in the first GPU, device = DEV_GPU_1, stored in the second GPU, and so on.
     :return: Module moved to GPU device.
 
     Examples::
@@ -258,7 +258,7 @@ ModuleList
 
     Save submodules in a list. ModuleList can be indexed like a normal Python list, and the internal parameters of the Module it contains can be saved.
 
-    :param modules: list of nn.Modules
+    :param modules: list of nn.Module
 
     :return: a list of modules
 
@@ -268,7 +268,7 @@ ModuleList
         from pyvqnet.nn import Module,Linear,ModuleList
         from pyvqnet.qnn import ProbsMeasure,QuantumLayer
         import pyqpanda as pq
-        def pqctest (input,param,qubits,cubits,m_machine):
+        def pqctest (input,param,qubits,cbits,m_machine):
             circuit = pq.QCircuit()
             circuit.insert(pq.H(qubits[0]))
             circuit.insert(pq.H(qubits[1]))
@@ -399,9 +399,9 @@ Conv1D
     :param use_bias: `bool` - if use bias, defaults to True
     :param kernel_initializer: `callable` - Defaults to None
     :param bias_initializer: `callable` - Defaults to None
-    :param dilation_rate: `int` - dilated size, defaults: 1
+    :param dilation_rate: `int` - dilated size, default: 1
     :param group: `int` -  number of groups of grouped convolutions. Default: 1
-    :param dtype: The data type of the parameter, defaults: None, use the default data type kfloat32, which represents a 32-bit floating point number.
+    :param dtype: The data type of the parameter, default: None, use the default data type kfloat32, which represents a 32-bit floating point number.
     :param name: The name of the module, default: "".
     :return: a Conv1D class
 
@@ -446,9 +446,9 @@ Conv2D
     :param use_bias: `bool` - if use bias, defaults to True
     :param kernel_initializer: `callable` - Defaults to None
     :param bias_initializer: `callable` - Defaults to None
-    :param dilation_rate: `int` - dilated size, defaults: 1
+    :param dilation_rate: `int` - dilated size, default: 1
     :param group: `int` -  number of groups of grouped convolutions. Default: 1.
-    :param dtype: The data type of the parameter, defaults: None, use the default data type kfloat32, which represents a 32-bit floating point number.
+    :param dtype: The data type of the parameter, default: None, use the default data type kfloat32, which represents a 32-bit floating point number.
     :param name: The name of the module, default: "".
 
     :return: a Conv2D class
@@ -502,10 +502,10 @@ ConvT2D
     :param use_bias: `bool` - Whether to use a offset item. Default to use
     :param kernel_initializer: `callable` - Defaults to None
     :param bias_initializer: `callable` - Defaults to None
-    :param dilation_rate: `int` - dilated size, defaults: 1.
+    :param dilation_rate: `int` - dilated size, default: 1.
     :param out_padding: Additional size added to one side of each dimension in the output shape. Default: (0,0) 
     :param group: `int` -  number of groups of grouped convolutions. Default: 1.
-    :param dtype: The data type of the parameter, defaults: None, use the default data type kfloat32, which represents a 32-bit floating point number.
+    :param dtype: The data type of the parameter, default: None, use the default data type kfloat32, which represents a 32-bit floating point number.
     :param name: The name of the module, default: "".
 
     :return: a ConvT2D class
@@ -712,7 +712,7 @@ Embedding
     :param num_embeddings: `int` - size of the dictionary of embeddings.
     :param embedding_dim: `int` - the size of each embedding vector.
     :param weight_initializer: `callable` - defaults to normal.
-    :param dtype: The data type of the parameter, defaults: None, use the default data type kfloat32, which represents a 32-bit floating point number.
+    :param dtype: The data type of the parameter, default: None, use the default data type kfloat32, which represents a 32-bit floating point number.
     :param name: name of the output layer.
 
     :return: a Embedding class
@@ -779,7 +779,7 @@ BatchNorm2d
     :param affine: A boolean value that, when set to ``True``, causes this module to have learnable per-channel affine parameters, initialized to 1 (for weights) and 0 (for biases). Default: ``True``.
     :param beta_initializer: `callable` - defaults to zeros.
     :param gamma_initializer: `callable` - defaults to ones.
-    :param dtype: The data type of the parameter, defaults: None, use the default data type kfloat32, which represents a 32-bit floating point number.
+    :param dtype: The data type of the parameter, default: None, use the default data type kfloat32, which represents a 32-bit floating point number.
     :param name: name of the output layer
     :return: a BatchNorm2d class
 
@@ -843,7 +843,7 @@ BatchNorm1d
     :param affine: A boolean value that, when set to ``True``, causes this module to have learnable per-channel affine parameters, initialized to 1 (for weights) and 0 (for biases). Default: ``True``.
     :param beta_initializer: `callable` - defaults to zeros.
     :param gamma_initializer: `callable` - defaults to ones.
-    :param dtype: The data type of the parameter, defaults: None, use the default data type kfloat32, which represents a 32-bit floating point number.
+    :param dtype: The data type of the parameter, default: None, use the default data type kfloat32, which represents a 32-bit floating point number.
     :param name: name of the output layer
     :return: a BatchNorm1d class
 
@@ -887,7 +887,7 @@ LayerNormNd
     :param norm_shape: `float` - standardize the shape.
     :param epsilon: `float` - numerical stability constant, defaults to 1e-5.
     :param affine: A boolean value that, when set to ``True``, causes this module to have learnable per-channel affine parameters, initialized to 1 (for weights) and 0 (for biases). Default: ``True``.
-    :param dtype: The data type of the parameter, defaults: None, use the default data type kfloat32, which represents a 32-bit floating point number.
+    :param dtype: The data type of the parameter, default: None, use the default data type kfloat32, which represents a 32-bit floating point number.
     :param name: name of the output layer.
 
     :return: a LayerNormNd class.
@@ -934,7 +934,7 @@ LayerNorm2d
     :param epsilon: `float` - numerical stability constant, defaults to 1e-5
     :param affine: A boolean value that, when set to ``True``, causes this module to have learnable per-channel affine parameters, initialized to 1 (for weights) and 0 (for biases). Default: ``True``.
     :param name: name of the output layer
-    :param dtype: The data type of the parameter, defaults: None, use the default data type kfloat32, which represents a 32-bit floating point number.
+    :param dtype: The data type of the parameter, default: None, use the default data type kfloat32, which represents a 32-bit floating point number.
     
     :return: a LayerNorm2d class
 
@@ -986,7 +986,7 @@ LayerNorm1d
     :param norm_size: `float` - normalize size,equals to last dim
     :param epsilon: `float` - numerical stability constant, defaults to 1e-5
     :param affine: A boolean value that, when set to ``True``, causes this module to have learnable per-channel affine parameters, initialized to 1 (for weights) and 0 (for biases). Default: ``True``.
-    :param dtype: The data type of the parameter, defaults: None, use the default data type kfloat32, which represents a 32-bit floating point number.
+    :param dtype: The data type of the parameter, default: None, use the default data type kfloat32, which represents a 32-bit floating point number.
     :param name: name of the output layer
 
     :return: a LayerNorm1d class
@@ -1029,7 +1029,7 @@ GroupNorm
     :param num_channels (int): Number of channels expected in the input
     :param eps: Value to add to the denominator for numerical stability. Default: 1e-5
     :param affine: A boolean value that, when set to ``True``, causes this module to have learnable per-channel affine parameters, initialized to 1 (for weights) and 0 (for biases). Default: ``True``.
-    :param dtype: The data type of the parameter, defaults: None, use the default data type kfloat32, which represents a 32-bit floating point number.
+    :param dtype: The data type of the parameter, default: None, use the default data type kfloat32, which represents a 32-bit floating point number.
     :param name: name of the output layer
 
     :return: GroupNorm class
@@ -1059,7 +1059,7 @@ Linear
     :param weight_initializer: `callable` - defaults to normal
     :param bias_initializer: `callable` - defaults to zeros
     :param use_bias: `bool` - defaults to True
-    :param dtype: The data type of the parameter, defaults: None, use the default data type kfloat32, which represents a 32-bit floating point number.
+    :param dtype: The data type of the parameter, default: None, use the default data type kfloat32, which represents a 32-bit floating point number.
     :param name: name of the output layer
 
     :return: a Linear class
@@ -1218,7 +1218,7 @@ GRU
      if batch_first is False, the input shape should be [seq_len,batch_size,feature_dim],default: True.
     :param use_bias: If use_bias is False, this module will not contain bias. default: True.
     :param bidirectional: If bidirectional is True, the module will be bidirectional GRU. default: False.
-    :param dtype: The data type of the parameter, defaults: None, use the default data type kfloat32, which represents a 32-bit floating point number.
+    :param dtype: The data type of the parameter, default: None, use the default data type kfloat32, which represents a 32-bit floating point number.
     :param name: name of the output layer
 
     :return: A GRU module instance.
@@ -1291,7 +1291,7 @@ RNN
      if batch_first is False, the input shape should be [seq_len,batch_size,feature_dim],default: True.
     :param use_bias: If use_bias is False, this module will not contain bias. default: True.
     :param bidirectional: If bidirectional is True, the module will be bidirectional RNN. default: False.
-    :param dtype: The data type of the parameter, defaults: None, use the default data type kfloat32, which represents a 32-bit floating point number.
+    :param dtype: The data type of the parameter, default: None, use the default data type kfloat32, which represents a 32-bit floating point number.
     :param name: name of the output layer
 
     :return: A RNN module instance.
@@ -1365,7 +1365,7 @@ LSTM
      if batch_first is False, the input shape should be [seq_len,batch_size,feature_dim],default: True.
     :param use_bias: If use_bias is False, this module will not contain bias. default: True.
     :param bidirectional: If bidirectional is True, the module will be bidirectional LSTM. default: False.
-    :param dtype: The data type of the parameter, defaults: None, use the default data type kfloat32, which represents a 32-bit floating point number.
+    :param dtype: The data type of the parameter, default: None, use the default data type kfloat32, which represents a 32-bit floating point number.
     :param name: name of the output layer
 
     :return: A LSTM module instance.
@@ -1461,7 +1461,7 @@ Dynamic_GRU
     :param batch_first: If True, the input shape is provided as [batch size, sequence length, feature dimension]. If False, input shape is provided as [sequence length, batch size, feature dimension], default True.
     :param use_bias: If False, the layer does not use bias weights b_ih and b_hh. Default: true.
     :param bidirectional: If true, becomes a bidirectional GRU. Default: false.
-    :param dtype: The data type of the parameter, defaults: None, use the default data type kfloat32, which represents a 32-bit floating point number.
+    :param dtype: The data type of the parameter, default: None, use the default data type kfloat32, which represents a 32-bit floating point number.
     :param name: name of the output layer
 
     :return: A Dynamic_GRU class
@@ -1550,7 +1550,7 @@ Dynamic_RNN
       If False, the input shape is [sequence length, batch size, feature dimension], default True.
     :param use_bias: If False, the module does not apply bias items, default: True.
     :param bidirectional: If True, it becomes bidirectional RNN, default: False.
-    :param dtype: The data type of the parameter, defaults: None, use the default data type kfloat32, which represents a 32-bit floating point number.
+    :param dtype: The data type of the parameter, default: None, use the default data type kfloat32, which represents a 32-bit floating point number.
     :param name: name of the output layer
 
     :return: Dynamic_RNN instance
@@ -1647,7 +1647,7 @@ Dynamic_LSTM
       If False, the input shape is [sequence length, batch size, feature dimension], default True.
     :param use_bias: If False, the module does not apply bias items, default: True.
     :param bidirectional: If True, it becomes a bidirectional LSTM, default: False.
-    :param dtype: The data type of the parameter, defaults: None, use the default data type kfloat32, which represents a 32-bit floating point number.
+    :param dtype: The data type of the parameter, default: None, use the default data type kfloat32, which represents a 32-bit floating point number.
     :param name: name of the output layer
 
     :return: Dynamic_LSTM instance
@@ -1809,7 +1809,7 @@ fuse_module
         from pyvqnet.utils import set_random_seed
         from pyvqnet.nn import fuse_module
 
-        def get_accuary(result, label):
+        def get_accuracy(result, label):
             result = (result > 0.5).astype(4)
             score = tensor.sums(result == label)
             return score.item()
@@ -1869,13 +1869,13 @@ fuse_module
 
                 sum_loss += loss_b.item()
                 count += batch_size
-                accuary += get_accuary(result, label.reshape([-1,1]))
+                accuary += get_accuracy(result, label.reshape([-1,1]))
                 t = t + 1
             
             loss_history.append(sum_loss/count)
             accuracy_history.append(accuary/count)
             print(
-                f"epoch:{i}, #### loss:{sum_loss/count} #####accuray:{accuary/count}"
+                f"epoch:{i}, #### loss:{sum_loss/count} #####accuracy:{accuary/count}"
             )
         print(f"run time {time() - time2}")
         
@@ -1901,7 +1901,7 @@ SDPA
 =================================
 .. py:class:: pyvqnet.transformer.e2eqvit.SDPA(attn_mask=None,dropout_p=0.,scale=None,is_causal=False)
 
-    SDPA scaling dot product attention mechanism, math method on cpu, flash method on gpu.
+    SDPA scaling dot product attention mechanism.
 
     :param attn_mask: Attention mask; shape must be broadcastable to the shape of attention weights.
     :param dropout_p: Dropout probability; if greater than 0.0, dropout is applied.

@@ -2,6 +2,35 @@ VQNet Changelog
 ###############################
 
 
+[v2.18.0] - 2026-04-22
+***************************
+
+Added
+===================
+- ``vqnetrun`` now supports ``--backend nccl`` mode, with distributed startup controllable via ``--nproc_per_node``, ``--nnodes``, ``--node_rank``, ``--master_addr``, ``--master_port``, ``--nccl_socket_ifname`` parameters.
+- Added ``VQCQCloudLayer`` interface for submitting VQC Module to QCloud real chips or pyqpanda3 local simulators, supporting parameter_shift backpropagation.
+- ``CommController`` adds ``destroy()`` method for NCCL communication resource cleanup.
+
+Changed
+===================
+- Default backend changed to ``pyvqnet-ad``.
+- Removed deprecated ``QuantumLayerMultiProcess``, ``DataParallelHybirdVQCQpandaQVMLayer``, ``HybirdVQCQpanda3QVMLayer`` interfaces.
+- ``split_group`` renamed to ``split_groups``.
+- Depends on NVIDIA runtime for CUDA 12.6.
+- "chip_id" default changed to "WK_C180".
+- ``ComplexEntangelingTemplate`` renamed to ``ComplexEntanglingTemplate``.
+- ``vqc.rst``: added "Test 2: 10-Qubit VQC Gradient Comparison" benchmark section comparing VQNet / TorchQuantum / DeepQuantum / Pennylane / MindQuantum.
+- Updated benchmark spec table with CUDA 12.6, torchquantum 0.2.0, mindquantum 0.12.0.
+
+Fixed
+===================
+- Fixed integer overflow issue in ``roll`` CUDA kernel.
+- Fixed ``cuda_masked_fill`` support for complex64/complex128 types.
+- Fixed ``log_softmax`` forward computation producing incorrect +inf values under ``bfloat16``.
+- Fixed device errors caused by missing ``CUDAGuard`` during cross-GPU memory access.
+- Fixed many typos.
+
+
 [v2.17.3] - 2026-03-31
 ***************************
 
@@ -11,7 +40,6 @@ Added
 - Added asynchronous NCCL communication interfaces: ``nccl_async_all_gather``, ``nccl_async_all_reduce``, ``nccl_async_reduce``, ``nccl_async_broadcast``, ``nccl_async_send``, ``nccl_async_recv``.
 - Added support for the latest Origin Quantum chip with chip ID ``WK_C180``
 - Added ``data_ptr`` and other interfaces, experimentally added support for `triton <https://triton-lang.org/main/index.html>`_.
-- Added License file.
 
 Changed
 ===================
@@ -75,7 +103,7 @@ Added
 - Added the quantum natural gradient SPSA algorithm (qnspsa) interface, quantum circuit born machine (QBM), the quantum natural gradient interface with momentum, and a pure quantum qgru example.
 - Added the ``torch_native`` backend.
 - Added a bit-parallel interface to support bit-parallel quantum circuits, and added a bit reordering function to reduce the number of bit swaps.
-- Added the ``split_group`` method.
+- Added the ``split_groups`` method.
 
 Changed
 ==================
@@ -130,7 +158,7 @@ Changed
 - Removed outdated ONNX functions, removed most of the interfaces that integrated pyqpanda, and retained some interfaces used in the sample code.
 - VQC_QuantumEmbedding interface modification
 - When installing this package, pyqpanda is no longer installed at the same time, but pyqpanda3 is installed at the same time.
-- The VQC interface supports the use of `x[,:2]` as input parameters, which originally only supported the `x[:,[2]]` format.
+- The VQC interface supports the use of `x[:,:2]` as input parameters, which originally only supported the `x[:,[2]]` format.
 - This software supports Python 3.9, 3.10, 3.11, and no longer supports Python 3.8
 
 Fixed
@@ -173,7 +201,7 @@ Added
 - Added block-encoding algorithms of `VQC_LCU`, `VQC_FABLE`, `VQC_QSVT`, and qpanda algorithm implementation `QPANDA_QSVT`, `QPANDA_LCU`, `QPANDA_FABLE` interfaces.
 - Added integer addition to quantum bits `vqc_qft_add_to_register`, addition of numbers on two quantum bits `vqc_qft_add_two_register`, and multiplication of numbers on two quantum bits `vqc_qft_mul`.
 - Added hybrid qpanda and vqc training module `HybirdVQCQpandaQVMLayer`.
-- Added `einsum`, `moveaxis`, `eigh`, `dignoal` and other interface implementations.
+- Added `einsum`, `moveaxis`, `eigh`, `diagonal` and other interface implementations.
 - Added tensor parallel computing functions in distributed computing `ColumnParallelLinear`, `RowParallelLinear`.
 - Added Zero in distributed computing stage-1 function `ZeroModelInitial`.
 - `QuantumBatchAsyncQcloudLayer` specifies diff_method == "random_coordinate_descent" and does not use PSR but randomly selects a quantum parameter for gradient calculation.
@@ -279,7 +307,7 @@ Fixed
 
 Added
 ===========
-- Added new interfaces under pyvqnet.qnn.vqc: IsingXX, IsingXY, IsingYY, IsingZZ, SDG, TDG, PhaseShift, MutliRZ, MultiCnot, MultixCnot, ControlledPhaseShift, SingleExcitation, DoubleExcitation, VQC_AllSinglesDoubles, ExpressiveEntanglingAnsatz, etc.;
+- Added new interfaces under pyvqnet.qnn.vqc: IsingXX, IsingXY, IsingYY, IsingZZ, SDG, TDG, PhaseShift, MultiRZ, MultiCnot, MultixCnot, ControlledPhaseShift, SingleExcitation, DoubleExcitation, VQC_AllSinglesDoubles, ExpressiveEntanglingAnsatz, etc.;
 - Added pyvqnet.qnn.vqc.QuantumLayerAdjoint interface that supports adjoint gradient calculation;
 - Supported the mutual conversion function between originIR and VQC;
 - Supported classical and quantum module information in statistical VQC models;
@@ -411,7 +439,7 @@ Added
 ==================
 
 - Add support for stack, bidirectional recurrent neural network interface: RNN, LSTM, GRU
-- Add interfaces for common calculation performance indicators: MSE, RMSE, MAE, R_Square, precision_recall_f1_2_score, precision_recall_f1_Multi_scoreprecision_recall_f1_N_score, auc_calculate
+- Add interfaces for common calculation performance indicators: MSE, RMSE, MAE, R_Square, precision_recall_f1_2_score, precision_recall_f1_Multi_score,precision_recall_f1_N_score, auc_calculate
 - Increase the algorithm example of quantum kernel SVM
 
 Changed

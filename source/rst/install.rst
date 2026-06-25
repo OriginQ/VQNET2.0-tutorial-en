@@ -11,39 +11,14 @@ We provide precompiled Python packages for installation on Linux, Windows, macOS
     pip install pyvqnet --upgrade
 
 
-If you encounter the following GLBCXX problem on Linux:
-
-.. code-block::
-
-    ImportError: /lib/x86_64-linux-gnu/libstdc++.so.6: version `GLIBCXX_3.4.30' not found (required by /home/whc/miniforge3/envs/py310/lib/python3.10/site-packages/pyvqnet/libs/libvqnet.so)
-
-You can update the libstdcxx library, for example:
-
-.. code-block::
-
-    conda install -c conda-forge "libstdcxx-ng>=12"
-
-For Windows and Linux systems, the pyvqnet package includes built-in acceleration features for classic neural network computations based on Nvidia CUDA, which depends on the specific version of NVIDIA CUDA 11.8 runtime libraries (automatically installed with the package).
+For Windows and Linux systems, the pyvqnet package includes built-in acceleration features for classic neural network computations based on Nvidia CUDA, which depends on the specific version of NVIDIA CUDA 12.6 runtime libraries (automatically installed with the package).
 The package is optimized for the following CUDA architectures:
 **sm_80** (NVIDIA A100, A30 series data center GPUs) and **sm_86** (NVIDIA GeForce RTX 30 series consumer GPUs). Please ensure you are using a GPU that supports these architectures; otherwise, the program may not function correctly.
 
     .. important::
 
-        Please note that since this package does not distinguish between CPU/GPU versions, it depends on NVIDIA CUDA runtime libraries under Windows and Linux, which are automatically installed with the package. This may cause conflicts with other software that depends on different versions of CUDA (such as torch based on CUDA 12).
+        Please note that since this package does not distinguish between CPU/GPU versions, it depends on NVIDIA CUDA runtime libraries under Windows and Linux, which are automatically installed with the package. This may cause conflicts with other software that depends on different versions.
 
-        The relevant library versions are:
-        ::
-
-            "nvidia-cublas-cu11==11.11.3.6",
-            "nvidia-cuda-runtime-cu11==11.8.89",
-            "nvidia-nccl-cu11== 2.19.3",
-            "nvidia-cuda-cupti-cu11==11.8.87",
-            "nvidia-cuda-nvrtc-cu11==11.8.89",
-            "nvidia-cufft-cu11==10.9.0.58",
-            "nvidia-cusolver-cu11==11.4.1.48",
-            "nvidia-cusparse-cu11==11.7.5.86",
-            "nvidia-nvtx-cu11==11.8.86",
-            "nvidia-curand-cu11==10.3.0.86",
 
 Validate VQNet's installation
 ----------------------------------
@@ -97,46 +72,46 @@ In this example, 1 qubit is used, multiple parameterized rotation gates `RZ`, `R
         x1 = input.squeeze()
         param1 = weights.squeeze()
         # Build quantum circuit instance using pyqpanda3 interface
-        circult = pq.QCircuit()
+        circuit = pq.QCircuit()
         # Insert RZ gate on the first qubit with parameter x1[0]
-        circult << pq.RZ(qlist[0], x1[0])
+        circuit << pq.RZ(qlist[0], x1[0])
         # Insert RY gate on the first qubit with parameter x1[1]
-        circult << pq.RY(qlist[0], x1[1])
+        circuit << pq.RY(qlist[0], x1[1])
         # Insert RZ gate on the first qubit with parameter x1[2]
-        circult << pq.RZ(qlist[0], x1[2])
+        circuit << pq.RZ(qlist[0], x1[2])
         # Insert RZ gate on the first qubit with parameter param1[0]
-        circult << pq.RZ(qlist[0], param1[0])
+        circuit << pq.RZ(qlist[0], param1[0])
         # Insert RY gate on the first qubit with parameter param1[1]
-        circult << pq.RY(qlist[0], param1[1])
+        circuit << pq.RY(qlist[0], param1[1])
         # Insert RZ gate on the first qubit with parameter param1[2]
-        circult << pq.RZ(qlist[0], param1[2])
+        circuit << pq.RZ(qlist[0], param1[2])
         # Insert RZ gate on the first qubit with parameter x1[0]
-        circult << pq.RZ(qlist[0], x1[0])
+        circuit << pq.RZ(qlist[0], x1[0])
         # Insert RY gate on the first qubit with parameter x1[1]
-        circult << pq.RY(qlist[0], x1[1])
+        circuit << pq.RY(qlist[0], x1[1])
         # Insert RZ gate on the first qubit with parameter x1[2]
-        circult << pq.RZ(qlist[0], x1[2])
+        circuit << pq.RZ(qlist[0], x1[2])
         # Insert RZ gate on the first qubit with parameter param1[3]
-        circult << pq.RZ(qlist[0], param1[3])
+        circuit << pq.RZ(qlist[0], param1[3])
         # Insert RY gate on the first qubit with parameter param1[4]
-        circult << pq.RY(qlist[0], param1[4])
+        circuit << pq.RY(qlist[0], param1[4])
         # Insert RZ gate on the first qubit with parameter param1[5]
-        circult << pq.RZ(qlist[0], param1[5])
+        circuit << pq.RZ(qlist[0], param1[5])
         # Insert RZ gate on the first qubit with parameter x1[0]
-        circult << pq.RZ(qlist[0], x1[0])
+        circuit << pq.RZ(qlist[0], x1[0])
         # Insert RY gate on the first qubit with parameter x1[1]
-        circult << pq.RY(qlist[0], x1[1])
+        circuit << pq.RY(qlist[0], x1[1])
         # Insert RZ gate on the first qubit with parameter x1[2]
-        circult << pq.RZ(qlist[0], x1[2])
+        circuit << pq.RZ(qlist[0], x1[2])
         # Insert RZ gate on the first qubit with parameter param1[6]
-        circult << pq.RZ(qlist[0], param1[6])
+        circuit << pq.RZ(qlist[0], param1[6])
         # Insert RY gate on the first qubit with parameter param1[7]
-        circult << pq.RY(qlist[0], param1[7])
+        circuit << pq.RY(qlist[0], param1[7])
         # Insert RZ gate on the first qubit with parameter param1[8]
-        circult << pq.RZ(qlist[0], param1[8])
+        circuit << pq.RZ(qlist[0], param1[8])
         # Build quantum program
         prog = pq.QProg()
-        prog << circult
+        prog << circuit
         # Get probability measurement
         prob = probs_measure(machine ,prog,  qlist)
 

@@ -19,11 +19,11 @@ import sphinx_rtd_theme
 # -- Project information -----------------------------------------------------
 
 project = 'VQNET'
-copyright = '2022, Original Quantum'
+copyright = '2026, Original Quantum'
 author = 'Original Quantum'
 
 # The full version, including alpha/beta/rc tags
-release = 'v2.17.3'
+release = 'v2.18.0'
 
 
 # -- General configuration ---------------------------------------------------
@@ -171,7 +171,7 @@ latex_elements = {
 \renewcommand\CJKfamilydefault{\CJKrmdefault}
 % Completely fix repeating section titles - force static content everywhere
 \fancyhf{}
-\renewcommand{\leftmark}{VQNET v2.17.3}
+\renewcommand{\leftmark}{VQNET v2.18.0}
 \renewcommand{\rightmark}{}
 \fancyfoot[C]{\thepage}
 \pagestyle{fancy}

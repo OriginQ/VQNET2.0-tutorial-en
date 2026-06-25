@@ -52,7 +52,7 @@ It is theoretically possible to calculate the gradient of parameters about Hamil
     :param num_of_cbits: num of classic bits
     :param diff_method: 'parameter_shift' or 'finite_diff'
     :param delta:  delta for diff
-    :param dtype: The data type of the parameter, defaults: None, use the default data type kfloat32, which represents a 32-bit floating point number.
+    :param dtype: The data type of the parameter, default: None, use the default data type kfloat32, which represents a 32-bit floating point number.
     :param name: name of the output layer
 
     :return: a module can calculate quantum circuits .
@@ -149,7 +149,7 @@ If you are more familiar with pyQPanda2 syntax, please using QuantumLayerV2 clas
     :param para_num: `int` - Number of parameter
     :param diff_method: 'parameter_shift' or 'finite_diff'
     :param delta:  delta for diff
-    :param dtype: The data type of the parameter, defaults: None, use the default data type kfloat32, which represents a 32-bit floating point number.
+    :param dtype: The data type of the parameter, default: None, use the default data type kfloat32, which represents a 32-bit floating point number.
     :param name: name of the output layer
     :return: a module can calculate quantum circuits .
 
@@ -261,7 +261,7 @@ We can use ``NoiseQuantumLayer`` to define an automatic microclassification of q
     :param diff_method: 'parameter_shift' or 'finite_diff'
     :param delta:  delta for diff
     :param noise_set_config: noise set function
-    :param dtype: The data type of the parameter, defaults: None, use the default data type kfloat32, which represents a 32-bit floating point number.
+    :param dtype: The data type of the parameter, default: None, use the default data type kfloat32, which represents a 32-bit floating point number.
     :param name: name of the output layer
     
     :return: a module can calculate quantum circuits with noise model.
@@ -664,7 +664,7 @@ QiskitLayer
                     accuracy += get_accuracy(result,label)
                     t = t + 1
 
-                    print(f"epoch:{i}, iter{t} #### loss:{sum_loss*batch_size/count} #####accuray:{accuracy/count}")
+                    print(f"epoch:{i}, iter{t} #### loss:{sum_loss*batch_size/count} #####accuracy:{accuracy/count}")
                 TL.append(sum_loss*batch_size/count)
                 TA.append(accuracy/count)
             print(f"qiskit epoch {epoch}, accuracy {TA[-1]}")
@@ -896,7 +896,7 @@ CirqLayer
                     accuracy += get_accuracy(result,label)
                     t = t + 1
 
-                    print(f"epoch:{i},  #### loss:{sum_loss*batch_size/count} #####accuray:{accuracy/count}")
+                    print(f"epoch:{i},  #### loss:{sum_loss*batch_size/count} #####accuracy:{accuracy/count}")
                 TL.append(sum_loss*batch_size/count)
                 TA.append(accuracy/count)
             print(f"cirq epoch {epoch}, final accuracy {TA[-1]}")

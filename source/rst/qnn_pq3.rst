@@ -25,7 +25,7 @@ If you are familiar with pyQPanda3 syntax, you can use the interface QuantumLaye
     :param para_num: `int` - number of parameters.
     :param diff_method: Method for solving quantum circuit parameter gradients, "parameter shift" or "finite difference", default parameter offset.
     :param delta: \delta when calculating gradients by finite difference.
-    :param dtype: data type of the parameter, defaults: None, use the default data type: kfloat32, representing 32-bit floating point numbers.
+    :param dtype: data type of the parameter, default: None, use the default data type: kfloat32, representing 32-bit floating point numbers.
     :param name: the name of this module, defaults to "".
 
     :return: a module that can calculate quantum circuits.
@@ -38,9 +38,9 @@ If you are familiar with pyQPanda3 syntax, you can use the interface QuantumLaye
 
         The use of the quantum circuit function qprog_with_measure (input, param) can be referred to the example below.
 
-        `input`: Input one-dimensional classical data. If not, input None.
+        `input`: Input one-dimensional classical data. If not, input None
 
-        `param`: Input one-dimensional variational quantum circuit parameters to be trained.
+        `param`: Input one-dimensional variational quantum circuit parameters to be trained
 
     .. note::
 
@@ -132,9 +132,9 @@ QpandaQProgVQCLayer
 
         origin_qprog_func (input,param )
 
-        `input`: user-defined array class input 1-dimensional classical data.
+        `input`: user-defined array class input 1-dimensional classical data
 
-        `param`: array_like input user-defined 1-dimensional quantum circuit parameters.
+        `param`: array_like input user-defined 1-dimensional quantum circuit parameters
 
     .. note::
 
@@ -149,7 +149,7 @@ QpandaQProgVQCLayer
 
         def qfun(input, param ):
             m_qlist = range(3)
-            cubits = range(3)
+            cbits = range(3)
             measure_qubits = [0,1, 2]
             m_prog = pq.QProg()
             cir = pq.QCircuit(3)
@@ -173,7 +173,7 @@ QpandaQProgVQCLayer
             m_prog<<cir
 
             for idx, ele in enumerate(measure_qubits):
-                m_prog << pq.measure(m_qlist[ele], cubits[idx])  # pylint: disable=expression-not-assigned
+                m_prog << pq.measure(m_qlist[ele], cbits[idx])  # pylint: disable=expression-not-assigned
             return m_prog
 
         from pyvqnet.utils.initializer import ones
@@ -213,9 +213,9 @@ When you install the latest version of pyqpanda3, you can use this interface to 
 
         origin_qprog_func(input,param)
 
-        `input`: Input 1~2D classical data. In the case of 2D, the first dimension is the batch size.
+            `input`: Input 1~2D classical data. In the case of 2D, the first dimension is the batch size
 
-        `param`: Input the parameters to be trained for the 1D variational quantum circuit.
+            `param`: Input the parameters to be trained for the 1D variational quantum circuit
 
     .. note::
 
@@ -230,7 +230,7 @@ When you install the latest version of pyqpanda3, you can use this interface to 
     :param dtype: The data type of the parameter. The default value is None, which means using the default data type pyvqnet.kfloat32.
     :param name: The name of the module. The default is an empty string.
     :param diff_method: Differentiation method for gradient calculation. The default is "parameter_shift", "random_coordinate_descent".
-    :param submit_kwargs: Additional keyword parameters for submitting quantum circuits, default: {"chip_id":"origin_wukong","is_amend":True,"is_mapping":True,"is_optimization":True,"compile_level":3,"default_task_group_size":200,"test_qcloud_fake":False,"if_print_qcloud_log":False}, when test_qcloud_fake is set to True, local CPUQVM simulation.
+    :param submit_kwargs: Additional keyword parameters for submitting quantum circuits, default: {"if_print_qcloud_log":False,"chip_id":"WK_C180","is_amend":True,"is_mapping":True,"is_optimization":True,"compile_level":3,"default_task_group_size":200,"test_qcloud_fake":False,"":"server_ip_address"}, when test_qcloud_fake is set to True, local CPUQVM simulation.
     :param query_kwargs: Additional keyword parameters for querying quantum results, default: {"timeout":1,"total_timeout":60,"print_query_info":True,"sub_circuits_split_size":1}.
     :return: A module that can compute quantum circuits.
 
@@ -467,7 +467,73 @@ QuantumLayerAdjoint
         [-0.041001 ,-0.2520995, 0.0683114,-0.0986969, 0.1000023]]
         <QTensor [2, 5] DEV_CPU kfloat32>
         """
-        
+
+VQCQCloudLayer
+============================
+
+.. py:class:: pyvqnet.qnn.pq3.vqc_qcloud_layer.VQCQCloudLayer(vqc_module, qcloud_token, pauli_str_dict=None, shots=1000, name="", submit_kwargs={}, query_kwargs={})
+
+    Submit VQC Module to QCloud real chip or pyqpanda3 local simulator for execution.
+
+    Forward propagation: Instead of executing VQNet's quantum variational circuit computation, it calls the quantum real chip or qpanda local simulator for computation.
+
+    Backward propagation: Uses the parameter_shift rule to compute gradients. For each input dimension and each trainable parameter in the VQC,
+    generates +/- pi/2 shifted circuits and submits them for computation, retrieves results to compute the jacobian. Gradients are set on the input tensor and the VQC's trainable Parameters.
+
+    .. note::
+
+        The default total timeout for a single circuit submission to QCloud is 60 seconds. If timeout occurs due to QCloud being busy, you can set the ``total_timeout`` key in ``query_kwargs`` to specify the wait seconds.
+
+    .. note::
+
+        You cannot define a measurement function (such as ``MeasureAll``) in ``vqc_module``. Measurement should be specified via the ``pauli_str_dict`` parameter to indicate observables.
+        For example: ``VQCQCloudLayer(vqc_module, token, pauli_str_dict={'Z0': 1, 'Z1': 1})``.
+
+    :param vqc_module: VQNet VQC Module, must include a QMachine with save_ir=True.
+    :param qcloud_token: QCloud API token. Pass an empty string if using a local simulator.
+    :param pauli_str_dict: Pauli operator dictionary for expectation value computation. Default is None, which performs measurement operation.
+    :param shots: Number of measurements. Default is 1000.
+    :param name: Module name. Default is empty string.
+    :param submit_kwargs: Additional keyword parameters for submitting quantum circuits, default: {"if_print_qcloud_log":False,"chip_id":"WK_C180","is_amend":True,"is_mapping":True,"is_optimization":True,"compile_level":3,"default_task_group_size":200,"test_qcloud_fake":False,"":"server_ip_address"}, when test_qcloud_fake is set to True, local CPUQVM simulation.
+    :param query_kwargs: Additional keyword arguments for querying quantum results. Default: {"timeout":1,"total_timeout":60, "print_query_info":True,"sub_circuits_split_size":1}.
+
+    Example::
+
+        from pyvqnet.qnn.vqc import *
+        from pyvqnet.qnn.pq3 import VQCQCloudLayer
+        from pyvqnet.nn import Module
+        import pyvqnet
+
+        class QModel(Module):
+            def __init__(self, num_wires, dtype):
+                super(QModel, self).__init__()
+                self._num_wires = num_wires
+                self._dtype = dtype
+                self.qm = QMachine(num_wires, dtype=dtype, save_ir=True)
+                self.rx_layer = RX(has_params=True, trainable=False, wires=0)
+                self.u1 = U1(has_params=True, trainable=True, wires=[1])
+                self.cnot = CNOT(wires=[0, 1])
+
+            def forward(self, x, *args, **kwargs):
+                self.qm.reset_states(x.shape[0])
+                self.rx_layer(params=x[:, [0]], q_machine=self.qm)
+                self.cnot(q_machine=self.qm)
+                self.u1(q_machine=self.qm)
+                return x
+
+        qmodel = QModel(num_wires=2, dtype=pyvqnet.kcomplex64)
+        layer = VQCQCloudLayer(
+            qmodel,
+            "your_qcloud_token",
+            pauli_str_dict={'Z0': 1, 'Z1': 1},
+            shots=1000,
+            submit_kwargs={"test_qcloud_fake": True},
+        )
+        x = pyvqnet.tensor.QTensor([[0.5, 0.3], [0.5, 0.3]], requires_grad=True)
+        y = layer(x)
+        y.backward()
+        print(x.grad)
+        print(qmodel.u1.params.grad)
 
 grad
 ===============
@@ -527,7 +593,7 @@ QLinear implements a quantum full-connection algorithm. First, the data is encod
 
 .. image:: ./images/qlinear_cir.png
 
-.. py:class:: pyvqnet.qnn.qlinear.QLinear(input_channels,output_channels,machine: str = "CPU"))
+.. py:class:: pyvqnet.qnn.qlinear.QLinear(input_channels,output_channels,machine: str = "CPU")
 
     Quantum fully connected module. The input to the fully connected module is of shape (input channels, output channels). Note that this layer does not take variational quantum parameters.
 
@@ -536,7 +602,7 @@ QLinear implements a quantum full-connection algorithm. First, the data is encod
     :param machine: `str` - The virtual machine to use, CPU simulation is used by default.
     :return: Quantum fully connected layer.
 
-    Exmaple::
+    Example::
 
         from pyvqnet.tensor import QTensor
         from pyvqnet.qnn.qlinear import QLinear
@@ -583,7 +649,7 @@ Qconv
         :param padding: `tuple` - Padding, defaults to (0,0).
         :param kernel_initializer: `callable` - Defaults to normal distribution.
         :param machine: `str` - The virtual machine to use, defaults to CPU simulation.
-        :param dtype: The data type of the parameter, defaults: None, use the default data type: kfloat32, representing 32-bit floating point numbers.
+        :param dtype: The data type of the parameter, default: None, use the default data type: kfloat32, representing 32-bit floating point numbers.
         :param name: The name of this module, defaults to "".
 
         :return: Quantum convolution layer.
@@ -1141,10 +1207,10 @@ StronglyEntanglingTemplate
         circuit.print_circuit(qubits)
 
 
-ComplexEntangelingTemplate
+ComplexEntanglingTemplate
 ============================
 
-.. py:class:: pyvqnet.qnn.pq3.ComplexEntangelingTemplate(weights,num_qubits,depth)
+.. py:class:: pyvqnet.qnn.pq3.ComplexEntanglingTemplate(weights,num_qubits,depth)
 
     Strongly entangled layer consisting of U3 gates and CNOT gates.
     This circuit template is from the following paper: https://arxiv.org/abs/1804.00633.
@@ -1153,11 +1219,11 @@ ComplexEntangelingTemplate
     :param num_qubits: number of qubits.
     :param depth: depth of the subcircuit.
     :return:
-        A ComplexEntangelingTemplate instance
+        A ComplexEntanglingTemplate instance
 
     Example::
 
-        from pyvqnet.qnn.pq3 import ComplexEntangelingTemplate
+        from pyvqnet.qnn.pq3 import ComplexEntanglingTemplate
         import pyqpanda3.core as pq
         from pyvqnet.tensor import *
         depth=3
@@ -1169,7 +1235,7 @@ ComplexEntangelingTemplate
 
         qubits = range(num_qubits)
 
-        circuit = ComplexEntangelingTemplate(weights, num_qubits=num_qubits,depth=depth)
+        circuit = ComplexEntanglingTemplate(weights, num_qubits=num_qubits,depth=depth)
         result = circuit.create_circuit(qubits)
         circuit.print_circuit(qubits)
 
@@ -1228,8 +1294,8 @@ Measure quantum circuits
 expval
 ============================
 
-.. py:function:: pyvqnet.qnn.pq3.measure.expval(machine,prog,pauli_str_dict)
-    
+.. py:function:: pyvqnet.qnn.pq3.measure.expval(machine,prog,pauli_str_dict,shots=1000,noise_model=None)
+
     The expected value of the provided Hamiltonian observation.
 
     If the observation is :math:`0.7Z\otimes X\otimes I+0.2I\otimes Z\otimes I`,
@@ -1240,6 +1306,8 @@ expval
     :param machine: The quantum machine created by pyQPanda3.
     :param prog: The quantum program created by pyQPanda3.
     :param pauli_str_dict: Hamiltonian observed value.
+    :param shots: Number of measurements, default is 1000.
+    :param noise_model: Noise model to apply, default is None (ideal simulation).
 
     :return: expected value.
 
@@ -1267,8 +1335,8 @@ expval
 QuantumMeasure
 =============================
 
-.. py:function:: pyvqnet.qnn.pq3.measure.QuantumMeasure(machine,prog,measure_qubits:list,shots:int = 1000, qcloud_option="")
-    
+.. py:function:: pyvqnet.qnn.pq3.measure.QuantumMeasure(machine,prog,measure_qubits:list,shots:int = 1000, qcloud_option="",noise_model=None)
+
     Computes quantum circuit measurements. Returns measurements obtained by Monte Carlo methods.
 
     For more details, please visit https://pyqpanda-toturial.readthedocs.io/zh/latest/Measure.html?highlight=measure_all .
@@ -1280,6 +1348,7 @@ QuantumMeasure
     :param measure_qubits: List containing the measurement bit indices.
     :param shots: The number of measurements, the default value is 1000.
     :param qcloud_option: Set the qcloud configuration, the default value is "", you can pass in a QCloudOptions class, which is only useful when using qcloud.
+    :param noise_model: Noise model to apply, default is None (ideal simulation).
     :return: Returns the measurement results obtained by the Monte Carlo method.
 
     Example::
@@ -1305,6 +1374,52 @@ QuantumMeasure
 
         measure_result = quantum_measure(machine,prog,[2,0])
         print(measure_result)
+
+
+ProbsMeasure
+============================
+
+.. py:function:: pyvqnet.qnn.pq3.measure.ProbsMeasure(machine,prog,measure_qubits:list,shots=1,noise_model=None)
+
+    Compute circuit probability measurements.
+
+    For more details, please visit https://pyqpanda-toturial.readthedocs.io/zh/latest/PMeasure.html.
+
+    The ProbsMeasure api currently only supports pyQPanda ``CPUQVM`` or ``QCloud``.
+
+    :param measure_qubits: List containing the measurement qubit indices.
+    :param prog: The quantum program created by qpanda.
+    :param machine: The quantum virtual machine allocated by pyQPanda.
+    :param shots: Number of measurements, default is 1, which computes the theoretical value.
+    :param noise_model: Noise model to apply, default is None (ideal simulation).
+    :return: Measure qubits in lexicographic order.
+
+
+    Example::
+
+        from pyqpanda3.core import *
+        from pyvqnet.qnn.pq3.measure import probs_measure
+        circuit = QCircuit(3)
+        circuit << H(0)
+        circuit << P(2, 0.2)
+        circuit << RX(1, 0.9)
+        circuit << RX(0, 0.6)
+        circuit << RX(1, 0.3)
+        circuit << RY(1, 0.3)
+        circuit << RY(2, 2.7)
+        circuit << RX(0, 1.5)
+
+        prog = QProg()
+        prog.append(circuit)
+        prog.append(measure(0, 0))
+        prog.append(measure(1, 1))
+        prog.append(measure(2, 2))
+
+        machine = CPUQVM()
+
+        measure_result = probs_measure(machine,prog,[2,0])
+        print(measure_result)
+        #[0.04796392899146941, 0, 0.4760180355042653, 0.4760180355042653]
 
 
 DensityMatrixFromQstate
