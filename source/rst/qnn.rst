@@ -2,6 +2,11 @@ Quantum Machine Learning API using QPanda2
 ####################################################
 
 
+.. note::
+
+    pyqpanda2 is a historical quantum computing framework developed by Origin Quantum. We recommend new users to use pyqpanda3. For usage of pyqpanda3, please refer to the `pyqpanda3 documentation <https://pyqpanda.readthedocs.io/zh/latest/>`_ , or the :ref:`QuantumLayer_pq3` section in this document.
+
+
 .. warning::
 
     The quantum computing part of the following interface uses pyQPanda2 https://pyqpanda-toturial.readthedocs.io/zh/latest/.

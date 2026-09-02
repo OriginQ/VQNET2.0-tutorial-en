@@ -683,7 +683,7 @@ Data loading, model training process code:
         loss = 0
         
         loss = (labels - predictions) ** 2
-        loss = tensor.mean(loss,axis=0)
+        loss = tensor.mean(loss, dim=0)
         return loss
     def run2():
         """
@@ -2373,10 +2373,9 @@ which consists of 15 random You matrices corresponding to the classical Dense La
     from sklearn import datasets
     import seaborn as sns
 
-    from pyqpanda import *
-    from pyvqnet.qnn.vqc.qcircuit import isingxx,isingyy,isingzz,u3,cnot,VQC_AmplitudeEmbedding,rxx,ryy,rzz,rzx
-    from pyvqnet.qnn.vqc.qmachine import QMachine
-    from pyvqnet.qnn.vqc.utils import probs
+from pyvqnet.qnn.vqc import isingxx,isingyy,isingzz,u3,cnot,VQC_AmplitudeEmbedding,rxx,ryy,rzz,rzx
+from pyvqnet.qnn.vqc import QMachine
+from pyvqnet.qnn.vqc.common import probs
     from pyvqnet.nn import Module, Parameter
     from pyvqnet.tensor import tensor
     from pyvqnet.tensor import QTensor
@@ -2703,9 +2702,9 @@ The specific code implementation is as follows:
     from pyvqnet.dtype import *
 
     from pyvqnet.tensor.tensor import QTensor
-    from pyvqnet.qnn.vqc.qcircuit import PauliZ, VQC_ZZFeatureMap,PauliX,PauliY,hadamard,crz,rz
-    from pyvqnet.qnn.vqc import QMachine
-    from pyvqnet.qnn.vqc.qmeasure import MeasureAll
+from pyvqnet.qnn.vqc import PauliZ, VQC_ZZFeatureMap,PauliX,PauliY,hadamard,crz,rz
+from pyvqnet.qnn.vqc import QMachine
+from pyvqnet.qnn.vqc import MeasureAll
     from pyvqnet import tensor
     import functools as ft
 
@@ -3178,7 +3177,6 @@ The following is the specific QSVD implementation code:
     from pyvqnet.qnn.measure import expval
     from pyvqnet.nn.parameter import Parameter
     from pyvqnet.dtype import *
-    from pyqpanda import *
     import pyvqnet
     from pyvqnet.qnn.vqc import ry, QMachine, cnot, rz
 
@@ -4275,5 +4273,4 @@ The following example builds a QGRU model for time series data prediction using 
             loss = mse(QTensor(batch_y,dtype=kfloat32),pred)
             loss.backward()
             optim.step()
-            print("i")
             print(loss)

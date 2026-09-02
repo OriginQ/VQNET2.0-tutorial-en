@@ -4,20 +4,20 @@ Steps of VQNet Installation
 VQNet python package Installation
 ----------------------------------
 
-We provide precompiled Python packages for installation on Linux, Windows, macOS 13+ (arm64), supporting **python3.10, python3.11, or python3.12**.
+We provide precompiled Python packages for installation on Linux, Windows, macOS 13+ (arm64), supporting **Python 3.10~Python 3.14**.
 
 .. code-block::
 
     pip install pyvqnet --upgrade
 
 
-For Windows and Linux systems, the pyvqnet package includes built-in acceleration features for classic neural network computations based on Nvidia CUDA, which depends on the specific version of NVIDIA CUDA 12.6 runtime libraries (automatically installed with the package).
+For Windows and Linux systems, pyvqnet automatically installs the NVIDIA runtime libraries based on CUDA 12.6 (versions specified by ``pyvqnet`` installation dependencies) via pip, to support classic neural network computation acceleration.
 The package is optimized for the following CUDA architectures:
 **sm_80** (NVIDIA A100, A30 series data center GPUs) and **sm_86** (NVIDIA GeForce RTX 30 series consumer GPUs). Please ensure you are using a GPU that supports these architectures; otherwise, the program may not function correctly.
 
     .. important::
 
-        Please note that since this package does not distinguish between CPU/GPU versions, it depends on NVIDIA CUDA runtime libraries under Windows and Linux, which are automatically installed with the package. This may cause conflicts with other software that depends on different versions.
+        Please note that since this package does not distinguish between CPU/GPU versions, it depends on NVIDIA CUDA 12.6 runtime libraries under Windows and Linux, which are installed via pip. If the PyTorch or other frameworks in your current environment are compiled with a different CUDA version, it may cause CUDA runtime library version conflicts, leading to abnormal program behavior (such as GPU not being recognized, training errors, etc.). It is recommended to use a separate virtual environment or container for installation.
 
 
 Validate VQNet's installation

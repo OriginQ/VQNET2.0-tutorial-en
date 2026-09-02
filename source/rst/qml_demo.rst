@@ -1,13 +1,13 @@
 Quantum Machine Learning Using Qpanda
 ###############################################
 
-We use VQNet and pyqpanda2 or pyqpanda3 to implement multiple quantum machine learning examples.
+We use VQNet and pyqpanda3 to implement multiple quantum machine learning examples.
 
 .. warning::
 
-    The quantum computing part of the following interface may use pyqpanda2 https://pyqpanda-toturial.readthedocs.io/zh/latest/.
+The quantum computing part of the following interface uses pyqpanda3 https://qcloud.originqc.com.cn/document/qpanda-3/.
 
-    You need to install pyqpanda additionally, `pip install pyqpanda`
+You need to install pyqpanda3 additionally, `pip install pyqpanda3`
 
 
 Application of Parameterized Quantum Circuit in Classification Task
@@ -453,12 +453,12 @@ Following figures show the local quantum circuits structure on each qubits:
     from pyvqnet.optim.adam import Adam
     from pyvqnet.data.data import data_generator
     from pyvqnet.tensor import tensor
-    from pyvqnet.qnn.measure import expval
-    from pyvqnet.qnn.quantumlayer import QuantumLayer
-    from pyvqnet.qnn.template import AmplitudeEmbeddingCircuit
+    from pyvqnet.qnn.pq3.measure import expval
+    from pyvqnet.qnn.pq3.quantumlayer import QuantumLayer
+    from pyvqnet.qnn.pq3.template import AmplitudeEmbeddingCircuit
     from pyvqnet.nn.linear import Linear
     import numpy as np
-    import pyqpanda as pq
+    import pyqpanda3.core as pq
     import matplotlib.pyplot as plt
     import matplotlib
     try:
@@ -806,7 +806,7 @@ Mnist dataset definition
     from pyvqnet.optim.adam import Adam
     from pyvqnet.data.data import data_generator
     from pyvqnet.tensor import tensor
-    from pyvqnet.qnn.measure import expval
+    from pyvqnet.qnn.pq3.measure import expval
     from pyvqnet.nn.linear import Linear
     import numpy as np
     from pyvqnet.qnn.qcnn import Quanvolution
@@ -1325,9 +1325,9 @@ The approach here is that this set of optimal quantum logic gates should make th
     sys.path.insert(0,"../")
 
     import copy
-    import pyqpanda as pq
+    import pyqpanda3.core as pq
     from pyvqnet.tensor.tensor import QTensor
-    from pyvqnet.qnn.measure import expval
+    from pyvqnet.qnn.pq3.measure import expval
     import numpy as np
     import matplotlib.pyplot as plt
     import matplotlib
@@ -1498,7 +1498,7 @@ These samples are divided into training data training_data and testing data test
     from pyvqnet.data.data import data_generator
     from pyvqnet.tensor import tensor
     from pyvqnet.tensor import QTensor
-    import pyqpanda as pq
+    import pyqpanda3.core as pq
 
     import numpy as np
     import matplotlib.pyplot as plt
@@ -1636,39 +1636,39 @@ These samples are divided into training data training_data and testing data test
 Construct Quantum Circuits
 ---------------------------------
 
-In this example, we use the `pyQPanda2 <https://pyqpanda-tutorial-en.readthedocs.io/en/latest/chapter2/index.html#quantum-circuit>`__ , A simple quantum circuit of 1 qubit is defined. The circuit takes the output of the classical neural network layer as input,encodes quantum data through ``H`` , ``RY``  quantum logic gates, and calculates the expected value of Hamiltonian in the z direction as output.
+In this example, we use pyqpanda3 . A simple quantum circuit of 1 qubit is defined. The circuit takes the output of the classical neural network layer as input, encodes quantum data through ``H``, ``RY`` quantum logic gates, and calculates the expected value of Hamiltonian in the z direction as output.
 
 .. code-block::
 
-    from pyqpanda import *
-    import pyqpanda as pq
+    import pyvqnet
+    pyvqnet.utils.set_random_seed(142)
+    import pyqpanda3.core as pq
     import numpy as np
-    def circuit(weights):
+    def circuit(x ,weights):
         num_qubits = 1
-        #Use pyQPanda2 to create a simulator 
+        #Create a simulator with pyqpanda3
         machine = pq.CPUQVM()
-        machine.init_qvm()
-        #Use pyQPanda2 to alloc qubits
-        qubits = machine.qAlloc_many(num_qubits)
-        #Use pyQPanda2 to alloc classic bits
-        cbits = machine.cAlloc_many(num_qubits)
+        #Allocate qubits with pyqpanda3
+        qubits = range(num_qubits)
+        #Allocate classical bits for measurement assistance
+        cbits = range(num_qubits)
         #Construct circuits
         circuit = pq.QCircuit()
-        circuit.insert(pq.H(qubits[0]))
-        circuit.insert(pq.RY(qubits[0], weights[0]))
-        #Construct quantum program
-        prog = pq.QProg()
-        prog.insert(circuit)
-        #Defines measurement
-        prog << measure_all(qubits, cbits)
+        circuit << pq.H(qubits[0])
+        circuit << pq.RY(qubits[0], x[0])
 
-        #run quantum with quantum measurements
-        result = machine.run_with_configuration(prog, cbits, 100)
-        
-        counts = np.array(list(result.values()))
-        states = np.array(list(result.keys())).astype(float)
-        probabilities = counts / 100
-        expectation = np.sum(states * probabilities)
+        prog = pq.QProg()
+        prog << circuit
+        for i in range(num_qubits):
+            prog << pq.measure(qubits[i], cbits[i])
+        shots = 1000
+        #Run the quantum program
+        machine.run(prog, shots)
+        result = machine.result().get_counts()
+        # Fill in both outcomes: when all shots collapse to a single basis state, count0 or count1 may be missing
+        count0 = result.get("0", 0)
+        count1 = result.get("1", 0)
+        expectation = (count0 - count1) / shots   # <Z> = P(0) - P(1)
         return expectation
 
 .. figure:: ./images/hqcnn_quantum_cir.png
@@ -1681,46 +1681,14 @@ Create Hybird Model
 --------------------------
 
 Since quantum circuits can perform automatic differentiation calculations together with classical neural networks,
-Therefore, we can use VQNet's convolutional layer ``Conv2D`` , pooling layer ``MaxPool2D`` , fully connected layer ``Linear`` and
-the quantum circuit to build model just now.
-The definition of the `Net` and `Hybrid` classes inherit from the VQNet automatic differentiation module ``Module`` 
-and the definition of the forward calculation is defined in forward function ``forward()``,
-An automatic differentiation Model of convolution, quantum encoding, and measurement of the MNIST data is constructed to obtain the final features required for the classification task.
+we can use VQNet's convolutional layer ``Conv2D`` , pooling layer ``MaxPool2D`` , fully connected layer ``Linear`` and the quantum circuit built above to construct the model.
+Through the definition of the ``Net`` class inheriting from VQNet's automatic differentiation module ``Module`` , and using ``QuantumLayerV2`` to wrap the quantum circuit layer,
+an automatically differentiable model is constructed to convolve, reduce dimension, quantum-encode and measure the MNIST data in this example, obtaining the final features required for the classification task.
 
 .. code-block::
 
-    #Quantum computing layer front pass and the definition of gradient calculation function, which need to be inherited from the abstract class Module
-    from pyvqnet.native.backprop_utils import AutoGradNode
-    class Hybrid(Module):
-        """ Hybrid quantum - Quantum layer definition """
-        def __init__(self, shift):
-            super(Hybrid, self).__init__()
-            self.shift = shift
-        def forward(self, input): 
-            self.input = input
-            expectation_z = circuit(np.array(input.data))
-            result = [[expectation_z]]
-            requires_grad = input.requires_grad
-            def _backward(g, input):
-                """ Backward pass computation """
-                input_list = np.array(input.data)
-                shift_right = input_list + np.ones(input_list.shape) * self.shift
-                shift_left = input_list - np.ones(input_list.shape) * self.shift
-
-                gradients = []
-                for i in range(len(input_list)):
-                    expectation_right = circuit(shift_right[i])
-                    expectation_left = circuit(shift_left[i])
-
-                    gradient = expectation_right - expectation_left
-                    gradients.append(gradient)
-                gradients = np.array([gradients]).T
-                return gradients * np.array(g)
-
-            nodes = []
-            if input.requires_grad:
-                nodes.append(AutoGradNode(tensor=input, df=lambda g: _backward(g, input)))
-            return QTensor(data=result, requires_grad=requires_grad, nodes=nodes)
+    #Definition of the forward pass and gradient computation of the quantum computing layer, handled automatically by QuantumLayerV2
+    from pyvqnet.qnn import QuantumLayerV2
 
     #Model definition
     class Net(Module):
@@ -1732,7 +1700,7 @@ An automatic differentiation Model of convolution, quantum encoding, and measure
             self.maxpool2 = MaxPool2D([2, 2], [2, 2], padding="valid")
             self.fc1 = Linear(input_channels=256, output_channels=64)
             self.fc2 = Linear(input_channels=64, output_channels=1)
-            self.hybrid = Hybrid(np.pi / 2)
+            self.hybrid = QuantumLayerV2(circuit, 0)
             self.fc3 = Linear(input_channels=1, output_channels=2)
 
         def forward(self, x):
@@ -1947,12 +1915,12 @@ Quantum partial circuit diagram are illustrated below:
     from pyvqnet.data.data import data_generator
     from pyvqnet.tensor import tensor
     from pyvqnet.tensor.tensor import QTensor
-    import pyqpanda as pq
-    from pyqpanda import *
+    import pyqpanda3.core as pq
+    import pyvqnet
     import matplotlib
     from pyvqnet.nn.module import *
     from pyvqnet.utils.initializer import *
-    from pyvqnet.qnn.quantumlayer import QuantumLayer
+    from pyvqnet.qnn.pq3.quantumlayer import QuantumLayer
 
     try:
         matplotlib.use('TkAgg')
@@ -2618,7 +2586,7 @@ it is to give a picture and classify each pixel on the picture. Separate the pix
 to different objects. `Unet <https://arxiv.org/abs/1505.04597>`_ is a classical image segmentation algorithm.
 
 Here, we explore how to partially quantify the classical neural network to create a hybrid quantum classical
-`QUnet`  neural network. We will write a simple example of integrating `pyQPanda2 <https://pyqpanda-tutorial-en.readthedocs.io/en/latest/>`__ with `VQNet` .
+`QUnet` neural network. We will write a simple example of integrating pyqpanda3 with `VQNet`.
 Qunet is mainly used to solve the technology of image segmentation.
 
 
@@ -2637,7 +2605,7 @@ into training data training_data and test data testing_data.
 
 Constructing quantum circuits
 -------------------------------------------
-In this example, we define a quantum circuit using pyqpanda2. The input 3-channel color
+In this example, we define a quantum circuit using pyqpanda3. The input 3-channel color
 image data is compressed into a single channel gray image and stored, and then the feature of the data is
 extracted and dimensionality reduced by quantum convolution operation.
 
@@ -2663,8 +2631,8 @@ Import necessary libraries and functions
     from pyvqnet.dtype import *
     from pyvqnet.tensor import tensor,kfloat32
     from pyvqnet.tensor.tensor import QTensor
-    import pyqpanda as pq
-    from pyqpanda import *
+    import pyqpanda3.core as pq
+    import pyvqnet
     from pyvqnet.utils.storage import load_parameters, save_parameters
 
     import matplotlib
@@ -2908,19 +2876,19 @@ are connected through concatenate for feature fusion.
 
             out5 = self.u1(out4)
             out5_pad_out4 = tensor.pad2d(out5, (1, 0, 1, 0), 0)
-            cat_out5 = tensor.concatenate([out5_pad_out4, out_4], axis=1)
+            cat_out5 = tensor.concatenate([out5_pad_out4, out_4], dim=1)
 
             out6 = self.u2(cat_out5)
             out6_pad_out_3 = tensor.pad2d(out6, (1, 0, 1, 0), 0)
-            cat_out6 = tensor.concatenate([out6_pad_out_3, out_3], axis=1)
+            cat_out6 = tensor.concatenate([out6_pad_out_3, out_3], dim=1)
 
             out7 = self.u3(cat_out6)
             out7_pad_out_2 = tensor.pad2d(out7, (1, 0, 1, 0), 0)
-            cat_out7 = tensor.concatenate([out7_pad_out_2, out_2], axis=1)
+            cat_out7 = tensor.concatenate([out7_pad_out_2, out_2], dim=1)
 
             out8 = self.u4(cat_out7)
             out8_pad_out_1 = tensor.pad2d(out8, (1, 0, 1, 0), 0)
-            cat_out8 = tensor.concatenate([out8_pad_out_1, out_1], axis=1)
+            cat_out8 = tensor.concatenate([out8_pad_out_1, out_1], dim=1)
             out = self.conv1(cat_out8)
             out = self.BatchNorm2d1(out)
             out = self.Relu1(out)
@@ -3165,7 +3133,7 @@ Run classification on test set
 
 We introduce and analyze a proposed quantum multilayer perceptron (QMLP) architecture featuring fault-tolerant input embeddings, rich nonlinearities, and enhanced variational circuit simulations with parameterized two-qubit entanglement gates.
 `QMLP: An Error-Tolerant Nonlinear Quantum MLP Architecture using Parameterized Two-Qubit Gates <https://arxiv.org/pdf/2206.01345.pdf>`_ .
-We will write a simple example of integrating `pyQPanda2 <https://pyqpanda-toturial.readthedocs.io/zh/latest/>`_ with `VQNet`.
+We will write a simple example of integrating pyqpanda3 with `VQNet`.
 
 
 Building Hybrid Classical-Quantum Neural Networks
@@ -3177,13 +3145,13 @@ Building Hybrid Classical-Quantum Neural Networks
     import gzip
     import struct
     import numpy as np
-    import pyqpanda as pq
+    import pyqpanda3.core as pq
     from pyvqnet.nn.module import Module
     from pyvqnet.nn.loss import MeanSquaredError, CrossEntropyLoss
     from pyvqnet.optim.adam import Adam
     from pyvqnet.tensor.tensor import QTensor
-    from pyvqnet.qnn.measure import expval
-    from pyvqnet.qnn.quantumlayer import QuantumLayer
+    from pyvqnet.qnn.pq3.measure import expval
+    from pyvqnet.qnn.pq3.quantumlayer import QuantumLayer
     from pyvqnet.nn.pooling import AvgPool2D
     from pyvqnet.nn.linear import Linear
     from pyvqnet.data.data import data_generator
@@ -3506,7 +3474,7 @@ Loss situation on the training set.
 
 We introduce and analyze a proposed quantum reinforcement learning network (QDRL), whose features reshape classical deep reinforcement learning algorithms such as experience replay and target networks into representations of variational quantum circuits.
 Furthermore, we use a quantum information encoding scheme to reduce the number of model parameters compared to classical neural networks. `QDRL: Variational Quantum Circuits for Deep Reinforcement Learning <https://arxiv.org/pdf/1907.00397.pdf>`_.
-We will write a simple example of integrating `pyQPanda2 <https://pyqpanda-toturial.readthedocs.io/zh/latest/>`_ with `VQNet`.
+We will write a simple example of integrating pyqpanda3 with `VQNet`.
 
 
 
@@ -3522,15 +3490,15 @@ Requires ``gym`` == 0.23.0 , ``pygame`` == 2.1.2 .
     import gym
     import time
     from matplotlib import animation
-    import pyqpanda as pq
+    import pyqpanda3.core as pq
     from pyvqnet.nn.module import Module
     from pyvqnet.nn.loss import MeanSquaredError
     from pyvqnet.optim.adam import Adam
     from pyvqnet.tensor.tensor import QTensor
     from pyvqnet import kfloat32
-    from pyvqnet.qnn.quantumlayer import QuantumLayer
+    from pyvqnet.qnn.pq3.quantumlayer import QuantumLayer
     from pyvqnet.tensor import tensor
-    from pyvqnet.qnn.measure import expval
+    from pyvqnet.qnn.pq3.measure import expval
     from pyvqnet._core import Tensor as CoreTensor
     import matplotlib
     from matplotlib import pyplot as plt
@@ -3763,7 +3731,7 @@ The data is randomly generated by make_blobs under SciPy, and the function is de
     import numpy as np
     from pyvqnet.tensor.tensor import QTensor, zeros
     import pyvqnet.tensor.tensor as tensor
-    import pyqpanda as pq
+    import pyqpanda3.core as pq
     from sklearn.datasets import make_blobs
     import matplotlib.pyplot as plt
     import matplotlib
@@ -3996,8 +3964,8 @@ Make input data, define parallel quantum models, and do not perform model traini
     Quantum Fourier Series
     """
     import numpy as np
-    import pyqpanda as pq
-    from pyvqnet.qnn.measure import expval
+    import pyqpanda3.core as pq
+    from pyvqnet.qnn.pq3.measure import expval
     import matplotlib.pyplot as plt
     import matplotlib
     try:
@@ -4102,9 +4070,9 @@ Make the input data, define the serial quantum model, and build the training mod
     from pyvqnet.nn.loss import MeanSquaredError
     from pyvqnet.optim.adam import Adam
     from pyvqnet.tensor.tensor import QTensor
-    import pyqpanda as pq
-    from pyvqnet.qnn.measure import expval
-    from pyvqnet.qnn.quantumlayer import QuantumLayer
+    import pyqpanda3.core as pq
+    from pyvqnet.qnn.pq3.measure import expval
+    from pyvqnet.qnn.pq3.quantumlayer import QuantumLayer
     import matplotlib.pyplot as plt
     import matplotlib
     try:
@@ -4280,8 +4248,8 @@ Make input data, define parallel quantum models, and do not perform model traini
     Quantum Fourier Series
     """
     import numpy as np
-    import pyqpanda as pq
-    from pyvqnet.qnn.measure import expval
+    import pyqpanda3.core as pq
+    from pyvqnet.qnn.pq3.measure import expval
     import matplotlib.pyplot as plt
     import matplotlib
     try:
@@ -4405,9 +4373,9 @@ Make the input data, define the parallel quantum model, and build the training m
     from pyvqnet.nn.loss import MeanSquaredError
     from pyvqnet.optim.adam import Adam
     from pyvqnet.tensor.tensor import QTensor
-    import pyqpanda as pq
-    from pyvqnet.qnn.measure import expval
-    from pyvqnet.qnn.quantumlayer import QuantumLayer
+    import pyqpanda3.core as pq
+    from pyvqnet.qnn.pq3.measure import expval
+    from pyvqnet.qnn.pq3.quantumlayer import QuantumLayer
     import matplotlib.pyplot as plt
     import matplotlib
     try:
@@ -4633,7 +4601,7 @@ The following uses VQNet to demonstrate the quantum circuit expression capabilit
     from scipy import integrate
     from scipy.linalg import sqrtm
     from scipy.stats import entropy
-    import pyqpanda as pq
+    import pyqpanda3.core as pq
     import numpy as np
     from pyvqnet.qnn.ansatz import HardwareEfficientAnsatz
     from pyvqnet.tensor import tensor
@@ -4821,9 +4789,9 @@ The following shows an example of applying VQNet to calculate the gradient using
 
 .. code-block::
 
-    import pyqpanda as pq
+    import pyqpanda3.core as pq
     import numpy as np
-    from pyvqnet.qnn.measure import expval
+    from pyvqnet.qnn.pq3.measure import expval
     from scipy.linalg import expm
     import matplotlib
     try:
@@ -4964,7 +4932,7 @@ VQNet implements an example of this algorithm: solving the ground state energy o
 .. code-block::
 
     import numpy as np
-    import pyqpanda as pq
+    import pyqpanda3.core as pq
     from pyvqnet.qnn.template import StronglyEntanglingTemplate
     from pyvqnet.qnn.measure import Hermitian_expval
     from pyvqnet.qnn import QuantumLayerV2
@@ -5160,7 +5128,7 @@ Through the operation, it is not difficult for readers to find that as the numbe
         """
         barren plateau
         """
-        import pyqpanda as pq
+        import pyqpanda3.core as pq
         import numpy as np
         import matplotlib.pyplot as plt
 
@@ -5293,12 +5261,12 @@ The following is the application of the QVC classification example using the gra
 
     import random
     import numpy as np
-    import pyqpanda as pq
+    import pyqpanda3.core as pq
 
     from pyvqnet.data import data_generator as dataloader
     from pyvqnet.nn.module import Module
     from pyvqnet.optim import sgd
-    from pyvqnet.qnn.quantumlayer import QuantumLayer
+    from pyvqnet.qnn.pq3.quantumlayer import QuantumLayer
     from pyvqnet.nn.loss import CategoricalCrossEntropy
     from pyvqnet.tensor.tensor import QTensor
     from pyvqnet.qnn import Gradient_Prune_Instance
@@ -5538,9 +5506,9 @@ Model training using quantumlayer in VQNet
 
     from pyvqnet.tensor.tensor import QTensor
     import random
-    import pyqpanda as pq
-    from pyvqnet.qnn.quantumlayer import QuantumLayer
-    from pyqpanda import *
+    import pyqpanda3.core as pq
+    from pyvqnet.qnn.pq3.quantumlayer import QuantumLayer
+    import pyvqnet
     random.seed(1234)
 
     qvc_train_data = [0,1,0,0,1,
@@ -5742,8 +5710,8 @@ An example of a complete noisy quantum machine learning model is as follows:
     from pyvqnet.data.data import data_generator
     from pyvqnet.tensor import tensor
 
-    import pyqpanda as pq
-    from pyqpanda import *
+    import pyqpanda3.core as pq
+    import pyvqnet
     from pyvqnet.qnn.quantumlayer import NoiseQuantumLayer
     import matplotlib
     try:

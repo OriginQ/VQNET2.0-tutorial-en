@@ -230,7 +230,7 @@ When you install the latest version of pyqpanda3, you can use this interface to 
     :param dtype: The data type of the parameter. The default value is None, which means using the default data type pyvqnet.kfloat32.
     :param name: The name of the module. The default is an empty string.
     :param diff_method: Differentiation method for gradient calculation. The default is "parameter_shift", "random_coordinate_descent".
-    :param submit_kwargs: Additional keyword parameters for submitting quantum circuits, default: {"if_print_qcloud_log":False,"chip_id":"WK_C180","is_amend":True,"is_mapping":True,"is_optimization":True,"compile_level":3,"default_task_group_size":200,"test_qcloud_fake":False,"":"server_ip_address"}, when test_qcloud_fake is set to True, local CPUQVM simulation.
+    :param submit_kwargs: Additional keyword parameters for submitting quantum circuits, default: {"if_print_qcloud_log":False,"chip_id":"WK_C180","is_amend":True,"is_mapping":True,"is_optimization":True,"compile_level":3,"default_task_group_size":200,"test_qcloud_fake":False,"server_ip_address":"","use_qwc":True}, when test_qcloud_fake is set to True, local CPUQVM simulation.
     :param query_kwargs: Additional keyword parameters for querying quantum results, default: {"timeout":1,"total_timeout":60,"print_query_info":True,"sub_circuits_split_size":1}.
     :return: A module that can compute quantum circuits.
 
@@ -494,7 +494,7 @@ VQCQCloudLayer
     :param pauli_str_dict: Pauli operator dictionary for expectation value computation. Default is None, which performs measurement operation.
     :param shots: Number of measurements. Default is 1000.
     :param name: Module name. Default is empty string.
-    :param submit_kwargs: Additional keyword parameters for submitting quantum circuits, default: {"if_print_qcloud_log":False,"chip_id":"WK_C180","is_amend":True,"is_mapping":True,"is_optimization":True,"compile_level":3,"default_task_group_size":200,"test_qcloud_fake":False,"":"server_ip_address"}, when test_qcloud_fake is set to True, local CPUQVM simulation.
+    :param submit_kwargs: Additional keyword parameters for submitting quantum circuits, default: {"if_print_qcloud_log":False,"chip_id":"WK_C180","is_amend":True,"is_mapping":True,"is_optimization":True,"compile_level":3,"default_task_group_size":200,"test_qcloud_fake":False,"server_ip_address":"","use_qwc":True}, when test_qcloud_fake is set to True, local CPUQVM simulation.
     :param query_kwargs: Additional keyword arguments for querying quantum results. Default: {"timeout":1,"total_timeout":60, "print_query_info":True,"sub_circuits_split_size":1}.
 
     Example::
@@ -551,7 +551,7 @@ grad
         Gradient of parameters
 
 
-    Examples::
+    Example::
 
         from pyvqnet.qnn.pq3 import grad, ProbsMeasure
         import pyqpanda3.core as pq
@@ -892,7 +892,7 @@ Controlled_Hadamard
 
     :param qubits: qubit index.
 
-    Examples::
+    Example::
 
         import pyqpanda3.core as pq
 
@@ -963,7 +963,7 @@ FermionicSingleExcitation
     :return:
         pyQPanda3 QCircuit
 
-    Examples::
+    Example::
 
         from pyvqnet.qnn.pq3 import FermionicSingleExcitation, expval
 
@@ -1011,7 +1011,7 @@ FermionicDoubleExcitation
     :return:
         pyQPanda3 QCircuit
 
-    Examples::
+    Example::
 
         import pyqpanda3.core as pq
         from pyvqnet.qnn.pq3 import FermionicDoubleExcitation, expval
@@ -1057,7 +1057,7 @@ UCCSD
     :param init_state: occupation-number vector of length ``len(wires)`` representing the high-frequency state. ``init_state`` Initialize the qubit state.
     :param qubits: Qubit index.
 
-    Examples::
+    Example::
         
         import pyqpanda3.core as pq
         from pyvqnet.tensor import tensor
@@ -1071,38 +1071,6 @@ UCCSD
                                         d_wires=[[[0, 1], [2, 3]], [[0, 1], [2, 3, 4, 5]], [[0, 1], [3, 4]], [[0, 1], [4, 5]]],
                                         init_state=[1, 1, 0, 0, 0, 0],
                                         qubits=qlists)
-
-QuantumPoolingCircuit
-============================
-
-.. py:function:: pyvqnet.qnn.pq3.template.QuantumPoolingCircuit(sources_wires, sinks_wires, params,qubits)
-
-    Quantum circuit that downsamples data.
-
-    To reduce the number of qubits in the circuit, first create pairs of qubits in the system. After initially pairing all qubits, apply the generalized 2-qubit unitary to each pair of qubits. And after applying these two qubit unitary, ignore one qubit in each pair of qubits for the rest of the neural network.
-
-    :param sources_wires: Source qubit indices to be ignored.
-    :param sinks_wires: Target qubit indices to be retained.
-    :param params: Input parameters.
-    :param qubits: Qubit indices.
-
-    :return:
-        pyQPanda3 QCircuit
-
-    Examples::
-
-        from pyvqnet.qnn.pq3.template import QuantumPoolingCircuit
-        import pyqpanda3.core as pq
-        from pyvqnet import tensor
-
-        qlists = range(4)
-        p = tensor.full([6], 0.35)
-        cir = QuantumPoolingCircuit([0, 1], [2, 3], p, qlists)
-        print(cir)
-
-Commonly used quantum circuit combinations
-***********************************************************
-VQNet provides some quantum circuits commonly used in quantum machine learning research
 
 HardwareEfficientAnsatz
 =============================
@@ -1339,9 +1307,7 @@ QuantumMeasure
 
     Computes quantum circuit measurements. Returns measurements obtained by Monte Carlo methods.
 
-    For more details, please visit https://pyqpanda-toturial.readthedocs.io/zh/latest/Measure.html?highlight=measure_all .
-
-    The QuantumMeasure api currently only supports pyQPanda3 ``CPUQVM`` or ``QCloud`` .
+    The QuantumMeasure API currently only supports pyQPanda3 ``CPUQVM`` or ``QCloud`` .
 
     :param machine: The quantum virtual machine allocated by pyQPanda3.
     :param prog: The quantum program created by pyQPanda3.
@@ -1383,9 +1349,7 @@ ProbsMeasure
 
     Compute circuit probability measurements.
 
-    For more details, please visit https://pyqpanda-toturial.readthedocs.io/zh/latest/PMeasure.html.
-
-    The ProbsMeasure api currently only supports pyQPanda ``CPUQVM`` or ``QCloud``.
+    The ProbsMeasure API currently only supports pyQPanda ``CPUQVM`` or ``QCloud``.
 
     :param measure_qubits: List containing the measurement qubit indices.
     :param prog: The quantum program created by qpanda.
@@ -1523,7 +1487,7 @@ Purity
     :return:
         purity
 
-    Examples::
+    Example::
 
         from pyvqnet.qnn.pq3.measure import Purity
         qstate = [(0.9306699299765968 + 0j), (0.18865613455240968 + 0j),

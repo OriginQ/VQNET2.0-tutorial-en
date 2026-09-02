@@ -163,7 +163,7 @@ toGPU
     :param device: The device currently saving QTensor, default=DEV_GPU_0. device = pyvqnet.DEV_GPU_0, stored in the first GPU, device = DEV_GPU_1, stored in the second GPU, and so on.
     :return: Module moved to GPU device.
 
-    Examples::
+    Example::
 
         from pyvqnet.nn.conv import ConvT2D 
         test_conv = ConvT2D(3, 2, [4,4], [2, 2], "same")
@@ -181,7 +181,7 @@ toCPU
 
     :return: Module moved to CPU device.
 
-    Examples::
+    Example::
 
         from pyvqnet.nn.conv import ConvT2D 
         test_conv = ConvT2D(3, 2, [4,4], [2, 2], "same")
@@ -266,44 +266,49 @@ ModuleList
 
         from pyvqnet.tensor import *
         from pyvqnet.nn import Module,Linear,ModuleList
-        from pyvqnet.qnn import ProbsMeasure,QuantumLayer
-        import pyqpanda as pq
-        def pqctest (input,param,qubits,cbits,m_machine):
+        from pyvqnet.qnn.pq3 import ProbsMeasure,QuantumLayer
+        import pyqpanda3.core as pq
+        def pqctest (input,param):
+            num_of_qubits = 4
+
+            m_machine = pq.CPUQVM()# outside
+
+            qubits = range(num_of_qubits)
+
             circuit = pq.QCircuit()
-            circuit.insert(pq.H(qubits[0]))
-            circuit.insert(pq.H(qubits[1]))
-            circuit.insert(pq.H(qubits[2]))
-            circuit.insert(pq.H(qubits[3]))
+            circuit << pq.H(qubits[0])
+            circuit << pq.H(qubits[1])
+            circuit << pq.H(qubits[2])
+            circuit << pq.H(qubits[3])
 
-            circuit.insert(pq.RZ(qubits[0],input[0]))
-            circuit.insert(pq.RZ(qubits[1],input[1]))
-            circuit.insert(pq.RZ(qubits[2],input[2]))
-            circuit.insert(pq.RZ(qubits[3],input[3]))
+            circuit << pq.RZ(qubits[0],input[0])
+            circuit << pq.RZ(qubits[1],input[1])
+            circuit << pq.RZ(qubits[2],input[2])
+            circuit << pq.RZ(qubits[3],input[3])
 
-            circuit.insert(pq.CNOT(qubits[0],qubits[1]))
-            circuit.insert(pq.RZ(qubits[1],param[0]))
-            circuit.insert(pq.CNOT(qubits[0],qubits[1]))
+            circuit << pq.CNOT(qubits[0],qubits[1])
+            circuit << pq.RZ(qubits[1],param[0])
+            circuit << pq.CNOT(qubits[0],qubits[1])
 
-            circuit.insert(pq.CNOT(qubits[1],qubits[2]))
-            circuit.insert(pq.RZ(qubits[2],param[1]))
-            circuit.insert(pq.CNOT(qubits[1],qubits[2]))
+            circuit << pq.CNOT(qubits[1],qubits[2])
+            circuit << pq.RZ(qubits[2],param[1])
+            circuit << pq.CNOT(qubits[1],qubits[2])
 
-            circuit.insert(pq.CNOT(qubits[2],qubits[3]))
-            circuit.insert(pq.RZ(qubits[3],param[2]))
-            circuit.insert(pq.CNOT(qubits[2],qubits[3]))
-
+            circuit << pq.CNOT(qubits[2],qubits[3])
+            circuit << pq.RZ(qubits[3],param[2])
+            circuit << pq.CNOT(qubits[2],qubits[3])
 
             prog = pq.QProg()
-            prog.insert(circuit)
+            prog << circuit
 
-            rlt_prob = ProbsMeasure([0,2],prog,m_machine,qubits)
+            rlt_prob = ProbsMeasure(m_machine,prog,[0,2])
             return rlt_prob
 
 
         class M(Module):
             def __init__(self):
                 super(M, self).__init__()
-                self.pqc2 = ModuleList([QuantumLayer(pqctest,3,"cpu",4,1), Linear(4,1)
+                self.pqc2 = ModuleList([QuantumLayer(pqctest,3), Linear(4,1)
                 ])
 
             def forward(self, x, *args, **kwargs):
@@ -1124,6 +1129,101 @@ Dropout
         #   [[  0.   0.]
         #    [  0.  14.]]]]
 
+RMSNorm
+=================================
+
+.. py:class:: pyvqnet.nn.RMSNorm(normalized_shape, eps:float = 1e-5, affine:bool = True, dtype=None)
+
+    Applies Root Mean Square Layer Normalization to the input mini-batch data. RMS takes the last dimension of the input.
+
+    :param normalized_shape: Normalization shape. If a single integer, treated as ``[normalized_shape]``.
+    :param eps: Numerical stability constant, default: 1e-5.
+    :param affine: Whether to use learnable affine parameters (gamma), default: True.
+    :param dtype: Parameter data type, default: None, uses the default data type.
+    :return: An RMSNorm class instance.
+
+    .. note::
+
+        This module only runs on GPU. Refer to the "GPU Model Training" section above to transfer the model and data to GPU.
+
+    Example::
+
+        import pyvqnet
+        from pyvqnet.nn import RMSNorm
+        from pyvqnet.tensor import tensor, kfloat32
+        rms = RMSNorm(8, eps=1e-5, dtype=kfloat32)
+        rms.toGPU(pyvqnet.DEV_GPU_0)
+        x = tensor.arange(1.0, 17.0, dtype=kfloat32).reshape([2, 8])
+        x = x.GPU(pyvqnet.DEV_GPU_0)
+        x.requires_grad = True
+        y = rms(x)
+        print(y)
+
+        # [[0.1980295,0.3960589,0.5940884,...,1.1881769,1.3862063,1.5842358],
+        #  [0.7082005,0.7868894,0.8655784,...,1.1016452,1.1803341,1.2590231]]
+
+
+RoPE
+=================================
+
+.. py:class:: pyvqnet.nn.RoPE(head_dim:int, max_seq_len:int = 2048, base:float = 10000.0, rope_type:str = "standard", scale_factor:float = 4.0, original_max_seq_len = None, beta_fast:float = 32.0, beta_slow:float = 1.0)
+
+    Rotary Position Embedding (RoPE). Injects position information by rotating dimension pairs of the last dimension (head_dim) of the query and key tensors.
+
+    :param head_dim: Attention head dimension (must be even).
+    :param max_seq_len: Maximum sequence length for pre-computed cos/sin cache, default: 2048.
+    :param base: RoPE base frequency, default: 10000.0 (Llama uses 500000.0).
+    :param rope_type: Rotation type, options: "standard" | "ntk" | "dynamic_ntk" | "yarn", default: "standard".
+    :param scale_factor: Extension scale factor (e.g., 4.0 means 4x context), default: 4.0.
+    :param original_max_seq_len: Pre-trained sequence length, default: None.
+    :param beta_fast: YaRN high-frequency truncation, default: 32.0.
+    :param beta_slow: YaRN low-frequency truncation, default: 1.0.
+    :return: A RoPE class instance.
+
+    .. note::
+
+        This module only runs on GPU. Refer to the "GPU Model Training" section above to transfer the model and data to GPU.
+
+    Example::
+
+        import pyvqnet
+        from pyvqnet.tensor import QTensor, DEV_GPU_0
+        from pyvqnet.nn.rope import RoPE
+        import numpy as np
+
+        q = QTensor(np.arange(1.0, 17.0, dtype=np.float32).reshape([1, 1, 4, 4]), device=DEV_GPU_0)
+        k = QTensor(np.arange(17.0, 33.0, dtype=np.float32).reshape([1, 1, 4, 4]), device=DEV_GPU_0)
+
+        rope = RoPE(4, max_seq_len=4, rope_type="standard")
+        rope.toGPU(DEV_GPU_0)
+        out_q, _ = rope.forward(q, k)
+        print(out_q)
+
+
+SwiGLU
+=================================
+
+.. py:class:: pyvqnet.nn.SwiGLU(name:str="")
+
+    SwiGLU activation function layer, a variant of the SwiGLU gated linear unit: ``SiLU(gate) * up``.
+
+    :param name: Name of the activation function layer, default: "".
+    :return: A SwiGLU activation function layer instance.
+
+    Example::
+
+        from pyvqnet.nn import SwiGLU
+        from pyvqnet.tensor import QTensor, kfloat32
+        layer = SwiGLU()
+        gate = QTensor([1.0, 2.0, 3.0, 4.0], dtype=kfloat32)
+        up = QTensor([0.5, 1.0, 1.5, 2.0], dtype=kfloat32)
+        y = layer(gate, up)
+        print(y)
+
+        # [0.3655293,1.761594 ,4.286584 ,7.85611  ]
+
+
+
 DropPath
 =================================
 
@@ -1792,7 +1892,7 @@ fuse_module
 
     :return: Module fused model.
 
-    Examples::
+    Example::
     
         from pyvqnet import tensor,kfloat32
         from pyvqnet.nn import Linear
@@ -1908,7 +2008,7 @@ SDPA
     :param scale: Scaling factor applied prior to softmax.
     :param is_causal: If true, assumes upper left causal attention masking and errors if both attn_mask and is_causal are set.
     
-    Examples::
+    Example::
     
         from pyvqnet.transformer import SDPA
         from pyvqnet import tensor
@@ -2230,7 +2330,7 @@ Sigmoid
         :param name: name of the output layer
         :return: sigmoid Activation layer
 
-        Examples::
+        Example::
 
             from pyvqnet.nn import Sigmoid
             from pyvqnet.tensor import QTensor
@@ -2252,7 +2352,7 @@ Softplus
         :param name: name of the output layer
         :return: softplus Activation layer
 
-    Examples::
+    Example::
 
         from pyvqnet.nn import Softplus
         from pyvqnet.tensor import QTensor
@@ -2274,7 +2374,7 @@ Softsign
         :param name: name of the output layer
         :return: softsign Activation layer
 
-        Examples::
+        Example::
 
             from pyvqnet.nn import Softsign
             from pyvqnet.tensor import QTensor
@@ -2286,7 +2386,7 @@ Softsign
 
 Softmax
 =================================
-.. py:class:: pyvqnet.nn.Softmax(axis: int = - 1, name: str = '')
+.. py:class:: pyvqnet.nn.Softmax(dim: int = - 1, name: str = '')
 
     Applies a softmax activation function to the given layer.
 
@@ -2294,11 +2394,11 @@ Softmax
         \text{Softmax}(x_{i}) = \frac{\exp(x_i)}{\sum_j \exp(x_j)}
 
 
-    :param axis: dimension on which to operate (-1 for last axis),default = -1
+    :param dim: dimension on which to operate (-1 for last dimension),default = -1
     :param name: name of the output layer
     :return: softmax Activation layer
 
-    Examples::
+    Example::
 
         from pyvqnet.nn import Softmax
         from pyvqnet.tensor import QTensor
@@ -2325,7 +2425,7 @@ HardSigmoid
     :param name: name of the output layer
     :return: hard sigmoid Activation layer
 
-    Examples::
+    Example::
 
         from pyvqnet.nn import HardSigmoid
         from pyvqnet.tensor import QTensor
@@ -2351,7 +2451,7 @@ ReLu
     :param name: name of the output layer
     :return: ReLu Activation layer
 
-    Examples::
+    Example::
 
         from pyvqnet.nn import ReLu
         from pyvqnet.tensor import QTensor
@@ -2379,7 +2479,7 @@ LeakyReLu
     :param name: name of the output layer
     :return: leaky ReLu Activation layer
 
-    Examples::
+    Example::
 
         from pyvqnet.nn import LeakyReLu
         from pyvqnet.tensor import QTensor
@@ -2406,7 +2506,7 @@ Gelu
 
     :return: Gelu activation function layer instance.
 
-    Examples::
+    Example::
 
         from pyvqnet.tensor import randu, ones_like
         from pyvqnet.nn import Gelu
@@ -2435,7 +2535,7 @@ ELU
     :param name: name of the output layer
     :return: Elu Activation layer
 
-    Examples::
+    Example::
 
         from pyvqnet.nn import ELU
         from pyvqnet.tensor import QTensor
@@ -2457,7 +2557,7 @@ Tanh
     :param name: name of the output layer
     :return: hyperbolic tangent Activation layer
 
-    Examples::
+    Example::
 
         from pyvqnet.nn import Tanh
         from pyvqnet.tensor import QTensor
@@ -2875,85 +2975,6 @@ sgd
         #  [19.5999985, 20.5800018, 21.5600014, 22.5400009]]]
         # ]
 
-rotosolve
-=================================
-
-Rotosolve algorithm, which allows a direct jump to the optimal value of a single parameter relative to the fixed value of other parameters, can directly find the optimal parameters of the quantum circuit optimization algorithm.
-
-.. py:class:: pyvqnet.optim.rotosolve.Rotosolve(max_iter =50)
-
-    Rotosolve: The rotosolve algorithm can be used to minimize a linear combination
-    of quantum measurement expectation values. See the following paper:
-    https://arxiv.org/abs/1903.12166, Ken M. Nakanishi.
-    https://arxiv.org/abs/1905.09692, Mateusz Ostaszewski.
-
-    :param max_iter: max number of iterations of the rotosolve update
-    :return: a Rotosolve optimizer
-
-    Example::
-
-        from pyvqnet.optim.rotosolve import Rotosolve
-        import pyqpanda as pq
-        from pyvqnet.tensor import QTensor
-
-        from pyvqnet import kfloat64
-        from pyvqnet.qnn.measure import expval
-        machine = pq.CPUQVM()
-        machine.init_qvm()
-        nqbits = machine.qAlloc_many(2)
-
-
-        def gen(param, generators, qbits, circuit):
-            if generators == "X":
-                circuit.insert(pq.RX(qbits, param))
-            elif generators == "Y":
-                circuit.insert(pq.RY(qbits, param))
-            else:
-                circuit.insert(pq.RZ(qbits, param))
-
-
-        def circuits(params, generators, circuit):
-            gen(params[0], generators[0], nqbits[0], circuit)
-            gen(params[1], generators[1], nqbits[1], circuit)
-            circuit.insert(pq.CNOT(nqbits[0], nqbits[1]))
-            prog = pq.QProg()
-            prog.insert(circuit)
-            return prog
-
-
-        def ansatz1(params: QTensor, generators):
-            circuit = pq.QCircuit()
-
-            prog = circuits(params, generators, circuit)
-            return expval(machine, prog, {"Z0": 1},
-                        nqbits), expval(machine, prog, {"Y1": 1}, nqbits)
-
-
-        def ansatz2(params: QTensor, generators):
-            circuit = pq.QCircuit()
-
-            prog = circuits(params, generators, circuit)
-            return expval(machine, prog, {"X0": 1}, nqbits)
-
-
-        def loss(params):
-            Z, Y = ansatz1(params, ["X", "Y"])
-            X = ansatz2(params, ["X", "Y"])
-            return 0.5 * Y + 0.8 * Z - 0.2 * X
-
-
-        t = QTensor([0.3, 0.25],dtype=kfloat64)
-        opt = Rotosolve(max_iter=5)
-
-        costs_rotosolve = opt.minimize(t, loss)
-        print(costs_rotosolve)
-        # [0.7642691884821847, -0.799999999999997, -0.799999999999997, -0.799999999999997, -0.799999999999997]
-
-
-.. figure:: ./images/rotosolve.png
-
-Metrics
-********************************************************
 
 
 MSE

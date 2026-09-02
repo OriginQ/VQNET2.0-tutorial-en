@@ -23,7 +23,7 @@ For details, please refer to the relevant interfaces and sample codes in this do
 
 Answer: Users may need to install the VC++ runtime library on Windows.
 Refer to https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist?view=msvc-170 to install the appropriate runtime library.
-In addition, VQNet currently only supports python3.10, 3.11, 3.12 version, so please confirm your python version.
+In addition, VQNet currently only supports Python 3.10~3.14 versions, so please confirm your Python version.
 
 **Q: How to call the original quantum cloud and quantum chip for calculation**
 
@@ -35,64 +35,12 @@ In VQNet, users can use ``QuantumBatchAsyncQcloudLayer`` to build a variational 
 Answer: To build a VQNet model, it is necessary to ensure that all modules used in it are differentiable. When a module in the model cannot calculate the gradient, the module and the previous modules will not be able to calculate the gradient using the chain rule.
 If the user customizes a quantum variational circuit, please use the interface under :ref:`QuantumLayer_pq3` provided by VQNet. For classic machine learning modules, you need to use the interfaces defined by :doc:`./QTensor` and :doc:`./nn`. These interfaces encapsulate the functions of gradient calculation, and VQNet can perform automatic differentiation.
 
-If the user wants to use a list containing multiple modules as a submodule in `Module`, please do not use the List that comes with python, you need to use pyvqnet.nn.module.ModuleList instead of List. In this way, the training parameters of the sub-modules can be registered to the whole model, enabling automatic differential training. Here are examples:
+If the user wants to use a list containing multiple modules as a submodule in `Module`, please do not use the List that comes with python, you need to use pyvqnet.nn.module.ModuleList instead of List. In this way, the training parameters of the sub-modules can be registered to the whole model, enabling automatic differential training.
 
-     Example::
-
-         from pyvqnet. tensor import *
-         from pyvqnet.nn import Module,Linear,ModuleList
-         from pyvqnet.qnn import ProbsMeasure, QuantumLayer
-         import pyqpanda as pq
-         def pqctest(input, param, qubits, cbits, m_machine):
-             circuit = pq. QCircuit()
-             circuit.insert(pq.H(qubits[0]))
-             circuit.insert(pq.H(qubits[1]))
-             circuit.insert(pq.H(qubits[2]))
-             circuit.insert(pq.H(qubits[3]))
-
-             circuit.insert(pq.RZ(qubits[0],input[0]))
-             circuit.insert(pq.RZ(qubits[1],input[1]))
-             circuit.insert(pq.RZ(qubits[2],input[2]))
-             circuit.insert(pq.RZ(qubits[3],input[3]))
-
-             circuit.insert(pq.CNOT(qubits[0],qubits[1]))
-             circuit.insert(pq.RZ(qubits[1],param[0]))
-             circuit.insert(pq.CNOT(qubits[0],qubits[1]))
-
-             circuit.insert(pq.CNOT(qubits[1],qubits[2]))
-             circuit.insert(pq.RZ(qubits[2],param[1]))
-             circuit.insert(pq.CNOT(qubits[1],qubits[2]))
-
-             circuit.insert(pq.CNOT(qubits[2],qubits[3]))
-             circuit.insert(pq.RZ(qubits[3],param[2]))
-             circuit.insert(pq.CNOT(qubits[2],qubits[3]))
-
-             prog = pq.QProg()
-             prog. insert(circuit)
-
-             rlt_prob = ProbsMeasure([0,2],prog,m_machine,qubits)
-             return rlt_prob
-
-
-         class M(Module):
-             def __init__(self):
-                 super(M, self).__init__()
-                 #Should be built using ModuleList
-                 self.pqc2 = ModuleList([QuantumLayer(pqctest,3,"cpu",4,1), Linear(4,1)
-                 ])
-                 #Direct use of list cannot save the parameters in pqc3.
-                 #self.pqc3 = [QuantumLayer(pqctest,3,"cpu",4,1), Linear(4,1)
-                 #]
-             def forward(self, x, *args, **kwargs):
-                 y = self.pqc2[0](x) + self.pqc2[1](x)
-                 return y
-
-         mm = M()
-         print(mm. state_dict(). keys())
 
 **Q: Why did the original code not run in version 2.0.7**
 
-Answer: In version v2.0.7, we added different data types and dtype attributes to QTensor, and restricted input based on PyTorch. For example, the Embedding layer input needs to be kint64, CategoricalCrossEntropy, CrossEntropyLoss, SoftmaxCrossEntropy, NLL_Loss layers's label for Loss and needs to be kint64.
+Answer: In version v2.0.7, we added different data types and dtype attributes to QTensor, and restricted input based on PyTorch. For example, the Embedding layer input needs to be kint64, CategoricalCrossEntropy, CrossEntropyLoss, SoftmaxCrossEntropy, and NLL_Loss layers' labels need to be kint64.
 
 You can use the 'astype()' interface to convert the type to the specified data type, or initialize the QTensor using the corresponding data type numpy array.
 

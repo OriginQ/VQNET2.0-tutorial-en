@@ -221,7 +221,7 @@ QTensor
         Return the indices of the maximum values of a QTensor across a dimension.
 
         :param dim: dim (int) – the dimension to reduce,only accepts single axis. if dim == None, returns the indices of the maximum value of all elements in the input tensor.The valid dim range is [-R, R), where R is input's ndim. when dim < 0, it works the same way as dim + R.
-        :param keepdims:  whether the output QTensor has dim retained or not.
+        :param keepdim:  whether the output QTensor has dim retained or not.
 
         :return: the indices of the maximum value in the input QTensor.
 
@@ -262,7 +262,7 @@ QTensor
         Return the indices of the minimum  values of a QTensor across a dimension.
 
         :param dim: dim (int) – the dimension to reduce,only accepts single axis. if dim == None, returns the indices of the minimum value of all elements in the input tensor.The valid dim range is [-R, R), where R is input's ndim. when dim < 0, it works the same way as dim + R.
-        :param keepdims:  whether the output QTensor has dim retained or not.
+        :param keepdim:  whether the output QTensor has dim retained or not.
 
         :return: the indices of the minimum  value in the input QTensor.
 
@@ -828,7 +828,7 @@ QTensor
 
         :return: Clone QTensor to GPU device.
 
-        Examples::
+        Example::
 
             from pyvqnet.tensor import QTensor
             a = QTensor([2])
@@ -844,7 +844,7 @@ QTensor
 
         :return: Clone QTensor to CPU device.
 
-        Examples::
+        Example::
 
             from pyvqnet.tensor import QTensor
             a = QTensor([2])
@@ -868,7 +868,7 @@ QTensor
         :param device: The device currently saving QTensor, default=DEV_GPU_0. device = pyvqnet.DEV_GPU_0, stored in the first GPU, device = DEV_GPU_1, stored in the second GPU, and so on.
         :return: QTensor moved to GPU device.
 
-        Examples::
+        Example::
 
             from pyvqnet.tensor import QTensor
             a = QTensor([2])
@@ -884,7 +884,7 @@ QTensor
 
         :return: QTensor moved to CPU device.
 
-        Examples::
+        Example::
 
             from pyvqnet.tensor import QTensor
             a = QTensor([2])
@@ -899,7 +899,7 @@ QTensor
 
         :return: Whether this QTensor's data is stored on GPU host memory.
 
-        Examples::
+        Example::
         
             from pyvqnet.tensor import QTensor
             a = QTensor([2])
@@ -913,7 +913,7 @@ QTensor
 
         :return: Whether this QTensor's data is stored in CPU host memory.
 
-        Examples::
+        Example::
         
             from pyvqnet.tensor import QTensor
             a = QTensor([2])
@@ -1357,7 +1357,7 @@ multinomial
     :return:
         output sample index
 
-    Examples::
+    Example::
 
         from pyvqnet import tensor
         weights = tensor.QTensor([0.1,10, 3, 1]) 
@@ -1384,7 +1384,7 @@ triu
 
     :return: output a QTensor
 
-    Examples::
+    Example::
 
         from pyvqnet.tensor import tensor
         a = tensor.arange(1.0, 2 * 6 * 5 + 1.0).reshape([2, 6, 5])
@@ -1417,7 +1417,7 @@ tril
 
     :return: output a QTensor
 
-    Examples::
+    Example::
 
         from pyvqnet.tensor import tensor
         a = tensor.arange(1.0, 2 * 6 * 5 + 1.0).reshape([12, 5])
@@ -1506,12 +1506,12 @@ round
 sort
 ==============================
 
-.. py:function:: pyvqnet.tensor.sort(t, axis: int, descending=False, stable=True)
+.. py:function:: pyvqnet.tensor.sort(t, dim: int, descending=False, stable=True)
 
     Sort QTensor along the axis
 
     :param t: input QTensor
-    :param axis: sort axis
+    :param dim: sort axis
     :param descending: sort order if desc
     :param stable:  Whether to use stable sorting or not
     :return: output QTensor
@@ -1535,12 +1535,12 @@ sort
 argsort
 ==============================
 
-.. py:function:: pyvqnet.tensor.argsort(t, axis: int, descending=False, stable=True)
+.. py:function:: pyvqnet.tensor.argsort(t, dim: int, descending=False, stable=True)
 
     Return an array of indices of the same shape as input that index data along the given axis in sorted order.
 
     :param t: input QTensor
-    :param axis: sort axis
+    :param dim: sort axis
     :param descending: sort order if desc
     :param stable:  Whether to use stable sorting or not
     :return: output QTensor
@@ -1564,7 +1564,7 @@ argsort
 topK
 ==============================
 
-.. py:function:: pyvqnet.tensor.topK(t, k, axis=-1, if_descent=True)
+.. py:function:: pyvqnet.tensor.topK(t, k, dim=-1, if_descent=True)
 
     Returns the k largest elements of the input tensor along the given axis.
 
@@ -1572,12 +1572,12 @@ topK
 
     :param t: input a QTensor
     :param k: numbers of largest elements or smallest elements
-    :param axis: sort axis,default = -1,the last axis
+    :param dim: sort axis,default = -1,the last axis
     :param if_descent: sort order,defaults to True
 
     :return: A new QTensor
 
-    Examples::
+    Example::
 
         from pyvqnet.tensor import tensor, QTensor
         x = QTensor([
@@ -1600,7 +1600,7 @@ topK
 argtopK
 ==============================
 
-.. py:function:: pyvqnet.tensor.argtopK(t, k, axis=-1, if_descent=True)
+.. py:function:: pyvqnet.tensor.argtopK(t, k, dim=-1, if_descent=True)
 
     Return the index of the k largest elements along the given axis of the input tensor.
 
@@ -1608,12 +1608,12 @@ argtopK
 
     :param t: input a QTensor
     :param k: numbers of largest elements or smallest elements
-    :param axis: sort axis,default = -1,the last axis
+    :param dim: sort axis,default = -1,the last axis
     :param if_descent: sort order,defaults to True
 
     :return: A new QTensor
 
-    Examples::
+    Example::
 
         from pyvqnet.tensor import tensor, QTensor
         x = QTensor([
@@ -1730,13 +1730,13 @@ divide
 sums
 ==============================
 
-.. py:function:: pyvqnet.tensor.sums(t: pyvqnet.tensor.QTensor, axis: Optional[int] = None, keepdims=False)
+.. py:function:: pyvqnet.tensor.sums(t: pyvqnet.tensor.QTensor, dim: Optional[int] = None, keepdim=False)
 
     Sums all the elements in QTensor along given axis.if axis = None, sums all the elements in QTensor. 
 
     :param t: input QTensor
-    :param axis:  axis used to sums, defaults to None
-    :param keepdims:  whether the output tensor has dim retained or not. - defaults to False
+    :param dim:  axis used to sums, defaults to None
+    :param keepdim:  whether the output tensor has dim retained or not. - defaults to False
     :return:  output QTensor
 
 
@@ -1755,12 +1755,12 @@ sums
 cumsum
 ==============================
 
-.. py:function:: pyvqnet.tensor.cumsum(t, axis=-1)
+.. py:function:: pyvqnet.tensor.cumsum(t, dim=-1)
 
     Return the cumulative sum of input elements in the dimension axis.
 
     :param t:  the input QTensor
-    :param axis:  Calculation of the axis,defaults to -1,use the last axis
+    :param dim:  Calculation of the axis,defaults to -1,use the last axis
 
     :return:  output QTensor.
 
@@ -1779,13 +1779,13 @@ cumsum
 mean
 ==============================
 
-.. py:function:: pyvqnet.tensor.mean(t: pyvqnet.tensor.QTensor, axis=None, keepdims=False)
+.. py:function:: pyvqnet.tensor.mean(t: pyvqnet.tensor.QTensor, dim=None, keepdim=False)
 
     Obtain the mean values in the QTensor along the axis.
 
     :param t:  the input QTensor.
-    :param axis: the dimension to reduce.
-    :param keepdims:  whether the output QTensor has dim retained or not, defaults to False.
+    :param dim: the dimension to reduce.
+    :param keepdim:  whether the output QTensor has dim retained or not, defaults to False.
     :return: returns the mean value of the input QTensor.
 
     Example::
@@ -1793,7 +1793,7 @@ mean
         from pyvqnet.tensor import tensor
         from pyvqnet.tensor import QTensor
         t = QTensor([[1, 2, 3], [4, 5, 6.0]])
-        x = tensor.mean(t, axis=1)
+        x = tensor.mean(t, dim=1)
         print(x)
 
         # [2., 5.]
@@ -1801,13 +1801,13 @@ mean
 median
 ==============================
 
-.. py:function:: pyvqnet.tensor.median(t: pyvqnet.tensor.QTensor, axis=None, keepdims=False)
+.. py:function:: pyvqnet.tensor.median(t: pyvqnet.tensor.QTensor, dim=None, keepdim=False)
 
     Obtain the median value in the QTensor.
 
     :param t: the input QTensor
-    :param axis:  An axis for averaging,defaults to None
-    :param keepdims:  whether the output QTensor has dim retained or not, defaults to False
+    :param dim:  An axis for averaging,defaults to None
+    :param keepdim:  whether the output QTensor has dim retained or not, defaults to False
 
     :return: Return the median of the values in input or QTensor.
 
@@ -1834,14 +1834,14 @@ median
 std
 ==============================
 
-.. py:function:: pyvqnet.tensor.std(t: pyvqnet.tensor.QTensor, axis=None, keepdims=False, unbiased=True)
+.. py:function:: pyvqnet.tensor.std(t: pyvqnet.tensor.QTensor, dim=None, keepdim=False, unbiased=True)
 
     Obtain the standard variance value in the QTensor.
 
 
     :param t:  the input QTensor
-    :param axis:  the axis used to calculate the standard deviation,defaults to None
-    :param keepdims:  whether the output QTensor has dim retained or not, defaults to False
+    :param dim:  the axis used to calculate the standard deviation,defaults to None
+    :param keepdim:  whether the output QTensor has dim retained or not, defaults to False
     :param unbiased:  whether to use Bessel’s correction,default true
     :return: Return the standard variance of the values in input or QTensor
 
@@ -1868,14 +1868,14 @@ std
 var
 ==============================
 
-.. py:function:: pyvqnet.tensor.var(t: pyvqnet.tensor.QTensor, axis=None, keepdims=False, unbiased=True)
+.. py:function:: pyvqnet.tensor.var(t: pyvqnet.tensor.QTensor, dim=None, keepdim=False, unbiased=True)
 
     Obtain the variance in the QTensor.
 
 
     :param t:  the input QTensor.
-    :param axis:  The axis used to calculate the variance,defaults to None
-    :param keepdims:  whether the output QTensor has dim retained or not, defaults to False.
+    :param dim:  The axis used to calculate the variance,defaults to None
+    :param keepdim:  whether the output QTensor has dim retained or not, defaults to False.
     :param unbiased:  whether to use Bessel’s correction,default true.
 
 
@@ -2454,12 +2454,12 @@ log
 log_softmax
 ==============================
 
-.. py:function:: pyvqnet.tensor.log_softmax(t, axis=-1)
+.. py:function:: pyvqnet.tensor.log_softmax(t, dim=-1)
     
     Sequentially calculate the results of the softmax function and the log function on the axis axis.
 
     :param t: input QTensor .
-    :param axis: The axis used to calculate softmax, the default is -1.
+    :param dim: The axis used to calculate softmax, the default is -1.
 
     :return: Output QTensor.
 
@@ -2537,7 +2537,7 @@ eigh
 
         Returns eigenvalues ​​and eigenvectors
 
-    Examples::
+    Example::
 
         import numpy as np
         import pyvqnet
@@ -2566,14 +2566,14 @@ eigh
 frobenius_norm
 ==============================
 
-.. py:function:: pyvqnet.tensor.frobenius_norm(t: QTensor, axis: int = None, keepdims=False)
+.. py:function:: pyvqnet.tensor.frobenius_norm(t: QTensor, dim: int = None, keepdim=False)
 
     Computes the F-norm of the tensor on the input QTensor along the axis set by axis ,
     if axis is None, returns the F-norm of all elements.
 
     :param t: Inpout QTensor .
-    :param axis: The axis used to find the F norm, the default is None.
-    :param keepdims: Whether the output tensor preserves the reduced dimensionality. The default is False.
+    :param dim: The axis used to find the F norm, the default is None.
+    :param keepdim: Whether the output tensor preserves the reduced dimensionality. The default is False.
     :return: Output a QTensor or F-norm value.
 
 
@@ -2645,14 +2645,14 @@ minimum
 min
 ==============================
 
-.. py:function:: pyvqnet.tensor.min(t: pyvqnet.tensor.QTensor, axis=None, keepdims=False)
+.. py:function:: pyvqnet.tensor.min(t: pyvqnet.tensor.QTensor, dim=None, keepdim=False)
 
     Return min elements of the input QTensor alongside given axis.
     if axis == None, return the min value of all elements in tensor.
 
     :param t: input QTensor
-    :param axis: axis used for min, defaults to None
-    :param keepdims:  whether the output tensor has dim retained or not. - defaults to False
+    :param dim: axis used for min, defaults to None
+    :param keepdim:  whether the output tensor has dim retained or not. - defaults to False
     :return: output QTensor
 
     Example::
@@ -2660,7 +2660,7 @@ min
         from pyvqnet.tensor import tensor
         from pyvqnet.tensor import QTensor
         t = QTensor([[1, 2, 3], [4, 5, 6]])
-        x = tensor.min(t, axis=1, keepdims=True)
+        x = tensor.min(t, dim=1, keepdim=True)
         print(x)
 
         # [
@@ -2671,14 +2671,14 @@ min
 max
 ==============================
 
-.. py:function:: pyvqnet.tensor.max(t: pyvqnet.tensor.QTensor, axis=None, keepdims=False)
+.. py:function:: pyvqnet.tensor.max(t: pyvqnet.tensor.QTensor, dim=None, keepdim=False)
 
     Return max elements of the input QTensor alongside given axis.
     if axis == None, return the max value of all elements in tensor.
 
     :param t: input QTensor
-    :param axis: axis used for max, defaults to None
-    :param keepdims:  whether the output tensor has dim retained or not. - defaults to False
+    :param dim: axis used for max, defaults to None
+    :param keepdim:  whether the output tensor has dim retained or not. - defaults to False
     :return: output QTensor
 
     Example::
@@ -2686,7 +2686,7 @@ max
         from pyvqnet.tensor import tensor
         from pyvqnet.tensor import QTensor
         t = QTensor([[1, 2, 3], [4, 5, 6]])
-        x = tensor.max(t, axis=1, keepdims=True)
+        x = tensor.max(t, dim=1, keepdim=True)
         print(x)
 
         # [[3],
@@ -3217,12 +3217,12 @@ broadcast
 concatenate
 ==============================
 
-.. py:function:: pyvqnet.tensor.concatenate(args: list, axis=1)
+.. py:function:: pyvqnet.tensor.concatenate(args: list, dim=0)
 
     Concatenate the input QTensor along the axis and return a new QTensor.
 
     :param args: list consist of input QTensors
-    :param axis: dimension to concatenate. Has to be between 0 and the number of dimensions of concatenate tensors.
+    :param dim: dimension to concatenate. Has to be between 0 and the number of dimensions of concatenate tensors.
     :return: output QTensor
 
     Example::
@@ -3242,12 +3242,12 @@ concatenate
 stack
 ==============================
 
-.. py:function:: pyvqnet.tensor.stack(QTensors: list, axis) 
+.. py:function:: pyvqnet.tensor.stack(QTensors: list, dim=0) 
 
     Join a sequence of arrays along a new axis,return a new QTensor.
 
     :param QTensors: list contains QTensors
-    :param axis: dimension to insert. Has to be between 0 and the number of dimensions of stacked tensors. 
+    :param dim: dimension to insert. Has to be between 0 and the number of dimensions of stacked tensors. 
     :return: output QTensor
 
     Example::
@@ -3382,12 +3382,12 @@ tile
 squeeze
 ==============================
 
-.. py:function:: pyvqnet.tensor.squeeze(t: pyvqnet.tensor.QTensor, axis: int = - 1)
+.. py:function:: pyvqnet.tensor.squeeze(t: pyvqnet.tensor.QTensor, dim: Optional[int] = None)
 
     Remove axes of length one .
 
     :param t: input QTensor
-    :param axis: squeeze axis,if axis = -1 ,squeeze all the dimensions that have size of 1.
+    :param dim: squeeze axis,if axis = -1 ,squeeze all the dimensions that have size of 1.
     :return: output QTensor
 
     Example::
@@ -3412,12 +3412,12 @@ squeeze
 unsqueeze
 ==============================
 
-.. py:function:: pyvqnet.tensor.unsqueeze(t: pyvqnet.tensor.QTensor, axis: int = 0)
+.. py:function:: pyvqnet.tensor.unsqueeze(t: pyvqnet.tensor.QTensor, dim: int = 0)
 
     Return a new QTensor with a dimension of size one inserted at the specified position.
 
     :param t: input QTensor
-    :param axis: unsqueeze axis,which will insert dimension.
+    :param dim: unsqueeze axis,which will insert dimension.
     :return: output QTensor
 
     Example::
@@ -3470,13 +3470,13 @@ moveaxis
 swapaxis
 ==============================
 
-.. py:function:: pyvqnet.tensor.swapaxis(t, axis1: int, axis2: int)
+.. py:function:: pyvqnet.tensor.swapaxis(t, dim1: int, dim2: int)
 
-    Interchange two axes of an array.The given dimensions axis1 and axis2 are swapped.
+    Interchange two axes of an array.The given dimensions dim1 and dim2 are swapped.
 
     :param t: input QTensor
-    :param axis1: First axis.
-    :param axis2:  Destination position for the original axis. These must also be unique
+    :param dim1: First axis.
+    :param dim2:  Destination position for the original axis. These must also be unique
     :return: output QTensor
 
     Example::
@@ -3512,7 +3512,7 @@ masked_fill
     :param value: specified value
     :return:  A QTensor
 
-    Examples::
+    Example::
 
         from pyvqnet.tensor import tensor
         import numpy as np
@@ -3796,7 +3796,7 @@ pad_sequence
          If batch_first is ``False``, the tensor size is ``batch size x longest sequence length x *``.
          Otherwise the size of the tensor is ``longest sequence length x batch size x *``.
 
-    Examples::
+    Example::
 
         from pyvqnet.tensor import tensor
         a = tensor.ones([4, 2,3])
@@ -3852,7 +3852,7 @@ pad_packed_sequence
     :return:
         A tuple of tensors containing the padded sequences, and a list of lengths for each sequence in the batch. Batch elements will be reordered in their original order.
     
-    Examples::
+    Example::
 
         from pyvqnet.tensor import tensor
         a = tensor.ones([4, 2,3])
@@ -3930,7 +3930,7 @@ pack_pad_sequence
 
     :return: A :class:`PackedSequence` object.
 
-    Examples::
+    Example::
 
         from pyvqnet.tensor import tensor
         a = tensor.ones([4, 2,3])
@@ -3989,7 +3989,7 @@ functional_conv2d
     :return: qtensor 
 
 
-    Examples:: 
+    Example:: 
 
         from pyvqnet.nn.functional import functional_conv2d 
         from pyvqnet.tensor import arange,ones 

@@ -2942,7 +2942,7 @@ VQC_Controlled_Hadamard
     :param wires: Qubit idx, the first is the control bit, and the list length is 2.
     :param q_machine: Quantum virtual machine device.
 
-    Examples::
+    Example::
 
         from pyvqnet.tensor import QTensor
         from pyvqnet.qnn.vqc.qcircuit import VQC_Controlled_Hadamard
@@ -3022,7 +3022,7 @@ VQC_FermionicSingleExcitation
     :return:
             pyqpanda QCircuit
 
-    Examples::
+    Example::
 
         from pyvqnet.tensor import QTensor
         from pyvqnet.qnn.vqc.qcircuit import VQC_FermionicSingleExcitation
@@ -3072,7 +3072,7 @@ VQC_FermionicDoubleExcitation
     :return:
         pyqpanda QCircuit
 
-    Examples::
+    Example::
 
         from pyvqnet.tensor import QTensor
         from pyvqnet.qnn.vqc.qcircuit import VQC_FermionicDoubleExcitation
@@ -3124,7 +3124,7 @@ VQC_UCCSD
          high frequency state. ``init_state`` is the qubit initialization state.
     :param q_machine: Quantum virtual machine device.
 
-    Examples::
+    Example::
 
         from pyvqnet.qnn.vqc import VQC_UCCSD, QMachine, MeasureAll
         from pyvqnet.tensor import QTensor
@@ -3319,44 +3319,6 @@ VQC_BasisRotation
         #   [[-0.1715559-0.1614315j  0.1624039-0.0598041j]
         #    [ 0.0608986-0.1078906j -0.305845 +0.1773662j]]]]
 
-VQC_QuantumPoolingCircuit
------------------------------------------
-
-.. py:function:: pyvqnet.qnn.vqc.VQC_QuantumPoolingCircuit(ignored_wires, sinks_wires, params, q_machine)
-
-    A quantum circuit that downsamples data.
-
-    To reduce the number of qubits in a circuit, pairs of qubits are first created in the system. After initially pairing all qubits, a generalized 2-qubit unitary is applied to each pair of qubits. 
-    And after applying the two-qubit unitary, one qubit in each pair of qubits is ignored in the rest of the neural network.
-
-    :param sources_wires: The source qubit index that will be ignored.
-    :param sinks_wires: The target qubit index to keep.
-    :param params: Input parameters.
-    :param q_machine: Quantum virtual machine device.
-
-    :return:
-        pyqpanda QCircuit
-
-    Examples:: 
-
-        from pyvqnet.qnn.vqc import VQC_QuantumPoolingCircuit, QMachine, MeasureAll
-        import pyqpanda as pq
-        from pyvqnet import tensor
-        machine = pq.CPUQVM()
-        machine.init_qvm()
-        qlists = machine.qAlloc_many(4)
-        p = tensor.full([6], 0.35)
-        qm = QMachine(4)
-        VQC_QuantumPoolingCircuit(q_machine=qm,
-                                ignored_wires=[0, 1],
-                                sinks_wires=[2, 3],
-                                params=p)
-        m = MeasureAll(obs={"Z1": 1})
-        exp = m(q_machine=qm)
-        print(exp)
-
-
-
 ExpressiveEntanglingAnsatz
 ---------------------------------------------------------------
 
@@ -3550,7 +3512,7 @@ VQC_FABLE
 
     :return: Returns an instance of the VQC-based FABLE class.
 
-    Examples::
+    Example::
 
         from pyvqnet.qnn.vqc import VQC_FABLE
         from pyvqnet.qnn.vqc import QMachine
@@ -3585,7 +3547,7 @@ VQC_LCU
     :param wires: qlist index on which operator to act, may require auxiliary qubits.
     :param check_hermitian: Check if input is Hermitian, default: True.
 
-    Examples::
+    Example::
 
         from pyvqnet.qnn.vqc import VQC_LCU
         from pyvqnet.qnn.vqc import QMachine
@@ -4250,7 +4212,7 @@ Quanvolution
     :param machine_type_or_cloud_token: Machine type string or Qcloud token, default is "cpu".
     :return: A Quanvolution instance.
 
-    Examples::
+    Example::
 
         from pyvqnet.qnn.qcnn import Quanvolution
         import pyvqnet.tensor as tensor
@@ -5757,7 +5719,7 @@ QNSPSAOptimizer
 
         :return: Updated parameters.
 
-        Examples::
+        Example::
 
             from pyvqnet.tensor import QTensor,ones,randu
             from pyvqnet.qnn.vqc import rx,cry,QMachine,MeasureAll,QModule
@@ -5787,6 +5749,2642 @@ QNSPSAOptimizer
                 loss =qmd(params)
                 if i % 10 == 0:
                     print(f"Step {i}: cost = {loss}")
+
+
+Tensor Network Backend Variational Quantum Circuit Module
+============================================
+
+.. note::
+
+    This module implements automatic differentiation and GPU acceleration based on ``jax``. The default ``pyvqnet`` installation does not include this dependency; install it with ``pip install jax`` (CPU) or ``pip install jax[cuda12]`` (GPU, requires CUDA 12.6). In addition, ``tensornetwork`` must be installed: ``pip install tensornetwork``.
+
+Tensor Network (TN) significantly reduces computational complexity by decomposing complex tensors into a network of lower-dimensional tensors.
+
+Matrix Product State (MPS) is a special form of tensor network. MPS represents a quantum state as a product of a series of matrices, effectively reducing the number of parameters and lowering the computational complexity.
+
+The following interfaces are based on the ``pyvqnet`` backend (default backend) and provide support for building quantum circuits with tensor networks, including base classes for circuit construction, quantum logic gates, quantum circuits, and measurement methods. Parameter gradients are computed by automatic differentiation simulation instead of the parameter-shift method.
+
+Constructing quantum circuits in MPS mode complements the support for building large-qubit quantum circuits.
+
+.. warning::
+
+        Enable MPS circuit construction via the ``use_mps`` parameter of ``TNQMachine``, supporting large-qubit (100 and above) quantum circuit simulation.
+
+.. warning::
+        
+        Batch usage differs from the classical-module usage. Based on vmap, data and parameters that build circuits are input with one dimension fewer, i.e., the state-vector simulation code ``x[:,i]`` should be changed to ``x[i]``. See the examples in the interfaces below. Batch execution must be based on both ``TNQMachine`` and ``TNQModule``, and the batch size must be explicitly specified via ``reset_states`` of ``TNQMachine``.
+
+base class
+--------------------------------------------------
+
+TNQModule
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+Variational quantum circuit models based on tensor networks need to inherit from ``TNQModule``:
+
+.. py:class:: pyvqnet.qnn.vqc.tn.native.TNQModule(use_jit=True,vectorized_argnums=0,name="")
+
+    Under the `pyvqnet` backend (default backend), this is the base class that a tensor-network variational quantum circuit model `Module` should inherit from.
+    This class uses tensor-network modules to execute quantum circuits.
+
+    :param use_jit: Enable JIT compilation, default: True.
+    :param vectorized_argnums: Indices of the arguments to be vectorized. These arguments should share the same batch shape along the same dimension, default: 0.
+    :param name: Name of the module.
+
+    .. note::
+
+        When ``use_jit`` is enabled, the model is JIT-compiled with ``jax`` ``jit``. The first run performs the compilation, which takes a long time.
+
+    .. note::
+
+        This class and its derived classes are only applicable under ``pyvqnet.backends.set_backend("pyvqnet")``.
+
+    Example::
+
+        import pyvqnet
+        from pyvqnet.nn import Parameter
+        pyvqnet.backends.set_backend("pyvqnet")
+        from pyvqnet.qnn.vqc.tn.native import TNQModule
+        from pyvqnet.qnn.vqc.tn.native import TNQMachine, RX, RY, CNOT, PauliX, PauliZ,qmeasure,qcircuit,VQC_RotCircuit
+        class QModel(TNQModule):
+            def __init__(self, num_wires, dtype,batch_size=2):
+                super(QModel, self).__init__()
+
+                self._num_wires = num_wires
+                self._dtype = dtype
+                self.qm = TNQMachine(num_wires, dtype=dtype)
+
+                self.w = Parameter((2,4,3),initializer=pyvqnet.utils.initializer.quantum_uniform)
+                self.cnot = CNOT(wires=[0, 1])
+                self.batch_size = batch_size
+            def forward(self, x, *args, **kwargs):
+                self.qm.reset_states(batchsize=self.batch_size)
+
+                def get_cnot(nqubits,qm):
+                    for i in range(len(nqubits) - 1):
+                        CNOT(wires = [nqubits[i], nqubits[i + 1]])(q_machine = qm)
+                    CNOT(wires = [nqubits[len(nqubits) - 1], nqubits[0]])(q_machine = qm)
+
+
+                def build_circuit(weights, xx, nqubits,qm):
+                    def Rot(weights_j, nqubits,qm):#pylint:disable=invalid-name
+                        VQC_RotCircuit(qm,nqubits,weights_j)
+
+                    def basisstate(qm,xx, nqubits):
+                        for i in nqubits:
+                            qcircuit.rz(q_machine=qm, wires=i, params=xx[i])
+                            qcircuit.ry(q_machine=qm, wires=i, params=xx[i])
+                            qcircuit.rz(q_machine=qm, wires=i, params=xx[i])
+
+                    basisstate(qm,xx,nqubits)
+
+                    for i in range(weights.shape[0]):
+
+                        weights_i = weights[i, :, :]
+                        for j in range(len(nqubits)):
+                            weights_j = weights_i[j]
+                            Rot(weights_j, nqubits[j],qm)
+                        get_cnot(nqubits,qm)
+
+                build_circuit(self.w, x,range(4),self.qm)
+
+                y= qmeasure.MeasureAll(obs={'Z0': 1})(self.qm)
+                return y
+
+
+        x= pyvqnet.tensor.QTensor([[1,0,0,1],[1,1,0,1]],dtype=pyvqnet.kfloat32)
+        model = QModel(4,pyvqnet.kcomplex64,2)
+        y = model(x)
+        y.backward(pyvqnet.tensor.ones_like(y))
+
+TNQMachine
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+Variational quantum circuit devices based on tensor networks need to be initialized with ``TNQMachine``.
+
+.. py:class:: pyvqnet.qnn.vqc.tn.native.TNQMachine(num_wires, dtype=pyvqnet.kcomplex64,use_mps=False)
+
+    Simulator class for variational quantum computing, containing a ``states`` attribute which holds the state vectors of the quantum circuit.
+
+    .. warning::
+        
+        Before running a complete quantum circuit, `pyvqnet.qnn.vqc.tn.native.TNQMachine.reset_states(batchsize)` must be used to reinitialize the initial state inside the simulator and broadcast it to
+        (batchsize, *) dimensions for batch data training.
+
+    .. warning::
+        
+        In tensor-network quantum circuits, the ``vmap`` feature is enabled by default, and the batch dimension is discarded from the logic-gate parameters on the circuit.
+        When calling, if the argument dimension is [batch_size, \*], the first batch_size dimension is dropped and the remaining dimensions are used directly, e.g., input data x[:,1] -> x[1]; the same applies to trainable parameters. See the xx, weights usage in the examples below.
+
+
+    :param num_wires: Number of qubits.
+    :param dtype: Data type for computation. Default: pyvqnet.kcomplex64, corresponding parameter precision is pyvqnet.kfloat32.
+    :param use_mps: Whether to simulate based on mpscircuit, used to simulate large-qubit quantum circuit execution.
+
+    :return: An TNQMachine object.
+
+    Example::
+        
+        import pyvqnet
+        from pyvqnet.nn import Parameter
+        pyvqnet.backends.set_backend("pyvqnet")
+        from pyvqnet.qnn.vqc.tn.native import TNQModule
+        from pyvqnet.qnn.vqc.tn.native import TNQMachine, RX, RY, CNOT, PauliX, PauliZ,qmeasure,qcircuit,VQC_RotCircuit
+        class QModel(TNQModule):
+            def __init__(self, num_wires, dtype,batch_size=2):
+                super(QModel, self).__init__()
+
+                self._num_wires = num_wires
+                self._dtype = dtype
+                self.qm = TNQMachine(num_wires, dtype=dtype)
+
+                self.w = Parameter((2,4,3),initializer=pyvqnet.utils.initializer.quantum_uniform)
+                self.cnot = CNOT(wires=[0, 1])
+                self.batch_size = batch_size
+            def forward(self, x, *args, **kwargs):
+                self.qm.reset_states(batchsize=self.batch_size)
+
+                def get_cnot(nqubits,qm):
+                    for i in range(len(nqubits) - 1):
+                        CNOT(wires = [nqubits[i], nqubits[i + 1]])(q_machine = qm)
+                    CNOT(wires = [nqubits[len(nqubits) - 1], nqubits[0]])(q_machine = qm)
+
+
+                def build_circuit(weights, xx, nqubits,qm):
+                    def Rot(weights_j, nqubits,qm):#pylint:disable=invalid-name
+                        VQC_RotCircuit(qm,nqubits,weights_j)
+
+                    def basisstate(qm,xx, nqubits):
+                        for i in nqubits:
+                            qcircuit.rz(q_machine=qm, wires=i, params=xx[i])
+                            qcircuit.ry(q_machine=qm, wires=i, params=xx[i])
+                            qcircuit.rz(q_machine=qm, wires=i, params=xx[i])
+
+                    basisstate(qm,xx,nqubits)
+
+                    for i in range(weights.shape[0]):
+
+                        weights_i = weights[i, :, :]
+                        for j in range(len(nqubits)):
+                            weights_j = weights_i[j]
+                            Rot(weights_j, nqubits[j],qm)
+                        get_cnot(nqubits,qm)
+
+                build_circuit(self.w, x,range(4),self.qm)
+
+                y= qmeasure.MeasureAll(obs={'Z0': 1})(self.qm)
+                return y
+
+
+        x= pyvqnet.tensor.QTensor([[1,0,0,1],[1,1,0,1]],dtype=pyvqnet.kfloat32)
+        model = QModel(4,pyvqnet.kcomplex64,2)
+        y = model(x)
+        y.backward(pyvqnet.tensor.ones_like(y))
+
+    .. py:method:: get_states()
+
+        Obtain the states in the tensor network.
+
+Variational Quantum Logic Gate Module
+--------------------------------------------------
+
+
+The function interfaces in ``pyvqnet.qnn.vqc`` below directly support computation with ``QTensor`` of the ``pyvqnet`` backend, invoked via ``pyvqnet.qnn.vqc.tn.native``.
+
+.. csv-table:: List of supported pyvqnet.qnn.vqc.sv.native interfaces
+   :file: ./images/same_apis_from_tn.csv
+
+The following quantum circuit modules inherit from ``pyvqnet.qnn.vqc.tn.native.TNQModule``, in which computation is performed with ``QTensor``.
+
+
+.. warning::
+
+    This class and its derived classes are only applicable under ``pyvqnet.backends.set_backend("pyvqnet")``.
+
+    If these classes have non-parameter member variable ``_buffers``, the data within is of ``QTensor`` type.
+    If these classes have parameter member variable ``_parameters``, the data within is of ``pyvqnet.nn.Parameter`` type.
+
+I
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. py:class:: pyvqnet.qnn.vqc.tn.native.I(has_params: bool = False,trainable: bool = False,init_params=None,wires=None,dtype=pyvqnet.kcomplex64,use_dagger=False)
+    
+    Defines a I logic gate class.
+
+    .. warning::
+
+        This class inherits from ``pyvqnet.qnn.vqc.tn.native.QModule`` and ``pyvqnet.nn.Module``.
+        This class can be added as a submodule of ``pyvqnet.nn.Module`` into a ``TNQModule`` model.
+
+    :param has_params: Whether the gate has parameters. Gates such as RX and RY should be set to True; parameter-free gates should be set to False. Default: False.
+    :param trainable: Whether the layer carries trainable parameters. Set to False if this layer builds the gate matrix from external input data; set to True if the trainable parameters need to be initialized from this layer. Default: False.
+    :param init_params: Initialization parameters, a QTensor used to encode classical data, default: None.
+    :param wires: Qubit indices on which the circuit acts, default: None.
+    :param dtype: Data precision of the matrix inside the gate; can be set to pyvqnet.kcomplex64 or pyvqnet.kcomplex128, corresponding to float or double inputs respectively.
+    :param use_dagger: Whether to use the transpose-conjugate version of this gate, default: False.
+    :return: A I logic gate instance.
+
+    Example::
+
+
+        import pyvqnet
+        pyvqnet.backends.set_backend("pyvqnet")
+        from pyvqnet.qnn.vqc.tn.native import I,TNQMachine
+        device = TNQMachine(4)
+        layer = I(wires=0)
+        batchsize = 1
+        device.reset_states(1)
+        layer(q_machine = device)
+        print(device.get_states())
+
+Hadamard
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. py:class:: pyvqnet.qnn.vqc.tn.native.Hadamard(has_params: bool = False,trainable: bool = False,init_params=None,wires=None,dtype=pyvqnet.kcomplex64,use_dagger=False)
+    
+    Defines a Hadamard logic gate class.
+
+    .. warning::
+
+        This class inherits from ``pyvqnet.qnn.vqc.tn.native.QModule`` and ``pyvqnet.nn.Module``.
+        This class can be added as a submodule of ``pyvqnet.nn.Module`` into a ``TNQModule`` model.
+
+    :param has_params: Whether the gate has parameters. Gates such as RX and RY should be set to True; parameter-free gates should be set to False. Default: False.
+    :param trainable: Whether the layer carries trainable parameters. Set to False if this layer builds the gate matrix from external input data; set to True if the trainable parameters need to be initialized from this layer. Default: False.
+    :param init_params: Initialization parameters, a QTensor used to encode classical data, default: None.
+    :param wires: Qubit indices on which the circuit acts, default: None.
+    :param dtype: Data precision of the matrix inside the gate; can be set to pyvqnet.kcomplex64 or pyvqnet.kcomplex128, corresponding to float or double inputs respectively.
+    :param use_dagger: Whether to use the transpose-conjugate version of this gate, default: False.
+    :return: A Hadamard logic gate instance.
+
+    Example::
+
+
+        import pyvqnet
+        pyvqnet.backends.set_backend("pyvqnet")
+        from pyvqnet.qnn.vqc.tn.native import Hadamard,TNQMachine
+        device = TNQMachine(4)
+        layer = Hadamard(wires=0)
+        batchsize = 1
+        device.reset_states(1)
+        layer(q_machine = device)
+        print(device.get_states())
+
+T
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. py:class:: pyvqnet.qnn.vqc.tn.native.T(has_params: bool = False,trainable: bool = False,init_params=None,wires=None,dtype=pyvqnet.kcomplex64,use_dagger=False)
+    
+    Defines a T logic gate class.
+
+    .. warning::
+
+        This class inherits from ``pyvqnet.qnn.vqc.tn.native.QModule`` and ``pyvqnet.nn.Module``.
+        This class can be added as a submodule of ``pyvqnet.nn.Module`` into a ``TNQModule`` model.
+
+    :param has_params: Whether the gate has parameters. Gates such as RX and RY should be set to True; parameter-free gates should be set to False. Default: False.
+    :param trainable: Whether the layer carries trainable parameters. Set to False if this layer builds the gate matrix from external input data; set to True if the trainable parameters need to be initialized from this layer. Default: False.
+    :param init_params: Initialization parameters, a QTensor used to encode classical data, default: None.
+    :param wires: Qubit indices on which the circuit acts, default: None.
+    :param dtype: Data precision of the matrix inside the gate; can be set to pyvqnet.kcomplex64 or pyvqnet.kcomplex128, corresponding to float or double inputs respectively.
+    :param use_dagger: Whether to use the transpose-conjugate version of this gate, default: False.
+    :return: A T logic gate instance.
+
+    Example::
+
+
+        import pyvqnet
+        pyvqnet.backends.set_backend("pyvqnet")
+        from pyvqnet.qnn.vqc.tn.native import T,TNQMachine
+        device = TNQMachine(4)
+        layer = T(wires=0)
+        batchsize = 1
+        device.reset_states(1)
+        layer(q_machine = device)
+        print(device.get_states())
+
+S
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. py:class:: pyvqnet.qnn.vqc.tn.native.S(has_params: bool = False,trainable: bool = False,init_params=None,wires=None,dtype=pyvqnet.kcomplex64,use_dagger=False)
+    
+    Defines a S logic gate class.
+
+    .. warning::
+
+        This class inherits from ``pyvqnet.qnn.vqc.tn.native.QModule`` and ``pyvqnet.nn.Module``.
+        This class can be added as a submodule of ``pyvqnet.nn.Module`` into a ``TNQModule`` model.
+
+    :param has_params: Whether the gate has parameters. Gates such as RX and RY should be set to True; parameter-free gates should be set to False. Default: False.
+    :param trainable: Whether the layer carries trainable parameters. Set to False if this layer builds the gate matrix from external input data; set to True if the trainable parameters need to be initialized from this layer. Default: False.
+    :param init_params: Initialization parameters, a QTensor used to encode classical data, default: None.
+    :param wires: Qubit indices on which the circuit acts, default: None.
+    :param dtype: Data precision of the matrix inside the gate; can be set to pyvqnet.kcomplex64 or pyvqnet.kcomplex128, corresponding to float or double inputs respectively.
+    :param use_dagger: Whether to use the transpose-conjugate version of this gate, default: False.
+    :return: A S logic gate instance.
+
+    Example::
+
+
+        import pyvqnet
+        pyvqnet.backends.set_backend("pyvqnet")
+        from pyvqnet.qnn.vqc.tn.native import S,TNQMachine
+        device = TNQMachine(4)
+        layer = S(wires=0)
+        batchsize = 1
+        device.reset_states(1)
+        layer(q_machine = device)
+        print(device.get_states())
+
+PauliX
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. py:class:: pyvqnet.qnn.vqc.tn.native.PauliX(has_params: bool = False,trainable: bool = False,init_params=None,wires=None,dtype=pyvqnet.kcomplex64,use_dagger=False)
+    
+    Defines a PauliX logic gate class.
+
+    .. warning::
+
+        This class inherits from ``pyvqnet.qnn.vqc.tn.native.QModule`` and ``pyvqnet.nn.Module``.
+        This class can be added as a submodule of ``pyvqnet.nn.Module`` into a ``TNQModule`` model.
+
+
+    :param has_params: Whether the gate has parameters. Gates such as RX and RY should be set to True; parameter-free gates should be set to False. Default: False.
+    :param trainable: Whether the layer carries trainable parameters. Set to False if this layer builds the gate matrix from external input data; set to True if the trainable parameters need to be initialized from this layer. Default: False.
+    :param init_params: Initialization parameters, a QTensor used to encode classical data, default: None.
+    :param wires: Qubit indices on which the circuit acts, default: None.
+    :param dtype: Data precision of the matrix inside the gate; can be set to pyvqnet.kcomplex64 or pyvqnet.kcomplex128, corresponding to float or double inputs respectively.
+    :param use_dagger: Whether to use the transpose-conjugate version of this gate, default: False.
+    :return: A PauliX logic gate instance.
+
+    Example::
+
+
+        import pyvqnet
+        pyvqnet.backends.set_backend("pyvqnet")
+        from pyvqnet.qnn.vqc.tn.native import PauliX,TNQMachine
+        device = TNQMachine(4)
+        layer = PauliX(wires=0)
+        batchsize = 1
+        device.reset_states(1)
+        layer(q_machine = device)
+        print(device.get_states())
+
+PauliY
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. py:class:: pyvqnet.qnn.vqc.tn.native.PauliY(has_params: bool = False,trainable: bool = False,init_params=None,wires=None,dtype=pyvqnet.kcomplex64,use_dagger=False)
+    
+    Defines a PauliY logic gate class.
+
+    .. warning::
+
+        This class inherits from ``pyvqnet.qnn.vqc.tn.native.QModule`` and ``pyvqnet.nn.Module``.
+        This class can be added as a submodule of ``pyvqnet.nn.Module`` into a ``TNQModule`` model.
+
+
+    :param has_params: Whether the gate has parameters. Gates such as RX and RY should be set to True; parameter-free gates should be set to False. Default: False.
+    :param trainable: Whether the layer carries trainable parameters. Set to False if this layer builds the gate matrix from external input data; set to True if the trainable parameters need to be initialized from this layer. Default: False.
+    :param init_params: Initialization parameters, a QTensor used to encode classical data, default: None.
+    :param wires: Qubit indices on which the circuit acts, default: None.
+    :param dtype: Data precision of the matrix inside the gate; can be set to pyvqnet.kcomplex64 or pyvqnet.kcomplex128, corresponding to float or double inputs respectively.
+    :param use_dagger: Whether to use the transpose-conjugate version of this gate, default: False.
+    :return: A PauliY logic gate instance.
+
+    Example::
+
+
+        import pyvqnet
+        pyvqnet.backends.set_backend("pyvqnet")
+        from pyvqnet.qnn.vqc.tn.native import PauliY,TNQMachine
+        device = TNQMachine(4)
+        layer = PauliY(wires=0)
+        batchsize = 1
+        device.reset_states(1)
+        layer(q_machine = device)
+        print(device.get_states())
+
+PauliZ
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. py:class:: pyvqnet.qnn.vqc.tn.native.PauliZ(has_params: bool = False,trainable: bool = False,init_params=None,wires=None,dtype=pyvqnet.kcomplex64,use_dagger=False)
+    
+    Defines a PauliZ logic gate class.
+
+    .. warning::
+
+        This class inherits from ``pyvqnet.qnn.vqc.tn.native.QModule`` and ``pyvqnet.nn.Module``.
+        This class can be added as a submodule of ``pyvqnet.nn.Module`` into a ``TNQModule`` model.
+
+
+    :param has_params: Whether the gate has parameters. Gates such as RX and RY should be set to True; parameter-free gates should be set to False. Default: False.
+    :param trainable: Whether the layer carries trainable parameters. Set to False if this layer builds the gate matrix from external input data; set to True if the trainable parameters need to be initialized from this layer. Default: False.
+    :param init_params: Initialization parameters, a QTensor used to encode classical data, default: None.
+    :param wires: Qubit indices on which the circuit acts, default: None.
+    :param dtype: Data precision of the matrix inside the gate; can be set to pyvqnet.kcomplex64 or pyvqnet.kcomplex128, corresponding to float or double inputs respectively.
+    :param use_dagger: Whether to use the transpose-conjugate version of this gate, default: False.
+    :return: A PauliZ logic gate instance.
+
+    Example::
+
+
+        import pyvqnet
+        pyvqnet.backends.set_backend("pyvqnet")
+        from pyvqnet.qnn.vqc.tn.native import PauliZ,TNQMachine
+        device = TNQMachine(4)
+        layer = PauliZ(wires=0)
+        batchsize = 1
+        device.reset_states(1)
+        layer(q_machine = device)
+        print(device.get_states())
+
+RX
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. py:class:: pyvqnet.qnn.vqc.tn.native.RX(has_params: bool = False,trainable: bool = False,init_params=None,wires=None,dtype=pyvqnet.kcomplex64,use_dagger=False)
+    
+    Defines a RX logic gate class.
+
+
+    .. warning::
+
+        This class inherits from ``pyvqnet.qnn.vqc.tn.native.QModule`` and ``pyvqnet.nn.Module``.
+        This class can be added as a submodule of ``pyvqnet.nn.Module`` into a ``TNQModule`` model.
+
+    :param has_params: Whether the gate has parameters. Gates such as RX and RY should be set to True; parameter-free gates should be set to False. Default: False.
+    :param trainable: Whether the layer carries trainable parameters. Set to False if this layer builds the gate matrix from external input data; set to True if the trainable parameters need to be initialized from this layer. Default: False.
+    :param init_params: Initialization parameters, a QTensor used to encode classical data, default: None.
+    :param wires: Qubit indices on which the circuit acts, default: None.
+    :param dtype: Data precision of the matrix inside the gate; can be set to pyvqnet.kcomplex64 or pyvqnet.kcomplex128, corresponding to float or double inputs respectively.
+    :param use_dagger: Whether to use the transpose-conjugate version of this gate, default: False.
+    :return: A RX logic gate instance.
+
+    Example::
+
+        import pyvqnet
+        pyvqnet.backends.set_backend("pyvqnet")
+        from pyvqnet.qnn.vqc.tn.native import RX,TNQMachine
+        device = TNQMachine(4)
+        layer = RX(has_params= True, trainable= True, wires=0)
+        batchsize = 2
+        device.reset_states(batchsize)
+        layer(q_machine = device)
+        print(device.get_states())
+
+RY
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. py:class:: pyvqnet.qnn.vqc.tn.native.RY(has_params: bool = False,trainable: bool = False,init_params=None,wires=None,dtype=pyvqnet.kcomplex64,use_dagger=False)
+    
+    Defines a RY logic gate class.
+
+    .. warning::
+
+        This class inherits from ``pyvqnet.qnn.vqc.tn.native.QModule`` and ``pyvqnet.nn.Module``.
+        This class can be added as a submodule of ``pyvqnet.nn.Module`` into a ``TNQModule`` model.
+
+    :param has_params: Whether the gate has parameters. Gates such as RX and RY should be set to True; parameter-free gates should be set to False. Default: False.
+    :param trainable: Whether the layer carries trainable parameters. Set to False if this layer builds the gate matrix from external input data; set to True if the trainable parameters need to be initialized from this layer. Default: False.
+    :param init_params: Initialization parameters, a QTensor used to encode classical data, default: None.
+    :param wires: Qubit indices on which the circuit acts, default: None.
+    :param dtype: Data precision of the matrix inside the gate; can be set to pyvqnet.kcomplex64 or pyvqnet.kcomplex128, corresponding to float or double inputs respectively.
+    :param use_dagger: Whether to use the transpose-conjugate version of this gate, default: False.
+    :return: A RY logic gate instance.
+
+    Example::
+
+        import pyvqnet
+        pyvqnet.backends.set_backend("pyvqnet")
+        from pyvqnet.qnn.vqc.tn.native import RY,TNQMachine
+        device = TNQMachine(4)
+        layer = RY(has_params= True, trainable= True, wires=0)
+        batchsize = 2
+        device.reset_states(batchsize)
+        layer(q_machine = device)
+        print(device.get_states())
+
+RZ
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. py:class:: pyvqnet.qnn.vqc.tn.native.RZ(has_params: bool = False,trainable: bool = False,init_params=None,wires=None,dtype=pyvqnet.kcomplex64,use_dagger=False)
+    
+    Defines a RZ logic gate class.
+
+    .. warning::
+
+        This class inherits from ``pyvqnet.qnn.vqc.tn.native.QModule`` and ``pyvqnet.nn.Module``.
+        This class can be added as a submodule of ``pyvqnet.nn.Module`` into a ``TNQModule`` model.
+
+    :param has_params: Whether the gate has parameters. Gates such as RX and RY should be set to True; parameter-free gates should be set to False. Default: False.
+    :param trainable: Whether the layer carries trainable parameters. Set to False if this layer builds the gate matrix from external input data; set to True if the trainable parameters need to be initialized from this layer. Default: False.
+    :param init_params: Initialization parameters, a QTensor used to encode classical data, default: None.
+    :param wires: Qubit indices on which the circuit acts, default: None.
+    :param dtype: Data precision of the matrix inside the gate; can be set to pyvqnet.kcomplex64 or pyvqnet.kcomplex128, corresponding to float or double inputs respectively.
+    :param use_dagger: Whether to use the transpose-conjugate version of this gate, default: False.
+    :return: A RZ logic gate instance.
+
+    Example::
+
+        import pyvqnet
+        pyvqnet.backends.set_backend("pyvqnet")
+        from pyvqnet.qnn.vqc.tn.native import RZ,TNQMachine
+        device = TNQMachine(4)
+        layer = RZ(has_params= True, trainable= True, wires=0)
+        batchsize = 2
+        device.reset_states(batchsize)
+        layer(q_machine = device)
+        print(device.get_states())
+
+CRX
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. py:class:: pyvqnet.qnn.vqc.tn.native.CRX(has_params: bool = False,trainable: bool = False,init_params=None,wires=None,dtype=pyvqnet.kcomplex64,use_dagger=False)
+    
+    Defines a CRX logic gate class.
+
+    .. warning::
+
+        This class inherits from ``pyvqnet.qnn.vqc.tn.native.QModule`` and ``pyvqnet.nn.Module``.
+        This class can be added as a submodule of ``pyvqnet.nn.Module`` into a ``TNQModule`` model.
+
+    :param has_params: Whether the gate has parameters. Gates such as RX and RY should be set to True; parameter-free gates should be set to False. Default: False.
+    :param trainable: Whether the layer carries trainable parameters. Set to False if this layer builds the gate matrix from external input data; set to True if the trainable parameters need to be initialized from this layer. Default: False.
+    :param init_params: Initialization parameters, a QTensor used to encode classical data, default: None.
+    :param wires: Qubit indices on which the circuit acts, default: None.
+    :param dtype: Data precision of the matrix inside the gate; can be set to pyvqnet.kcomplex64 or pyvqnet.kcomplex128, corresponding to float or double inputs respectively.
+    :param use_dagger: Whether to use the transpose-conjugate version of this gate, default: False.
+    :return: A CRX logic gate instance.
+
+    Example::
+
+        import pyvqnet
+        pyvqnet.backends.set_backend("pyvqnet")
+        from pyvqnet.qnn.vqc.tn.native import CRX,TNQMachine
+        device = TNQMachine(4)
+        layer = CRX(has_params= True, trainable= True, wires=[0,2])
+        batchsize = 2
+        device.reset_states(batchsize)
+        layer(q_machine = device)
+        print(device.get_states())
+
+CRY
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. py:class:: pyvqnet.qnn.vqc.tn.native.CRY(has_params: bool = False,trainable: bool = False,init_params=None,wires=None,dtype=pyvqnet.kcomplex64,use_dagger=False)
+    
+    Defines a CRY logic gate class.
+
+    .. warning::
+
+        This class inherits from ``pyvqnet.qnn.vqc.tn.native.QModule`` and ``pyvqnet.nn.Module``.
+        This class can be added as a submodule of ``pyvqnet.nn.Module`` into a ``TNQModule`` model.
+
+    :param has_params: Whether the gate has parameters. Gates such as RX and RY should be set to True; parameter-free gates should be set to False. Default: False.
+    :param trainable: Whether the layer carries trainable parameters. Set to False if this layer builds the gate matrix from external input data; set to True if the trainable parameters need to be initialized from this layer. Default: False.
+    :param init_params: Initialization parameters, a QTensor used to encode classical data, default: None.
+    :param wires: Qubit indices on which the circuit acts, default: None.
+    :param dtype: Data precision of the matrix inside the gate; can be set to pyvqnet.kcomplex64 or pyvqnet.kcomplex128, corresponding to float or double inputs respectively.
+    :param use_dagger: Whether to use the transpose-conjugate version of this gate, default: False.
+    :return: A CRY logic gate instance.
+
+    Example::
+
+        import pyvqnet
+        pyvqnet.backends.set_backend("pyvqnet")
+        from pyvqnet.qnn.vqc.tn.native import CRY,TNQMachine
+        device = TNQMachine(4)
+        layer = CRY(has_params= True, trainable= True, wires=[0,2])
+        batchsize = 2
+        device.reset_states(batchsize)
+        layer(q_machine = device)
+        print(device.get_states())
+
+CRZ
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+
+.. py:class:: pyvqnet.qnn.vqc.tn.native.CRZ(has_params: bool = False,trainable: bool = False,init_params=None,wires=None,dtype=pyvqnet.kcomplex64,use_dagger=False)
+    
+    Defines a CRZ logic gate class.
+
+    .. warning::
+
+        This class inherits from ``pyvqnet.qnn.vqc.tn.native.QModule`` and ``pyvqnet.nn.Module``.
+        This class can be added as a submodule of ``pyvqnet.nn.Module`` into a ``TNQModule`` model.
+
+    :param has_params: Whether the gate has parameters. Gates such as RX and RY should be set to True; parameter-free gates should be set to False. Default: False.
+    :param trainable: Whether the layer carries trainable parameters. Set to False if this layer builds the gate matrix from external input data; set to True if the trainable parameters need to be initialized from this layer. Default: False.
+    :param init_params: Initialization parameters, a QTensor used to encode classical data, default: None.
+    :param wires: Qubit indices on which the circuit acts, default: None.
+    :param dtype: Data precision of the matrix inside the gate; can be set to pyvqnet.kcomplex64 or pyvqnet.kcomplex128, corresponding to float or double inputs respectively.
+    :param use_dagger: Whether to use the transpose-conjugate version of this gate, default: False.
+    :return: A CRZ logic gate instance.
+
+    Example::
+
+        import pyvqnet
+        pyvqnet.backends.set_backend("pyvqnet")
+        from pyvqnet.qnn.vqc.tn.native import CRZ,TNQMachine
+        device = TNQMachine(4)
+        layer = CRZ(has_params= True, trainable= True, wires=[0,2])
+        batchsize = 2
+        device.reset_states(batchsize)
+        layer(q_machine = device)
+        print(device.get_states())
+
+U1
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. py:class:: pyvqnet.qnn.vqc.tn.native.U1(has_params: bool = False,trainable: bool = False,init_params=None,wires=None,dtype=pyvqnet.kcomplex64,use_dagger=False)
+    
+    Defines a U1 logic gate class.
+
+    .. warning::
+
+        This class inherits from ``pyvqnet.qnn.vqc.tn.native.QModule`` and ``pyvqnet.nn.Module``.
+        This class can be added as a submodule of ``pyvqnet.nn.Module`` into a ``TNQModule`` model.
+
+    :param has_params: Whether the gate has parameters. Gates such as RX and RY should be set to True; parameter-free gates should be set to False. Default: False.
+    :param trainable: Whether the layer carries trainable parameters. Set to False if this layer builds the gate matrix from external input data; set to True if the trainable parameters need to be initialized from this layer. Default: False.
+    :param init_params: Initialization parameters, a QTensor used to encode classical data, default: None.
+    :param wires: Qubit indices on which the circuit acts, default: None.
+    :param dtype: Data precision of the matrix inside the gate; can be set to pyvqnet.kcomplex64 or pyvqnet.kcomplex128, corresponding to float or double inputs respectively.
+    :param use_dagger: Whether to use the transpose-conjugate version of this gate, default: False.
+    :return: A U1 logic gate instance.
+
+    Example::
+
+        import pyvqnet
+        pyvqnet.backends.set_backend("pyvqnet")
+        from pyvqnet.qnn.vqc.tn.native import U1,TNQMachine
+        device = TNQMachine(4)
+        layer = U1(has_params= True, trainable= True, wires=0)
+        batchsize = 2
+        device.reset_states(batchsize)
+        layer(q_machine = device)
+        print(device.get_states())
+
+U2
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+
+.. py:class:: pyvqnet.qnn.vqc.tn.native.U2(has_params: bool = False,trainable: bool = False,init_params=None,wires=None,dtype=pyvqnet.kcomplex64,use_dagger=False)
+    
+    Defines a U2 logic gate class.
+
+    .. warning::
+
+        This class inherits from ``pyvqnet.qnn.vqc.tn.native.QModule`` and ``pyvqnet.nn.Module``.
+        This class can be added as a submodule of ``pyvqnet.nn.Module`` into a ``TNQModule`` model.
+
+    :param has_params: Whether the gate has parameters. Gates such as RX and RY should be set to True; parameter-free gates should be set to False. Default: False.
+    :param trainable: Whether the layer carries trainable parameters. Set to False if this layer builds the gate matrix from external input data; set to True if the trainable parameters need to be initialized from this layer. Default: False.
+    :param init_params: Initialization parameters, a QTensor used to encode classical data, default: None.
+    :param wires: Qubit indices on which the circuit acts, default: None.
+    :param dtype: Data precision of the matrix inside the gate; can be set to pyvqnet.kcomplex64 or pyvqnet.kcomplex128, corresponding to float or double inputs respectively.
+    :param use_dagger: Whether to use the transpose-conjugate version of this gate, default: False.
+    :return: A U2 logic gate instance.
+
+    Example::
+
+        import pyvqnet
+        pyvqnet.backends.set_backend("pyvqnet")
+        from pyvqnet.qnn.vqc.tn.native import U2,TNQMachine
+        device = TNQMachine(4)
+        layer = U2(has_params= True, trainable= True, wires=0)
+        batchsize = 2
+        device.reset_states(batchsize)
+        layer(q_machine = device)
+        print(device.get_states())
+
+U3
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+
+.. py:class:: pyvqnet.qnn.vqc.tn.native.U3(has_params: bool = False,trainable: bool = False,init_params=None,wires=None,dtype=pyvqnet.kcomplex64,use_dagger=False)
+    
+    Defines a U3 logic gate class.
+
+    .. warning::
+
+        This class inherits from ``pyvqnet.qnn.vqc.tn.native.QModule`` and ``pyvqnet.nn.Module``.
+        This class can be added as a submodule of ``pyvqnet.nn.Module`` into a ``TNQModule`` model.
+
+    :param has_params: Whether the gate has parameters. Gates such as RX and RY should be set to True; parameter-free gates should be set to False. Default: False.
+    :param trainable: Whether the layer carries trainable parameters. Set to False if this layer builds the gate matrix from external input data; set to True if the trainable parameters need to be initialized from this layer. Default: False.
+    :param init_params: Initialization parameters, a QTensor used to encode classical data, default: None.
+    :param wires: Qubit indices on which the circuit acts, default: None.
+    :param dtype: Data precision of the matrix inside the gate; can be set to pyvqnet.kcomplex64 or pyvqnet.kcomplex128, corresponding to float or double inputs respectively.
+    :param use_dagger: Whether to use the transpose-conjugate version of this gate, default: False.
+    :return: A U3 logic gate instance.
+
+    Example::
+
+        import pyvqnet
+        pyvqnet.backends.set_backend("pyvqnet")
+        from pyvqnet.qnn.vqc.tn.native import U3,TNQMachine
+        device = TNQMachine(4)
+        layer = U3(has_params= True, trainable= True, wires=0)
+        batchsize = 2
+        device.reset_states(batchsize)
+        layer(q_machine = device)
+        print(device.get_states())
+
+CNOT
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. py:class:: pyvqnet.qnn.vqc.tn.native.CNOT(has_params: bool = False,trainable: bool = False,init_params=None,wires=None,dtype=pyvqnet.kcomplex64,use_dagger=False)
+    
+    Defines a CNOT logic gate class, also known as CX.
+
+    .. warning::
+
+        This class inherits from ``pyvqnet.qnn.vqc.tn.native.QModule`` and ``pyvqnet.nn.Module``.
+        This class can be added as a submodule of ``pyvqnet.nn.Module`` into a ``TNQModule`` model.
+
+    :param has_params: Whether the gate has parameters. Gates such as RX and RY should be set to True; parameter-free gates should be set to False. Default: False.
+    :param trainable: Whether the layer carries trainable parameters. Set to False if this layer builds the gate matrix from external input data; set to True if the trainable parameters need to be initialized from this layer. Default: False.
+    :param init_params: Initialization parameters, a QTensor used to encode classical data, default: None.
+    :param wires: Qubit indices on which the circuit acts, default: None.
+    :param dtype: Data precision of the matrix inside the gate; can be set to pyvqnet.kcomplex64 or pyvqnet.kcomplex128, corresponding to float or double inputs respectively.
+    :param use_dagger: Whether to use the transpose-conjugate version of this gate, default: False.
+    :return: A CNOT logic gate instance.
+
+    Example::
+
+        import pyvqnet
+        pyvqnet.backends.set_backend("pyvqnet")
+        from pyvqnet.qnn.vqc.tn.native import CNOT,TNQMachine
+        device = TNQMachine(4)
+        layer = CNOT(wires=[0,1])
+        batchsize = 2
+        device.reset_states(batchsize)
+        layer(q_machine = device)
+        print(device.get_states())
+
+CY
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. py:class:: pyvqnet.qnn.vqc.tn.native.CY(has_params: bool = False,trainable: bool = False,init_params=None,wires=None,dtype=pyvqnet.kcomplex64,use_dagger=False)
+    
+    Defines a CY logic gate class.
+
+    .. warning::
+
+        This class inherits from ``pyvqnet.qnn.vqc.tn.native.QModule`` and ``pyvqnet.nn.Module``.
+        This class can be added as a submodule of ``pyvqnet.nn.Module`` into a ``TNQModule`` model.
+
+    :param has_params: Whether the gate has parameters. Gates such as RX and RY should be set to True; parameter-free gates should be set to False. Default: False.
+    :param trainable: Whether the layer carries trainable parameters. Set to False if this layer builds the gate matrix from external input data; set to True if the trainable parameters need to be initialized from this layer. Default: False.
+    :param init_params: Initialization parameters, a QTensor used to encode classical data, default: None.
+    :param wires: Qubit indices on which the circuit acts, default: None.
+    :param dtype: Data precision of the matrix inside the gate; can be set to pyvqnet.kcomplex64 or pyvqnet.kcomplex128, corresponding to float or double inputs respectively.
+    :param use_dagger: Whether to use the transpose-conjugate version of this gate, default: False.
+    :return: A CY logic gate instance.
+
+    Example::
+
+        import pyvqnet
+        pyvqnet.backends.set_backend("pyvqnet")
+        from pyvqnet.qnn.vqc.tn.native import CY,TNQMachine
+        device = TNQMachine(4)
+        layer = CY(wires=[0,1])
+        batchsize = 2
+        device.reset_states(batchsize)
+        layer(q_machine = device)
+        print(device.get_states())
+
+CZ
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. py:class:: pyvqnet.qnn.vqc.tn.native.CZ(has_params: bool = False,trainable: bool = False,init_params=None,wires=None,dtype=pyvqnet.kcomplex64,use_dagger=False)
+    
+    Defines a CZ logic gate class.
+
+    .. warning::
+
+        This class inherits from ``pyvqnet.qnn.vqc.tn.native.QModule`` and ``pyvqnet.nn.Module``.
+        This class can be added as a submodule of ``pyvqnet.nn.Module`` into a ``TNQModule`` model.
+
+    :param has_params: Whether the gate has parameters. Gates such as RX and RY should be set to True; parameter-free gates should be set to False. Default: False.
+    :param trainable: Whether the layer carries trainable parameters. Set to False if this layer builds the gate matrix from external input data; set to True if the trainable parameters need to be initialized from this layer. Default: False.
+    :param init_params: Initialization parameters, a QTensor used to encode classical data, default: None.
+    :param wires: Qubit indices on which the circuit acts, default: None.
+    :param dtype: Data precision of the matrix inside the gate; can be set to pyvqnet.kcomplex64 or pyvqnet.kcomplex128, corresponding to float or double inputs respectively.
+    :param use_dagger: Whether to use the transpose-conjugate version of this gate, default: False.
+    :return: A CZ logic gate instance.
+
+    Example::
+
+        import pyvqnet
+        pyvqnet.backends.set_backend("pyvqnet")
+        from pyvqnet.qnn.vqc.tn.native import CZ,TNQMachine
+        device = TNQMachine(4)
+        layer = CZ(wires=[0,1])
+        batchsize = 2
+        device.reset_states(batchsize)
+        layer(q_machine = device)
+        print(device.get_states())
+
+CR
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. py:class:: pyvqnet.qnn.vqc.tn.native.CR(has_params: bool = False,trainable: bool = False,init_params=None,wires=None,dtype=pyvqnet.kcomplex64,use_dagger=False)
+    
+    Defines a CR logic gate class.
+
+    .. warning::
+
+        This class inherits from ``pyvqnet.qnn.vqc.tn.native.QModule`` and ``pyvqnet.nn.Module``.
+        This class can be added as a submodule of ``pyvqnet.nn.Module`` into a ``TNQModule`` model.
+
+    :param has_params: Whether the gate has parameters. Gates such as RX and RY should be set to True; parameter-free gates should be set to False. Default: False.
+    :param trainable: Whether the layer carries trainable parameters. Set to False if this layer builds the gate matrix from external input data; set to True if the trainable parameters need to be initialized from this layer. Default: False.
+    :param init_params: Initialization parameters, a QTensor used to encode classical data, default: None.
+    :param wires: Qubit indices on which the circuit acts, default: None.
+    :param dtype: Data precision of the matrix inside the gate; can be set to pyvqnet.kcomplex64 or pyvqnet.kcomplex128, corresponding to float or double inputs respectively.
+    :param use_dagger: Whether to use the transpose-conjugate version of this gate, default: False.
+    :return: A CR logic gate instance.
+
+    Example::
+
+        import pyvqnet
+        pyvqnet.backends.set_backend("pyvqnet")
+        from pyvqnet.qnn.vqc.tn.native import CR,TNQMachine
+        device = TNQMachine(4)
+        layer = CR(has_params= True, trainable= True, wires=[0,2])
+        batchsize = 2
+        device.reset_states(batchsize)
+        layer(q_machine = device)
+        print(device.get_states())
+
+SWAP
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+
+.. py:class:: pyvqnet.qnn.vqc.tn.native.SWAP(has_params: bool = False,trainable: bool = False,init_params=None,wires=None,dtype=pyvqnet.kcomplex64,use_dagger=False)
+    
+    Defines a SWAP logic gate class.
+
+    .. warning::
+
+        This class inherits from ``pyvqnet.qnn.vqc.tn.native.QModule`` and ``pyvqnet.nn.Module``.
+        This class can be added as a submodule of ``pyvqnet.nn.Module`` into a ``TNQModule`` model.
+
+    :param has_params: Whether the gate has parameters. Gates such as RX and RY should be set to True; parameter-free gates should be set to False. Default: False.
+    :param trainable: Whether the layer carries trainable parameters. Set to False if this layer builds the gate matrix from external input data; set to True if the trainable parameters need to be initialized from this layer. Default: False.
+    :param init_params: Initialization parameters, a QTensor used to encode classical data, default: None.
+    :param wires: Qubit indices on which the circuit acts, default: None.
+    :param dtype: Data precision of the matrix inside the gate; can be set to pyvqnet.kcomplex64 or pyvqnet.kcomplex128, corresponding to float or double inputs respectively.
+    :param use_dagger: Whether to use the transpose-conjugate version of this gate, default: False.
+    :return: A SWAP logic gate instance.
+
+    Example::
+
+        import pyvqnet
+        pyvqnet.backends.set_backend("pyvqnet")
+        from pyvqnet.qnn.vqc.tn.native import SWAP,TNQMachine
+        device = TNQMachine(4)
+        layer = SWAP(wires=[0,1])
+        batchsize = 2
+        device.reset_states(batchsize)
+        layer(q_machine = device)
+        print(device.get_states())
+
+CSWAP
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. py:class:: pyvqnet.qnn.vqc.tn.native.CSWAP(has_params: bool = False,trainable: bool = False,init_params=None,wires=None,dtype=pyvqnet.kcomplex64,use_dagger=False)
+    
+    Defines a SWAP logic gate class.
+
+    .. math:: CSWAP = \begin{bmatrix}
+            1 & 0 & 0 & 0 & 0 & 0 & 0 & 0 \\
+            0 & 1 & 0 & 0 & 0 & 0 & 0 & 0 \\
+            0 & 0 & 1 & 0 & 0 & 0 & 0 & 0 \\
+            0 & 0 & 0 & 1 & 0 & 0 & 0 & 0 \\
+            0 & 0 & 0 & 0 & 1 & 0 & 0 & 0 \\
+            0 & 0 & 0 & 0 & 0 & 0 & 1 & 0 \\
+            0 & 0 & 0 & 0 & 0 & 1 & 0 & 0 \\
+            0 & 0 & 0 & 0 & 0 & 0 & 0 & 1
+        \end{bmatrix}.
+
+    .. warning::
+
+        This class inherits from ``pyvqnet.qnn.vqc.tn.native.QModule`` and ``pyvqnet.nn.Module``.
+        This class can be added as a submodule of ``pyvqnet.nn.Module`` into a ``TNQModule`` model.
+
+    :param has_params: Whether the gate has parameters. Gates such as RX and RY should be set to True; parameter-free gates should be set to False. Default: False.
+    :param trainable: Whether the layer carries trainable parameters. Set to False if this layer builds the gate matrix from external input data; set to True if the trainable parameters need to be initialized from this layer. Default: False.
+    :param init_params: Initialization parameters, a QTensor used to encode classical data, default: None.
+    :param wires: Qubit indices on which the circuit acts, default: None.
+    :param dtype: Data precision of the matrix inside the gate; can be set to pyvqnet.kcomplex64 or pyvqnet.kcomplex128, corresponding to float or double inputs respectively.
+    :param use_dagger: Whether to use the transpose-conjugate version of this gate, default: False.
+    :return: A CSWAP logic gate instance.
+
+    Example::
+
+        import pyvqnet
+        pyvqnet.backends.set_backend("pyvqnet")
+        from pyvqnet.qnn.vqc.tn.native import CSWAP,TNQMachine
+        device = TNQMachine(4)
+        layer = CSWAP(wires=[0,1,2])
+        batchsize = 2
+        device.reset_states(batchsize)
+        layer(q_machine = device)
+        print(device.get_states())
+
+RXX
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+
+.. py:class:: pyvqnet.qnn.vqc.tn.native.RXX(has_params: bool = False,trainable: bool = False,init_params=None,wires=None,dtype=pyvqnet.kcomplex64,use_dagger=False)
+    
+    Defines a RXX logic gate class.
+
+    .. warning::
+
+        This class inherits from ``pyvqnet.qnn.vqc.tn.native.QModule`` and ``pyvqnet.nn.Module``.
+        This class can be added as a submodule of ``pyvqnet.nn.Module`` into a ``TNQModule`` model.
+
+    :param has_params: Whether the gate has parameters. Gates such as RX and RY should be set to True; parameter-free gates should be set to False. Default: False.
+    :param trainable: Whether the layer carries trainable parameters. Set to False if this layer builds the gate matrix from external input data; set to True if the trainable parameters need to be initialized from this layer. Default: False.
+    :param init_params: Initialization parameters, a QTensor used to encode classical data, default: None.
+    :param wires: Qubit indices on which the circuit acts, default: None.
+    :param dtype: Data precision of the matrix inside the gate; can be set to pyvqnet.kcomplex64 or pyvqnet.kcomplex128, corresponding to float or double inputs respectively.
+    :param use_dagger: Whether to use the transpose-conjugate version of this gate, default: False.
+    :return: A RXX logic gate instance.
+
+    Example::
+
+        import pyvqnet
+        pyvqnet.backends.set_backend("pyvqnet")
+        from pyvqnet.qnn.vqc.tn.native import RXX,TNQMachine
+        device = TNQMachine(4)
+        layer = RXX(has_params= True, trainable= True, wires=[0,2])
+        batchsize = 2
+        device.reset_states(batchsize)
+        layer(q_machine = device)
+        print(device.get_states())
+
+RYY
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. py:class:: pyvqnet.qnn.vqc.tn.native.RYY(has_params: bool = False,trainable: bool = False,init_params=None,wires=None,dtype=pyvqnet.kcomplex64,use_dagger=False)
+    
+    Defines a RYY logic gate class.
+
+    .. warning::
+
+        This class inherits from ``pyvqnet.qnn.vqc.tn.native.QModule`` and ``pyvqnet.nn.Module``.
+        This class can be added as a submodule of ``pyvqnet.nn.Module`` into a ``TNQModule`` model.
+
+    :param has_params: Whether the gate has parameters. Gates such as RX and RY should be set to True; parameter-free gates should be set to False. Default: False.
+    :param trainable: Whether the layer carries trainable parameters. Set to False if this layer builds the gate matrix from external input data; set to True if the trainable parameters need to be initialized from this layer. Default: False.
+    :param init_params: Initialization parameters, a QTensor used to encode classical data, default: None.
+    :param wires: Qubit indices on which the circuit acts, default: None.
+    :param dtype: Data precision of the matrix inside the gate; can be set to pyvqnet.kcomplex64 or pyvqnet.kcomplex128, corresponding to float or double inputs respectively.
+    :param use_dagger: Whether to use the transpose-conjugate version of this gate, default: False.
+    :return: A RYY logic gate instance.
+
+    Example::
+
+        import pyvqnet
+        pyvqnet.backends.set_backend("pyvqnet")
+        from pyvqnet.qnn.vqc.tn.native import RYY,TNQMachine
+        device = TNQMachine(4)
+        layer = RYY(has_params= True, trainable= True, wires=[0,2])
+        batchsize = 2
+        device.reset_states(batchsize)
+        layer(q_machine = device)
+        print(device.get_states())
+
+RZZ
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. py:class:: pyvqnet.qnn.vqc.tn.native.RZZ(has_params: bool = False,trainable: bool = False,init_params=None,wires=None,dtype=pyvqnet.kcomplex64,use_dagger=False)
+    
+    Defines a RZZ logic gate class.
+
+    .. warning::
+
+        This class inherits from ``pyvqnet.qnn.vqc.tn.native.QModule`` and ``pyvqnet.nn.Module``.
+        This class can be added as a submodule of ``pyvqnet.nn.Module`` into a ``TNQModule`` model.
+
+    :param has_params: Whether the gate has parameters. Gates such as RX and RY should be set to True; parameter-free gates should be set to False. Default: False.
+    :param trainable: Whether the layer carries trainable parameters. Set to False if this layer builds the gate matrix from external input data; set to True if the trainable parameters need to be initialized from this layer. Default: False.
+    :param init_params: Initialization parameters, a QTensor used to encode classical data, default: None.
+    :param wires: Qubit indices on which the circuit acts, default: None.
+    :param dtype: Data precision of the matrix inside the gate; can be set to pyvqnet.kcomplex64 or pyvqnet.kcomplex128, corresponding to float or double inputs respectively.
+    :param use_dagger: Whether to use the transpose-conjugate version of this gate, default: False.
+    :return: A RZZ logic gate instance.
+
+    Example::
+
+        import pyvqnet
+        pyvqnet.backends.set_backend("pyvqnet")
+        from pyvqnet.qnn.vqc.tn.native import RZZ,TNQMachine
+        device = TNQMachine(4)
+        layer = RZZ(has_params= True, trainable= True, wires=[0,2])
+        batchsize = 2
+        device.reset_states(batchsize)
+        layer(q_machine = device)
+        print(device.get_states())
+
+RZX
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. py:class:: pyvqnet.qnn.vqc.tn.native.RZX(has_params: bool = False,trainable: bool = False,init_params=None,wires=None,dtype=pyvqnet.kcomplex64,use_dagger=False)
+    
+    Defines a RZX logic gate class.
+
+    .. warning::
+
+        This class inherits from ``pyvqnet.qnn.vqc.tn.native.QModule`` and ``pyvqnet.nn.Module``.
+        This class can be added as a submodule of ``pyvqnet.nn.Module`` into a ``TNQModule`` model.
+
+    :param has_params: Whether the gate has parameters. Gates such as RX and RY should be set to True; parameter-free gates should be set to False. Default: False.
+    :param trainable: Whether the layer carries trainable parameters. Set to False if this layer builds the gate matrix from external input data; set to True if the trainable parameters need to be initialized from this layer. Default: False.
+    :param init_params: Initialization parameters, a QTensor used to encode classical data, default: None.
+    :param wires: Qubit indices on which the circuit acts, default: None.
+    :param dtype: Data precision of the matrix inside the gate; can be set to pyvqnet.kcomplex64 or pyvqnet.kcomplex128, corresponding to float or double inputs respectively.
+    :param use_dagger: Whether to use the transpose-conjugate version of this gate, default: False.
+    :return: A RZX logic gate instance.
+
+    Example::
+
+        import pyvqnet
+        pyvqnet.backends.set_backend("pyvqnet")
+        from pyvqnet.qnn.vqc.tn.native import RZX,TNQMachine
+        device = TNQMachine(4)
+        layer = RZX(has_params= True, trainable= True, wires=[0,2])
+        batchsize = 2
+        device.reset_states(batchsize)
+        layer(q_machine = device)
+        print(device.get_states())
+
+Toffoli
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+
+.. py:class:: pyvqnet.qnn.vqc.tn.native.Toffoli(has_params: bool = False,trainable: bool = False,init_params=None,wires=None,dtype=pyvqnet.kcomplex64,use_dagger=False)
+    
+    Defines a Toffoli logic gate class.
+
+    .. warning::
+
+        This class inherits from ``pyvqnet.qnn.vqc.tn.native.QModule`` and ``pyvqnet.nn.Module``.
+        This class can be added as a submodule of ``pyvqnet.nn.Module`` into a ``TNQModule`` model.
+
+    :param has_params: Whether the gate has parameters. Gates such as RX and RY should be set to True; parameter-free gates should be set to False. Default: False.
+    :param trainable: Whether the layer carries trainable parameters. Set to False if this layer builds the gate matrix from external input data; set to True if the trainable parameters need to be initialized from this layer. Default: False.
+    :param init_params: Initialization parameters, a QTensor used to encode classical data, default: None.
+    :param wires: Qubit indices on which the circuit acts, default: None.
+    :param dtype: Data precision of the matrix inside the gate; can be set to pyvqnet.kcomplex64 or pyvqnet.kcomplex128, corresponding to float or double inputs respectively.
+    :param use_dagger: Whether to use the transpose-conjugate version of this gate, default: False.
+    :return: A Toffoli logic gate instance.
+
+    Example::
+
+        import pyvqnet
+        pyvqnet.backends.set_backend("pyvqnet")
+        from pyvqnet.qnn.vqc.tn.native import Toffoli,TNQMachine
+        device = TNQMachine(4)
+        layer = Toffoli(  wires=[0,2,1])
+        batchsize = 2
+        device.reset_states(batchsize)
+        layer(q_machine = device)
+        print(device.get_states())
+
+IsingXX
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+
+.. py:class:: pyvqnet.qnn.vqc.tn.native.IsingXX(has_params: bool = False,trainable: bool = False,init_params=None,wires=None,dtype=pyvqnet.kcomplex64,use_dagger=False)
+    
+    Defines a IsingXX logic gate class.
+
+    .. warning::
+
+        This class inherits from ``pyvqnet.qnn.vqc.tn.native.QModule`` and ``pyvqnet.nn.Module``.
+        This class can be added as a submodule of ``pyvqnet.nn.Module`` into a ``TNQModule`` model.
+
+    :param has_params: Whether the gate has parameters. Gates such as RX and RY should be set to True; parameter-free gates should be set to False. Default: False.
+    :param trainable: Whether the layer carries trainable parameters. Set to False if this layer builds the gate matrix from external input data; set to True if the trainable parameters need to be initialized from this layer. Default: False.
+    :param init_params: Initialization parameters, a QTensor used to encode classical data, default: None.
+    :param wires: Qubit indices on which the circuit acts, default: None.
+    :param dtype: Data precision of the matrix inside the gate; can be set to pyvqnet.kcomplex64 or pyvqnet.kcomplex128, corresponding to float or double inputs respectively.
+    :param use_dagger: Whether to use the transpose-conjugate version of this gate, default: False.
+    :return: A IsingXX logic gate instance.
+
+    Example::
+
+        import pyvqnet
+        pyvqnet.backends.set_backend("pyvqnet")
+        from pyvqnet.qnn.vqc.tn.native import IsingXX,TNQMachine
+        device = TNQMachine(4)
+        layer = IsingXX(has_params= True, trainable= True, wires=[0,2])
+        batchsize = 2
+        device.reset_states(batchsize)
+        layer(q_machine = device)
+        print(device.get_states())
+
+IsingYY
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+
+.. py:class:: pyvqnet.qnn.vqc.tn.native.IsingYY(has_params: bool = False,trainable: bool = False,init_params=None,wires=None,dtype=pyvqnet.kcomplex64,use_dagger=False)
+    
+    Defines a IsingYY logic gate class.
+
+    .. warning::
+
+        This class inherits from ``pyvqnet.qnn.vqc.tn.native.QModule`` and ``pyvqnet.nn.Module``.
+        This class can be added as a submodule of ``pyvqnet.nn.Module`` into a ``TNQModule`` model.
+
+    :param has_params: Whether the gate has parameters. Gates such as RX and RY should be set to True; parameter-free gates should be set to False. Default: False.
+    :param trainable: Whether the layer carries trainable parameters. Set to False if this layer builds the gate matrix from external input data; set to True if the trainable parameters need to be initialized from this layer. Default: False.
+    :param init_params: Initialization parameters, a QTensor used to encode classical data, default: None.
+    :param wires: Qubit indices on which the circuit acts, default: None.
+    :param dtype: Data precision of the matrix inside the gate; can be set to pyvqnet.kcomplex64 or pyvqnet.kcomplex128, corresponding to float or double inputs respectively.
+    :param use_dagger: Whether to use the transpose-conjugate version of this gate, default: False.
+    :return: A IsingYY logic gate instance.
+
+    Example::
+
+        import pyvqnet
+        pyvqnet.backends.set_backend("pyvqnet")
+        from pyvqnet.qnn.vqc.tn.native import IsingYY,TNQMachine
+        device = TNQMachine(4)
+        layer = IsingYY(has_params= True, trainable= True, wires=[0,2])
+        batchsize = 2
+        device.reset_states(batchsize)
+        layer(q_machine = device)
+        print(device.get_states())
+
+IsingZZ
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. py:class:: pyvqnet.qnn.vqc.tn.native.IsingZZ(has_params: bool = False,trainable: bool = False,init_params=None,wires=None,dtype=pyvqnet.kcomplex64,use_dagger=False)
+    
+    Defines a IsingZZ logic gate class.
+
+
+    .. warning::
+
+        This class inherits from ``pyvqnet.qnn.vqc.tn.native.QModule`` and ``pyvqnet.nn.Module``.
+        This class can be added as a submodule of ``pyvqnet.nn.Module`` into a ``TNQModule`` model.
+
+    :param has_params: Whether the gate has parameters. Gates such as RX and RY should be set to True; parameter-free gates should be set to False. Default: False.
+    :param trainable: Whether the layer carries trainable parameters. Set to False if this layer builds the gate matrix from external input data; set to True if the trainable parameters need to be initialized from this layer. Default: False.
+    :param init_params: Initialization parameters, a QTensor used to encode classical data, default: None.
+    :param wires: Qubit indices on which the circuit acts, default: None.
+    :param dtype: Data precision of the matrix inside the gate; can be set to pyvqnet.kcomplex64 or pyvqnet.kcomplex128, corresponding to float or double inputs respectively.
+    :param use_dagger: Whether to use the transpose-conjugate version of this gate, default: False.
+    :return: A IsingZZ logic gate instance.
+
+    Example::
+
+        import pyvqnet
+        pyvqnet.backends.set_backend("pyvqnet")
+        from pyvqnet.qnn.vqc.tn.native import IsingZZ,TNQMachine
+        device = TNQMachine(4)
+        layer = IsingZZ(has_params= True, trainable= True, wires=[0,2])
+        batchsize = 2
+        device.reset_states(batchsize)
+        layer(q_machine = device)
+        print(device.get_states())
+
+IsingXY
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+
+.. py:class:: pyvqnet.qnn.vqc.tn.native.IsingXY(has_params: bool = False,trainable: bool = False,init_params=None,wires=None,dtype=pyvqnet.kcomplex64,use_dagger=False)
+    
+    Defines a IsingXY logic gate class.
+
+    .. warning::
+
+        This class inherits from ``pyvqnet.qnn.vqc.tn.native.QModule`` and ``pyvqnet.nn.Module``.
+        This class can be added as a submodule of ``pyvqnet.nn.Module`` into a ``TNQModule`` model.
+
+    :param has_params: Whether the gate has parameters. Gates such as RX and RY should be set to True; parameter-free gates should be set to False. Default: False.
+    :param trainable: Whether the layer carries trainable parameters. Set to False if this layer builds the gate matrix from external input data; set to True if the trainable parameters need to be initialized from this layer. Default: False.
+    :param init_params: Initialization parameters, a QTensor used to encode classical data, default: None.
+    :param wires: Qubit indices on which the circuit acts, default: None.
+    :param dtype: Data precision of the matrix inside the gate; can be set to pyvqnet.kcomplex64 or pyvqnet.kcomplex128, corresponding to float or double inputs respectively.
+    :param use_dagger: Whether to use the transpose-conjugate version of this gate, default: False.
+    :return: A IsingXY logic gate instance.
+
+    Example::
+
+        import pyvqnet
+        pyvqnet.backends.set_backend("pyvqnet")
+        from pyvqnet.qnn.vqc.tn.native import IsingXY,TNQMachine
+        device = TNQMachine(4)
+        layer = IsingXY(has_params= True, trainable= True, wires=[0,2])
+        batchsize = 2
+        device.reset_states(batchsize)
+        layer(q_machine = device)
+        print(device.get_states())
+
+PhaseShift
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+
+.. py:class:: pyvqnet.qnn.vqc.tn.native.PhaseShift(has_params: bool = False,trainable: bool = False,init_params=None,wires=None,dtype=pyvqnet.kcomplex64,use_dagger=False)
+    
+    Defines a PhaseShift logic gate class.
+
+    .. warning::
+
+        This class inherits from ``pyvqnet.qnn.vqc.tn.native.QModule`` and ``pyvqnet.nn.Module``.
+        This class can be added as a submodule of ``pyvqnet.nn.Module`` into a ``TNQModule`` model.
+
+    :param has_params: Whether the gate has parameters. Gates such as RX and RY should be set to True; parameter-free gates should be set to False. Default: False.
+    :param trainable: Whether the layer carries trainable parameters. Set to False if this layer builds the gate matrix from external input data; set to True if the trainable parameters need to be initialized from this layer. Default: False.
+    :param init_params: Initialization parameters, a QTensor used to encode classical data, default: None.
+    :param wires: Qubit indices on which the circuit acts, default: None.
+    :param dtype: Data precision of the matrix inside the gate; can be set to pyvqnet.kcomplex64 or pyvqnet.kcomplex128, corresponding to float or double inputs respectively.
+    :param use_dagger: Whether to use the transpose-conjugate version of this gate, default: False.
+    :return: A PhaseShift logic gate instance.
+
+    Example::
+
+        import pyvqnet
+        pyvqnet.backends.set_backend("pyvqnet")
+        from pyvqnet.qnn.vqc.tn.native import PhaseShift,TNQMachine
+        device = TNQMachine(4)
+        layer = PhaseShift(has_params= True, trainable= True, wires=1)
+        batchsize = 2
+        device.reset_states(batchsize)
+        layer(q_machine = device)
+        print(device.get_states())
+
+MultiRZ
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. py:class:: pyvqnet.qnn.vqc.tn.native.MultiRZ(has_params: bool = False,trainable: bool = False,init_params=None,wires=None,dtype=pyvqnet.kcomplex64,use_dagger=False)
+    
+    Defines a MultiRZ logic gate class.
+
+    .. warning::
+
+        This class inherits from ``pyvqnet.qnn.vqc.tn.native.QModule`` and ``pyvqnet.nn.Module``.
+        This class can be added as a submodule of ``pyvqnet.nn.Module`` into a ``TNQModule`` model.
+
+    :param has_params: Whether the gate has parameters. Gates such as RX and RY should be set to True; parameter-free gates should be set to False. Default: False.
+    :param trainable: Whether the layer carries trainable parameters. Set to False if this layer builds the gate matrix from external input data; set to True if the trainable parameters need to be initialized from this layer. Default: False.
+    :param init_params: Initialization parameters, a QTensor used to encode classical data, default: None.
+    :param wires: Qubit indices on which the circuit acts, default: None.
+    :param dtype: Data precision of the matrix inside the gate; can be set to pyvqnet.kcomplex64 or pyvqnet.kcomplex128, corresponding to float or double inputs respectively.
+    :param use_dagger: Whether to use the transpose-conjugate version of this gate, default: False.
+    :return: A MultiRZ logic gate instance.
+
+    Example::
+
+        import pyvqnet
+        pyvqnet.backends.set_backend("pyvqnet")
+        from pyvqnet.qnn.vqc.tn.native import MultiRZ,TNQMachine
+        device = TNQMachine(4)
+        layer = MultiRZ(has_params= True, trainable= True, wires=[0,2])
+        batchsize = 2
+        device.reset_states(batchsize)
+        layer(q_machine = device)
+        print(device.get_states())
+
+
+SDG
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+
+.. py:class:: pyvqnet.qnn.vqc.tn.native.SDG(has_params: bool = False,trainable: bool = False,init_params=None,wires=None,dtype=pyvqnet.kcomplex64,use_dagger=False)
+    
+    Defines a SDG logic gate class.
+
+    .. warning::
+
+        This class inherits from ``pyvqnet.qnn.vqc.tn.native.QModule`` and ``pyvqnet.nn.Module``.
+        This class can be added as a submodule of ``pyvqnet.nn.Module`` into a ``TNQModule`` model.
+
+    :param has_params: Whether the gate has parameters. Gates such as RX and RY should be set to True; parameter-free gates should be set to False. Default: False.
+    :param trainable: Whether the layer carries trainable parameters. Set to False if this layer builds the gate matrix from external input data; set to True if the trainable parameters need to be initialized from this layer. Default: False.
+    :param init_params: Initialization parameters, a QTensor used to encode classical data, default: None.
+    :param wires: Qubit indices on which the circuit acts, default: None.
+    :param dtype: Data precision of the matrix inside the gate; can be set to pyvqnet.kcomplex64 or pyvqnet.kcomplex128, corresponding to float or double inputs respectively.
+    :param use_dagger: Whether to use the transpose-conjugate version of this gate, default: False.
+    :return: A SDG logic gate instance.
+
+    Example::
+
+
+        import pyvqnet
+        pyvqnet.backends.set_backend("pyvqnet")
+        from pyvqnet.qnn.vqc.tn.native import SDG,TNQMachine
+        device = TNQMachine(4)
+        layer = SDG(wires=0)
+        batchsize = 1
+        device.reset_states(1)
+        layer(q_machine = device)
+        print(device.get_states())
+
+TDG
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. py:class:: pyvqnet.qnn.vqc.tn.native.TDG(has_params: bool = False,trainable: bool = False,init_params=None,wires=None,dtype=pyvqnet.kcomplex64,use_dagger=False)
+    
+    Defines a SDG logic gate class.
+
+    .. warning::
+
+        This class inherits from ``pyvqnet.qnn.vqc.tn.native.QModule`` and ``pyvqnet.nn.Module``.
+        This class can be added as a submodule of ``pyvqnet.nn.Module`` into a ``TNQModule`` model.
+
+    :param has_params: Whether the gate has parameters. Gates such as RX and RY should be set to True; parameter-free gates should be set to False. Default: False.
+    :param trainable: Whether the layer carries trainable parameters. Set to False if this layer builds the gate matrix from external input data; set to True if the trainable parameters need to be initialized from this layer. Default: False.
+    :param init_params: Initialization parameters, a QTensor used to encode classical data, default: None.
+    :param wires: Qubit indices on which the circuit acts, default: None.
+    :param dtype: Data precision of the matrix inside the gate; can be set to pyvqnet.kcomplex64 or pyvqnet.kcomplex128, corresponding to float or double inputs respectively.
+    :param use_dagger: Whether to use the transpose-conjugate version of this gate, default: False.
+    :return: A TDG logic gate instance.
+
+    Example::
+
+
+        import pyvqnet
+        pyvqnet.backends.set_backend("pyvqnet")
+        from pyvqnet.qnn.vqc.tn.native import TDG,TNQMachine
+        device = TNQMachine(4)
+        layer = TDG(wires=0)
+        batchsize = 1
+        device.reset_states(1)
+        layer(q_machine = device)
+        print(device.get_states())
+
+ControlledPhaseShift
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+
+.. py:class:: pyvqnet.qnn.vqc.tn.native.ControlledPhaseShift(has_params: bool = False,trainable: bool = False,init_params=None,wires=None,dtype=pyvqnet.kcomplex64,use_dagger=False)
+    
+    Defines a ControlledPhaseShift logic gate class.
+
+    .. warning::
+
+        This class inherits from ``pyvqnet.qnn.vqc.tn.native.QModule`` and ``pyvqnet.nn.Module``.
+        This class can be added as a submodule of ``pyvqnet.nn.Module`` into a ``TNQModule`` model.
+
+    :param has_params: Whether the gate has parameters. Gates such as RX and RY should be set to True; parameter-free gates should be set to False. Default: False.
+    :param trainable: Whether the layer carries trainable parameters. Set to False if this layer builds the gate matrix from external input data; set to True if the trainable parameters need to be initialized from this layer. Default: False.
+    :param init_params: Initialization parameters, a QTensor used to encode classical data, default: None.
+    :param wires: Qubit indices on which the circuit acts, default: None.
+    :param dtype: Data precision of the matrix inside the gate; can be set to pyvqnet.kcomplex64 or pyvqnet.kcomplex128, corresponding to float or double inputs respectively.
+    :param use_dagger: Whether to use the transpose-conjugate version of this gate, default: False.
+    :return: A ControlledPhaseShift logic gate instance.
+
+    Example::
+
+        import pyvqnet
+        pyvqnet.backends.set_backend("pyvqnet")
+        from pyvqnet.qnn.vqc.tn.native import ControlledPhaseShift,TNQMachine
+        device = TNQMachine(4)
+        layer = ControlledPhaseShift(has_params= True, trainable= True, wires=[0,2])
+        batchsize = 2
+        device.reset_states(batchsize)
+        layer(q_machine = device)
+        print(device.get_states())
+
+Common Measurement Interfaces
+--------------------------------------
+
+VQC_Purity
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. py:function:: pyvqnet.qnn.vqc.tn.native.VQC_Purity(state, qubits_idx, num_wires, use_tn=False)
+
+    Compute the purity on the specified qubits ``qubits_idx`` from the state vector.
+
+    .. math::
+        \gamma = \text{Tr}(\rho^2)
+
+    where :math:`\rho` is the density matrix. The purity of a normalized quantum state satisfies :math:`\frac{1}{d} \leq \gamma \leq 1`,
+    where :math:`d` is the dimension of the Hilbert space.
+    The purity of a pure state is 1.
+
+    :param state: Quantum state obtained from TNQMachine.get_states()
+    :param qubits_idx: Indices of the qubits for which to compute the purity
+    :param num_wires: Number of qubits
+    :param use_tn: Set to True for the tensor-network backend, default: False
+
+    :return: The purity at the corresponding qubit positions.
+
+    .. note::
+        
+        Batching must be used together with TNQModule.
+
+    Example::
+
+        import pyvqnet
+        from pyvqnet.qnn.vqc.tn.native import TNQMachine, qcircuit, TNQModule,VQC_Purity
+        pyvqnet.backends.set_backend("pyvqnet")
+        from pyvqnet.tensor import QTensor
+
+        x = QTensor([[0.7, 0.4], [1.7, 2.4]], requires_grad=True).toGPU()
+        x.requires_grad = True
+        class QM(TNQModule):
+            def __init__(self, name=""):
+                super().__init__(name)
+                self.device = TNQMachine(3)
+                
+            def forward(self, x):
+                self.device.reset_states(2)
+                qcircuit.rx(q_machine=self.device, wires=0, params=x[0])
+                qcircuit.ry(q_machine=self.device, wires=1, params=x[1])
+                qcircuit.ry(q_machine=self.device, wires=2, params=x[1])
+                qcircuit.cnot(q_machine=self.device, wires=[0, 1])
+                qcircuit.cnot(q_machine=self.device, wires=[2, 1])
+                return VQC_Purity([0, 1], 3, self.device)
+
+        model = QM().toGPU()
+        y_tn = model(x)
+        
+        y_tn.backward(pyvqnet.tensor.ones_like(y_tn))
+        print(y_tn)
+
+VQC_VarMeasure
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+
+.. py:function:: pyvqnet.qnn.vqc.tn.native.VQC_VarMeasure(q_machine, obs)
+
+    The variance of the provided observable ``obs``.
+
+    :param q_machine: Quantum state obtained from pyqpanda get_qstate()
+    :param obs: Observable to measure; currently Hadamard, I, PauliX, PauliY, PauliZ are supported.
+
+    :return: The variance of the observable.
+
+    .. note::
+
+        The measurement result is generally [b, 1], where b is the batch size set by q_machine.reset_states(b).
+
+    Example::
+
+        import pyvqnet
+        from pyvqnet.qnn.vqc.tn.native import TNQMachine, qcircuit, TNQModule, PauliY
+        from pyvqnet.qnn.vqc import VQC_VarMeasure
+        from pyvqnet.tensor import QTensor
+        from pyvqnet import kfloat64
+        pyvqnet.backends.set_backend("pyvqnet")
+        x = QTensor([[0.7, 0.4], [0.6, 0.4]], requires_grad=True).toGPU()
+        x.requires_grad = True
+        class QM(TNQModule):
+            def __init__(self, name=""):
+                super().__init__(name)
+                self.device = TNQMachine(3)
+                
+            def forward(self, x):
+                self.device.reset_states(2)
+                qcircuit.rx(q_machine=self.device, wires=0, params=x[0])
+                qcircuit.ry(q_machine=self.device, wires=1, params=x[1])
+                qcircuit.ry(q_machine=self.device, wires=2, params=x[1])
+                qcircuit.cnot(q_machine=self.device, wires=[0, 1])
+                qcircuit.cnot(q_machine=self.device, wires=[2, 1])
+                return VQC_VarMeasure(q_machine= self.device, obs=PauliY(wires=0))
+            
+        model = QM().toGPU()
+        y = model(x)
+
+        y.backward(pyvqnet.tensor.ones_like(y))
+        print(y)
+
+        # [[0.9370641],
+        # [0.9516521]]
+
+
+VQC_DensityMatrixFromQstate
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. py:function:: pyvqnet.qnn.vqc.tn.native.VQC_DensityMatrixFromQstate(state, indices, use_tn=False)
+
+    Compute the density matrix of the quantum state on a specific set of qubits.
+
+    :param state: One-dimensional list state vector. The size of this list should be ``(2**N,)`` for ``N`` qubits, and qstate should start from 000 -> 111.
+    :param indices: List of qubit indices in the subsystem under consideration.
+    :param use_tn: Set to True for the tensor-network backend, default: False.
+    :return: A density matrix of size ``(b, 2**len(indices), 2**len(indices))``, where b is the batch size set by q_machine.reset_states(b).
+
+    Example::
+
+        import pyvqnet
+        from pyvqnet.tensor import QTensor
+        from pyvqnet.qnn.vqc.tn.native import TNQMachine, qcircuit, VQC_DensityMatrixFromQstate,TNQModule
+        pyvqnet.backends.set_backend("pyvqnet")
+        x = QTensor([[0.7,0.4],[1.7,2.4]], requires_grad=True).toGPU()
+        x.requires_grad = True
+        class QM(TNQModule):
+            def __init__(self, name=""):
+                super().__init__(name=name, use_jit=True)
+                self.device = TNQMachine(3)
+                
+            def forward(self, x):
+                self.device.reset_states(2)
+                qcircuit.rx(q_machine=self.device, wires=0, params=x[0])
+                qcircuit.ry(q_machine=self.device, wires=1, params=x[1])
+                qcircuit.ry(q_machine=self.device, wires=2, params=x[1])
+                qcircuit.cnot(q_machine=self.device, wires=[0, 1])
+                qcircuit.cnot(q_machine=self.device, wires=[2, 1])
+                return VQC_DensityMatrixFromQstate([0,1], 3, self.device)
+            
+        model = QM().toGPU()
+        y = model(x)
+ 
+        y.backward(pyvqnet.tensor.ones_like(y))
+        print(y)
+
+        # [[[0.8155131+0.j        0.1718155+0.j        0.       +0.0627175j
+        #   0.       +0.2976855j]
+        #  [0.1718155+0.j        0.0669081+0.j        0.       +0.0244234j
+        #   0.       +0.0627175j]
+        #  [0.       -0.0627175j 0.       -0.0244234j 0.0089152+0.j
+        #   0.0228937+0.j       ]
+        #  [0.       -0.2976855j 0.       -0.0627175j 0.0228937+0.j
+        #   0.1086637+0.j       ]]
+        # 
+        # [[0.3362115+0.j        0.1471083+0.j        0.       +0.1674582j
+        #   0.       +0.3827205j]
+        #  [0.1471083+0.j        0.0993662+0.j        0.       +0.1131119j
+        #   0.       +0.1674582j]
+        #  [0.       -0.1674582j 0.       -0.1131119j 0.1287589+0.j
+        #   0.1906232+0.j       ]
+        #  [0.       -0.3827205j 0.       -0.1674582j 0.1906232+0.j
+        #   0.4356633+0.j       ]]]   
+
+
+
+Probability
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+
+.. py:class:: pyvqnet.qnn.vqc.tn.native.Probability(wires=None, name="")
+
+    Compute the probability measurement results of the quantum circuit on specific qubits.
+
+    .. warning::
+        
+        This class inherits from ``pyvqnet.qnn.vqc.tn.native.QModule`` and ``pyvqnet.nn.Module``.
+        This class can be added as a submodule of ``pyvqnet.nn.Module`` into a ``TNQModule`` model.
+
+    :param wires: Indices of the qubits to measure; list, tuple, or integer.
+    :param name: Name of the module, default: "".
+    :return: Measurement results, QTensor.
+
+    Example::
+
+        import pyvqnet
+        pyvqnet.backends.set_backend("pyvqnet")
+        from pyvqnet.qnn.vqc.tn.native import Probability, qcircuit, TNQMachine, Hadamard, CNOT
+        qm = TNQMachine(2)
+        qm.reset_states(2)
+        Hadamard(wires=0)(q_machine=qm)
+        CNOT(wires=[0, 1])(q_machine=qm)
+        ma = Probability(wires=1)
+        y = ma(q_machine=qm)
+        print(y)
+
+
+MeasureAll
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. py:class:: pyvqnet.qnn.vqc.tn.native.MeasureAll(obs=None, name="")
+
+    Compute the measurement results of the quantum circuit; obs can be multiple or single Pauli operators or a Hamiltonian.
+    For example:
+
+    {\'wires\': [0,  1], \'observables\': [\'x\', \'i\'],\'coefficient\':[0.23,-3.5]}
+    or:
+    {\'X0\': 0.23}
+    or:
+    [{\'wires\': [0, 2, 3],\'observables\': [\'X\', \'Y\', \'Z\'],\'coefficient\': [1, 0.5, 0.4]}, {\'wires\': [0, 1, 2],\'observables\': [\'X\', \'Y\', \'Z\'],\'coefficient\': [1, 0.5, 0.4]}]
+
+    .. warning::
+
+        This class inherits from ``pyvqnet.qnn.vqc.tn.native.QModule`` and ``pyvqnet.nn.Module``.
+        This class can be added as a submodule of ``pyvqnet.nn.Module`` into a ``TNQModule`` model.
+
+
+    :param obs: observable。
+    :param name: Name of the module, default: "".
+    :return: A MeasureAll measurement instance.
+
+    Example::
+
+        import pyvqnet
+        pyvqnet.backends.set_backend("pyvqnet")
+        from pyvqnet.qnn.vqc.tn.native import MeasureAll, qcircuit, TNQMachine, Hadamard, CNOT
+        qm = TNQMachine(2)
+        qm.reset_states(2)
+        Hadamard(wires=0)(q_machine=qm)
+        CNOT(wires=[0, 1])(q_machine=qm)
+        obs_list = [{"Z0 Z1": 2}, {"X1 X0": 2}]
+        ma = MeasureAll(obs=obs_list)
+        y = ma(q_machine=qm)
+        print(y)
+
+
+
+Samples
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. py:class:: pyvqnet.qnn.vqc.tn.native.Samples(wires=None, obs=None, shots = 1,name="")
+
+    Obtain sampled results with shots on a specific circuit
+
+    .. warning::
+
+        This class inherits from ``pyvqnet.qnn.vqc.tn.native.QModule`` and ``pyvqnet.nn.Module``.
+        This class can be added as a submodule of ``pyvqnet.nn.Module`` into a ``TNQModule`` model.
+
+
+    :param wires: Qubit indices to sample. Default: None, uses all qubits of the simulator at runtime.
+    :param obs: This value can only be set to None.
+    :param shots: Number of sample repetitions, default: 1.
+    :param name: Name of this module, default: "".
+    :return: A Samples measurement instance.
+
+    Example::
+
+        import pyvqnet
+        pyvqnet.backends.set_backend("pyvqnet")
+        from pyvqnet.qnn.vqc.tn.native import Samples, TNQMachine, Hadamard, CNOT
+        qm = TNQMachine(3)
+        qm.reset_states(2)
+        Hadamard(wires=0)(q_machine=qm)
+        CNOT(wires=[0, 1])(q_machine=qm)
+        ma = Samples(wires=[0, 1, 2], shots=3)
+        y = ma(q_machine=qm)
+        print(y)
+
+
+
+HermitianExpval
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. py:class:: pyvqnet.qnn.vqc.tn.native.HermitianExpval(obs=None, name="")
+
+    Compute the expectation of a Hermitian operator of the quantum circuit.
+
+    .. warning::
+
+        This class inherits from ``pyvqnet.qnn.vqc.tn.native.QModule`` and ``pyvqnet.nn.Module``.
+        This class can be added as a submodule of ``pyvqnet.nn.Module`` into a ``TNQModule`` model.
+
+
+    :param obs: Hermitian operator.
+    :param name: Name of the module, default: "".
+    :return: A HermitianExpval measurement instance.
+
+    Example::
+
+        import pyvqnet
+        pyvqnet.backends.set_backend("pyvqnet")
+        from pyvqnet.qnn.vqc.tn.native import TNQModule, TNQMachine, HermitianExpval, RX, RY, CNOT, PauliX, PauliZ, VQC_RotCircuit, rx, ry
+        from pyvqnet.tensor import QTensor, tensor
+        from pyvqnet.nn import Parameter
+        import numpy as np
+        bsz = 3
+        H = np.array([[8, 4, 0, -6], [4, 0, 4, 0], [0, 4, 8, 0], [-6, 0, 0, 0]])
+        class QModel(TNQModule):
+            def __init__(self, num_wires, dtype):
+                super(QModel, self).__init__()
+                self.rot_param = Parameter((3, ))
+                self._num_wires = num_wires
+                self._dtype = dtype
+                self.qm = TNQMachine(num_wires, dtype=dtype)
+                self.rx_layer1 = VQC_RotCircuit
+                self.ry_layer2 = RY(has_params=True,
+                                    trainable=True,
+                                    wires=0,
+                                    init_params=tensor.QTensor([-0.5]))
+                self.xlayer = PauliX(wires=0)
+                self.cnot = CNOT(wires=[0, 1])
+                self.measure = HermitianExpval(obs = {'wires':(1,0),'observables':tensor.to_tensor(H)})
+
+            def forward(self, x, *args, **kwargs):
+                self.qm.reset_states(bsz)
+
+                rx(q_machine=self.qm, wires=0, params=x[1])
+                ry(q_machine=self.qm, wires=1, params=x[0])
+                self.xlayer(q_machine=self.qm)
+                self.rx_layer1(params=self.rot_param, wire=1, q_machine=self.qm)
+                self.ry_layer2(q_machine=self.qm)
+                self.cnot(q_machine=self.qm)
+                rlt = self.measure(q_machine = self.qm)
+
+                return rlt
+
+
+        input_x = tensor.arange(1, bsz * 2 + 1,
+                                dtype=pyvqnet.kfloat32).reshape([bsz, 2])
+        input_x.requires_grad = True
+
+        qunatum_model = QModel(num_wires=2, dtype=pyvqnet.kcomplex64)
+
+        batch_y = qunatum_model(input_x)
+        batch_y.backward(pyvqnet.tensor.ones_like(batch_y))
+ 
+
+
+Common Quantum Circuit Templates
+--------------------------------------------------
+
+VQC_HardwareEfficientAnsatz
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. py:class:: pyvqnet.qnn.vqc.tn.native.VQC_HardwareEfficientAnsatz(n_qubits,single_rot_gate_list,entangle_gate="CNOT",entangle_rules='linear',depth=1,initial = None,dtype=None)
+
+    Implementation of the Hardware Efficient Ansatz introduced in the paper: `Hardware-efficient Variational Quantum Eigensolver for Small Molecules <https://arxiv.org/pdf/1704.05018.pdf>`__ .
+
+    .. warning::
+
+        This class inherits from ``pyvqnet.qnn.vqc.tn.native.QModule`` and ``pyvqnet.nn.Module``.
+        This class can be added as a submodule of ``pyvqnet.nn.Module`` into a ``TNQModule`` model.
+
+
+    :param n_qubits: Number of qubits.
+    :param single_rot_gate_list: List of single-qubit rotation gates, composed of one or more rotation gates acting on each qubit. Currently Rx, Ry, Rz are supported.
+    :param entangle_gate: Non-parameterized entangling gate. CNOT and CZ are supported. Default: CNOT.
+    :param entangle_rules: How the entangling gate is used in the circuit. 'linear' means the entangling gate acts on every adjacent pair of qubits. 'all' means it acts on any two qubits. Default: linear.
+    :param depth: Depth of the ansatz, default: 1.
+    :param initial: Use ``initial`` to initialize the parameters of all parameterized gates within; default: None, in which case this module randomly initializes parameters.
+    :param dtype: Data type of parameters, default: None, uses float32.
+    :return: A VQC_HardwareEfficientAnsatz instance.
+
+    Example::
+
+        from pyvqnet.nn import Linear
+        from pyvqnet.qnn.vqc.tn.native.qcircuit import VQC_HardwareEfficientAnsatz,RZZ,RZ
+        from pyvqnet.qnn.vqc.tn.native import Probability,TNQMachine, TNQModule
+        from pyvqnet import tensor
+        import pyvqnet
+        pyvqnet.backends.set_backend("pyvqnet")
+        pyvqnet.utils.set_random_seed(25)
+
+        class QM(TNQModule):
+            def __init__(self, name=""):
+                super().__init__(name)
+                self.linearx = Linear(4,2)
+                self.ansatz = VQC_HardwareEfficientAnsatz(4, ["rx", "RY", "rz"],
+                                            entangle_gate="cnot",
+                                            entangle_rules="linear",
+                                            depth=2)
+                self.encode1 = RZ(wires=0)
+                self.encode2 = RZ(wires=1)
+                self.measure = Probability(wires=[0, 2])
+                self.device = TNQMachine(4)
+            def forward(self, x, *args, **kwargs):
+                self.device.reset_states(bz)
+                y = self.linearx(x)
+                self.encode1(params = y[0],q_machine = self.device,)
+                self.encode2(params = y[1],q_machine = self.device,)
+                self.ansatz(q_machine =self.device)
+                return self.measure(q_machine =self.device)
+
+        bz =3
+        inputx = tensor.arange(1.0,bz*4+1).reshape([bz,4])
+        inputx.requires_grad= True
+        qlayer = QM()
+        y = qlayer(inputx)
+        y.backward(pyvqnet.tensor.ones_like(y))
+        print(y)
+
+
+VQC_BasicEntanglerTemplate
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. py:class:: pyvqnet.qnn.vqc.tn.native.VQC_BasicEntanglerTemplate(num_layer=1, num_qubits=1, rotation="RX", initial=None, dtype=None)
+
+    A layer composed of single-parameter single-qubit rotations on each qubit, followed by multiple CNOT gates forming a closed chain or ring.
+
+    The CNOT gate ring connects each qubit to its neighbors, where the last qubit is considered a neighbor of the first qubit.
+
+    .. warning::
+
+        This class inherits from ``pyvqnet.qnn.vqc.tn.native.QModule`` and ``pyvqnet.nn.Module``.
+        This class can be added as a submodule of ``pyvqnet.nn.Module`` into a ``TNQModule`` model.
+
+
+    :param num_layer: Number of quantum circuit layers.
+    :param num_qubits: Number of qubits, default: 1.
+    :param rotation: Single-parameter single-qubit gate to use; ``RX`` is used as the default.
+    :param initial: Use ``initial`` to initialize the parameters of all parameterized gates within; default: None, in which case this module randomly initializes parameters.
+    :param dtype: Data type of parameters, default: None, uses float32.
+    :return: A VQC_BasicEntanglerTemplate instance with trainable parameters.
+
+    Example::
+
+        import pyvqnet
+        pyvqnet.backends.set_backend("pyvqnet")
+        from pyvqnet.qnn.vqc.tn.native import TNQModule, VQC_BasicEntanglerTemplate, Probability, TNQMachine
+        from pyvqnet import tensor
+
+
+        class QM(TNQModule):
+            def __init__(self, name=""):
+                super().__init__(name)
+
+                self.ansatz = VQC_BasicEntanglerTemplate(2,
+                                                    4,
+                                                    "rz",
+                                                    initial=tensor.ones([1, 1]))
+
+                self.measure = Probability(wires=[0, 2])
+                self.device = TNQMachine(4)
+
+            def forward(self,x, *args, **kwargs):
+
+                self.ansatz(q_machine=self.device)
+                return self.measure(q_machine=self.device)
+
+        bz = 1
+        inputx = tensor.arange(1.0, bz * 4 + 1).reshape([bz, 4])
+        qlayer = QM()
+        y = qlayer(inputx)
+        y.backward(pyvqnet.tensor.ones_like(y))
+        print(y)
+
+
+
+VQC_StronglyEntanglingTemplate
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. py:class:: pyvqnet.qnn.vqc.tn.native.VQC_StronglyEntanglingTemplate(num_layers=1, num_qubits=1, rotation = "RX", initial = None, dtype: = None)
+
+    A layer composed of single-qubit rotations and entanglers, see `circuit-centric classifier design <https://arxiv.org/abs/1804.00633>`__ .
+
+    .. warning::
+
+        This class inherits from ``pyvqnet.qnn.vqc.tn.native.QModule`` and ``pyvqnet.nn.Module``.
+        This class can be added as a submodule of ``pyvqnet.nn.Module`` into a ``TNQModule`` model.
+
+
+    :param num_layers: Number of repeated layers, default: 1.
+    :param num_qubits: Number of qubits, default: 1.
+    :param rotation: Single-parameter single-qubit gate to use, default: `RX`
+    :param initial: Use ``initial`` to initialize the parameters of all parameterized gates within; default: None, in which case this module randomly initializes parameters.
+    :param dtype: Data type of parameters, default: None, uses float32.
+    :return: A VQC_BasicEntanglerTemplate instance
+
+
+    Example::
+
+        from pyvqnet.nn.torch import TorchModule,Linear,TorchModuleList
+        from pyvqnet.qnn.vqc.tn.native.qcircuit import VQC_StronglyEntanglingTemplate
+        from pyvqnet.qnn.vqc.tn.native import Probability, TNQMachine, TNQModule
+        from pyvqnet import tensor
+        import pyvqnet
+
+        pyvqnet.backends.set_backend("pyvqnet")
+        pyvqnet.utils.set_random_seed(25)
+        class QM(TNQModule):
+            def __init__(self, name=""):
+                super().__init__(name)
+
+                self.ansatz = VQC_StronglyEntanglingTemplate(2,
+                                                    4,
+                                                    None,
+                                                    initial=tensor.ones([1, 1]))
+
+                self.measure = Probability(wires=[0, 1])
+                self.device = TNQMachine(4)
+
+            def forward(self,x, *args, **kwargs):
+
+                self.ansatz(q_machine=self.device)
+                return self.measure(q_machine=self.device)
+
+        bz = 1
+        inputx = tensor.arange(1.0, bz * 4 + 1).reshape([bz, 4])
+        qlayer = QM()
+        y = qlayer(inputx)
+        y.backward(pyvqnet.tensor.ones_like(y))
+        print(y)
+
+VQC_QuantumEmbedding
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+
+.. py:class:: pyvqnet.qnn.vqc.tn.native.VQC_QuantumEmbedding(  num_repetitions_input, depth_input, num_unitary_layers, num_repetitions,initial = None,dtype = None,name= "")
+
+    Create a variational quantum circuit with RZ, RY, RZ to encode classical data into quantum states.
+    See `Quantum embeddings for machine learning <https://arxiv.org/abs/2001.03622>`_.
+
+    .. warning::
+
+        This class inherits from ``pyvqnet.qnn.vqc.tn.native.QModule`` and ``pyvqnet.nn.Module``.
+        This class can be added as a submodule of ``pyvqnet.nn.Module`` into a ``TNQModule`` model.
+
+
+    :param num_repetitions_input: Number of repetitions of the input encoding in the submodule.
+    :param depth_input: Input dimension.
+    :param num_unitary_layers: Number of repetitions of the variational quantum gates.
+    :param num_repetitions: Number of submodule repetitions.
+    :param initial: Parameter initialization value, default: None
+    :param dtype: Type of the parameters, default: None, uses float32.
+    :param name: Name of the class
+
+    Example::
+
+        from pyvqnet.qnn.vqc.tn.native.qcircuit import VQC_QuantumEmbedding
+        from pyvqnet.qnn.vqc.tn.native import TNQMachine, MeasureAll, TNQModule
+        from pyvqnet import tensor
+        import pyvqnet
+
+        pyvqnet.backends.set_backend("pyvqnet")
+        pyvqnet.utils.set_random_seed(25)
+        depth_input = 2
+        num_repetitions = 2
+        num_repetitions_input = 2
+        num_unitary_layers = 2
+        nq = depth_input * num_repetitions_input
+        bz = 12
+
+        class QM(TNQModule):
+            def __init__(self, name=""):
+                super().__init__(name)
+
+                self.ansatz = VQC_QuantumEmbedding(num_repetitions_input, depth_input,
+                                                num_unitary_layers,
+                                                num_repetitions, initial=tensor.full([1],12.0),dtype=pyvqnet.kfloat32)
+
+                self.measure = MeasureAll(obs={f"Z{nq-1}":1})
+                self.device = TNQMachine(nq)
+
+            def forward(self, x, *args, **kwargs):
+                self.device.reset_states(bz)
+                self.ansatz(x,q_machine=self.device)
+                return self.measure(q_machine=self.device)
+
+        inputx = tensor.arange(1.0, bz * depth_input + 1).reshape([bz, depth_input])
+        qlayer = QM()
+        y = qlayer(inputx)
+        y.backward(pyvqnet.tensor.ones_like(y))
+        print(y)
+
+
+ExpressiveEntanglingAnsatz
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. py:class:: pyvqnet.qnn.vqc.tn.native.ExpressiveEntanglingAnsatz(type: int, num_wires: int, depth: int, dtype=None, name: str = "")
+
+    The 19 different ansatze from the paper `Expressibility and entangling capability of parameterized quantum circuits for hybrid quantum-classical algorithms <https://arxiv.org/pdf/1905.10876.pdf>`_.
+
+    .. warning::
+
+        This class inherits from ``pyvqnet.qnn.vqc.tn.native.QModule`` and ``pyvqnet.nn.Module``.
+        This class can be added as a submodule of ``pyvqnet.nn.Module`` into a ``TNQModule`` model.
+
+
+    :param type: Circuit type from 1 to 19, 19 circuits in total.
+    :param num_wires: Number of qubits.
+    :param depth: Depth of the circuit.
+    :param dtype: Data type of parameters, default: None, uses float32.
+    :param name: Name, default: "".
+
+    :return:
+        An ExpressiveEntanglingAnsatz instance
+
+    Example::
+
+        from pyvqnet.qnn.vqc.tn.native.qcircuit import ExpressiveEntanglingAnsatz
+        from pyvqnet.qnn.vqc.tn.native import Probability, TNQMachine, MeasureAll, TNQModule
+        from pyvqnet import tensor
+        import pyvqnet
+
+        pyvqnet.backends.set_backend("pyvqnet")
+        pyvqnet.utils.set_random_seed(25)
+
+        class QModel(TNQModule):
+            def __init__(self, num_wires, dtype):
+                super(QModel, self).__init__()
+
+                self._num_wires = num_wires
+                self._dtype = dtype
+                self.qm = TNQMachine(num_wires, dtype=dtype)
+                self.c1 = ExpressiveEntanglingAnsatz(1,3,2)
+                self.measure = MeasureAll(obs={
+                    "Z1":1
+                })
+
+            def forward(self, x, *args, **kwargs):
+                self.qm.reset_states(1)
+                self.c1(q_machine = self.qm)
+                rlt = self.measure(q_machine=self.qm)
+                return rlt
+            
+
+        input_x = tensor.QTensor([[0.1, 0.2, 0.3]])
+
+        qunatum_model = QModel(num_wires=3, dtype=pyvqnet.kcomplex64)
+
+        batch_y = qunatum_model(input_x)
+        batch_y.backward()
+        print(batch_y)
+
+
+vqc_basis_embedding
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. py:function:: pyvqnet.qnn.vqc.tn.native.vqc_basis_embedding(basis_state,q_machine)
+   :noindex:
+
+    Encode n binary features into the basis states of n qubits of ``q_machine``. This function is aliased as `VQC_BasisEmbedding`.
+
+    For example, for ``basis_state=([0, 1, 1])``, the basis state in the quantum system is :math:`|011 \rangle`.
+
+    :param basis_state: Binary input of size ``(n)``.
+    :param q_machine: Quantum virtual machine device.
+    
+
+    Example::
+
+        import pyvqnet
+        pyvqnet.backends.set_backend("pyvqnet")
+        from pyvqnet.qnn.vqc.tn.native import vqc_basis_embedding,TNQMachine
+        qm  = TNQMachine(3)
+        vqc_basis_embedding(basis_state=[1,1,0],q_machine=qm)
+        print(qm.get_states())
+
+
+
+
+vqc_angle_embedding
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+
+.. py:function:: pyvqnet.qnn.vqc.tn.native.vqc_angle_embedding(input_feat, wires, q_machine: pyvqnet.qnn.vqc.tn.native.TNQMachine, rotation: str = "X")
+   :noindex:
+
+    Encode :math:`N` features into the rotation angles of :math:`n` qubits, where :math:`N \leq n`.
+    This function is aliased as `VQC_AngleEmbedding`.
+
+    The rotation can be chosen as 'X', 'Y', 'Z', defined by the ``rotation`` parameter as:
+
+    * ``rotation='X'`` uses the features as angles for RX rotation.
+
+    * ``rotation='Y'`` uses the features as angles for RY rotation.
+
+    * ``rotation='Z'`` uses the features as angles for RZ rotation.
+
+     ``wires`` represents the idx of the rotation gates on the qubits.
+
+    :param input_feat: Array representing the parameters.
+    :param wires: Qubit idx.
+    :param q_machine: Quantum virtual machine device.
+    :param rotation: Rotation gate, default: "X".
+    
+
+    Example::
+
+        import pyvqnet
+        pyvqnet.backends.set_backend("pyvqnet")
+        from pyvqnet.qnn.vqc.tn.native import vqc_angle_embedding, TNQMachine
+        from pyvqnet.tensor import QTensor
+        qm  = TNQMachine(2)
+        vqc_angle_embedding(QTensor([2.2, 1]), [0, 1], q_machine=qm, rotation='X')
+        print(qm.get_states())
+        vqc_angle_embedding(QTensor([2.2, 1]), [0, 1], q_machine=qm, rotation='Y')
+        print(qm.get_states())
+        vqc_angle_embedding(QTensor([2.2, 1]), [0, 1], q_machine=qm, rotation='Z')
+        print(qm.get_states())
+
+
+vqc_amplitude_embedding
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. py:function:: pyvqnet.qnn.vqc.tn.native.vqc_amplitude_embedding(input_feature, q_machine)
+
+    Encode :math:`2^n` features into an amplitude vector of :math:`n` qubits. This function is aliased as `VQC_AmplitudeEmbedding`.
+
+    :param input_feature: numpy array representing the parameters.
+    :param q_machine: Quantum virtual machine device.
+    
+
+    Example::
+
+        import pyvqnet
+        pyvqnet.backends.set_backend("pyvqnet")
+        from pyvqnet.qnn.vqc.tn.native import vqc_amplitude_embedding, TNQMachine
+        from pyvqnet.tensor import QTensor
+        qm  = TNQMachine(3)
+        vqc_amplitude_embedding(QTensor([3.2,-2,-2,0.3,12,0.1,2,-1]), q_machine=qm)
+        print(qm.get_states())
+
+
+
+vqc_iqp_embedding
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.. py:function:: pyvqnet.qnn.vqc.tn.native.vqc_iqp_embedding(input_feat, q_machine: pyvqnet.qnn.vqc.tn.native.TNQMachine, rep: int = 1)
+   :noindex:
+
+    Encode :math:`n` features into :math:`n` qubits using diagonal gates of an IQP circuit. This function is aliased as ``VQC_IQPEmbedding``.
+
+    The encoding was proposed by `Havlicek et al. (2018) <https://arxiv.org/pdf/1804.11326.pdf>`_.
+
+    By specifying ``rep``, the basic IQP circuit can be repeated.
+
+    :param input_feat: Array representing the parameters.
+    :param q_machine: Quantum virtual machine device.
+    :param rep: Number of repetitions of the quantum circuit block, default: 1.
+    
+
+    Example::
+
+        import pyvqnet
+        pyvqnet.backends.set_backend("pyvqnet")
+        from pyvqnet.qnn.vqc.tn.native import vqc_iqp_embedding, TNQMachine
+        from pyvqnet.tensor import QTensor
+        qm  = TNQMachine(3)
+        vqc_iqp_embedding(QTensor([3.2,-2,-2]), q_machine=qm)
+        print(qm.get_states())        
+
+
+
+vqc_rotcircuit
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. py:function:: pyvqnet.qnn.vqc.tn.native.vqc_rotcircuit(q_machine, wire, params)
+   :noindex:
+
+    A combination of quantum logic gates for arbitrary single-qubit rotation. This function is aliased as ``VQC_RotCircuit``.
+
+    .. math::
+
+        R(\phi,\theta,\omega) = RZ(\omega)RY(\theta)RZ(\phi)= \begin{bmatrix}
+        e^{-i(\phi+\omega)/2}\cos(\theta/2) & -e^{i(\phi-\omega)/2}\sin(\theta/2) \\
+        e^{-i(\phi-\omega)/2}\sin(\theta/2) & e^{i(\phi+\omega)/2}\cos(\theta/2)
+        \end{bmatrix}.
+
+
+    :param q_machine: Quantum virtual machine device.
+    :param wire: Qubit index.
+    :param params: Representing the parameters :math:`[\phi, \theta, \omega]`.
+    
+
+    Example::
+
+        import pyvqnet
+        pyvqnet.backends.set_backend("pyvqnet")
+        from pyvqnet.qnn.vqc.tn.native import vqc_rotcircuit, TNQMachine
+        from pyvqnet.tensor import QTensor
+        qm  = TNQMachine(3)
+        vqc_rotcircuit(q_machine=qm, wire=[1],params=QTensor([2.0,1.5,2.1]))
+        print(qm.get_states())
+
+
+vqc_crot_circuit
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+
+.. py:function:: pyvqnet.qnn.vqc.tn.native.vqc_crot_circuit(para,control_qubits,rot_wire,q_machine)
+   :noindex:
+
+	A combination of quantum logic gates for controlled-Rot single-qubit rotation. This function is aliased as ``VQC_CRotCircuit``.
+
+    .. math:: CR(\phi, \theta, \omega) = \begin{bmatrix}
+            1 & 0 & 0 & 0 \\
+            0 & 1 & 0 & 0\\
+            0 & 0 & e^{-i(\phi+\omega)/2}\cos(\theta/2) & -e^{i(\phi-\omega)/2}\sin(\theta/2)\\
+            0 & 0 & e^{-i(\phi-\omega)/2}\sin(\theta/2) & e^{i(\phi+\omega)/2}\cos(\theta/2)
+        \end{bmatrix}.
+    
+    :param para: Array representing the parameters.
+    :param control_qubits: Control qubit index.
+    :param rot_wire: Rot qubit index.
+    :param q_machine: Quantum virtual machine device.
+    
+
+    Example::
+
+        import pyvqnet
+        pyvqnet.backends.set_backend("pyvqnet")
+        from pyvqnet.tensor import QTensor
+        from pyvqnet.qnn.vqc.tn.native import vqc_crot_circuit,TNQMachine, MeasureAll
+        p = QTensor([2, 3, 4.0])
+        qm = TNQMachine(2)
+        vqc_crot_circuit(p, 0, 1, qm)
+        m = MeasureAll(obs={"Z0": 1})
+        exp = m(q_machine=qm)
+        print(exp)
+
+
+
+
+vqc_controlled_hadamard
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+
+.. py:function:: pyvqnet.qnn.vqc.tn.native.vqc_controlled_hadamard(wires, q_machine)
+   :noindex:
+
+    Controlled-Hadamard logic gate quantum circuit. This function is aliased as ``VQC_Controlled_Hadamard``.
+
+    .. math:: CH = \begin{bmatrix}
+            1 & 0 & 0 & 0 \\
+            0 & 1 & 0 & 0 \\
+            0 & 0 & \frac{1}{\sqrt{2}} & \frac{1}{\sqrt{2}} \\
+            0 & 0 & \frac{1}{\sqrt{2}} & -\frac{1}{\sqrt{2}}
+        \end{bmatrix}.
+
+    :param wires: List of qubit indices; the first is the control qubit, list length is 2.
+    :param q_machine: Quantum virtual machine device.
+    
+
+    Example::
+
+        import pyvqnet
+        pyvqnet.backends.set_backend("pyvqnet")
+        from pyvqnet.tensor import QTensor
+        from pyvqnet.qnn.vqc.tn.native import vqc_controlled_hadamard,\
+            TNQMachine, MeasureAll
+
+        p = QTensor([0.2, 3, 4.0])
+        qm = TNQMachine(3)
+        vqc_controlled_hadamard([1, 0], qm)
+        m = MeasureAll(obs={"Z0": 1})
+        exp = m(q_machine=qm)
+        print(exp)
+
+
+
+vqc_ccz
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. py:function:: pyvqnet.qnn.vqc.tn.native.vqc_ccz(wires, q_machine)
+   :noindex:
+
+    Controlled-Controlled-Z (CCZ) logic gate. This function is aliased as ``VQC_CCZ``.
+
+    .. math::
+
+        CCZ =
+        \begin{pmatrix}
+        1 & 0 & 0 & 0 & 0 & 0 & 0 & 0\\
+        0 & 1 & 0 & 0 & 0 & 0 & 0 & 0\\
+        0 & 0 & 1 & 0 & 0 & 0 & 0 & 0\\
+        0 & 0 & 0 & 1 & 0 & 0 & 0 & 0\\
+        0 & 0 & 0 & 0 & 1 & 0 & 0 & 0\\
+        0 & 0 & 0 & 0 & 0 & 1 & 0 & 0\\
+        0 & 0 & 0 & 0 & 0 & 0 & 1 & 0\\
+        0 & 0 & 0 & 0 & 0 & 0 & 0 & -1
+        \end{pmatrix}
+    
+    :param wires: List of qubit indices; the first is the control qubit. List length is 3.
+    :param q_machine: Quantum virtual machine device.
+    
+
+    Example::
+
+        import pyvqnet
+        pyvqnet.backends.set_backend("pyvqnet")
+        from pyvqnet.tensor import QTensor
+        from pyvqnet.qnn.vqc.tn.native import vqc_ccz,TNQMachine, MeasureAll
+        p = QTensor([0.2, 3, 4.0])
+
+        qm = TNQMachine(3)
+
+        vqc_ccz([1, 0, 2], qm)
+        m = MeasureAll(obs={"Z0": 1})
+        exp = m(q_machine=qm)
+        print(exp)
+
+
+
+vqc_fermionic_single_excitation
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. py:function:: pyvqnet.qnn.vqc.tn.native.vqc_fermionic_single_excitation(weight, wires, q_machine)
+   :noindex:
+
+    Coupled-cluster single-excitation operator raised to the tensor product of Pauli matrices. Its matrix form is given by:
+
+    .. math::
+
+        \hat{U}_{pr}(\theta) = \mathrm{exp} \{ \theta_{pr} (\hat{c}_p^\dagger \hat{c}_r
+        -\mathrm{H.c.}) \},
+
+    This function is aliased as ``VQC_FermionicSingleExcitation``.
+
+    :param weight: Parameter on qubit p, with only one element.
+    :param wires: Subset of qubit indices in the interval [r, p]. Minimum length must be 2. The first index is interpreted as r, and the last as p.
+                The middle indices are acted on by CNOT gates to compute the parity of the qubit set.
+    :param q_machine: Quantum virtual machine device.
+
+    
+
+    Example::
+
+        import pyvqnet
+        pyvqnet.backends.set_backend("pyvqnet")
+        from pyvqnet.tensor import QTensor
+        from pyvqnet.qnn.vqc.tn.native import vqc_fermionic_single_excitation,\
+            TNQMachine, MeasureAll
+        qm = TNQMachine(3)
+        p0 = QTensor([0.5])
+
+        vqc_fermionic_single_excitation(p0, [1, 0, 2], qm)
+        m = MeasureAll(obs={"Z0": 1})
+        exp = m(q_machine=qm)
+        print(exp)
+
+ 
+
+
+vqc_fermionic_double_excitation
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+
+.. py:function:: pyvqnet.qnn.vqc.tn.native.vqc_fermionic_double_excitation(weight, wires1, wires2, q_machine)
+   :noindex:
+
+    Coupled-cluster double-excitation operator raised to the tensor product of Pauli matrices. Its matrix form is given by:
+
+    .. math::
+
+        \hat{U}_{pqrs}(\theta) = \mathrm{exp} \{ \theta (\hat{c}_p^\dagger \hat{c}_q^\dagger
+        \hat{c}_r \hat{c}_s - \mathrm{H.c.}) \},
+
+    where :math:`\hat{c}` and :math:`\hat{c}^\dagger` are the fermionic annihilation and
+    creation operators respectively, and the indices :math:`r, s` and :math:`p, q` refer to occupied and
+    unoccupied molecular orbitals, respectively. Using the `Jordan-Wigner transformation
+    <https://arxiv.org/abs/1208.5986>`_ , the fermionic operators defined above can be written
+    in terms of Pauli matrices (for more details, see
+    `arXiv:1805.04340 <https://arxiv.org/abs/1805.04340>`_)
+
+    .. math::
+
+        \hat{U}_{pqrs}(\theta) = \mathrm{exp} \Big\{
+        \frac{i\theta}{8} \bigotimes_{b=s+1}^{r-1} \hat{Z}_b \bigotimes_{a=q+1}^{p-1}
+        \hat{Z}_a (\hat{X}_s \hat{X}_r \hat{Y}_q \hat{X}_p +
+        \hat{Y}_s \hat{X}_r \hat{Y}_q \hat{Y}_p +\\ \hat{X}_s \hat{Y}_r \hat{Y}_q \hat{Y}_p +
+        \hat{X}_s \hat{X}_r \hat{X}_q \hat{Y}_p - \mathrm{H.c.}  ) \Big\}
+
+    This function is aliased as ``VQC_FermionicDoubleExcitation``.
+
+    :param weight: Variable parameters
+    :param wires1: Subset of occupied qubit indices in the interval [s, r]. The first index is interpreted as s, the last as r. CNOT gates act on the middle indices to compute the parity of the qubit set.
+    :param wires2: Subset of occupied qubit indices in the interval [q, p]. The first index is interpreted as q, the last as p. CNOT gates act on the middle indices to compute the parity of the qubit set.
+    :param q_machine: Quantum virtual machine device.
+
+    
+
+    Example::
+
+        import pyvqnet
+        pyvqnet.backends.set_backend("pyvqnet")
+        from pyvqnet.tensor import QTensor
+        from pyvqnet.qnn.vqc.tn.native import vqc_fermionic_double_excitation,\
+            TNQMachine, MeasureAll
+        qm = TNQMachine(5)
+        p0 = QTensor([0.5])
+
+        vqc_fermionic_double_excitation(p0, [0, 1], [2, 3], qm)
+        m = MeasureAll(obs={"Z0": 1})
+        exp = m(q_machine=qm)
+        print(exp)
+ 
+
+vqc_uccsd
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+
+.. py:function:: pyvqnet.qnn.vqc.tn.native.vqc_uccsd(weights, wires, s_wires, d_wires, init_state, q_machine)
+   :noindex:
+
+    Implements the Unitary Coupled Cluster Singles and Doubles (UCCSD) ansatz. UCCSD is a VQE ansatz commonly used for quantum chemistry simulations.
+
+    Within the first-order Trotter approximation, the UCCSD unitary is given by:
+
+    .. math::
+
+        \hat{U}(\vec{\theta}) =
+        \prod_{p > r} \mathrm{exp} \Big\{\theta_{pr}
+        (\hat{c}_p^\dagger \hat{c}_r-\mathrm{H.c.}) \Big\}
+        \prod_{p > q > r > s} \mathrm{exp} \Big\{\theta_{pqrs}
+        (\hat{c}_p^\dagger \hat{c}_q^\dagger \hat{c}_r \hat{c}_s-\mathrm{H.c.}) \Big\}
+
+    where :math:`\hat{c}` and :math:`\hat{c}^\dagger` are the fermionic annihilation and
+    creation operators respectively, and the indices :math:`r, s` and :math:`p, q` refer to occupied and
+    unoccupied molecular orbitals, respectively. (See
+    `arXiv:1805.04340 <https://arxiv.org/abs/1805.04340>`_):
+
+    This function is aliased as ``VQC_UCCSD``.
+
+    :param weights: A tensor of size ``(len(s_wires) + len(d_wires))`` containing the parameters
+        :math:`\theta_{pr}` and :math:`\theta_{pqrs}` input to the Z rotations
+        ``FermionicSingleExcitation`` and ``FermionicDoubleExcitation``.
+    :param wires: Qubit indices on which the template acts
+    :param s_wires: List of lists containing qubit indices ``[r,...,p]``
+        generated by the single excitation
+        :math:`\vert r, p \rangle = \hat{c}_p^\dagger \hat{c}_r \vert \mathrm{HF} \rangle`,
+        where :math:`\vert \mathrm{HF} \rangle` denotes the Hartree-Fock reference state.
+    :param d_wires: A list of lists, where each list contains two lists
+        specifying the indices ``[s, ...,r]`` and ``[q,..., p]``
+        defining the double excitation :math:`\vert s, r, q, p \rangle = \hat{c}_p^\dagger \hat{c}_q^\dagger \hat{c}_r\hat{c}_s \vert \mathrm{HF} \rangle`.
+    :param init_state: An occupation-number vector of length ``len(wires)`` representing
+        the Hartree-Fock state. ``init_state`` initializes the state on the qubits.
+    :param q_machine: Quantum virtual machine device.
+    
+    
+    Example::
+
+        import pyvqnet
+        pyvqnet.backends.set_backend("pyvqnet")
+        from pyvqnet.qnn.vqc.tn.native import vqc_uccsd, TNQMachine, MeasureAll
+        from pyvqnet.tensor import QTensor
+        p0 = QTensor([2, 0.5, -0.2, 0.3, -2, 1, 3, 0])
+        s_wires = [[0, 1, 2], [0, 1, 2, 3, 4], [1, 2, 3], [1, 2, 3, 4, 5]]
+        d_wires = [[[0, 1], [2, 3]], [[0, 1], [2, 3, 4, 5]], [[0, 1], [3, 4]],
+                [[0, 1], [4, 5]]]
+        qm = TNQMachine(6)
+
+        vqc_uccsd(p0, range(6), s_wires, d_wires, QTensor([1.0, 1, 0, 0, 0, 0]), qm)
+        m = MeasureAll(obs={"Z1": 1})
+        exp = m(q_machine=qm)
+        print(exp)
+
+        # [[0.963802]]
+
+
+vqc_zfeaturemap
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. py:function:: pyvqnet.qnn.vqc.tn.native.vqc_zfeaturemap(input_feat, q_machine: pyvqnet.qnn.vqc.tn.native.TNQMachine, data_map_func=None, rep: int = 2)
+   :noindex:
+
+    First-order Pauli-Z evolution circuit.
+
+    For 3 qubits and 2 repetitions, the circuit is represented as:
+
+    .. parsed-literal::
+
+        ┌───┐┌──────────────┐┌───┐┌──────────────┐
+        ┤ H ├┤ U1(2.0*x[0]) ├┤ H ├┤ U1(2.0*x[0]) ├
+        ├───┤├──────────────┤├───┤├──────────────┤
+        ┤ H ├┤ U1(2.0*x[1]) ├┤ H ├┤ U1(2.0*x[1]) ├
+        ├───┤├──────────────┤├───┤├──────────────┤
+        ┤ H ├┤ U1(2.0*x[2]) ├┤ H ├┤ U1(2.0*x[2]) ├
+        └───┘└──────────────┘└───┘└──────────────┘
+    
+    The Pauli string is fixed as ``Z``. Therefore, the first-order expansion is a circuit without entangling gates.
+
+    :param input_feat: Array representing the input parameters.
+    :param q_machine: Quantum virtual machine.
+    :param data_map_func: Parameter mapping function, a callable designed as: ``data_map_func = lambda x: x``.
+    :param rep: Number of module repetitions.
+    
+    Example::
+
+        import pyvqnet
+        pyvqnet.backends.set_backend("pyvqnet")
+        from pyvqnet.qnn.vqc.tn.native import vqc_zfeaturemap, TNQMachine, hadamard
+        from pyvqnet.tensor import QTensor
+        qm = TNQMachine(3)
+        for i in range(3):
+            hadamard(q_machine=qm, wires=[i])
+        vqc_zfeaturemap(input_feat=QTensor([[0.1,0.2,0.3]]),q_machine = qm)
+        print(qm.get_states())
+ 
+
+vqc_zzfeaturemap
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. py:function:: pyvqnet.qnn.vqc.tn.native.vqc_zzfeaturemap(input_feat, q_machine: pyvqnet.qnn.vqc.tn.native.TNQMachine, data_map_func=None, entanglement: Union[str, List[List[int]],Callable[[int], List[int]]] = "full",rep: int = 2)
+   :noindex:
+
+    Second-order Pauli-Z evolution circuit.
+
+    For 3 qubits, 1 repetition, and linear entanglement, the circuit is represented as:
+
+    .. parsed-literal::
+
+        ┌───┐┌─────────────────┐
+        ┤ H ├┤ U1(2.0*φ(x[0])) ├──■────────────────────────────■────────────────────────────────────
+        ├───┤├─────────────────┤┌─┴─┐┌──────────────────────┐┌─┴─┐
+        ┤ H ├┤ U1(2.0*φ(x[1])) ├┤ X ├┤ U1(2.0*φ(x[0],x[1])) ├┤ X ├──■────────────────────────────■──
+        ├───┤├─────────────────┤└───┘└──────────────────────┘└───┘┌─┴─┐┌──────────────────────┐┌─┴─┐
+        ┤ H ├┤ U1(2.0*φ(x[2])) ├──────────────────────────────────┤ X ├┤ U1(2.0*φ(x[1],x[2])) ├┤ X ├
+        └───┘└─────────────────┘                                  └───┘└──────────────────────┘└───┘
+    
+    where ``φ`` is a classical nonlinear function. For two input values ``φ(x,y) = (pi - x)(pi - y)``, and for one input value ``φ(x) = x``. Expressed with ``data_map_func`` as follows:
+    
+    .. code-block::
+        
+        def data_map_func(x):
+            coeff = x if x.shape[-1] == 1 else ft.reduce(lambda x, y: (np.pi - x) * (np.pi - y), x)
+            return coeff
+
+    :param input_feat: Array representing the input parameters.
+    :param q_machine: Quantum virtual machine.
+    :param data_map_func: Parameter mapping function, a callable.
+    :param entanglement: The specified entanglement structure.
+    :param rep: Number of module repetitions.
+    
+    Example::
+
+        import pyvqnet
+        pyvqnet.backends.set_backend("pyvqnet")
+        from pyvqnet.qnn.vqc.tn.native import vqc_zzfeaturemap, TNQMachine
+        from pyvqnet.tensor import QTensor
+
+        qm = TNQMachine(3)
+        vqc_zzfeaturemap(q_machine=qm, input_feat=QTensor([[0.1,0.2,0.3]]))
+        print(qm.get_states())
+
+
+vqc_allsinglesdoubles
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. py:function:: pyvqnet.qnn.vqc.tn.native.vqc_allsinglesdoubles(weights, q_machine: pyvqnet.qnn.vqc.tn.native.TNQMachine, hf_state, wires, singles=None, doubles=None)
+   :noindex:
+
+    In this case, we have four single and double excitations that preserve the total spin projection of the Hartree-Fock state.
+
+    The resulting unitary preserves the particle number and prepares an n-qubit system in a superposition of the initial Hartree-Fock state and other states encoding multi-excitation configurations.
+      
+    :param weights: A QTensor of size ``(len(singles) + len(doubles),)`` containing the angles applied in order to the vqc.qCircuit.single_excitation and vqc.qCircuit.double_excitation operations
+    :param q_machine: Quantum virtual machine.
+    :param hf_state: Occupation-number vector of length ``len(wires)`` representing the Hartree-Fock state; ``hf_state`` is used to initialize the circuit.
+    :param wires: Qubits to act on.
+    :param singles: Sequence of lists with the two qubit indices on which the single_excitation operation acts.
+    :param doubles: Sequence of lists with the two qubit indices on which the double_excitation operation acts.
+
+    For example, the quantum circuit for the two-electron, six-qubit case is shown below:
+    
+.. image:: ./images/all_singles_doubles.png
+    :width: 600 px
+    :align: center
+
+|
+
+    Example::
+
+        import pyvqnet
+        pyvqnet.backends.set_backend("pyvqnet")
+        from pyvqnet.qnn.vqc.tn.native import vqc_allsinglesdoubles, TNQMachine
+
+        from pyvqnet.tensor import QTensor
+        qubits = 4
+        qm = TNQMachine(qubits)
+
+        vqc_allsinglesdoubles(q_machine=qm, weights=QTensor([0.55, 0.11, 0.53]), 
+                              hf_state = QTensor([1,1,0,0]), singles=[[0, 2], [1, 3]], doubles=[[0, 1, 2, 3]], wires=[0,1,2,3])
+        print(qm.get_states())
+
+vqc_basisrotation
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. py:function:: pyvqnet.qnn.vqc.tn.native.vqc_basisrotation(q_machine: pyvqnet.qnn.vqc.tn.native.TNQMachine, wires, unitary_matrix: QTensor, check=False)
+   :noindex:
+
+    Implements a circuit providing a Givens rotation for performing exact single-particle basis rotations. The circuit comes from the unitary transformation :math:`U(u)` of single-particle fermions given in `arXiv:1711.04789 <https://arxiv.org/abs/1711.04789>`_.
+    
+    .. math::
+
+        U(u) = \exp{\left( \sum_{pq} \left[\log u \right]_{pq} (a_p^\dagger a_q - a_q^\dagger a_p) \right)}.
+    
+    :math:`U(u)` is implemented using the scheme given in the paper `Optica, 3, 1460 (2016) <https://opg.optica.org/optica/fulltext.cfm?uri=optica-3-12-1460&id=355743>`_.
+    
+
+    :param q_machine: Quantum virtual machine.
+    :param wires: Qubits to act on.
+    :param unitary_matrix: Matrix specifying the basis transformation.
+    :param check: Check whether `unitary_matrix` is unitary.
+
+    Example::
+
+        import pyvqnet
+
+        pyvqnet.backends.set_backend("pyvqnet")
+        from pyvqnet.qnn.vqc.tn.native import vqc_basisrotation, TNQMachine
+        from pyvqnet.tensor import QTensor
+        import numpy as np
+
+        V = np.array([[0.73678 + 0.27511j, -0.5095 + 0.10704j, -0.06847 + 0.32515j],
+                    [0.73678 + 0.27511j, -0.5095 + 0.10704j, -0.06847 + 0.32515j],
+                    [-0.21271 + 0.34938j, -0.38853 + 0.36497j, 0.61467 - 0.41317j]])
+
+        eigen_vals, eigen_vecs = np.linalg.eigh(V)
+        umat = eigen_vecs.T
+        wires = range(len(umat))
+
+        qm = TNQMachine(len(umat))
+
+        vqc_basisrotation(q_machine=qm,
+                        wires=wires,
+                        unitary_matrix=QTensor(umat, dtype=qm.dtype))
+
+        print(qm.get_states())
 
 
 .. _benchmarks:
