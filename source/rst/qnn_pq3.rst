@@ -573,10 +573,10 @@ VQCLayer
     When ``submit_kwargs["pauli_str_dict"]`` is enabled, you can select a faster expectation value measurement scheme with ``submit_kwargs["shadow_config"]``:
 
     * ``shadow_config=0`` (default): full measurement (MeasureAll), exact expectation values.
-    * ``shadow_config=1`` : random classical shadow. shots is the total number of snapshots T, and each snapshot circuit runs 1 shot.
-    * ``shadow_config=2`` : derandomized classical shadow. shots is the scheduling length N; greedy scheduling generates N circuits, each with 1 shot.
+    * ``shadow_config=1``: random classical shadow. shots is the total number of snapshots T, and each snapshot circuit runs 1 shot.
+    * ``shadow_config=2``: derandomized classical shadow. shots is the scheduling length N; greedy scheduling generates N circuits, each with 1 shot.
 
-    Classical shadows work on ``vqnet_native`` and the submission backends ( ``qcloud_fake`` / ``qcloud_service`` ) but are not supported on ``qpanda_runtime`` (raises ``ValueError``).
+    Classical shadows work on ``vqnet_native`` and the submission backends (``qcloud_fake`` / ``qcloud_service``) but are not supported on ``qpanda_runtime`` (raises ``ValueError``).
     Gradient path: ``vqnet_native`` uses the native automatic differentiation of the VQC module;
     submission backends use the parameter-shift method on mode-0 circuits.
 
@@ -604,7 +604,7 @@ VQCLayer
         ``pauli_str_dict``: expectation value measurement, mutually exclusive with ``query_kwargs["measure_qubits"]``;
         ``shadow_config``: expectation value measurement scheme (requires ``pauli_str_dict``): 0 = full measurement (default), 1 = random classical shadow, 2 = derandomized classical shadow. Supported on ``vqnet_native`` and submission backends, not on ``qpanda_runtime``;
         ``shadow_seed``: classical shadow recipe seed, random by default (fixed for the layer lifetime, so training is reproducible);
-        ``noise_model``: ``QCloudNoiseModel`` noise model instance, used by the ``qcloud_fake`` backend to generate noisy local simulation results; the ``qcloud_service`` backend supports only cloud simulator chips ( ``full_amplitude`` / ``partial_amplitude`` / ``single_amplitude`` );
+        ``noise_model``: ``QCloudNoiseModel`` noise model instance, used by the ``qcloud_fake`` backend to generate noisy local simulation results; the ``qcloud_service`` backend supports only cloud simulator chips (``full_amplitude`` / ``partial_amplitude`` / ``single_amplitude``);
         ``log_file``: log output file path (through ``LogOutput.FILE``), mutually exclusive with ``if_print_qcloud_log``, FILE takes precedence; default empty string (no file output);
         ``point_label``: passed through to the cloud backend submission JSON, default 1;
         ``enable_binary_encoding``: enable binary encoding submission, default False;

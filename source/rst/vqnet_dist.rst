@@ -1663,31 +1663,7 @@ ParallelTrainingWrapper
 
     A unified parallel training wrapper that supports three parallel modes: classical layer pipeline parallelism (PP), data parallelism (DP), and bit parallelism (Bit). It can interleave classical layers and variational quantum circuits (VQC) into a multi-level pipeline for execution.
 
-    :param args: Training configuration dictionary. See the table below for keys and values.
-    :param pipeline_def: Model definition. The following four forms are supported:
-
-        1. Handwritten dictionary list (legacy pipeline_def):
-
-           ``[{"type": "classical", "layers": [...]}, ...]``
-
-           Each entry is a stage dictionary and supports three types: ``classical``, ``vqc_split``, and ``vqc_whole``.
-
-        2. Pure classical model: a list of ``nn.Module`` layers, automatically assigned to stages.
-
-        3. Pure VQC model: a ``QModule`` subclass (must be a class, not an instance).
-
-        4. Hybrid model: a list of ``("classical", [layers])`` / ``("vqc", VQCClass)`` tuples.
-
-        Forms 2-4 are automatically compiled by ``auto_plan`` into the legacy dictionary-list intermediate representation.
-
-    :param trainset: Dataset. It must have ``.data`` and ``.labels`` attributes, and ``__getitem__`` must return a ``(data, label)`` pair.
-    :param strategy: Strategy dictionary, used only for declarative model definitions (forms 2-4). Optional keys:
-
-        - ``classical_split`` (``"uniform"`` | ``"auto"``, default ``"auto"``): Classical layer assignment strategy.
-        - ``vqc_split`` (``None`` | ``False``, default ``None``): ``None`` means automatically split VQC blocks; ``False`` means keep each VQC block intact.
-        - ``compression_policy`` (default ``"greedy"``): Stage merging strategy.
-
-    ``args`` parameter list:
+    :param args: Training configuration dictionary. The following keys are supported:
 
         ``data_parallel_size`` (int, default 1)
             Data parallelism degree.
@@ -1713,6 +1689,29 @@ ParallelTrainingWrapper
             Print interval in steps.
         ``seed`` (int, default 42)
             Random seed for determinism of VQC recording.
+
+    :param pipeline_def: Model definition. The following four forms are supported:
+
+        1. Handwritten dictionary list (legacy pipeline_def):
+
+           ``[{"type": "classical", "layers": [...]}, ...]``
+
+           Each entry is a stage dictionary and supports three types: ``classical``, ``vqc_split``, and ``vqc_whole``.
+
+        2. Pure classical model: a list of ``nn.Module`` layers, automatically assigned to stages.
+
+        3. Pure VQC model: a ``QModule`` subclass (must be a class, not an instance).
+
+        4. Hybrid model: a list of ``("classical", [layers])`` / ``("vqc", VQCClass)`` tuples.
+
+        Forms 2-4 are automatically compiled by ``auto_plan`` into the legacy dictionary-list intermediate representation.
+
+    :param trainset: Dataset. It must have ``.data`` and ``.labels`` attributes, and ``__getitem__`` must return a ``(data, label)`` pair.
+    :param strategy: Strategy dictionary, used only for declarative model definitions (forms 2-4). Optional keys:
+
+        - ``classical_split`` (``"uniform"`` | ``"auto"``, default ``"auto"``): Classical layer assignment strategy.
+        - ``vqc_split`` (``None`` | ``False``, default ``None``): ``None`` means automatically split VQC blocks; ``False`` means keep each VQC block intact.
+        - ``compression_policy`` (default ``"greedy"``): Stage merging strategy.
 
     .. note::
 
