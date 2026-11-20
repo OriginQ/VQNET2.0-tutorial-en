@@ -8093,7 +8093,7 @@ Quantum machine learning batch data tensor-network training benchmark
 .. note::
     The VQNet tensor-network backend used in this benchmark depends on ``jax`` and ``tensornetwork``. For installation instructions, see the "Tensor-Network Backend Variational Quantum Circuit Module" section above.
 
-This benchmark follows the same circuit structure as Test 2 in the previous section (RY(data) → [RY(param) → CRZ(param) → RY(param) → CRZ(param)] × L). It evaluates the performance of tensor-network (TN) simulation backends for gradient computation with batched data in variational quantum circuits. The tests were run on Linux with a GPU, comparing the VQNet JAX TN backend based on tensor-network contraction simulation ( ``pyvqnet.qnn.vqc.tn.torch`` , torch frontend + JAX contraction engine) and TensorCircuit (jax backend) against state-vector-based frameworks: VQNet (including the ``fused_multi_crz`` fused-operator variant), TorchQuantum, PennyLane, DeepQuantum, and MindQuantum. The tests used n = 4 and n = 10 qubits, a circuit depth of 10 layers, and batch sizes 512/128/32. For faster frameworks, the average time over 20 runs was recorded; slower frameworks (PennyLane and MindQuantum) were run only 2 times to save time.
+This benchmark follows the same circuit structure as Test 2 in the previous section (RY(data) → [RY(param) → CRZ(param) → RY(param) → CRZ(param)] × L). It evaluates the performance of tensor-network (TN) simulation backends for gradient computation with batched data in variational quantum circuits. The tests were run on Linux with a GPU, comparing the VQNet JAX TN backend based on tensor-network contraction simulation ( ``pyvqnet.qnn.vqc.tn.torch`` , torch frontend + JAX contraction engine) and TensorCircuit (jax backend) against state-vector-based frameworks: VQNet (including the ``fused_multi_crz`` fused-operator variant), TorchQuantum, and PennyLane, among others. The tests used n = 4 and n = 10 qubits, a circuit depth of 10 layers, and batch sizes 512/128/32. For faster frameworks, the average time over 20 runs was recorded; slower frameworks were run only 2 times to save time.
 
 .. image:: ./images/grad_bench_full_n4.png
    :width: 600 px
@@ -8913,9 +8913,7 @@ The test code is as follows:
 
     def plot_results_main(results, output_path="grad_benchmarks_main.png"):
         """
-        Plot only the main framework comparison (grouped bar chart of 7 frameworks):
-        pyVQNet (fused CRZ) / VQNet JAX TN (TNQModule, torch interface) / TensorCircuit-NG (torch interface) /
-        TorchQuantum / PennyLane / DeepQuantum / MindQuantum
+        Plot only the main framework comparison.
         """
         plot_results(results, output_path,
                      frameworks=['new', 'vqnet-jax-tn-torch', 'tc-torch', 'torchquantum', 'pl', 'dq', 'mq'])

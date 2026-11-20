@@ -5737,7 +5737,7 @@ Quantum Machine Learning Batch Data Training Benchmarks
 Test 1: Gradient Comparison on Batch Data
 ------------------------------------------------------------
 
-In quantum machine learning, gradient computation is critical to the efficiency of variational quantum circuits. To evaluate quantum gradient performance across frameworks, this work benchmarks VQNet, Deepquantum, and Pennylane on Linux with a GPU. Tests cover different batch sizes (16 and 32), circuit depths (2 and 4 layers), and qubit counts (4, 8, 12, and 16), recording the average runtime of 10 runs for each framework. The circuit structure is a CNOT + RX + RZ + RX encoding layer. Deepquantum and Pennylane use the Torch GPU backend, while VQNet implements GPU computation with its own code.
+In quantum machine learning, gradient computation is critical to the efficiency of variational quantum circuits. To evaluate quantum gradient performance across frameworks, this work benchmarks VQNet and Pennylane, among others, on Linux with a GPU. Tests cover different batch sizes (16 and 32), circuit depths (2 and 4 layers), and qubit counts (4, 8, 12, and 16), recording the average runtime of 10 runs for each framework. The circuit structure is a CNOT + RX + RZ + RX encoding layer. Pennylane and similar frameworks use the Torch GPU backend, while VQNet implements GPU computation with its own code.
 
 .. image:: ./images/grad-benchmarks.png
    :width: 600 px
@@ -5974,11 +5974,11 @@ In quantum machine learning, gradient computation is critical to the efficiency 
 Test 2: 10-Qubit VQC Gradient Comparison
 ------------------------------------------------------------
 
-This test uses the 10-qubit, 10-layer VQC circuit from the Origin Quantum large model paper to compare gradient computation performance across five frameworks: VQNet, TorchQuantum (TQ), DeepQuantum (DQ), Pennylane (PL), and MindQuantum (MQ). The circuit structure is:
+This test uses the 10-qubit, 10-layer VQC circuit from the Origin Quantum large model paper to compare gradient computation performance across frameworks such as VQNet, TorchQuantum (TQ), and Pennylane (PL). The circuit structure is:
 
   RY(data) → [RY(param) → CRZ(param) → RY(param) → CRZ(param)] × L
 
-Each layer contains 40 parameters (4 groups × 10 qubits), for 400 parameters in total. Batch sizes range from 1 to 1024. Trial counts: 20 for VQNet, TQ, and DQ; 2 for PL and MQ, since the latter two are slower with batched data and were run only twice to save time.
+Each layer contains 40 parameters (4 groups × 10 qubits), for 400 parameters in total. Batch sizes range from 1 to 1024. Trial counts: 20 for VQNet and TQ; 2 for PL and other slower frameworks, which were run only twice to save time with batched data.
 
 .. image:: ./images/grad_benchmarks_10q_ry_crz.png
    :width: 600 px
