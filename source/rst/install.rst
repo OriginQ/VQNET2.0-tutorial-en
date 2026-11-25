@@ -1,27 +1,33 @@
-Steps of VQNet Installation
+VQNet Installation Steps
 ==================================
 
-VQNet python package Installation
-----------------------------------
+Installing the VQNet Python Package
+-----------------------------------
 
-We provide precompiled Python packages for installation on Linux, Windows, macOS 13+ (arm64), supporting **Python 3.10~Python 3.14**.
+We provide prebuilt Python packages for installation on Linux, Windows, and macOS 13+ (arm64). **Python 3.10 to Python 3.14** is required.
+
+The installation command is as follows:
 
 .. code-block::
 
     pip install pyvqnet --upgrade
 
-
-For Windows and Linux systems, pyvqnet automatically installs the NVIDIA runtime libraries based on CUDA 12.6 (versions specified by ``pyvqnet`` installation dependencies) via pip, to support classic neural network computation acceleration.
-The package is optimized for the following CUDA architectures:
-**sm_80** (NVIDIA A100, A30 series data center GPUs) and **sm_86** (NVIDIA GeForce RTX 30 series consumer GPUs). Please ensure you are using a GPU that supports these architectures; otherwise, the program may not function correctly.
+For Windows and Linux, pyvqnet automatically installs the CUDA 12.6 based NVIDIA runtime libraries through pip during installation (the version is specified by the installation dependency declaration of ``pyvqnet``), to accelerate classical neural network computation.
+The package is compiled with optimizations for the following CUDA architectures:
+**sm_80** (NVIDIA A100 and A30 series data center GPUs) and **sm_86** (NVIDIA GeForce RTX 30 series consumer GPUs). Make sure to use a GPU that supports these architectures, otherwise the program may not run correctly.
 
     .. important::
 
-        Please note that since this package does not distinguish between CPU/GPU versions, it depends on NVIDIA CUDA 12.6 runtime libraries under Windows and Linux, which are installed via pip. If the PyTorch or other frameworks in your current environment are compiled with a different CUDA version, it may cause CUDA runtime library version conflicts, leading to abnormal program behavior (such as GPU not being recognized, training errors, etc.). It is recommended to use a separate virtual environment or container for installation.
+        Note that this package does not separate CPU and GPU builds; on both Windows and Linux it installs the NVIDIA CUDA 12.6 runtime libraries through pip dependencies. If a framework such as PyTorch installed in the current environment was compiled against a different CUDA version, a CUDA runtime library version conflict may occur, causing abnormal program behavior (for example, the GPU is not recognized or training reports errors). Installing in an isolated virtual environment or container is recommended.
 
 
-Validate VQNet's installation
-----------------------------------
+
+
+Testing a Successful VQNet Installation
+---------------------------------------
+
+
+
 
 .. code-block::
 
@@ -30,7 +36,7 @@ Validate VQNet's installation
     a = arange(1,25).reshape([2, 3, 4])
     print(a)
 
-Testing GPU Functionality in VQNet
+Testing VQNet GPU Functionality
 ----------------------------------
 
 .. code-block::
@@ -40,27 +46,26 @@ Testing GPU Functionality in VQNet
     a = ones([4,5],device = DEV_GPU_0)
     print(a)
 
-A simple case of VQNet
---------------------------
-Here we introduced a case which consisted with classical neural network modules and quantum modules of VQNet to describing the workflow of quantum machine learning. 
-It refers to `Data re-uploading for a universal quantum classifier <https://arxiv.org/abs/1907.02085>`_ .
-Generally, there are following parts of quantum computing module in quantum machine learning:
+A Simple VQNet Example
+----------------------
 
-(1)Encoder:encoding classical data into quantum state;
+This section introduces a complete machine learning workflow built with the classical neural network modules and quantum modules of VQNet. The example is based on `Data re-uploading for a universal quantum classifier <https://arxiv.org/abs/1907.02085>`_.
+A quantum computing module in quantum machine learning generally consists of the following parts:
 
-(2)Ansats: training the parameters in Parameterized Quantum Gates;
+(1) Encoder circuit (Encoder), used to encode classical data into quantum data;
+(2) Variational quantum circuit (Ansatz), used to train the parameters of parameterized quantum gates;
+(3) Measurement module (Measurement), used to obtain measured values (that is, the projection of the quantum state of a qubit onto certain axes).
 
-(3)Measurement: measuring the value of a qubit(projection of qubit's quantum state in a specified axis).
-
-Quantum computing module is the theoretical basis of the hybrid model of quantum classical neural network, which is also differentiable like the module of classical neural network. VQNet supports quantum computing module and classical computing module to form a hybrid machine learning model, and provides a variety of optimization algorithm optimization parameters. (e.g. Convolution layer, pooling layer, full connection layer, activation function, etc.)
+Like the computational modules of a classical neural network, a quantum computing module is differentiable. This is the theoretical basis of hybrid quantum-classical neural network models.
+VQNet supports combining quantum computing modules with classical computing modules (for example, convolution, pooling, fully connected layers, and activation functions) to form hybrid machine learning models, and provides multiple optimization algorithms for parameter optimization.
 
 .. figure:: ./images/classic-quantum.PNG
 
-In the quantum computing module, VQNet supports the use of the efficient quantum software computing package `pyqpanda3 <https://qcloud.originqc.com.cn/document/qpanda-3/index.html>`_ to build quantum modules.
-Using the various commonly used interfaces provided by pyqpanda3, users can quickly build quantum computing modules.
+For quantum computing modules, VQNet supports building quantum modules with `pyqpanda3 <https://qcloud.originqc.com.cn/document/qpanda-3/index.html>`_, Origin Quantum's efficient quantum software package.
+With the common interfaces provided by pyQPanda3, users can quickly build quantum computing modules.
 
-The following example uses pyqpanda3 to build a quantum computing module. Through VQNet, this quantum module can be directly embedded into a hybrid machine learning model for quantum circuit parameter training.
-In this example, 1 qubit is used, multiple parameterized rotation gates `RZ`, `RY`, `RZ` are used to encode the input x, and the `probs_measure` function is used to observe the probability measurement result of the qubit as output.
+In the following example, we use pyQPanda3 to build a quantum computing module. Through VQNet, this quantum computing module can be embedded directly into a hybrid machine learning model to train quantum circuit parameters.
+This example uses 1 qubit, encodes the input x with multiple parameterized rotation gates `RZ`, `RY`, and `RZ`, and uses the `probs_measure` function to observe the probability measurement results of the qubit as the output.
 
 .. code-block::
 
@@ -71,62 +76,61 @@ In this example, 1 qubit is used, multiple parameterized rotation gates `RZ`, `R
         machine = pq.CPUQVM()
         x1 = input.squeeze()
         param1 = weights.squeeze()
-        # Build quantum circuit instance using pyqpanda3 interface
+        #Build a quantum circuit instance using the pyqpanda3 interface
         circuit = pq.QCircuit()
-        # Insert RZ gate on the first qubit with parameter x1[0]
+        #Insert an RZ gate on the first qubit using the pyqpanda3 interface, with parameter x1[0]
         circuit << pq.RZ(qlist[0], x1[0])
-        # Insert RY gate on the first qubit with parameter x1[1]
+        #Insert an RY gate on the first qubit using the pyqpanda3 interface, with parameter x1[1]
         circuit << pq.RY(qlist[0], x1[1])
-        # Insert RZ gate on the first qubit with parameter x1[2]
+        #Insert an RZ gate on the first qubit using the pyqpanda3 interface, with parameter x1[2]
         circuit << pq.RZ(qlist[0], x1[2])
-        # Insert RZ gate on the first qubit with parameter param1[0]
+        #Insert an RZ gate on the first qubit using the pyqpanda3 interface, with parameter param1[0]
         circuit << pq.RZ(qlist[0], param1[0])
-        # Insert RY gate on the first qubit with parameter param1[1]
+        #Insert an RY gate on the first qubit using the pyqpanda3 interface, with parameter param1[1]
         circuit << pq.RY(qlist[0], param1[1])
-        # Insert RZ gate on the first qubit with parameter param1[2]
+        #Insert an RZ gate on the first qubit using the pyqpanda3 interface, with parameter param1[2]
         circuit << pq.RZ(qlist[0], param1[2])
-        # Insert RZ gate on the first qubit with parameter x1[0]
+        #Insert an RZ gate on the first qubit using the pyqpanda3 interface, with parameter x1[0]
         circuit << pq.RZ(qlist[0], x1[0])
-        # Insert RY gate on the first qubit with parameter x1[1]
+        #Insert an RY gate on the first qubit using the pyqpanda3 interface, with parameter x1[1]
         circuit << pq.RY(qlist[0], x1[1])
-        # Insert RZ gate on the first qubit with parameter x1[2]
+        #Insert an RZ gate on the first qubit using the pyqpanda3 interface, with parameter x1[2]
         circuit << pq.RZ(qlist[0], x1[2])
-        # Insert RZ gate on the first qubit with parameter param1[3]
+        #Insert an RZ gate on the first qubit using the pyqpanda3 interface, with parameter param1[3]
         circuit << pq.RZ(qlist[0], param1[3])
-        # Insert RY gate on the first qubit with parameter param1[4]
+        #Insert an RY gate on the first qubit using the pyqpanda3 interface, with parameter param1[4]
         circuit << pq.RY(qlist[0], param1[4])
-        # Insert RZ gate on the first qubit with parameter param1[5]
+        #Insert an RZ gate on the first qubit using the pyqpanda3 interface, with parameter param1[5]
         circuit << pq.RZ(qlist[0], param1[5])
-        # Insert RZ gate on the first qubit with parameter x1[0]
+        #Insert an RZ gate on the first qubit using the pyqpanda3 interface, with parameter x1[0]
         circuit << pq.RZ(qlist[0], x1[0])
-        # Insert RY gate on the first qubit with parameter x1[1]
+        #Insert an RY gate on the first qubit using the pyqpanda3 interface, with parameter x1[1]
         circuit << pq.RY(qlist[0], x1[1])
-        # Insert RZ gate on the first qubit with parameter x1[2]
+        #Insert an RZ gate on the first qubit using the pyqpanda3 interface, with parameter x1[2]
         circuit << pq.RZ(qlist[0], x1[2])
-        # Insert RZ gate on the first qubit with parameter param1[6]
+        #Insert an RZ gate on the first qubit using the pyqpanda3 interface, with parameter param1[6]
         circuit << pq.RZ(qlist[0], param1[6])
-        # Insert RY gate on the first qubit with parameter param1[7]
+        #Insert an RY gate on the first qubit using the pyqpanda3 interface, with parameter param1[7]
         circuit << pq.RY(qlist[0], param1[7])
-        # Insert RZ gate on the first qubit with parameter param1[8]
+        #Insert an RZ gate on the first qubit using the pyqpanda3 interface, with parameter param1[8]
         circuit << pq.RZ(qlist[0], param1[8])
-        # Build quantum program
+        #Build the quantum program
         prog = pq.QProg()
         prog << circuit
-        # Get probability measurement
+        #Get the probability measurement values
         prob = probs_measure(machine ,prog,  qlist)
 
         return prob
 
-Our task is to classify these data which is generated randomly based on binary classification algorithm. In this task,
-0 is a circle's center, points within radius by 1 colored in red are one category, the samples are labeled in blue are another category.
+The machine learning task in this example is to perform binary classification on randomly generated data. The figure below shows a sample of this data: the origin is the center of the circle, red 2-D points within a radius of 1 form one class, and blue points form the other class.
 
 .. figure:: ./images/origin_circle.png
 
-The pipeline of the training process
+Training and Test Code Flow
 
 .. code-block::
 
-    # import required libraries and functions
+    #Import the required libraries and functions
     from pyvqnet.qnn.pq3.quantumlayer import QuantumLayer
     from pyvqnet.optim import adam
     from pyvqnet.nn.loss import CategoricalCrossEntropy
@@ -134,34 +138,31 @@ The pipeline of the training process
     import numpy as np
     from pyvqnet.nn.module import Module
 
-
-Defining a model, where ``__init__`` function defines the internal neural network modules and quantum modules, and ``forward`` function defines the forward function, ``QuantumLayer`` is an abstract class
-that encapsulates quantum computing.
-VQNet will calculate the parameters' gradient automatically with `qdrl_circuit`, `param_num`.
-
+Define the model Model, where the `__init__` function defines each internal neural network module and quantum module, and the `forward` function defines the forward pass. `QuantumLayer` is an abstract class that wraps quantum computation.
+You only need to pass the quantum computing function `qdrl_circuit`, the number of trainable parameters `param_num`, the backend configuration `"cpu"`, and the number of qubits `qbit_num`. The class then computes parameter gradients automatically in `VQNet`.
 
 .. code-block::
 
-    # number of parameters to be trained.
+    #Number of trainable parameters
     param_num = 9
-    # qubit number.
+    #Number of qubits in the quantum computing module
     qbit_num  = 1
-    #define a model class inherits from Module.
+    #Define a machine learning model class that inherits from Module
     class Model(Module):
         def __init__(self):
             super(Model, self).__init__()
-            #use QuantumLayer to embed quantum circuit into autodiff pipeline.
+            #The QuantumLayer class brings a quantum circuit with trainable parameters into VQNet's automatic differentiation training flow
             self.pqc = QuantumLayer(qdrl_circuit,param_num)
-        #define the forward function
+        #Define the model forward function
         def forward(self, x):
             x = self.pqc(x)
             return x
 
-Definiting some functions of training model 
+Define some functions required for training the model
 
 .. code-block::
 
-    # a function to generating the raw data randomly
+    # Function to randomly generate training data
     def circle(samples:int,  rads =  np.sqrt(2/np.pi)) :
         data_x, data_y = [], []
         for i in range(samples):
@@ -173,13 +174,13 @@ Definiting some functions of training model
             data_y.append(y)
         return np.array(data_x,dtype=np.float32), np.array(data_y,np.int64)
 
-    # a funntion to loading data
+    # Data loading function
     def get_minibatch_data(x_data, label, batch_size):
         for i in range(0,x_data.shape[0]-batch_size+1,batch_size):
             idxs = slice(i, i + batch_size)
             yield x_data[idxs], label[idxs]
 
-    # a function to computing the accuracy
+    # Function to compute accuracy
     def get_score(pred, label):
         pred, label = np.array(pred.data), np.array(label.data)
         pred = np.argmax(pred,axis=1)
@@ -187,29 +188,29 @@ Definiting some functions of training model
         score = np.sum(pred == score)
         return score
 
-VQNet follows the general workflow of machine learning: loading the data iteratively, front propagation, calculating loss function, back propagation, updating the parameter.
+VQNet follows the standard machine learning training and test workflow: iterate over loading data, forward computation, loss computation, backward computation, and parameter updates.
 
 .. code-block::
 
-    # instantiating a model
+    #Instantiate the defined model
     model = Model()
-    # using Adam to define a optimizer
+    #Define an optimizer, using Adam here
     optimizer = adam.Adam(model.parameters(),lr =0.6)
-    # using cross-entropy to define a loss function
+    #Define a loss function, using cross-entropy loss here
     Closs = CategoricalCrossEntropy()
 
-A function to train the model
+Functions for training the model
 
 .. code-block::
 
     def train():
-            
-        #  generate data to be trained randomly   
+
+        # Randomly generate training data
         x_train, y_train = circle(500)
-        x_train = np.hstack((x_train, np.zeros((x_train.shape[0], 1),dtype=np.float32)))  
-        # define the number of data about each batch
+        x_train = np.hstack((x_train, np.zeros((x_train.shape[0], 1),dtype=np.float32)))
+        # Define the number of data samples per training batch
         batch_size = 32
-        # Maximum of training iteration times
+        # Maximum number of training epochs
         epoch = 10
         print("start training...........")
         for i in range(epoch):
@@ -218,31 +219,32 @@ A function to train the model
             count = 0
             loss = 0
             for data, label in get_minibatch_data(x_train, y_train,batch_size):
-                # clear the cache of optimizer
+                # Clear cached gradients in the optimizer
                 optimizer.zero_grad()
-                # forward computing
+                # Model forward computation
                 output = model(data)
-                # calculating loss function
+                # Compute the loss function
                 losss = Closs(label, output)
-                # anti-propagation
+                # Loss backpropagation
                 losss.backward()
-                # update the parameter of optimizer
+                # Update optimizer parameters
                 optimizer._step()
-                # calculate the accuracy
+                # Compute metrics such as accuracy
                 accuracy += get_score(output,label)
 
                 loss += losss.item()
                 count += batch_size
-                
+
             print(f"epoch:{i}, train_accuracy:{accuracy/count}")
             print(f"epoch:{i}, train_loss:{loss/count}\n")
-            
-A function to validate the model
+
+
+Functions for validating the model
 
 .. code-block::
 
     def test():
-        
+
         batch_size = 1
         model.eval()
         print("start eval...................")
@@ -260,7 +262,7 @@ A function to validate the model
 
         print(f"test_accuracy:{test_accuracy/count}")
 
-Training and testing results
+Training and test results:
 
 .. code-block::
 
@@ -298,10 +300,3 @@ Training and testing results
     test_accuracy:0.826
 
 .. figure:: ./images/qdrl_for_simple.png
-
-
-
-
-
-
-

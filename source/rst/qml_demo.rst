@@ -1,43 +1,41 @@
-Quantum Machine Learning Using Qpanda
-###############################################
+Quantum Machine Learning Examples with pyqpanda3
+#################################################
 
-We use VQNet and pyqpanda3 to implement multiple quantum machine learning examples.
+We use VQNet and pyqpanda3 to implement several quantum machine learning examples.
+
 
 .. warning::
 
-The quantum computing part of the following interface uses pyqpanda3 https://qcloud.originqc.com.cn/document/qpanda-3/.
+    The quantum computing parts of the following interfaces use pyqpanda3 https://qcloud.originqc.com.cn/document/qpanda-3/.
 
-You need to install pyqpanda3 additionally, `pip install pyqpanda3`
+    You need to install pyqpanda3 separately: `pip install pyqpanda3`
 
 
-Application of Parameterized Quantum Circuit in Classification Task
-*****************************************************************************************************
+Applications of parameterized quantum circuits in classification tasks
+**********************************************************************
 
-1. QVC demo
-========================================
+1. QVC example
+=========================
 
-This example uses VQNet to implement the algorithm in the thesis: `Circuit-centric quantum classifiers <https://arxiv.org/pdf/1804.00633.pdf>`_  .
-This example is used to determine whether a binary number is odd or even. By encoding the binary number onto the qubit and optimizing the variable parameters in the circuit, 
-the z-direction observation of the circuit can indicate whether the input is odd or even.
+This example uses VQNet to implement the variable quantum circuit from `Circuit-centric quantum classifiers <https://arxiv.org/pdf/1804.00633.pdf>`_ for a binary classification task.
+The example decides whether a binary number is odd or even. By encoding the binary number into qubits and optimizing the variable parameters in the circuit, the z-direction measurement of the circuit indicates whether the input is odd or even.
 
 Quantum circuit
--------------------------------
-The variable component sub-circuit usually defines a sub-circuit, which is a basic circuit architecture, and complex variational circuits can be constructed by repeating layers.
-Our circuit layer consists of multiple rotating quantum logic gates and ``CNOT`` quantum logic gates that entangle each qubit with its neighboring qubits.
-We also need a circuit to encode classical data into a quantum state, so that the output of the circuit measurement is related to the input.
-In this example, we encode the binary input onto the qubits in the corresponding order. For example, the input data 1101 is encoded into 4 qubits.
+-------------------
+A variational quantum circuit usually defines a sub-circuit, a basic circuit architecture that can be repeated in layers to build complex variational circuits.
+Our circuit layer consists of several rotation gates and ``CNOT`` gates that entangle each qubit with its neighbor.
+We also need a circuit that encodes classical data into quantum states, so that the measured output is related to the input.
+In this example, we encode the binary input into qubits in the corresponding order. For example, input data 1101 is encoded into 4 qubits. This example uses pyqpanda3.
 
 .. math::
 
     x = 0101 \rightarrow|\psi\rangle=|0101\rangle
 
-.. figure:: ./images/qvc_circuit.png
+.. image:: ./images/qvc_circuit.png
    :width: 600 px
    :align: center
 
 |
-
-This example uses pyqpanda3.
 
 .. code-block::
 
@@ -102,19 +100,16 @@ This example uses pyqpanda3.
         return prob
 
 
-Model building
------------------------
-We have defined variable quantum circuits ``qvc_circuits`` .
-We hope to use it in our VQNet's automatic differentiation framework,
-to take advantage of VQNet's optimization fucntions for model training.
-We define a Model class, which inherits from the abstract class ``Module``.
-The model uses the ``pyvqnet.qnn.pq3.QuantumLayer`` class, which is a quantum computing layer that can be automatically differentiated.
-``qvc_circuits`` is the quantum circuit we want to run,
-24 is the number of all quantum circuit parameters that need to be trained.
+
+Model construction
+-------------------
+We have defined the variable quantum circuit ``qvc_circuits``. We want to use it in VQNet's automatic differentiation logic and train the model with VQNet optimization algorithms. We define a Model class that inherits from the abstract class ``Module``.
+The Model uses the ``pyvqnet.qnn.pq3.QuantumLayer`` class, an automatically differentiable quantum computing layer. ``qvc_circuits`` is the quantum circuit we want to run, 24 is the number of trainable quantum circuit parameters, "cpu" means the pyqpanda3 full-amplitude simulator is used, and 4 means 4 qubits are requested.
+In the ``forward()`` function, the user defines the forward logic of the model.
 
 .. code-block::
 
-     class Model(Module):
+    class Model(Module):
         def __init__(self):
             super(Model, self).__init__()
             self.qvc = QuantumLayer(qvc_circuits,24)
@@ -123,10 +118,10 @@ The model uses the ``pyvqnet.qnn.pq3.QuantumLayer`` class, which is a quantum co
             return self.qvc(x)
 
 
+
 Model training and testing
-------------------------------------
-We use pre-generated random binary numbers and their odd and even labels.
-The data as follows.
+--------------------------
+We use pre-generated random binary numbers and their odd/even labels. The data is as follows:
 
 .. code-block::
 
@@ -162,10 +157,10 @@ The data as follows.
         label = np.eye(2)[label].reshape(-1,2)
         return data, label
 
-Model forwarding, loss function calculation,
-reverse calculation, optimizer calculation can perform like the general 
-neural network training mode,until the number of iterations reaches the preset value.
-The training data used is generated above, and the test data is qvc_test_data and train data is qvc_train_data.
+
+
+Then we can train as with a normal neural network: forward pass, loss computation, backward pass, optimizer step, until the preset number of iterations is reached.
+The training data is the qvc_train_data generated above, and the test data is qvc_test_data.
 
 .. code-block::
 
@@ -174,14 +169,15 @@ The training data used is generated above, and the test data is qvc_test_data an
         score = np.sum(np.argmax(result,axis=1)==np.argmax(label,1))
         return score
 
+    # Instantiate the Model class
     model = Model()
-
+    # Define the optimizer; model.parameters() gives all trainable parameters, lr is the learning rate
     optimizer = SGD(model.parameters(),lr =0.1)
-
+    # The batch size can be changed during training
     batch_size = 3
-
+    # Maximum number of training iterations
     epoch = 20
-
+    # Model loss function
     loss = CategoricalCrossEntropy()
 
     model.train()
@@ -248,30 +244,33 @@ The training data used is generated above, and the test data is qvc_test_data an
     [0.3412148654]
     test:--------------->loss:QTensor(0.3412148654, requires_grad=True) #####accuracy:1.0
 
-The following picture illustrates the curve of model's accuracy:
+Model accuracy on the test data:
 
-.. figure:: ./images/qvc_accuracy.png
+.. image:: ./images/qvc_accuracy.png
    :width: 600 px
    :align: center
 
 |
 
-2. data re-uploading algorithm
-=======================================
-In a neural network, each neuron receives information from all neurons in the upper layer (Figure a). 
-In contrast, the single-bit quantum classifier accepts the previous information processing unit and input (Figure b).
-For traditional quantum circuits, when the data is uploaded, the result can be obtained directly through several unitary 
-transformations :math:`U(\theta_1,\theta_2,\theta_3)`.However, in the Quantum Data Re upLoading (QDRL) task, the data needs to be re-uploaded before every unitary transformation.
+2. Data re-uploading model
+==================================
+In a neural network, each neuron receives information from all neurons in the previous layer (Figure a). In contrast, a single-qubit quantum classifier receives the output of the previous information-processing unit and the input (Figure b).
+Put simply, in a conventional quantum circuit, once data loading is complete, the result can be obtained directly through a few unitary transformations :math:`U(\theta_1,\theta_2,\theta_3)`.
+In Quantum Data Re-uploading (QDRL) tasks, however, the data must be re-uploaded before the unitary transformations.
 
-                                                                .. centered:: Comparison of QDRL and classic neural network schematics
+                                            .. centered:: Comparison of QDRL and a classical neural network
 
-.. figure:: ./images/qdrl.png
+.. image:: ./images/qdrl.png
    :width: 600 px
    :align: center
 
 |
 
 .. code-block::
+
+    """
+    Parameterized quantum circuit for Quantum Data Re-upLoading
+    """
 
     import sys
     sys.path.insert(0, "../")
@@ -282,14 +281,8 @@ transformations :math:`U(\theta_1,\theta_2,\theta_3)`.However, in the Quantum Da
     from pyvqnet.nn.loss import CategoricalCrossEntropy
     from pyvqnet.tensor.tensor import QTensor
     from pyvqnet.nn.module import Module
-    import matplotlib.pyplot as plt
-    import matplotlib
+
     from pyvqnet.data import data_generator as get_minibatch_data
-    try:
-        matplotlib.use("TkAgg")
-    except:  
-        print("Can not use matplot TkAgg")
-        pass
 
     np.random.seed(42)
 
@@ -319,18 +312,6 @@ transformations :math:`U(\theta_1,\theta_2,\theta_3)`.However, in the Quantum Da
             data_x.append(x)
             data_y.append(y)
         return np.array(data_x), np.array(data_y)
-
-
-    def plot_data(x, y, fig=None, ax=None):
-
-        if fig is None:
-            fig, ax = plt.subplots(1, 1, figsize=(5, 5))
-        reds = y == 0
-        blues = y == 1
-        ax.scatter(x[reds, 0], x[reds, 1], c="red", s=20, edgecolor="k")
-        ax.scatter(x[blues, 0], x[blues, 1], c="blue", s=20, edgecolor="k")
-        ax.set_xlabel("$x_1$")
-        ax.set_ylabel("$x_2$")
 
 
     def get_score(pred, label):
@@ -404,386 +385,392 @@ transformations :math:`U(\theta_1,\theta_2,\theta_3)`.However, in the Quantum Da
         train()
         test()
 
-The following picture illustrates the curve of model's accuracy: 
+QDRL accuracy on the test data:
 
-.. figure:: ./images/qdrl_accuracy.png
+.. image:: ./images/qdrl_accuracy.png
    :width: 600 px
    :align: center
 
 |
 
-3. VSQL: Variational Shadow Quantum Learning for Classification Model
-================================================================================================================================================================
-Using variable quantum circuits to construct a two-class classification model, 
-comparing the classification accuracy with a neural network with similar parameter accuracy, 
-the accuracy of the two is similar. The quantity of parameters of quantum circuits is much smaller than that of classical neural networks.
-The algorithm is based on the paper: `Variational Shadow Quantum Learning for Classification Model <https://arxiv.org/abs/2012.08288>`_ to 
-reproduce.
+3. VSQL: Variational Shadow Quantum Learning for Classification model
+=======================================================================
+A variational quantum circuit is used to build a two-class classification model. Compared with a neural network of similar parameter precision, the classification accuracies are close, while the quantum circuit has far fewer parameters.
+The algorithm reproduces `Variational Shadow Quantum Learning for Classification Model <https://arxiv.org/abs/2012.08288>`_.
 
-Following figure shows the architecture of VSQL algorithm:
+The overall VSQL quantum model is shown below:
 
-.. figure:: ./images/vsql_model.PNG
+.. image:: ./images/vsql_model.PNG
    :width: 600 px
    :align: center
 
 |
 
-Following figures show the local quantum circuits structure on each qubits:
+Local quantum circuits on each qubit in VSQL are shown below:
 
-.. figure:: ./images/vsql_0.png
-.. figure:: ./images/vsql_1.png
-.. figure:: ./images/vsql_2.png
-.. figure:: ./images/vsql_3.png
-.. figure:: ./images/vsql_4.png
-.. figure:: ./images/vsql_5.png
-.. figure:: ./images/vsql_6.png
-.. figure:: ./images/vsql_7.png
-.. figure:: ./images/vsql_8.png
+.. image:: ./images/vsql_0.png
+.. image:: ./images/vsql_1.png
+.. image:: ./images/vsql_2.png
+.. image:: ./images/vsql_3.png
+.. image:: ./images/vsql_4.png
+.. image:: ./images/vsql_5.png
+.. image:: ./images/vsql_6.png
+.. image:: ./images/vsql_7.png
+.. image:: ./images/vsql_8.png
+
+|
 
 .. code-block::
 
-    import sys
-    sys.path.insert(0, "../")
-    import os
-    import os.path
-    import struct
-    import gzip
-    from pyvqnet.nn.module import Module
-    from pyvqnet.nn.loss import CategoricalCrossEntropy
-    from pyvqnet.optim.adam import Adam
-    from pyvqnet.data.data import data_generator
-    from pyvqnet.tensor import tensor
-    from pyvqnet.qnn.pq3.measure import expval
-    from pyvqnet.qnn.pq3.quantumlayer import QuantumLayer
-    from pyvqnet.qnn.pq3.template import AmplitudeEmbeddingCircuit
-    from pyvqnet.nn.linear import Linear
-    import numpy as np
-    import pyqpanda3.core as pq
-    import matplotlib.pyplot as plt
-    import matplotlib
-    try:
-        matplotlib.use("TkAgg")
-    except:  
-        print("Can not use matplot TkAgg")
-        pass
+    """
+    Parameterized quantum circuit for VSQL
 
-    try:
-        import urllib.request
-    except ImportError:
-        raise ImportError("You should use Python 3.x")
+    """
 
-    url_base = 'https://ossci-datasets.s3.amazonaws.com/mnist/'
-    key_file = {
-        "train_img": "train-images-idx3-ubyte.gz",
-        "train_label": "train-labels-idx1-ubyte.gz",
-        "test_img": "t10k-images-idx3-ubyte.gz",
-        "test_label": "t10k-labels-idx1-ubyte.gz"
-    }
+        import sys
+        sys.path.insert(0, "../")
+        import os
+        import os.path
+        import struct
+        import gzip
+        from pyvqnet.nn.module import Module
+        from pyvqnet.nn.loss import CategoricalCrossEntropy
+        from pyvqnet.optim.adam import Adam
+        from pyvqnet.data.data import data_generator
+        from pyvqnet.tensor import tensor
+        from pyvqnet.qnn.pq3.measure import expval
+        from pyvqnet.qnn.pq3.quantumlayer import QuantumLayer
+        from pyvqnet.qnn.pq3.template import AmplitudeEmbeddingCircuit
+        from pyvqnet.nn.linear import Linear
+        import numpy as np
+        import pyqpanda3.core as pq
+        import matplotlib.pyplot as plt
+        import matplotlib
+        try:
+            matplotlib.use("TkAgg")
+        except:
+            print("Can not use matplot TkAgg")
+            pass
 
+        try:
+            import urllib.request
+        except ImportError:
+            raise ImportError("You should use Python 3.x")
 
-    def _download(dataset_dir, file_name):
-        """
-        Download function for mnist dataset file
-        """
-        file_path = dataset_dir + "/" + file_name
-
-        if os.path.exists(file_path):
-            with gzip.GzipFile(file_path) as file:
-                file_path_ungz = file_path[:-3].replace("\\", "/")
-                if not os.path.exists(file_path_ungz):
-                    open(file_path_ungz, "wb").write(file.read())
-            return
-
-        print("Downloading " + file_name + " ... ")
-        urllib.request.urlretrieve(url_base + file_name, file_path)
-        if os.path.exists(file_path):
-            with gzip.GzipFile(file_path) as file:
-                file_path_ungz = file_path[:-3].replace("\\", "/")
-                file_path_ungz = file_path_ungz.replace("-idx", ".idx")
-                if not os.path.exists(file_path_ungz):
-                    open(file_path_ungz, "wb").write(file.read())
-        print("Done")
+        url_base = 'https://ossci-datasets.s3.amazonaws.com/mnist/'
+        key_file = {
+            "train_img": "train-images-idx3-ubyte.gz",
+            "train_label": "train-labels-idx1-ubyte.gz",
+            "test_img": "t10k-images-idx3-ubyte.gz",
+            "test_label": "t10k-labels-idx1-ubyte.gz"
+        }
 
 
-    def download_mnist(dataset_dir):
-        for v in key_file.values():
-            _download(dataset_dir, v)
+        def _download(dataset_dir, file_name):
+            """
+            Download function for mnist dataset file
+            """
+            file_path = dataset_dir + "/" + file_name
+
+            if os.path.exists(file_path):
+                with gzip.GzipFile(file_path) as file:
+                    file_path_ungz = file_path[:-3].replace("\\", "/")
+                    if not os.path.exists(file_path_ungz):
+                        open(file_path_ungz, "wb").write(file.read())
+                return
+
+            print("Downloading " + file_name + " ... ")
+            urllib.request.urlretrieve(url_base + file_name, file_path)
+            if os.path.exists(file_path):
+                with gzip.GzipFile(file_path) as file:
+                    file_path_ungz = file_path[:-3].replace("\\", "/")
+                    file_path_ungz = file_path_ungz.replace("-idx", ".idx")
+                    if not os.path.exists(file_path_ungz):
+                        open(file_path_ungz, "wb").write(file.read())
+            print("Done")
 
 
-    if not os.path.exists("./result"):
-        os.makedirs("./result")
-    else:
-        pass
+        def download_mnist(dataset_dir):
+            for v in key_file.values():
+                _download(dataset_dir, v)
 
 
-    def circuits_of_vsql(x, weights, qlist, clist, machine):  
-        """
-        VSQL model of quantum circuits
-        """
-        weights = weights.reshape([depth + 1, 3, n_qsc])
-
-        def subcir(weights, qlist, depth, n_qsc, n_start):  
-            cir = pq.QCircuit()
-
-            for i in range(n_qsc):
-                cir.insert(pq.RX(qlist[n_start + i], weights[0][0][i]))
-                cir.insert(pq.RY(qlist[n_start + i], weights[0][1][i]))
-                cir.insert(pq.RX(qlist[n_start + i], weights[0][2][i]))
-            for repeat in range(1, depth + 1):
-                for i in range(n_qsc - 1):
-                    cir.insert(pq.CNOT(qlist[n_start + i], qlist[n_start + i + 1]))
-                cir.insert(pq.CNOT(qlist[n_start + n_qsc - 1], qlist[n_start]))
-                for i in range(n_qsc):
-                    cir.insert(pq.RY(qlist[n_start + i], weights[repeat][1][i]))
-
-            return cir
-
-        def get_pauli_str(n_start, n_qsc):  
-            pauli_str = ",".join("X" + str(i)
-                                for i in range(n_start, n_start + n_qsc))
-            return {pauli_str: 1.0}
-
-        f_i = []
-        origin_in = AmplitudeEmbeddingCircuit(x, qlist)
-        for st in range(n - n_qsc + 1):
-            psd = get_pauli_str(st, n_qsc)
-            cir = pq.QCircuit()
-            cir.insert(origin_in)
-            cir.insert(subcir(weights, qlist, depth, n_qsc, st))
-            prog = pq.QProg()
-            prog.insert(cir)
-
-            f_ij = expval(machine, prog, psd, qlist)
-            f_i.append(f_ij)
-        f_i = np.array(f_i)
-        return f_i
-
-
-    #GLOBAL VAR
-    n = 10
-    n_qsc = 2
-    depth = 1
-
-
-    class QModel(Module):
-        """
-        Model of VSQL
-        """
-        def __init__(self):
-            super().__init__()
-            self.vq = QuantumLayer(circuits_of_vsql, (depth + 1) * 3 * n_qsc,
-                                "cpu", 10)
-            self.fc = Linear(n - n_qsc + 1, 2)
-
-        def forward(self, x):
-            x = self.vq(x)
-            x = self.fc(x)
-
-            return x
-
-
-    class Model(Module):
-        def __init__(self):
-            super().__init__()
-            self.fc1 = Linear(input_channels=28 * 28, output_channels=2)
-
-        def forward(self, x):
-
-            x = tensor.flatten(x, 1)
-            x = self.fc1(x)
-            return x
-
-
-    def load_mnist(dataset="training_data", digits=np.arange(2), path="./"):
-        """
-        load mnist data
-        """
-        from array import array as pyarray
-        download_mnist(path)
-        if dataset == "training_data":
-            fname_image = os.path.join(path, "train-images.idx3-ubyte").replace(
-                "\\", "/")
-            fname_label = os.path.join(path, "train-labels.idx1-ubyte").replace(
-                "\\", "/")
-        elif dataset == "testing_data":
-            fname_image = os.path.join(path, "t10k-images.idx3-ubyte").replace(
-                "\\", "/")
-            fname_label = os.path.join(path, "t10k-labels.idx1-ubyte").replace(
-                "\\", "/")
+        if not os.path.exists("./result"):
+            os.makedirs("./result")
         else:
-            raise ValueError("dataset must be 'training_data' or 'testing_data'")
-
-        flbl = open(fname_label, "rb")
-        _, size = struct.unpack(">II", flbl.read(8))
-
-        lbl = pyarray("b", flbl.read())
-        flbl.close()
-
-        fimg = open(fname_image, "rb")
-        _, size, rows, cols = struct.unpack(">IIII", fimg.read(16))
-        img = pyarray("B", fimg.read())
-        fimg.close()
-
-        ind = [k for k in range(size) if lbl[k] in digits]
-        num = len(ind)
-        images = np.zeros((num, rows, cols), dtype=np.float32)
-
-        labels = np.zeros((num, 1), dtype=int)
-        for i in range(len(ind)):
-            images[i] = np.array(img[ind[i] * rows * cols:(ind[i] + 1) * rows *
-                                    cols]).reshape((rows, cols))
-            labels[i] = lbl[ind[i]]
-
-        return images, labels
+            pass
 
 
-    def run_vsql():
-        """
-        VQSL MODEL
-        """
-        digits = [0, 1]
-        x_train, y_train = load_mnist("training_data", digits)
-        x_train = x_train / 255
-        y_train = y_train.reshape(-1, 1)
-        y_train = np.eye(len(digits))[y_train].reshape(-1, len(digits)).astype(
-            np.int64)
-        x_test, y_test = load_mnist("testing_data", digits)
-        x_test = x_test / 255
-        y_test = y_test.reshape(-1, 1)
-        y_test = np.eye(len(digits))[y_test].reshape(-1,
-                                                    len(digits)).astype(np.int64)
+        def circuits_of_vsql(x, weights):
+            """
+            VSQL model of quantum circuits
+            """
+            qlist = range(n)
+            machine = pq.CPUQVM()
+            weights = weights.reshape([depth + 1, 3, n_qsc])
 
-        x_train_list = []
-        x_test_list = []
-        for i in range(x_train.shape[0]):
-            x_train_list.append(
-                np.pad(x_train[i, :, :].flatten(), (0, 240),
-                    constant_values=(0, 0)))
-        x_train = np.array(x_train_list)
+            def subcir(weights, qlist, depth, n_qsc, n_start):
+                cir = pq.QCircuit()
 
-        for i in range(x_test.shape[0]):
-            x_test_list.append(
-                np.pad(x_test[i, :, :].flatten(), (0, 240),
-                    constant_values=(0, 0)))
+                for i in range(n_qsc):
+                    cir << pq.RX(qlist[n_start + i], weights[0][0][i])
+                    cir << pq.RY(qlist[n_start + i], weights[0][1][i])
+                    cir << pq.RX(qlist[n_start + i], weights[0][2][i])
+                for repeat in range(1, depth + 1):
+                    for i in range(n_qsc - 1):
+                        cir << pq.CNOT(qlist[n_start + i], qlist[n_start + i + 1])
+                    cir << pq.CNOT(qlist[n_start + n_qsc - 1], qlist[n_start])
+                    for i in range(n_qsc):
+                        cir << pq.RY(qlist[n_start + i], weights[repeat][1][i])
 
-        x_test = np.array(x_test_list)
+                return cir
 
-        x_train = x_train[:500]
-        y_train = y_train[:500]
+            def get_pauli_str(n_start, n_qsc):
+                pauli_str = " ".join("X" + str(i)
+                                    for i in range(n_start, n_start + n_qsc))
+                return {pauli_str: 1.0}
 
-        x_test = x_test[:100]
-        y_test = y_test[:100]
-        print("model start")
-        model = QModel()
+            f_i = []
+            origin_in = AmplitudeEmbeddingCircuit(x, qlist)
+            for st in range(n - n_qsc + 1):
+                psd = get_pauli_str(st, n_qsc)
+                cir = pq.QCircuit()
+                cir << origin_in
+                cir << subcir(weights, qlist, depth, n_qsc, st)
+                prog = pq.QProg()
+                prog << cir
 
-        optimizer = Adam(model.parameters(), lr=0.1)
+                f_ij = expval(machine, prog, psd)
+                f_i.append(f_ij)
+            f_i = np.array(f_i)
+            return f_i
 
-        model.train()
-        result_file = open("./result/vqslrlt.txt", "w")
-        for epoch in range(1, 3):
+
+        #GLOBAL VAR
+        n = 10
+        n_qsc = 2
+        depth = 1
+
+
+        class QModel(Module):
+            """
+            Model of VSQL
+            """
+            def __init__(self):
+                super().__init__()
+                self.vq = QuantumLayer(circuits_of_vsql, (depth + 1) * 3 * n_qsc)
+                self.fc = Linear(n - n_qsc + 1, 2)
+
+            def forward(self, x):
+                x = self.vq(x)
+                x = self.fc(x)
+
+                return x
+
+
+        class Model(Module):
+            def __init__(self):
+                super().__init__()
+                self.fc1 = Linear(input_channels=28 * 28, output_channels=2)
+
+            def forward(self, x):
+
+                x = tensor.flatten(x, 1)
+                x = self.fc1(x)
+                return x
+
+
+        def load_mnist(dataset="training_data", digits=np.arange(2), path="./"):
+            """
+            load mnist data
+            """
+            from array import array as pyarray
+            download_mnist(path)
+            if dataset == "training_data":
+                fname_image = os.path.join(path, "train-images.idx3-ubyte").replace(
+                    "\\", "/")
+                fname_label = os.path.join(path, "train-labels.idx1-ubyte").replace(
+                    "\\", "/")
+            elif dataset == "testing_data":
+                fname_image = os.path.join(path, "t10k-images.idx3-ubyte").replace(
+                    "\\", "/")
+                fname_label = os.path.join(path, "t10k-labels.idx1-ubyte").replace(
+                    "\\", "/")
+            else:
+                raise ValueError("dataset must be 'training_data' or 'testing_data'")
+
+            flbl = open(fname_label, "rb")
+            _, size = struct.unpack(">II", flbl.read(8))
+
+            lbl = pyarray("b", flbl.read())
+            flbl.close()
+
+            fimg = open(fname_image, "rb")
+            _, size, rows, cols = struct.unpack(">IIII", fimg.read(16))
+            img = pyarray("B", fimg.read())
+            fimg.close()
+
+            ind = [k for k in range(size) if lbl[k] in digits]
+            num = len(ind)
+            images = np.zeros((num, rows, cols), dtype=np.float32)
+
+            labels = np.zeros((num, 1), dtype=int)
+            for i in range(len(ind)):
+                images[i] = np.array(img[ind[i] * rows * cols:(ind[i] + 1) * rows *
+                                        cols]).reshape((rows, cols))
+                labels[i] = lbl[ind[i]]
+
+            return images, labels
+
+
+        def run_vsql():
+            """
+            VQSL MODEL
+            """
+            digits = [0, 1]
+            x_train, y_train = load_mnist("training_data", digits)
+            x_train = x_train / 255
+            y_train = y_train.reshape(-1, 1)
+            y_train = np.eye(len(digits))[y_train].reshape(-1, len(digits)).astype(
+                np.int64)
+            x_test, y_test = load_mnist("testing_data", digits)
+            x_test = x_test / 255
+            y_test = y_test.reshape(-1, 1)
+            y_test = np.eye(len(digits))[y_test].reshape(-1,
+                                                        len(digits)).astype(np.int64)
+
+            x_train_list = []
+            x_test_list = []
+            for i in range(x_train.shape[0]):
+                x_train_list.append(
+                    np.pad(x_train[i, :, :].flatten(), (0, 240),
+                        constant_values=(0, 0)))
+            x_train = np.array(x_train_list)
+
+            for i in range(x_test.shape[0]):
+                x_test_list.append(
+                    np.pad(x_test[i, :, :].flatten(), (0, 240),
+                        constant_values=(0, 0)))
+
+            x_test = np.array(x_test_list)
+
+            x_train = x_train[:500]
+            y_train = y_train[:500]
+
+            x_test = x_test[:100]
+            y_test = y_test[:100]
+            print("model start")
+            model = QModel()
+
+            optimizer = Adam(model.parameters(), lr=0.1)
 
             model.train()
-            full_loss = 0
-            n_loss = 0
-            n_eval = 0
-            batch_size = 1
-            correct = 0
-            for x, y in data_generator(x_train,
-                                    y_train,
-                                    batch_size=batch_size,
-                                    shuffle=True):
-                optimizer.zero_grad()
-                try:
-                    x = x.reshape(batch_size, 1024)
-                except:  
-                    x = x.reshape(-1, 1024)
+            result_file = open("./result/vqslrlt.txt", "w")
+            for epoch in range(1, 3):
 
-                output = model(x)
-                cceloss = CategoricalCrossEntropy()
-                loss = cceloss(y, output)
-                loss.backward()
-                optimizer._step()
+                model.train()
+                full_loss = 0
+                n_loss = 0
+                n_eval = 0
+                batch_size = 1
+                correct = 0
+                for x, y in data_generator(x_train,
+                                        y_train,
+                                        batch_size=batch_size,
+                                        shuffle=True):
+                    optimizer.zero_grad()
+                    try:
+                        x = x.reshape(batch_size, 1024)
+                    except:
+                        x = x.reshape(-1, 1024)
 
-                full_loss += loss.item()
-                n_loss += batch_size
-                np_output = np.array(output.data, copy=False)
-                mask = np_output.argmax(1) == y.argmax(1)
-                correct += sum(mask)
-                print(f" n_loss {n_loss} Train Accuracy: {correct/n_loss} ")
-            print(f"Train Accuracy: {correct/n_loss} ")
-            print(f"Epoch: {epoch}, Loss: {full_loss / n_loss}")
-            result_file.write(f"{epoch}\t{full_loss / n_loss}\t{correct/n_loss}\t")
+                    output = model(x)
+                    cceloss = CategoricalCrossEntropy()
+                    loss = cceloss(y, output)
+                    loss.backward()
+                    optimizer._step()
 
-            # Evaluation
-            model.eval()
-            print("eval")
-            correct = 0
-            full_loss = 0
-            n_loss = 0
-            n_eval = 0
-            batch_size = 1
-            for x, y in data_generator(x_test,
-                                    y_test,
-                                    batch_size=batch_size,
-                                    shuffle=True):
-                x = x.reshape(1, 1024)
-                output = model(x)
+                    full_loss += loss.item()
+                    n_loss += batch_size
+                    np_output = np.array(output.data, copy=False)
+                    mask = np_output.argmax(1) == y.argmax(1)
+                    correct += sum(mask)
+                    print(f" n_loss {n_loss} Train Accuracy: {correct/n_loss} ")
+                print(f"Train Accuracy: {correct/n_loss} ")
+                print(f"Epoch: {epoch}, Loss: {full_loss / n_loss}")
+                result_file.write(f"{epoch}\t{full_loss / n_loss}\t{correct/n_loss}\t")
 
-                cceloss = CategoricalCrossEntropy()
-                loss = cceloss(y, output)
-                full_loss += loss.item()
+                # Evaluation
+                model.eval()
+                print("eval")
+                correct = 0
+                full_loss = 0
+                n_loss = 0
+                n_eval = 0
+                batch_size = 1
+                for x, y in data_generator(x_test,
+                                        y_test,
+                                        batch_size=batch_size,
+                                        shuffle=True):
+                    x = x.reshape(1, 1024)
+                    output = model(x)
 
-                np_output = np.array(output.data, copy=False)
-                mask = np_output.argmax(1) == y.argmax(1)
-                correct += sum(mask)
-                n_eval += 1
-                n_loss += 1
+                    cceloss = CategoricalCrossEntropy()
+                    loss = cceloss(y, output)
+                    full_loss += loss.item()
 
-            print(f"Eval Accuracy: {correct/n_eval}")
-            result_file.write(f"{full_loss / n_loss}\t{correct/n_eval}\n")
+                    np_output = np.array(output.data, copy=False)
+                    mask = np_output.argmax(1) == y.argmax(1)
+                    correct += sum(mask)
+                    n_eval += 1
+                    n_loss += 1
 
-        result_file.close()
-        del model
-        print("\ndone vqsl\n")
+                print(f"Eval Accuracy: {correct/n_eval}")
+                result_file.write(f"{full_loss / n_loss}\t{correct/n_eval}\n")
+
+            result_file.close()
+            del model
+            print("\ndone vqsl\n")
 
 
-    if __name__ == "__main__":
+        if __name__ == "__main__":
 
-        run_vsql()
+            run_vsql()
 
-The following shows the curve of model's accuracy and loss: 
 
-.. figure:: ./images/vsql_cacc.PNG
+VSQL accuracy on the test data:
+
+.. image:: ./images/vsql_cacc.PNG
    :width: 600 px
    :align: center
 
-.. figure:: ./images/vsql_closs.PNG
+.. image:: ./images/vsql_closs.PNG
    :width: 600 px
    :align: center
 
-.. figure:: ./images/vsql_qacc.PNG
+.. image:: ./images/vsql_qacc.PNG
    :width: 600 px
    :align: center
 
-.. figure:: ./images/vsql_qloss.PNG
+.. image:: ./images/vsql_qloss.PNG
    :width: 600 px
    :align: center
 
 |
 
-4.Quanvolution for image classification
-=======================================================================================================================
+4. Image classification with Quanvolution
+=========================================
 
-In this example, we implement a Quantum Convolutional Neural Network, a type originally introduced in the paper `Quanvolutional Neural Networks: Powering Image Recognition with Quantum Circuits <https://arxiv.org/abs/1904.04767>`_ method.
+In this example, we implement a quantum convolutional neural network, a method first introduced in `Quanvolutional Neural Networks: Powering Image Recognition with Quantum Circuits <https://arxiv.org/abs/1904.04767>`_.
 
-Similar to classic convolution, Quanvolution has the following steps:
-A small region of the input image, in our case a 2×2 square of classical data, is embedded into the quantum circuit.
-In this example, this is achieved by applying parameterized rotating logic gates to qubits initialized in the ground state. The convolutional kernel here generates variational circuits from stochastic circuits proposed in ref.
-Finally, the quantum system is measured to obtain a list of classical expected values.
-Similar to a classic convolutional layer, each expected value is mapped to a different channel of a single output pixel.
-Repeating the same process over different regions, the complete input image can be scanned, producing an output object that will be constructed as a multi-channel image.
-In order to perform classification tasks, this example uses the classic fully connected layer ``Linear`` to perform classification tasks after Quanvolution obtains the measurement values.
-The main difference from classical convolution is that Quanvolution can generate highly complex kernels whose computation is at least in principle classically intractable.
+Like classical convolution, Quanvolution has the following steps:
+A small patch of the input image, in our case a 2×2 square of classical data, is embedded into a quantum circuit.
+In this example, this is done by applying parameterized rotation gates to qubits initialized in the ground state. The kernel here is a variational circuit generated by the random circuit proposed in the reference.
+Finally, the quantum system is measured to obtain a list of classical expectation values.
+As in a classical convolutional layer, each expectation value maps to a different channel of a single output pixel.
+Repeating the same procedure at different regions scans the full input image and produces an output object, which is assembled into a multi-channel image.
+For classification, this example feeds the Quanvolution measurements into a classical fully connected layer ``Linear``.
+The main difference from classical convolution is that Quanvolution can generate highly complex kernels whose computation is, at least in principle, classically intractable.
 
 .. image:: ./images/quanvo.png
    :width: 600 px
@@ -791,7 +778,8 @@ The main difference from classical convolution is that Quanvolution can generate
 
 |
 
-Mnist dataset definition
+
+MNIST dataset definition
 
 .. code-block::
 
@@ -814,7 +802,7 @@ Mnist dataset definition
     import matplotlib
     try:
         matplotlib.use("TkAgg")
-    except:  
+    except:
         print("Can not use matplot TkAgg")
         pass
 
@@ -909,7 +897,7 @@ Mnist dataset definition
 
         return images, labels
 
-Module definition and process function's definition
+Model and run function definition
 
 .. code-block::
 
@@ -974,7 +962,7 @@ Module definition and process function's definition
                 optimizer.zero_grad()
                 try:
                     x = x.reshape(batch_size, 1, 28, 28)
-                except:  
+                except:
                     x = x.reshape(-1, 1, 28, 28)
 
                 output = model(x)
@@ -1031,7 +1019,7 @@ Module definition and process function's definition
 
         run_quanvolution()
 
-Training set, verification set loss, training set, verification set classification accuracy with Epoch transformation.
+Training and validation loss and classification accuracy versus epoch.
 
 .. code-block::
 
@@ -1051,33 +1039,34 @@ Training set, verification set loss, training set, verification set classificati
     # 13	0.022141477409750223	0.952	0.4724775951183983	0.83
     # 14	0.020372112181037665	0.956	0.46692863543197743	0.83
 
+Quantum autoencoder model
+******************************
 
-Quantum AutoEncoder Demo
-*******************************
+1. Quantum autoencoder
+======================
 
-1.Quantum AutoEncoder
-=======================================
+A classical autoencoder is a neural network that learns an efficient low-dimensional representation of data in a high-dimensional space. Given an input x, the autoencoder maps x to a low-dimensional point y from which x can be recovered.
+The structure of the underlying autoencoder network can be chosen to represent data in fewer dimensions, effectively compressing the input. Inspired by this idea, the quantum autoencoder model performs a similar task on quantum data.
+A quantum autoencoder is trained to compress a specific dataset of quantum states that classical compression algorithms cannot use. Its parameters are trained with classical optimization algorithms.
+We present a simple programmable circuit that can be trained into an efficient autoencoder. We apply the model in a quantum simulation setting to compress the ground states of the Hubbard model and molecular Hamiltonians.
+This example is based on `Quantum autoencoders for efficient compression of quantum data <https://arxiv.org/pdf/1612.02806.pdf>`_ .
 
-The classic autoencoder is a neural network that can learn high-efficiency low-dimensional representations of data in a high-dimensional space. 
-The task of the autoencoder is to map x to a low-dimensional point y given an input x, so that x can be recovered from y.
-The structure of the underlying autoencoder network can be selected to represent the data in a smaller dimension, thereby effectively compressing the input. 
-Inspired by this idea, the model of quantum autoencoder is used to perform similar tasks on quantum data.
-Quantum autoencoders are trained to compress specific data sets of quantum states, and classical compression algorithms cannot be used. 
-The parameters of the quantum autoencoder are trained using classical optimization algorithms.
-We show an example of a simple programmable circuit, which can be trained as an efficient autoencoder. 
-We apply our model in the context of quantum simulation to compress the Hubbard model and the ground state of the Hamiltonian.
-This algorithm is based on `Quantum autoencoders for efficient compression of quantum data <https://arxiv.org/pdf/1612.02806.pdf>`_ .
+QAE quantum circuit:
 
-
-QAE quantum circuits:
-
-.. figure:: ./images/QAE_Quantum_Cir.png
+.. image:: ./images/QAE_Quantum_Cir.png
    :width: 600 px
    :align: center
 
 |
 
 .. code-block::
+
+    """
+    Quantum AutoEncoder demo
+
+
+
+    """
 
     import os
     import sys
@@ -1145,7 +1134,7 @@ QAE quantum circuits:
             x = self.pqc(x)
             return x
 
-    def load_mnist(dataset="training_data", digits=np.arange(2), path="./"):         
+    def load_mnist(dataset="training_data", digits=np.arange(2), path="./"):         # download data
         import os, struct
         from array import array as pyarray
         download_mnist(path)
@@ -1182,8 +1171,8 @@ QAE quantum circuits:
     def run2():
         ##load dataset
 
-        x_train, y_train = load_mnist("training_data")                       
-        x_train = x_train / 255                                             
+        x_train, y_train = load_mnist("training_data")                      # download training data
+        x_train = x_train / 255                                             # normalize data to [0,1]
 
         x_test, y_test = load_mnist("testing_data")
 
@@ -1296,24 +1285,21 @@ QAE quantum circuits:
     if __name__ == '__main__':
         run2()
 
-The QAE error value obtained by running the above code, the loss is 1/fidelity, tending to 1 means the fidelity is close to 1.
+QAE error from running the code above. The loss is 1/fidelity, and a value approaching 1 means the fidelity is close to 1.
 
-.. figure:: ./images/qae_train_loss.png
+.. image:: ./images/qae_train_loss.png
    :width: 600 px
    :align: center
 
 |
 
-Quantum Circuits Structure Learning Demo
-********************************************
-
-1.Quantum circuits structure learning
-===============================================================================
-
-In the quantum circuit structure, the most frequently used quantum gates with parameters are `RZ` ,  `RY` , and  `RX`  gates, but which gate to use under what circumstances is a question worth studying. One method is random selection, but in this case It is very likely that the best results will not be achieved.
-The core goal of Quantum circuit structure learning task is to find the optimal combination of quantum gates with parameters.
-The approach here is that this set of optimal quantum logic gates should make the loss function to be the minimum.
-
+Quantum circuit structure learning
+**********************************
+1. Quantum circuit structure learning
+=====================================
+In quantum circuits, the most commonly used parameterized gates are RZ, RY, and RX, but choosing which gate to use in which situation is a question worth studying. One approach is random selection, which is unlikely to give the best result.
+The core goal of the quantum circuit structure learning task is to find the optimal combination of parameterized quantum gates.
+Here, this means finding the set of gates that minimizes the loss function.
 
 .. code-block::
 
@@ -1321,6 +1307,7 @@ The approach here is that this set of optimal quantum logic gates should make th
     Quantum Circuits Strcture Learning Demo
 
     """
+
     import sys
     sys.path.insert(0,"../")
 
@@ -1333,43 +1320,41 @@ The approach here is that this set of optimal quantum logic gates should make th
     import matplotlib
     try:
         matplotlib.use("TkAgg")
-    except:  
+    except:
         print("Can not use matplot TkAgg")
         pass
 
     machine = pq.CPUQVM()
-    machine.init_qvm()
-    nqbits = machine.qAlloc_many(2)
+    nqbits = range(2)
 
     def gen(param, generators, qbits, circuit):
         if generators == "X":
-            circuit.insert(pq.RX(qbits, param))
+            circuit << pq.RX(qbits, param)
         elif generators == "Y":
-            circuit.insert(pq.RY(qbits, param))
+            circuit << pq.RY(qbits, param)
         else:
-            circuit.insert(pq.RZ(qbits, param))
+            circuit << pq.RZ(qbits, param)
 
     def circuits(params, generators, circuit):
         gen(params[0], generators[0], nqbits[0], circuit)
         gen(params[1], generators[1], nqbits[1], circuit)
-        circuit.insert(pq.CNOT(nqbits[0], nqbits[1]))
+        circuit << pq.CNOT(nqbits[0], nqbits[1])
         prog = pq.QProg()
-        prog.insert(circuit)
+        prog << circuit
         return prog
 
     def ansatz1(params: QTensor, generators):
         circuit = pq.QCircuit()
         params = params.to_numpy()
         prog = circuits(params, generators, circuit)
-        return expval(machine, prog, {"Z0": 1},
-                    nqbits), expval(machine, prog, {"Y1": 1}, nqbits)
+        return expval(machine, prog, {"Z0": 1}), expval(machine, prog, {"Y1": 1})
 
 
     def ansatz2(params: QTensor, generators):
         circuit = pq.QCircuit()
         params = params.to_numpy()
         prog = circuits(params, generators, circuit)
-        return expval(machine, prog, {"X0": 1}, nqbits)
+        return expval(machine, prog, {"X0": 1})
 
 
     def loss(params, generators):
@@ -1440,46 +1425,37 @@ The approach here is that this set of optimal quantum logic gates should make th
     plt.tight_layout()
     plt.show()
 
-The quantum circuit structure obtained by running the above code contains :math:`RX`, one :math:`RY`
 
-.. figure:: ./images/final_quantum_circuit.png
+The quantum circuit structure obtained by running the code above: one :math:`RX` and one :math:`RY`.
+
+.. image:: ./images/final_quantum_circuit.png
+   :width: 600 px
+   :align: center
+
+And the loss function for different values of the gate parameters :math:`\theta_1` and :math:`\theta_2`.
+
+.. image:: ./images/loss3d.png
    :width: 600 px
    :align: center
 
 |
 
-And with the parameters in the quantum gate :math:`\theta_1`, :math:`\theta_2` change,Loss function has different values.
+Hybrid quantum-classical neural network models
+**********************************************
 
-.. figure:: ./images/loss3d.png
-   :width: 600 px
-   :align: center
+1. Hybrid quantum-classical neural network model
+================================================
 
-|
+Machine learning (ML) has become a successful interdisciplinary field that aims to extract generalizable information from data mathematically. Quantum machine learning seeks to use the principles of quantum mechanics to enhance machine learning, and vice versa.
+Whether your goal is to enhance classical ML algorithms by outsourcing hard computations to quantum computers, or to optimize quantum algorithms with classical ML architectures, both fall under quantum machine learning (QML).
+In this chapter, we explore how to partially quantize a classical neural network to create a hybrid quantum-classical neural network. Quantum circuits are built from quantum gates, and the quantum computation these gates implement is provably differentiable, as shown in `Quantum Circuit Learning <https://arxiv.org/abs/1803.00745>`_. Researchers therefore try to combine quantum circuits with classical neural network modules and train both together for hybrid quantum-classical machine learning tasks.
+We write a simple example that uses VQNet for a neural network training task. The goal is to show how easy VQNet is to use and to encourage ML practitioners to explore quantum computing.
 
-Hybird Quantum Classic Nerual Network Demo
-********************************************
+Data preparation
+----------------
 
-1.Hybrid Quantum Classic Neural Network Model
-==============================================================================
-
-Machine learning (ML) has become a successful interdisciplinary field that aims to extract generalizable information from data mathematically. 
-Quantum machine learning seeks to use the principles of quantum mechanics to enhance machine learning, and vice versa.
-Whether your goal is to enhance classical ML algorithms by outsourcing difficult calculations to quantum computers, 
-or use classical ML architectures to optimize quantum algorithms-both fall into the category of quantum machine learning (QML).
-In this chapter, we will explore how to partially quantify classical neural networks to create hybrid quantum classical neural networks. 
-Quantum circuits are composed of quantum logic gates, and the quantum calculations implemented by 
-these logic gates are proved to be differentiable by the paper `Quantum Circuit Learning <https://arxiv.org/abs/1803.00745>`_. 
-Therefore, researchers try to put quantum circuits and classical neural network modules together for training on hybrid quantum classical machine learning tasks.
-We will write a simple example to implement a neural network model training task using VQNet. 
-The purpose of this example is to demonstrate the simplicity of VQNet and encourage ML practitioners to explore the possibilities of quantum computing.
-
-
-Data Preparation
------------------------
-
-We will use `MNIST datasets <https://ossci-datasets.s3.amazonaws.com/mnist/>`_, the most basic neural network handwritten digit database as the classification data.
-We first load MNIST and filter data samples containing 0 and 1.
-These samples are divided into training data training_data and testing data testing_data, each of which has a dimension of 1*784.
+We use `MNIST datasets <http://yann.lecun.com/exdb/mnist/>`_, the most basic handwritten digit database for neural networks, as classification data.
+We first load MNIST and filter samples containing 0 and 1. These samples are split into training_data and testing_data, and each sample has shape 1*784.
 
 .. code-block::
 
@@ -1505,7 +1481,7 @@ These samples are divided into training data training_data and testing data test
     import matplotlib
     try:
         matplotlib.use("TkAgg")
-    except:  
+    except:
         print("Can not use matplot TkAgg")
         pass
 
@@ -1546,7 +1522,7 @@ These samples are divided into training data training_data and testing data test
         for v in key_file.values():
             _download(dataset_dir,v)
 
-    def load_mnist(dataset="training_data", digits=np.arange(2), path="./"):         
+    def load_mnist(dataset="training_data", digits=np.arange(2), path="./"):         # download data
         import os, struct
         from array import array as pyarray
         download_mnist(path)
@@ -1627,16 +1603,16 @@ These samples are divided into training data training_data and testing data test
 
     plt.show()
 
-.. figure:: ./images/mnsit_data_examples.png
+.. image:: ./images/mnsit_data_examples.png
    :width: 600 px
    :align: center
 
 |
 
-Construct Quantum Circuits
----------------------------------
+Building the quantum circuit
+----------------------------
 
-In this example, we use pyqpanda3 . A simple quantum circuit of 1 qubit is defined. The circuit takes the output of the classical neural network layer as input, encodes quantum data through ``H``, ``RY`` quantum logic gates, and calculates the expected value of Hamiltonian in the z direction as output.
+In this example, we use Origin Quantum's pyqpanda3 to define a simple one-qubit quantum circuit. The circuit takes the output of a classical neural network layer as input, encodes it into quantum data with ``H`` and ``RY`` gates, and computes the Hamiltonian expectation value in the z direction as output.
 
 .. code-block::
 
@@ -1646,13 +1622,13 @@ In this example, we use pyqpanda3 . A simple quantum circuit of 1 qubit is defin
     import numpy as np
     def circuit(x ,weights):
         num_qubits = 1
-        #Create a simulator with pyqpanda3
+        # Create a pyqpanda3 simulator
         machine = pq.CPUQVM()
-        #Allocate qubits with pyqpanda3
+        # Allocate qubits with pyqpanda3
         qubits = range(num_qubits)
-        #Allocate classical bits for measurement assistance
+        # Allocate classical bits for auxiliary measurement with pyqpanda3
         cbits = range(num_qubits)
-        #Construct circuits
+        # Build the circuit
         circuit = pq.QCircuit()
         circuit << pq.H(qubits[0])
         circuit << pq.RY(qubits[0], x[0])
@@ -1662,35 +1638,34 @@ In this example, we use pyqpanda3 . A simple quantum circuit of 1 qubit is defin
         for i in range(num_qubits):
             prog << pq.measure(qubits[i], cbits[i])
         shots = 1000
-        #Run the quantum program
+        # Run the quantum program
         machine.run(prog, shots)
         result = machine.result().get_counts()
-        # Fill in both outcomes: when all shots collapse to a single basis state, count0 or count1 may be missing
+        # Fill in both outcomes: count0 or count1 may be missing when all shots collapse to one basis state
         count0 = result.get("0", 0)
         count1 = result.get("1", 0)
-        expectation = (count0 - count1) / shots   # <Z> = P(0) - P(1)
+        expectation = (count0 - count1) / shots   # ⟨Z⟩ = P(0) - P(1)
         return expectation
 
-.. figure:: ./images/hqcnn_quantum_cir.png
+.. image:: ./images/hqcnn_quantum_cir.png
    :width: 600 px
    :align: center
 
 |
 
-Create Hybird Model
---------------------------
+Building the hybrid quantum neural network
+------------------------------------------
 
-Since quantum circuits can perform automatic differentiation calculations together with classical neural networks,
-we can use VQNet's convolutional layer ``Conv2D`` , pooling layer ``MaxPool2D`` , fully connected layer ``Linear`` and the quantum circuit built above to construct the model.
-Through the definition of the ``Net`` class inheriting from VQNet's automatic differentiation module ``Module`` , and using ``QuantumLayerV2`` to wrap the quantum circuit layer,
-an automatically differentiable model is constructed to convolve, reduce dimension, quantum-encode and measure the MNIST data in this example, obtaining the final features required for the classification task.
+Because quantum circuits can be differentiated automatically together with classical neural networks, we can build a model from VQNet's 2D convolution layer ``Conv2D``, pooling layer ``MaxPool2D``, fully connected layer ``Linear``, and the circuit built above.
+The following code defines a Net class that inherits from VQNet's automatic differentiation module ``Module`` and wraps the quantum circuit layer with ``QuantumLayerV2``, giving a model that can be differentiated automatically.
+The MNIST data goes through convolution, dimensionality reduction, quantum encoding, and measurement to obtain the final features needed for classification.
 
 .. code-block::
 
-    #Definition of the forward pass and gradient computation of the quantum computing layer, handled automatically by QuantumLayerV2
+    # The forward pass and gradient of the quantum layer are handled automatically by QuantumLayerV2
     from pyvqnet.qnn import QuantumLayerV2
 
-    #Model definition
+    # Model definition
     class Net(Module):
         def __init__(self):
             super(Net, self).__init__()
@@ -1715,20 +1690,19 @@ an automatically differentiable model is constructed to convolve, reduce dimensi
             x = self.fc3(x)
             return x
 
-.. figure:: ./images/hqcnnmodel.PNG
+.. image:: ./images/hqcnnmodel.PNG
    :width: 600 px
    :align: center
 
 |
 
 Training and testing
------------------------
+--------------------
 
-For the hybrid neural network model as shown in the figure below, we calculate the loss function by feeding data into the model iteratively, 
-and VQNet will  calculate the gradient of each parameter in the backward calculation automatically, 
-and use the optimizer to optimize the parameters until the number of iterations meets the preset value.
+The code above defines the model. As with classical neural network training, we still need to instantiate the model, define the loss function and optimizer, and define the full training and test loop.
+For the hybrid network shown below, we loop over the input data to compute the loss in the forward pass, automatically compute gradients of all trainable parameters in the backward pass, and update them with the optimizer until the preset number of iterations is reached.
 
-.. figure:: ./images/hqcnnarch.PNG
+.. image:: ./images/hqcnnarch.PNG
    :width: 600 px
    :align: center
 
@@ -1737,15 +1711,14 @@ and use the optimizer to optimize the parameters until the number of iterations 
 .. code-block::
 
     x_train, y_train, x_test, y_test = data_select(1000, 100)
-
-    #Create a model
-    model = Net() 
-    #Use adam optimizer
+    # Instantiate the model
+    model = Net()
+    # Adam is enough for this task; model.parameters() passes the parameters the model needs to train.
     optimizer = Adam(model.parameters(), lr=0.005)
-    #Use cross entropy loss
+    # Use the cross-entropy loss for classification
     loss_func = CategoricalCrossEntropy()
 
-    #train epoches   
+    # Number of training epochs
     epochs = 10
     train_loss_list = []
     val_loss_list = []
@@ -1756,32 +1729,27 @@ and use the optimizer to optimize the parameters until the number of iterations 
     for epoch in range(1, epochs):
         total_loss = []
         model.train()
-        batch_size = 1
+        batch_size = 250
         correct = 0
         n_train = 0
-        for x, y in data_generator(x_train, y_train, batch_size=1, shuffle=True):
+        for x, y in data_generator(x_train, y_train, batch_size=batch_size, shuffle=True):
 
             x = x.reshape(-1, 1, 28, 28)
-
             optimizer.zero_grad()
-            output = model(x)       
-            loss = loss_func(y, output)  
+            output = model(x)
+            loss = loss_func(y, output)
             loss_np = np.array(loss.data)
-            
             np_output = np.array(output.data, copy=False)
             mask = (np_output.argmax(1) == y.argmax(1))
             correct += np.sum(np.array(mask))
             n_train += batch_size
-
             loss.backward()
             optimizer._step()
-
             total_loss.append(loss_np)
 
         train_loss_list.append(np.sum(total_loss) / len(total_loss))
         train_acc_list.append(np.sum(correct) / n_train)
         print("{:.0f} loss is : {:.10f}".format(epoch, train_loss_list[-1]))
-
 
         model.eval()
         correct = 0
@@ -1796,16 +1764,16 @@ and use the optimizer to optimize the parameters until the number of iterations 
             mask = (np_output.argmax(1) == y.argmax(1))
             correct += np.sum(np.array(mask))
             n_eval += 1
-            
+
             total_loss.append(loss_np)
         print(f"Eval Accuracy: {correct / n_eval}")
         val_loss_list.append(np.sum(total_loss) / len(total_loss))
         val_acc_list.append(np.sum(correct) / n_eval)
 
-Visualization
----------------------
+Data visualization
+------------------
 
-The visualization curve of data loss function and accuracy on train and test data.
+Curves of the loss function and accuracy on the training and test data.
 
 .. code-block::
 
@@ -1836,11 +1804,11 @@ The visualization curve of data loss function and accuracy on train and test dat
     plt.show()
 
 
-.. figure:: ./images/HQCNNLOSS.png
+.. image:: ./images/HQCNNLOSS.png
    :width: 600 px
    :align: center
 
-.. figure:: ./images/HQCNNAccuracy.png
+.. image:: ./images/HQCNNAccuracy.png
    :width: 600 px
    :align: center
 
@@ -1865,22 +1833,21 @@ The visualization curve of data loss function and accuracy on train and test dat
         count += 1
     plt.show()
 
-.. figure:: ./images/eval_test.png
+.. image:: ./images/eval_test.png
    :width: 600 px
    :align: center
 
 |
 
-2.Hybrid quantum classical transfer learning model
-=======================================================================================================================
-We apply a machine learning method called transfer learning to image classifier based on hybrid classical quantum
-network. We will write a simple example of integrating pyQPanda2 with VQNet.Transfer learning is based on general intuition,
-that is, if the pre-trained network is good at solving a given problem, it can also be used to solve a different
-but related problem with only some additional training.
+2. Hybrid quantum-classical transfer learning model
+===================================================
 
-Quantum partial circuit diagram are illustrated below:
+We apply a machine learning method called transfer learning to an image classifier based on a hybrid classical-quantum network. We write a simple example that integrates pyqpanda3 with VQNet.
+Transfer learning is a well-established artificial neural network training technique based on the intuition that if a pretrained network is good at a given problem, a little extra training lets it solve a different but related problem.
 
-.. figure:: ./images/QTransferLearning_cir.png
+                                                            .. centered:: Diagram of the quantum part of the circuit
+
+.. image:: ./images/QTransferLearning_cir.png
    :width: 600 px
    :align: center
 
@@ -1916,11 +1883,11 @@ Quantum partial circuit diagram are illustrated below:
     from pyvqnet.tensor import tensor
     from pyvqnet.tensor.tensor import QTensor
     import pyqpanda3.core as pq
-    import pyvqnet
     import matplotlib
     from pyvqnet.nn.module import *
     from pyvqnet.utils.initializer import *
     from pyvqnet.qnn.pq3.quantumlayer import QuantumLayer
+    from pyvqnet.qnn.pq3.measure import expval
 
     try:
         matplotlib.use('TkAgg')
@@ -2010,7 +1977,7 @@ Quantum partial circuit diagram are illustrated below:
             x = self.fc3(x)  # 1 1
             return x
 
-    def load_mnist(dataset="training_data", digits=np.arange(2), path="./"):         
+    def load_mnist(dataset="training_data", digits=np.arange(2), path="./"):
         import os, struct
         from array import array as pyarray
         download_mnist(path)
@@ -2193,7 +2160,7 @@ Quantum partial circuit diagram are illustrated below:
             """
             circuit = pq.QCircuit()
             for idx in range(nqubits):
-                circuit.insert(pq.H(qubits[idx]))
+                circuit << pq.H(qubits[idx])
             return circuit
 
         def Q_RY_layer(qubits, w):
@@ -2201,7 +2168,7 @@ Quantum partial circuit diagram are illustrated below:
             """
             circuit = pq.QCircuit()
             for idx, element in enumerate(w):
-                circuit.insert(pq.RY(qubits[idx], element))
+                circuit << pq.RY(qubits[idx], element)
             return circuit
 
         def Q_entangling_layer(qubits, nqubits):
@@ -2212,44 +2179,41 @@ Quantum partial circuit diagram are illustrated below:
             #   CNOT  CNOT  CNOT...  CNOT
             circuit = pq.QCircuit()
             for i in range(0, nqubits - 1, 2):  # Loop over even indices: i=0,2,...N-2
-                circuit.insert(pq.CNOT(qubits[i], qubits[i + 1]))
+                circuit << pq.CNOT(qubits[i], qubits[i + 1])
             for i in range(1, nqubits - 1, 2):  # Loop over odd indices:  i=1,3,...N-3
-                circuit.insert(pq.CNOT(qubits[i], qubits[i + 1]))
+                circuit << pq.CNOT(qubits[i], qubits[i + 1])
             return circuit
 
-        def Q_quantum_net(q_input_features, q_weights_flat, qubits, cbits, machine):
+        def Q_quantum_net(q_input_features, q_weights_flat):
             """
             The variational quantum circuit.
             """
             machine = pq.CPUQVM()
-            machine.init_qvm()
-            qubits = machine.qAlloc_many(n_qubits)
+            qubits = range(n_qubits)
             circuit = pq.QCircuit()
 
             # Reshape weights
             q_weights = q_weights_flat.reshape([q_depth, n_qubits])
 
             # Start from state |+> , unbiased w.r.t. |0> and |1>
-            circuit.insert(Q_H_layer(qubits, n_qubits))
+            circuit << Q_H_layer(qubits, n_qubits)
 
             # Embed features in the quantum node
-            circuit.insert(Q_RY_layer(qubits, q_input_features))
+            circuit << Q_RY_layer(qubits, q_input_features)
 
             # Sequence of trainable variational layers
             for k in range(q_depth):
-                circuit.insert(Q_entangling_layer(qubits, n_qubits))
-                circuit.insert(Q_RY_layer(qubits, q_weights[k]))
+                circuit << Q_entangling_layer(qubits, n_qubits)
+                circuit << Q_RY_layer(qubits, q_weights[k])
 
             # Expectation values in the Z basis
             prog = pq.QProg()
-            prog.insert(circuit)
+            prog << circuit
 
             exp_vals = []
             for position in range(n_qubits):
                 pauli_str = "Z" + str(position)
-                pauli_map = pq.PauliOperator(pauli_str, 1)
-                hamiltion = pauli_map.toHamiltonian(True)
-                exp = machine.get_expectation(prog, hamiltion, qubits)
+                exp = expval(machine, prog, {pauli_str: 1.0})
                 exp_vals.append(exp)
 
             return exp_vals
@@ -2264,7 +2228,7 @@ Quantum partial circuit diagram are illustrated below:
                 super().__init__()
                 self.pre_net = Linear(128, n_qubits)
                 self.post_net = Linear(n_qubits, 10)
-                self.temp_Q = QuantumLayer(Q_quantum_net, q_depth * n_qubits, "cpu", n_qubits, n_qubits)
+                self.temp_Q = QuantumLayer(Q_quantum_net, q_depth * n_qubits)
 
             def forward(self, input_features):
                 """
@@ -2397,7 +2361,7 @@ Quantum partial circuit diagram are illustrated below:
             """
             circuit = pq.QCircuit()
             for idx in range(nqubits):
-                circuit.insert(pq.H(qubits[idx]))
+                circuit << pq.H(qubits[idx])
             return circuit
 
         def Q_RY_layer(qubits, w):
@@ -2405,7 +2369,7 @@ Quantum partial circuit diagram are illustrated below:
             """
             circuit = pq.QCircuit()
             for idx, element in enumerate(w):
-                circuit.insert(pq.RY(qubits[idx], element))
+                circuit << pq.RY(qubits[idx], element)
             return circuit
 
         def Q_entangling_layer(qubits, nqubits):
@@ -2416,43 +2380,40 @@ Quantum partial circuit diagram are illustrated below:
             #   CNOT  CNOT  CNOT...  CNOT
             circuit = pq.QCircuit()
             for i in range(0, nqubits - 1, 2):  # Loop over even indices: i=0,2,...N-2
-                circuit.insert(pq.CNOT(qubits[i], qubits[i + 1]))
+                circuit << pq.CNOT(qubits[i], qubits[i + 1])
             for i in range(1, nqubits - 1, 2):  # Loop over odd indices:  i=1,3,...N-3
-                circuit.insert(pq.CNOT(qubits[i], qubits[i + 1]))
+                circuit << pq.CNOT(qubits[i], qubits[i + 1])
             return circuit
 
-        def Q_quantum_net(q_input_features, q_weights_flat, qubits, cbits, machine):
+        def Q_quantum_net(q_input_features, q_weights_flat):
             """
             The variational quantum circuit.
             """
             machine = pq.CPUQVM()
-            machine.init_qvm()
-            qubits = machine.qAlloc_many(n_qubits)
+            qubits = range(n_qubits)
             circuit = pq.QCircuit()
 
             # Reshape weights
             q_weights = q_weights_flat.reshape([q_depth, n_qubits])
 
             # Start from state |+> , unbiased w.r.t. |0> and |1>
-            circuit.insert(Q_H_layer(qubits, n_qubits))
+            circuit << Q_H_layer(qubits, n_qubits)
 
             # Embed features in the quantum node
-            circuit.insert(Q_RY_layer(qubits, q_input_features))
+            circuit << Q_RY_layer(qubits, q_input_features)
 
             # Sequence of trainable variational layers
             for k in range(q_depth):
-                circuit.insert(Q_entangling_layer(qubits, n_qubits))
-                circuit.insert(Q_RY_layer(qubits, q_weights[k]))
+                circuit << Q_entangling_layer(qubits, n_qubits)
+                circuit << Q_RY_layer(qubits, q_weights[k])
 
             # Expectation values in the Z basis
             prog = pq.QProg()
-            prog.insert(circuit)
+            prog << circuit
             exp_vals = []
             for position in range(n_qubits):
                 pauli_str = "Z" + str(position)
-                pauli_map = pq.PauliOperator(pauli_str, 1)
-                hamiltion = pauli_map.toHamiltonian(True)
-                exp = machine.get_expectation(prog, hamiltion, qubits)
+                exp = expval(machine, prog, {pauli_str: 1.0})
                 exp_vals.append(exp)
 
             return exp_vals
@@ -2467,7 +2428,7 @@ Quantum partial circuit diagram are illustrated below:
                 super().__init__()
                 self.pre_net = Linear(128, n_qubits)
                 self.post_net = Linear(n_qubits, 10)
-                self.temp_Q = QuantumLayer(Q_quantum_net, q_depth * n_qubits, "cpu", n_qubits, n_qubits)
+                self.temp_Q = QuantumLayer(Q_quantum_net, q_depth * n_qubits)
 
             def forward(self, input_features):
                 """
@@ -2558,65 +2519,57 @@ Quantum partial circuit diagram are illustrated below:
         quantum_cnn_TransferLearning_predict()
 
 
-Loss on training set
 
-.. figure:: ./images/qcnn_transfer_learning_classical.png
+Loss on the training set
+
+.. image:: ./images/qcnn_transfer_learning_classical.png
    :width: 600 px
    :align: center
 
 |
 
-Run classification on test set
+Classification results on the test set
 
-.. figure:: ./images/qcnn_transfer_learning_predict.png
+.. image:: ./images/qcnn_transfer_learning_predict.png
    :width: 600 px
    :align: center
 
 |
 
-3. Hybrid quantum classical Unet network model
-==============================================================================
+3. Hybrid quantum-classical QUnet network model
+===============================================
 
-Image segmentation Image segmentation is a classical problem in the research of computer vision and has become a hot
-spot in the field of image understanding. Image segmentation an important part of image understanding, and one of the most difficult problems in image processing.
-The so-called image segmentation refers to the segmentation based on gray, color and spatial texture The image
-is divided into several disjoint regions by features such as theory and geometry, so that these features show
-consistency or similarity in the same region and obvious differences between different regions. In short,
-it is to give a picture and classify each pixel on the picture. Separate the pixel regions belonging
-to different objects. `Unet <https://arxiv.org/abs/1505.04597>`_ is a classical image segmentation algorithm.
-
-Here, we explore how to partially quantify the classical neural network to create a hybrid quantum classical
-`QUnet` neural network. We will write a simple example of integrating pyqpanda3 with `VQNet`.
-Qunet is mainly used to solve the technology of image segmentation.
-
+Image segmentation is a classic problem in computer vision research and a focus of interest in image understanding. It is the first step in image analysis, a foundation of computer vision,
+an important part of image understanding, and one of the hardest problems in image processing. Segmentation partitions an image
+into disjoint regions based on features such as grayscale, color, spatial texture, and geometric shape, so that these features are consistent or similar within a region and clearly different between regions.
+Put simply, given an image, it classifies every pixel and separates pixel regions belonging to different objects. `Unet <https://arxiv.org/abs/1505.04597>`_ is an algorithm for classical image segmentation.
+Here we explore how to partially quantize a classical neural network to create a `QUnet - Quantum Unet` neural network suited to quantum data. We write a simple example that integrates pyqpanda3 with VQNet.
+QUnet is mainly used for image segmentation.
 
 
 Data preparation
--------------------------
+-------------------
+We use data from the official VOCdevkit/VOC2012 library, `VOC2012 <http://host.robots.ox.ac.uk/pascal/VOC/voc2012/#devkit>`_, as image segmentation data.
+The samples are split into training_data and testing_data, and the folders contain images and labels.
 
-We will use the data of `VOC2012 <http://host.robots.ox.ac.uk/pascal/VOC/voc2012/#devkit>`_  official library as image segmentation data. These samples are divided
-into training data training_data and test data testing_data.
-
-.. figure:: ./images/Unet_data_imshow.png
+.. image:: ./images/Unet_data_imshow.png
    :width: 600 px
    :align: center
 
 |
 
-Constructing quantum circuits
--------------------------------------------
-In this example, we define a quantum circuit using pyqpanda3. The input 3-channel color
-image data is compressed into a single channel gray image and stored, and then the feature of the data is
-extracted and dimensionality reduced by quantum convolution operation.
+Building the quantum circuit
+----------------------------
+In this example, we use Origin Quantum's pyqpanda3 to define a quantum circuit. The input 3-channel color images are compressed to single-channel grayscale images and stored,
+then quantum convolution extracts and reduces the features.
 
-
-.. figure:: ./images/qunet_cir.png
+.. image:: ./images/qunet_cir.png
    :width: 600 px
    :align: center
 
 |
 
-Import necessary libraries and functions
+Import required libraries and functions
 
 .. code-block::
 
@@ -2629,11 +2582,11 @@ Import necessary libraries and functions
     from pyvqnet.nn.loss import BinaryCrossEntropy
     from pyvqnet.optim.adam import Adam
     from pyvqnet.dtype import *
-    from pyvqnet.tensor import tensor,kfloat32
+    from pyvqnet.tensor import tensor
     from pyvqnet.tensor.tensor import QTensor
     import pyqpanda3.core as pq
-    import pyvqnet
     from pyvqnet.utils.storage import load_parameters, save_parameters
+    from pyvqnet.qnn.pq3.measure import probs_measure
 
     import matplotlib
     try:
@@ -2644,11 +2597,11 @@ Import necessary libraries and functions
 
     import cv2
 
-Preprocessing data
+Preprocess data
 
 .. code-block::
 
-    # Preprocessing data
+    #Preprocess data
     class PreprocessingData:
         def __init__(self, path):
             self.path = path
@@ -2682,7 +2635,7 @@ Preprocessing data
 
             return x_data, y_label
 
-    # Quantum coding circuit
+    #Quantum encoding circuit
     class QCNN_:
         def __init__(self, image):
             self.image = image
@@ -2692,8 +2645,8 @@ Preprocessing data
             for i, pix in enumerate(pixels):
                 theta = np.arctan(pix)
                 phi = np.arctan(pix**2)
-                cir.insert(pq.RY(qlist[i], theta))
-                cir.insert(pq.RZ(qlist[i], phi))
+                cir << pq.RY(qlist[i], theta)
+                cir << pq.RZ(qlist[i], phi)
             return cir
 
         def entangle_cir(self, qlist):
@@ -2704,32 +2657,30 @@ Preprocessing data
                 ctred = i+1
                 if ctred == k_size:
                     ctred = 0
-                cir.insert(pq.CNOT(qlist[ctr], qlist[ctred]))
+                cir << pq.CNOT(qlist[ctr], qlist[ctred])
             return cir
 
         def qcnn_circuit(self, pixels):
             k_size = len(pixels)
-            machine = pq.MPSQVM()
-            machine.init_qvm()
-            qlist = machine.qAlloc_many(k_size)
+            machine = pq.CPUQVM()
+            qlist = range(k_size)
             cir = pq.QProg()
 
-            cir.insert(self.encode_cir(qlist, np.array(pixels) * np.pi / 2))
-            cir.insert(self.entangle_cir(qlist))
+            cir << self.encode_cir(qlist, np.array(pixels) * np.pi / 2)
+            cir << self.entangle_cir(qlist)
 
-            result0 = machine.prob_run_list(cir, [qlist[0]], -1)
-            result1 = machine.prob_run_list(cir, [qlist[1]], -1)
-            result2 = machine.prob_run_list(cir, [qlist[2]], -1)
-            result3 = machine.prob_run_list(cir, [qlist[3]], -1)
+            result0 = probs_measure(machine, cir, [qlist[0]])
+            result1 = probs_measure(machine, cir, [qlist[1]])
+            result2 = probs_measure(machine, cir, [qlist[2]])
+            result3 = probs_measure(machine, cir, [qlist[3]])
 
             result = [result0[-1]+result1[-1]+result2[-1]+result3[-1]]
-            machine.finalize()
             return result
 
     def quanconv_(image):
         """Convolves the input image with many applications of the same quantum circuit."""
         out = np.zeros((64, 64, 1))
-        
+
         for j in range(0, 128, 2):
             for k in range(0, 128, 2):
                 # Process a squared 2x2 region of the image with a quantum circuit
@@ -2741,7 +2692,7 @@ Preprocessing data
                         image[j + 1, k + 1, 0]
                     ]
                 )
-                
+
                 for c in range(1):
                     out[j // 2, k // 2, c] = q_results[c]
         return out
@@ -2753,16 +2704,13 @@ Preprocessing data
         quantum_images = np.asarray(quantum_images)
         return quantum_images
 
-Constructing hybrid classical quantum neural network
-----------------------------------------------------------
+Building the hybrid classical-quantum neural network
+----------------------------------------------------
 
-According to the Unet network framework, we use the `VQNet` framework to build the classic network part.
-The down-sampling neural network layer is used to reduce the dimension and extract features;
-The up-sampling neural network layer is used to restore the dimension; The up and down sampling layers
-are connected through concatenate for feature fusion.
+Following the Unet framework, we build the classical part with `VQNet`. Downsampling layers reduce dimensionality and extract features;
+upsampling layers restore dimensionality; upsampling and downsampling layers are connected by concatenate for feature fusion.
 
-
-.. figure:: ./images/Unet.png
+.. image:: ./images/Unet.png
    :width: 600 px
    :align: center
 
@@ -2770,7 +2718,7 @@ are connected through concatenate for feature fusion.
 
 .. code-block::
 
-    # Definition of down sampling neural network layer
+    #Downsampling neural network layer definition
     class DownsampleLayer(Module):
         def __init__(self, in_ch, out_ch):
             super(DownsampleLayer, self).__init__()
@@ -2803,7 +2751,7 @@ are connected through concatenate for feature fusion.
             out_2 = self.Relu3(x7)
             return out, out_2
 
-    # Definition of up sampling neural network layer
+    #Upsampling neural network layer definition
     class UpSampleLayer(Module):
         def __init__(self, in_ch, out_ch):
             super(UpSampleLayer, self).__init__()
@@ -2839,7 +2787,7 @@ are connected through concatenate for feature fusion.
             x_out = self.Relu3(x)
             return x_out
 
-    # Unet overall network architecture
+    #Overall UNet network architecture
     class UNet(Module):
         def __init__(self):
             super(UNet, self).__init__()
@@ -2889,6 +2837,7 @@ are connected through concatenate for feature fusion.
             out8 = self.u4(cat_out7)
             out8_pad_out_1 = tensor.pad2d(out8, (1, 0, 1, 0), 0)
             cat_out8 = tensor.concatenate([out8_pad_out_1, out_1], dim=1)
+
             out = self.conv1(cat_out8)
             out = self.BatchNorm2d1(out)
             out = self.Relu1(out)
@@ -2900,14 +2849,14 @@ are connected through concatenate for feature fusion.
             return out
 
 Training and model saving
--------------------------------
+-------------------------
 
-Similar to the training of classical neural network model,
-we also need to instantiate the model, define the loss function and optimizer, and define the whole training and
-testing process. For the hybrid neural network model as shown in the figure below, we calculate the loss value in
-forward function the gradient of each parameter in
-reverse calculation automatically, and use the optimizer to optimize the parameters until the number of
-iterations meets the preset value.If ``PREPROCESS`` is False, the code will skip the quantum data preprocessing.
+The code above defines the model. As with classical neural network training, we still need to instantiate the model,
+define the loss function and optimizer, and define the full training and test loop. For the hybrid network shown below, we loop over the input data to compute the loss in the forward pass,
+automatically compute gradients of all trainable parameters in the backward pass, and update them with the optimizer until the preset number of iterations is reached.
+Here we select 100 images from the downloaded VOC2012 data as the training set and 10 as the test set. The training set directory is `path0` and the test set directory is `path1`.
+Both the images and their label images are preprocessed by the quantum convolution module ``quantum_data_preprocessing``, and the Unet training objective is to make the quantum-preprocessed images and labels as close as possible.
+If quantized preprocessing has already been done, set ``PREPROCESS`` to False.
 
 .. code-block::
 
@@ -2952,6 +2901,8 @@ iterations meets the preset value.If ``PREPROCESS`` is False, the code will skip
 
     # use quantum encoder to preprocess data
 
+
+
     if PREPROCESS == True:
         print("Quantum pre-processing of train images:")
         q_train_images = quantum_data_preprocessing(train_images)
@@ -2983,7 +2934,6 @@ iterations meets the preset value.If ``PREPROCESS`` is False, the code will skip
 
     trainset = MyDataset(train_x, train_y)
     testset = MyDataset(test_x, test_y)
-    
     x_train = []
     y_label = []
     model = UNet()
@@ -3051,9 +3001,9 @@ iterations meets the preset value.If ``PREPROCESS`` is False, the code will skip
 
 
 Data visualization
------------------------
+------------------
 
-The loss function curve of training data is displayed and saved, and the test data results are saved.
+Save the loss curve plot for the training data and the test data results.
 
 .. code-block::
 
@@ -3100,44 +3050,45 @@ The loss function curve of training data is displayed and saved, and the test da
             plt.imshow(np.array(y_img_tensor.data).transpose([1, 2, 0]))
         else:
             plt.imshow(np.array(y_img_tensor.data).transpose([1, 2, 0]).squeeze(2))
-        plt.savefig("./result/" + str(i) + "_1" + ".jpg")
+        plt.savefig("./result/eval_" + str(i) + "_1" + ".jpg")
     print("end!")
 
-Loss on training set
+Loss on the training set
 
-.. figure:: ./images/qunet_train_loss.png
+.. image:: ./images/qunet_train_loss.png
    :width: 600 px
    :align: center
 
 |
 
-Run classification on test set
+Visualization of the results
 
-.. figure:: ./images/qunet_eval_1.jpg
+.. image:: ./images/qunet_eval_1.jpg
    :width: 600 px
    :align: center
 
-.. figure:: ./images/qunet_eval_2.jpg
+.. image:: ./images/qunet_eval_2.jpg
    :width: 600 px
    :align: center
 
-.. figure:: ./images/qunet_eval_3.jpg
+.. image:: ./images/qunet_eval_3.jpg
    :width: 600 px
    :align: center
 
 |
 
 
-4.Hybrid quantum-classical QMLP network model
-===============================================================================
 
-We introduce and analyze a proposed quantum multilayer perceptron (QMLP) architecture featuring fault-tolerant input embeddings, rich nonlinearities, and enhanced variational circuit simulations with parameterized two-qubit entanglement gates.
-`QMLP: An Error-Tolerant Nonlinear Quantum MLP Architecture using Parameterized Two-Qubit Gates <https://arxiv.org/pdf/2206.01345.pdf>`_ .
-We will write a simple example of integrating pyqpanda3 with `VQNet`.
+4. Hybrid quantum-classical QMLP network model
+==============================================
+
+We introduce and analyze a quantum multilayer perceptron (QMLP) architecture featuring fault-tolerant input embedding, rich nonlinearity, and enhanced variational circuit simulation with parameterized two-qubit entangling gates. See `QMLP: An Error-Tolerant Nonlinear Quantum MLP Architecture using Parameterized Two-Qubit Gates <https://arxiv.org/pdf/2206.01345.pdf>`_.
+We write a simple example that integrates `pyqpanda3` with `VQNet`.
 
 
-Building Hybrid Classical-Quantum Neural Networks
-----------------------------------------------------------
+
+Building the hybrid classical-quantum neural network
+----------------------------------------------------
 
 .. code-block::
 
@@ -3145,30 +3096,25 @@ Building Hybrid Classical-Quantum Neural Networks
     import gzip
     import struct
     import numpy as np
+    import matplotlib.pyplot as plt
     import pyqpanda3.core as pq
+    import pyvqnet
     from pyvqnet.nn.module import Module
-    from pyvqnet.nn.loss import MeanSquaredError, CrossEntropyLoss
+    from pyvqnet.nn.loss import CrossEntropyLoss
     from pyvqnet.optim.adam import Adam
-    from pyvqnet.tensor.tensor import QTensor
+
     from pyvqnet.qnn.pq3.measure import expval
     from pyvqnet.qnn.pq3.quantumlayer import QuantumLayer
     from pyvqnet.nn.pooling import AvgPool2D
     from pyvqnet.nn.linear import Linear
     from pyvqnet.data.data import data_generator
-    from pyvqnet.tensor import tensor
-    import matplotlib
-    from matplotlib import pyplot as plt
-    try:
-        matplotlib.use("TkAgg")
-    except:  # pylint:disable=bare-except
-        print("Can not use matplot TkAgg")
 
     try:
         import urllib.request
     except ImportError:
         raise ImportError("You should use Python 3.x")
 
-    url_base = "https://ossci-datasets.s3.amazonaws.com/mnist/"
+    url_base = 'https://ossci-datasets.s3.amazonaws.com/mnist/'
     key_file = {
         "train_img": "train-images-idx3-ubyte.gz",
         "train_label": "train-labels-idx1-ubyte.gz",
@@ -3204,7 +3150,7 @@ Building Hybrid Classical-Quantum Neural Networks
         for v in key_file.values():
             _download(dataset_dir, v)
 
-    def load_mnist(dataset="training_data", digits=np.arange(2), path="./"):
+    def load_mnist(dataset="training_data", digits=np.arange(2), path="../data/MNIST_data"):
         """
         load mnist data
         """
@@ -3239,7 +3185,7 @@ Building Hybrid Classical-Quantum Neural Networks
         labels = np.zeros((num, 1), dtype=int)
         for i in range(len(ind)):
             images[i] = np.array(img[ind[i] * rows * cols:(ind[i] + 1) * rows *
-                                     cols]).reshape((rows, cols))
+                                    cols]).reshape((rows, cols))
             labels[i] = lbl[ind[i]]
 
         return images, labels
@@ -3248,8 +3194,8 @@ Building Hybrid Classical-Quantum Neural Networks
         """
         Select data from mnist dataset.
         """
-        x_train, y_train = load_mnist("training_data")  
-        x_test, y_test = load_mnist("testing_data")  
+        x_train, y_train = load_mnist("training_data")
+        x_test, y_test = load_mnist("testing_data")
         idx_train = np.append(
             np.where(y_train == 0)[0][:train_num],
             np.where(y_train == 1)[0][:train_num])
@@ -3274,105 +3220,96 @@ Building Hybrid Classical-Quantum Neural Networks
 
     def RotCircuit(para, qlist):
 
-        if isinstance(para, QTensor):
-            para = QTensor._to_numpy(para)
-        if para.ndim > 1:
-            raise ValueError(" dim of paramters in Rot should be 1")
-        if para.shape[0] != 3:
-            raise ValueError(" numbers of paramters in Rot should be 3")
-
         cir = pq.QCircuit()
-        cir.insert(pq.RZ(qlist, para[2]))
-        cir.insert(pq.RY(qlist, para[1]))
-        cir.insert(pq.RZ(qlist, para[0]))
+        cir << pq.RZ(qlist, para[2])
+        cir << pq.RY(qlist, para[1])
+        cir << pq.RZ(qlist, para[0])
 
         return cir
 
     def build_RotCircuit(qubits, weights):
         cir = pq.QCircuit()
-        cir.insert(RotCircuit(weights[0:3], qubits[0]))
-        cir.insert(RotCircuit(weights[3:6], qubits[1]))
-        cir.insert(RotCircuit(weights[6:9], qubits[2]))
-        cir.insert(RotCircuit(weights[9:12], qubits[3]))
-        cir.insert(RotCircuit(weights[12:15], qubits[4]))
-        cir.insert(RotCircuit(weights[15:18], qubits[5]))
-        cir.insert(RotCircuit(weights[18:21], qubits[6]))
-        cir.insert(RotCircuit(weights[21:24], qubits[7]))
-        cir.insert(RotCircuit(weights[24:27], qubits[8]))
-        cir.insert(RotCircuit(weights[27:30], qubits[9]))
-        cir.insert(RotCircuit(weights[30:33], qubits[10]))
-        cir.insert(RotCircuit(weights[33:36], qubits[11]))
-        cir.insert(RotCircuit(weights[36:39], qubits[12]))
-        cir.insert(RotCircuit(weights[39:42], qubits[13]))
-        cir.insert(RotCircuit(weights[42:45], qubits[14]))
-        cir.insert(RotCircuit(weights[45:48], qubits[15]))
+        cir << RotCircuit(weights[0:3], qubits[0])
+        cir << RotCircuit(weights[3:6], qubits[1])
+        cir << RotCircuit(weights[6:9], qubits[2])
+        cir << RotCircuit(weights[9:12], qubits[3])
+        cir << RotCircuit(weights[12:15], qubits[4])
+        cir << RotCircuit(weights[15:18], qubits[5])
+        cir << RotCircuit(weights[18:21], qubits[6])
+        cir << RotCircuit(weights[21:24], qubits[7])
+        cir << RotCircuit(weights[24:27], qubits[8])
+        cir << RotCircuit(weights[27:30], qubits[9])
+        cir << RotCircuit(weights[30:33], qubits[10])
+        cir << RotCircuit(weights[33:36], qubits[11])
+        cir << RotCircuit(weights[36:39], qubits[12])
+        cir << RotCircuit(weights[39:42], qubits[13])
+        cir << RotCircuit(weights[42:45], qubits[14])
+        cir << RotCircuit(weights[45:48], qubits[15])
 
         return cir
 
     def CRXCircuit(para, control_qlists, rot_qlists):
         cir = pq.QCircuit()
-        cir.insert(pq.RX(rot_qlists, para))
-        cir.set_control(control_qlists)
+        cir << pq.CRX(control_qlists,rot_qlists, para)
         return cir
 
     def build_CRotCircuit(qubits, weights):
         cir = pq.QCircuit()
-        cir.insert(CRXCircuit(weights[0], qubits[0], qubits[1]))
-        cir.insert(CRXCircuit(weights[1], qubits[1], qubits[2]))
-        cir.insert(CRXCircuit(weights[2], qubits[2], qubits[3]))
-        cir.insert(CRXCircuit(weights[3], qubits[3], qubits[4]))
-        cir.insert(CRXCircuit(weights[4], qubits[4], qubits[5]))
-        cir.insert(CRXCircuit(weights[5], qubits[5], qubits[6]))
-        cir.insert(CRXCircuit(weights[6], qubits[6], qubits[7]))
-        cir.insert(CRXCircuit(weights[7], qubits[7], qubits[8]))
-        cir.insert(CRXCircuit(weights[8], qubits[8], qubits[9]))
-        cir.insert(CRXCircuit(weights[9], qubits[9], qubits[10]))
-        cir.insert(CRXCircuit(weights[10], qubits[10], qubits[11]))
-        cir.insert(CRXCircuit(weights[11], qubits[11], qubits[12]))
-        cir.insert(CRXCircuit(weights[12], qubits[12], qubits[13]))
-        cir.insert(CRXCircuit(weights[13], qubits[13], qubits[14]))
-        cir.insert(CRXCircuit(weights[14], qubits[14], qubits[15]))
-        cir.insert(CRXCircuit(weights[15], qubits[15], qubits[0]))
+        cir << CRXCircuit(weights[0], qubits[0], qubits[1])
+        cir << CRXCircuit(weights[1], qubits[1], qubits[2])
+        cir << CRXCircuit(weights[2], qubits[2], qubits[3])
+        cir << CRXCircuit(weights[3], qubits[3], qubits[4])
+        cir << CRXCircuit(weights[4], qubits[4], qubits[5])
+        cir << CRXCircuit(weights[5], qubits[5], qubits[6])
+        cir << CRXCircuit(weights[6], qubits[6], qubits[7])
+        cir << CRXCircuit(weights[7], qubits[7], qubits[8])
+        cir << CRXCircuit(weights[8], qubits[8], qubits[9])
+        cir << CRXCircuit(weights[9], qubits[9], qubits[10])
+        cir << CRXCircuit(weights[10], qubits[10], qubits[11])
+        cir << CRXCircuit(weights[11], qubits[11], qubits[12])
+        cir << CRXCircuit(weights[12], qubits[12], qubits[13])
+        cir << CRXCircuit(weights[13], qubits[13], qubits[14])
+        cir << CRXCircuit(weights[14], qubits[14], qubits[15])
+        cir << CRXCircuit(weights[15], qubits[15], qubits[0])
 
         return cir
 
 
-    def build_qmlp_circuit(x, weights, qubits, clist, machine):
+    def build_qmlp_circuit(x, weights, ):
+        qubits = range(16)
+        machine = pq.CPUQVM()
         cir = pq.QCircuit()
         num_qubits = len(qubits)
         for i in range(num_qubits):
-            cir.insert(pq.RX(qubits[i], x[i]))
+            cir << pq.RX(qubits[i], x[i])
 
-        cir.insert(build_RotCircuit(qubits, weights[0:48]))
-        cir.insert(build_CRotCircuit(qubits, weights[48:64]))
+        cir << build_RotCircuit(qubits, weights[0:48])
+        cir << build_CRotCircuit(qubits, weights[48:64])
 
         for i in range(num_qubits):
-            cir.insert(pq.RX(qubits[i], x[i]))
+            cir << pq.RX(qubits[i], x[i])
 
-        cir.insert(build_RotCircuit(qubits, weights[64:112]))
-        cir.insert(build_CRotCircuit(qubits, weights[112:128]))
+        cir << build_RotCircuit(qubits, weights[64:112])
+        cir << build_CRotCircuit(qubits, weights[112:128])
 
         prog = pq.QProg()
-        prog.insert(cir)
-        # print(prog)
-        # exit()
+        prog << cir
+
 
         exp_vals = []
         for position in range(num_qubits):
             pauli_str = {"Z" + str(position): 1.0}
-            exp2 = expval(machine, prog, pauli_str, qubits)
+            exp2 = expval(machine, prog, pauli_str)
             exp_vals.append(exp2)
 
         return exp_vals
-
-    
 
     class QMLPModel(Module):
         def __init__(self):
             super(QMLPModel, self).__init__()
             self.ave_pool2d = AvgPool2D([7, 7], [7, 7], "valid")
-            self.quantum_circuit = QuantumLayer(build_qmlp_circuit, 128, "CPU", 16, diff_method="finite_diff")
-            
+            self.quantum_circuit = QuantumLayer(build_qmlp_circuit, 128, diff_method="finite_diff")
+
             self.linear = Linear(16, 10)
 
         def forward(self, x):
@@ -3384,8 +3321,6 @@ Building Hybrid Classical-Quantum Neural Networks
             return result
 
     def vqnet_test_QMLPModel():
-        # train num=1000, test_num=100
-        # x_train, y_train, x_test, y_test = data_select(1000, 100)
 
         train_size = 1000
         eval_size = 100
@@ -3406,16 +3341,23 @@ Building Hybrid Classical-Quantum Neural Networks
         optimizer = Adam(model.parameters(), lr=0.005)
         loss_func = CrossEntropyLoss()
         loss_list = []
-        epochs = 30
+        epochs = 5
+        batch_size = 16
+
+        test_acc_list = []
+        test_loss_list = []
         for epoch in range(1, epochs):
             total_loss = []
 
             correct = 0
-            n_train = 0
+
+            train_loss = 0.0
+            train_correct = 0
+            train_total = 0
             for x, y in data_generator(x_train,
-                                       y_train,
-                                       batch_size=16,
-                                       shuffle=True):
+                                    y_train,
+                                    batch_size=batch_size,
+                                    shuffle=True):
 
                 x = x.reshape(-1, 1, 28, 28)
                 optimizer.zero_grad()
@@ -3423,30 +3365,72 @@ Building Hybrid Classical-Quantum Neural Networks
                 output = model(x)
                 # Calculating loss
                 loss = loss_func(y, output)
-                loss_np = np.array(loss.data)
-                print("loss: ", loss_np)
-                np_output = np.array(output.data, copy=False)
 
-                temp_out = np_output.argmax(axis=1)
-                temp_output = np.zeros((temp_out.size, 10))
-                temp_output[np.arange(temp_out.size), temp_out] = 1
-                temp_maks = (temp_output == y)
+                train_loss += loss.item()
 
-                correct += np.sum(np.array(temp_maks))
-                n_train += 160
+                #
+                pred = output.argmax(dim=1).numpy()
+                true = pyvqnet.tensor.to_tensor(y).argmax(dim=1)
+                train_correct += (pred == true).sum().item()
+                train_total += batch_size
 
                 # Backward pass
                 loss.backward()
                 # Optimize the weights
                 optimizer._step()
-                total_loss.append(loss_np)
+                total_loss.append(loss.item())
+            # epoch
+            epoch_loss = np.sum(total_loss) / len(total_loss)
+            loss_list.append(epoch_loss)
+            train_acc = correct / train_total
             print("##########################")
-            print(f"Train Accuracy: {correct / n_train}")
-            loss_list.append(np.sum(total_loss) / len(total_loss))
-            # train_acc_list.append(correct / n_train)
+            print(f"Train Accuracy: {train_acc}")
             print("epoch: ", epoch)
-            # print(100. * (epoch + 1) / epochs)
             print("{:.0f} loss is : {:.10f}".format(epoch, loss_list[-1]))
+
+            # -------------------- (epoch) -------------------- #
+            model.eval()  #
+            test_loss = 0.0
+            test_correct = 0
+            test_total = 0
+            with pyvqnet.no_grad():  #
+                #  batch_size (batch size)
+                for x_batch, y_batch in data_generator(x_test,
+                                                    y_test,
+                                                    batch_size=batch_size,
+                                                    shuffle=False):
+                    x_batch = x_batch.reshape(-1, 1, 28, 28)
+
+                    output:pyvqnet.tensor.QTensor = model(x_batch)
+                    loss = loss_func(y_batch, output)
+                    test_loss += loss.item() * len(x_batch)  #
+
+                    #
+                    pred = output.argmax(dim=1)
+                    true = pyvqnet.tensor.to_tensor(y_batch).argmax(dim=1)
+                    test_correct += (pred == true).sum().item()
+                    test_total += len(x_batch)
+
+            avg_test_loss = test_loss / test_total
+            test_acc = test_correct / test_total
+            test_loss_list.append(avg_test_loss)
+            test_acc_list.append(test_acc)
+
+            print(f"Test Accuracy: {test_acc:.4f}, Test Loss: {avg_test_loss:.6f}")
+            # ------------------------------------------------------------------ #
+
+        #
+        plt.figure(figsize=(8, 6))
+        plt.plot(range(1, len(loss_list)+1), loss_list, 'b-o', label='Training Loss')
+        plt.plot(range(1, len(test_loss_list)+1), test_loss_list, 'r-s', label='Test Loss')
+        plt.xlabel('Epoch')
+        plt.ylabel('Loss')
+        plt.title('Training and Test Loss Curves')
+        plt.legend()
+        plt.grid(True)
+        plt.tight_layout()
+        plt.savefig('loss_curves.png')
+        plt.show()
 
     if __name__ == "__main__":
 
@@ -3454,11 +3438,11 @@ Building Hybrid Classical-Quantum Neural Networks
 
 
 
-data result
---------------------
+Data results
+-----------------------
 
-The loss function curve of the training data is displayed and saved, and the results of the test data are saved.
-Loss situation on the training set.
+Save the loss curve plot for the training data and the test data results.
+Loss on the training set
 
 .. image:: ./images/QMLP.png
    :width: 600 px
@@ -3469,21 +3453,23 @@ Loss situation on the training set.
 
 .. _QDRL_DEMO:
 
-5.Hybrid quantum-classical QDRL network model
-===============================================================================
-
-We introduce and analyze a proposed quantum reinforcement learning network (QDRL), whose features reshape classical deep reinforcement learning algorithms such as experience replay and target networks into representations of variational quantum circuits.
-Furthermore, we use a quantum information encoding scheme to reduce the number of model parameters compared to classical neural networks. `QDRL: Variational Quantum Circuits for Deep Reinforcement Learning <https://arxiv.org/pdf/1907.00397.pdf>`_.
-We will write a simple example of integrating pyqpanda3 with `VQNet`.
+5. Hybrid quantum-classical QDRL network model
+==============================================
 
 
+We introduce and analyze a quantum deep reinforcement learning network (QDRL) that recasts classical deep reinforcement learning algorithms, such as experience replay and target networks, as variational quantum circuits.
+Compared with classical neural networks, we use a quantum information encoding scheme to reduce the number of model parameters. See `QDRL: Variational Quantum Circuits for Deep Reinforcement Learning <https://arxiv.org/pdf/1907.00397.pdf>`_.
+We write a simple example that integrates pyqpanda3 with VQNet.
 
-Building Hybrid Classical-Quantum Neural Networks
-----------------------------------------------------------
 
-Requires ``gym`` == 0.23.0 , ``pygame`` == 2.1.2 .
+
+Building the hybrid classical-quantum neural network
+----------------------------------------------------
+
+Install ``gym`` == 0.23.0 and ``pygame`` == 2.1.2 .
 
 .. code-block::
+
 
     import numpy as np
     import random
@@ -3499,7 +3485,7 @@ Requires ``gym`` == 0.23.0 , ``pygame`` == 2.1.2 .
     from pyvqnet.qnn.pq3.quantumlayer import QuantumLayer
     from pyvqnet.tensor import tensor
     from pyvqnet.qnn.pq3.measure import expval
-    from pyvqnet._core import Tensor as CoreTensor
+
     import matplotlib
     from matplotlib import pyplot as plt
     try:
@@ -3526,7 +3512,7 @@ Requires ``gym`` == 0.23.0 , ``pygame`` == 2.1.2 .
     STATE_NT = 3
     DONE = 4
     def RotCircuit(para, qlist):
-        
+
         if isinstance(para, QTensor):
             para = QTensor._to_numpy(para)
         if para.ndim > 1:
@@ -3534,52 +3520,53 @@ Requires ``gym`` == 0.23.0 , ``pygame`` == 2.1.2 .
         if para.shape[0] != 3:
             raise ValueError(" numbers of paramters in Rot should be 3")
         cir = pq.QCircuit()
-        cir.insert(pq.RZ(qlist, para[2]))
-        cir.insert(pq.RY(qlist, para[1]))
-        cir.insert(pq.RZ(qlist, para[0]))
+        cir << pq.RZ(qlist, para[2])
+        cir << pq.RY(qlist, para[1])
+        cir << pq.RZ(qlist, para[0])
         return cir
     def layer_circuit(qubits, weights):
         cir = pq.QCircuit()
         # Entanglement block
-        cir.insert(pq.CNOT(qubits[0], qubits[1]))
-        cir.insert(pq.CNOT(qubits[1], qubits[2]))
-        cir.insert(pq.CNOT(qubits[2], qubits[3]))
+        cir << pq.CNOT(qubits[0], qubits[1])
+        cir << pq.CNOT(qubits[1], qubits[2])
+        cir << pq.CNOT(qubits[2], qubits[3])
         # u3 gate
-        cir.insert(RotCircuit(weights[0], qubits[0]))  # weights shape = [4, 3]
-        cir.insert(RotCircuit(weights[1], qubits[1]))
-        cir.insert(RotCircuit(weights[2], qubits[2]))
-        cir.insert(RotCircuit(weights[3], qubits[3]))
+        cir << RotCircuit(weights[0], qubits[0])  # weights shape = [4, 3]
+        cir << RotCircuit(weights[1], qubits[1])
+        cir << RotCircuit(weights[2], qubits[2])
+        cir << RotCircuit(weights[3], qubits[3])
         return cir
     def encoder(encodings):
         encodings = int(encodings[0])
         return [i for i, b in enumerate(f'{encodings:0{CIRCUIT_SIZE}b}') if b == '1']
 
-    def build_qc(x, weights, qubits, cbits ,machine):
-
+    def build_qc(x, weights):
+        machine = pq.CPUQVM()
+        qubits = range(CIRCUIT_SIZE)
 
         cir = pq.QCircuit()
         if x:
             wires = encoder(x)
             for wire in wires:
-                cir.insert(pq.RX(qubits[wire], np.pi))
-                cir.insert(pq.RZ(qubits[wire], np.pi))
+                cir << pq.RX(qubits[wire], np.pi)
+                cir << pq.RZ(qubits[wire], np.pi)
         # parameter number = 24
         weights = weights.reshape([2, 4, 3])
         # layer wise
         for w in weights:
-            cir.insert(layer_circuit(qubits, w))
+            cir << layer_circuit(qubits, w)
         prog = pq.QProg()
-        prog.insert(cir)
+        prog << cir
         exp_vals = []
         for position in range(n_qubits):
             pauli_str = {"Z" + str(position): 1.0}
-            exp2 = expval(machine, prog, pauli_str, qubits)
+            exp2 = expval(machine, prog, pauli_str)
             exp_vals.append(exp2)
         return exp_vals
     class DRLModel(Module):
         def __init__(self):
             super(DRLModel, self).__init__()
-            self.quantum_circuit = QuantumLayer(build_qc, 24, "CPU", 4, diff_method="finite_diff")
+            self.quantum_circuit = QuantumLayer(build_qc, 24, diff_method="finite_diff")
 
         def forward(self, x):
             quanutum_result = self.quantum_circuit(x)
@@ -3622,7 +3609,7 @@ Requires ``gym`` == 0.23.0 , ``pygame`` == 2.1.2 .
             act_nt_np = int(act_nt.pdata[0])
             memory[i, t] = (state_t, act_t, reward, state_nt, done)
             if len(memory) >= BATCHSIZE:
-                # print('Optimizing...')
+
                 sampled_vs = [memory[k] for k in random.sample(list(memory), BATCHSIZE)]
                 target_temp = []
                 for s in sampled_vs:
@@ -3666,62 +3653,58 @@ Requires ``gym`` == 0.23.0 , ``pygame`` == 2.1.2 .
 Unsupervised learning
 ****************************
 
-1 Quantum Kmeans
-=======================================
+1. Quantum Kmeans
+==========================
 
 1.1 Introduction
------------------------
+-------------------
 
-Clustering algorithm is a typical unsupervised learning algorithm, which is mainly used to automatically classify similar samples into one class. In the clustering algorithm, samples are divided into different categories according to the similarity between samples. For different similarity calculation methods, different clustering results will be obtained. The common similarity calculation method is Euclidean distance method. What we want to show is the quantum k-means algorithm. K-means algorithm is a distance based clustering algorithm. It takes distance as the evaluation index of similarity, that is, the closer the distance between two objects, the greater the similarity. The algorithm considers that clusters are composed of objects close to each other, so compact and independent clusters are the ultimate goal.
+Clustering is a typical unsupervised learning algorithm, mainly used to group similar samples automatically. It partitions samples into different classes based on their similarity. Different similarity measures produce different clustering results; the common one is Euclidean distance. We present the quantum K-Means algorithm. K-Means is a distance-based clustering algorithm that uses distance as the similarity measure: the closer two objects are, the more similar they are. It assumes clusters consist of objects that are close together, so compact and separate clusters are the goal.
 
-Quantum kmeans quantum machine learning model can also be developed in VQNet. An example of the quantum kmeans clustering task is given below. Through the quantum circuit, we can construct a measurement that is positively correlated with the Euclidean distance of the variables of classical machine learning, so as to achieve the goal of finding the nearest neighbor.
+VQNet also supports development of Quantum Kmeans quantum machine learning models. Below is an example of a Quantum Kmeans clustering task. With a quantum circuit, we can build a measurement value positively correlated with the Euclidean distance of classical machine learning variables, achieving nearest-neighbor search.
 
+1.2 Algorithm principles
+-------------------------
 
-1.2 Introduction to algorithm principle
-------------------------------------------------
-
-The implementation of quantum k-means algorithm mainly uses swap test to compare the distance between input data points. Randomly select k points from N data points as centroids, measure the distance from each point to each centroid, assign it to the nearest centroid class, recalculate the centroid of each class, and iterate 2 to 3 steps until the new centroid is equal to or less than the specified threshold. In our example, we select 100 data points and 2 centroids, and use cswap circuit to calculate the distance.
-Finally, we obtained two data point clusters. :math:`|0\rangle` is an auxiliary bit, through the H logic gate, the qubit will become :math:`\frac{1}{\sqrt{2}}(|0\rangle + |1\rangle)`. Under the control of  :math:`|1\rangle` qubit,
-The quantum circuit will flip :math:`|x\rangle` and :math:`|y\rangle​` . Finally get the result:
+The quantum K-Means algorithm mainly uses the swap test to compare distances between input data points. K points are chosen at random from N data points as centroids; the distance from each point to each centroid is measured, each point is assigned to the nearest centroid class, the centroid of each class is recomputed, and steps 2 and 3 repeat until the new centroid is equal to or below a specified threshold, at which point the algorithm ends. In our example, we choose 100 data points and 2 centroids and use a CSWAP circuit to compute distances. We obtain two data point clusters. :math:`|0\rangle` is the ancilla qubit, which an H gate turns into :math:`\frac{1}{\sqrt{2}}(|0\rangle + |1\rangle)`. Controlled by the qubit :math:`|1\rangle`, the circuit swaps :math:`|x\rangle` and :math:`|y\rangle`. The final result is:
 
 .. math::
 
     |0_{anc}\rangle |x\rangle |y\rangle \rightarrow \frac{1}{2}|0_{anc}\rangle(|xy\rangle + |yx\rangle) + \frac{1}{2}|1_{anc}\rangle(|xy\rangle - |yx\rangle)
 
-If we measure the auxiliary qubit separately, the probability of the final state of the ground state :math:`|1\rangle` is:
+If we measure the ancilla qubit alone, the probability of the :math:`|1\rangle` basis state in the final state is:
 
 .. math::
 
     P(|1_{anc}\rangle) = \frac{1}{2} - \frac{1}{2}|\langle x | y \rangle|^2
 
-The Euclidean distance between two quantum states is as follows:
+The Euclidean distance between the two quantum states is as follows:
 
 .. math::
 
     Euclidean \ distance = \sqrt{(2 - 2|\langle x | y \rangle|)}
 
-Visible measurement qubit :math:`|1\rangle` ​ is positively correlated with Euclidean distance. The quantum circuit of this algorithm is as follows:
+It can be seen that the measured qubit :math:`|1\rangle` is positively correlated with the Euclidean distance. The quantum circuit for this algorithm is as follows:
 
-.. figure:: ./images/Kmeans.jpg
+.. image:: ./images/Kmeans.jpg
    :width: 600 px
    :align: center
 
 |
 
-1.3 VQNet  implementation
----------------------------------
+1.3 VQNet implementation
+------------------------
 
-1.3.1 Environmental preparation
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+1.3.1 Environment setup
+^^^^^^^^^^^^^^^^^^^^^^^
 
-The environment adopts Python 3 8. It is recommended to use CONDA for environment configuration. It comes with numpy, SciPy, Matplotlib, sklearn and other toolkits for easy use. If the python environment is adopted, relevant packages need to be installed, and the following environment pyvqnet needs to be prepared
-
+The environment uses Python 3.10. We recommend conda, which bundles numpy, scipy, matplotlib, sklearn, and other packages for convenience. If you use a plain Python environment, install the required packages.
+You also need pyvqnet.
 
 1.3.2 Data preparation
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^
 
-The data is randomly generated by make_blobs under SciPy, and the function is defined to generate Gaussian distribution data.
-
+Data is generated randomly with make_blobs from scipy, and a function is defined to generate Gaussian-distributed data.
 
 .. code-block::
 
@@ -3737,10 +3720,10 @@ The data is randomly generated by make_blobs under SciPy, and the function is de
     import matplotlib
     try:
         matplotlib.use("TkAgg")
-    except:  
+    except:
         print("Can not use matplot TkAgg")
         pass
-
+    # Return data points and cluster centers for data count n, center count k, and data std
     def get_data(n, k, std):
         data = make_blobs(n_samples=n,
                         n_features=2,
@@ -3752,91 +3735,93 @@ The data is randomly generated by make_blobs under SciPy, and the function is de
         return points, centers
 
 1.3.3 Quantum circuit
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^
 
-Constructing quantum circuits using VQNet
+Build the quantum circuit with VQNet
 
 .. code-block::
 
-    # The input quantum gate rotation angle is calculated according to the input coordinate point d (x, y)
+    # Compute the rotation angle of the quantum gate from the input coordinate point d(x,y)
     def get_theta(d):
         x = d[0]
         y = d[1]
         theta = 2 * math.acos((x.item() + y.item()) / 2.0)
         return theta
 
-    # The quantum circuit is constructed according to the input quantum data points
+    # Build the quantum circuit from the input quantum data points
     def qkmeans_circuits(x, y):
-
+        """
+        Quantum Circuit for kmeans
+        """
         theta_1 = get_theta(x)
         theta_2 = get_theta(y)
 
         num_qubits = 3
         machine = pq.CPUQVM()
-        machine.init_qvm()
-        qubits = machine.qAlloc_many(num_qubits)
-        cbits = machine.cAlloc_many(num_qubits)
+        qubits = range(num_qubits)
+        cbits = range(num_qubits)
         circuit = pq.QCircuit()
 
-        circuit.insert(pq.H(qubits[0]))
-        circuit.insert(pq.H(qubits[1]))
-        circuit.insert(pq.H(qubits[2]))
+        circuit << pq.H(qubits[0])
+        circuit << pq.H(qubits[1])
+        circuit << pq.H(qubits[2])
 
-        circuit.insert(pq.U3(qubits[1], theta_1, np.pi, np.pi))
-        circuit.insert(pq.U3(qubits[2], theta_2, np.pi, np.pi))
+        circuit << pq.U3(qubits[1], theta_1, np.pi, np.pi)
+        circuit << pq.U3(qubits[2], theta_2, np.pi, np.pi)
 
-        circuit.insert(pq.SWAP(qubits[1], qubits[2]).control([qubits[0]]))
+        circuit << pq.SWAP(qubits[1], qubits[2]).control([qubits[0]])
 
-        circuit.insert(pq.H(qubits[0]))
+        circuit << pq.H(qubits[0])
 
         prog = pq.QProg()
-        prog.insert(circuit)
-        prog << pq.Measure(qubits[0], cbits[0])
-        prog.insert(pq.Reset(qubits[0]))
-        prog.insert(pq.Reset(qubits[1]))
-        prog.insert(pq.Reset(qubits[2]))
+        prog << circuit
+        prog << pq.measure(qubits[0], cbits[0])
 
-        result = machine.run_with_configuration(prog, cbits, 1024)
+        machine.run(prog, 1024)
+        result = machine.result().get_counts()
 
         data = result
 
         if len(data) == 1:
             return 0.0
         else:
-            return data['001'] / 1024.0
+            return result.get("1", 0) / 1024.0
 
 1.3.4 Data visualization
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^
 
-Visual calculation of relevant clustering data
+Visualize the clustering data
 
 .. code-block::
 
-    # Visualization of scatter points and cluster centers
+    # Visualize the scatter points and cluster centers
     def draw_plot(points, centers, label=True):
         points = np.array(points)
         centers = np.array(centers)
-        if label==False:
-            plt.scatter(points[:,0], points[:,1])
+        if label is False:
+            plt.scatter(points[:, 0], points[:, 1])
         else:
-            plt.scatter(points[:,0], points[:,1], c=centers, cmap='viridis')
+            plt.scatter(points[:, 0], points[:, 1], c=centers, cmap="viridis")
         plt.xlim(0, 1)
         plt.ylim(0, 1)
         plt.show()
 
-1.3.5 Cluster calculation
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+1.3.5 Clustering computation
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Calculate the cluster center of relevant cluster data
+Compute cluster centers for the clustering data
 
 .. code-block::
 
-    # Randomly generate cluster center points
+    # Randomly generate cluster centers
     def initialize_centers(points,k):
         return points[np.random.randint(points.shape[0],size=k),:]
 
 
     def find_nearest_neighbour(points, centroids):
+        """
+        Find nearest neighbour
+        """
         n = points.shape[0]
         k = centroids.shape[0]
 
@@ -3848,7 +3833,6 @@ Calculate the cluster center of relevant cluster data
             for j in range(k):
 
                 temp_dis = qkmeans_circuits(points[i, :], centroids[j, :])
-
                 if temp_dis < min_dis:
                     min_dis = temp_dis
                     ind = j
@@ -3856,17 +3840,20 @@ Calculate the cluster center of relevant cluster data
 
         return centers
 
-    def find_centroids(points, centers):
 
+    def find_centroids(points, centers):
+        """
+        find centroids
+        """
         k = int(tensor.max(centers).item()) + 1
         centroids = tensor.zeros([k, 2], dtype=points.dtype)
+
         for i in range(k):
 
             cur_i = centers == i
-
-            x = points[:,0]
+            x = points[:, 0]
             x = x[cur_i]
-            y = points[:,1]
+            y = points[:, 1]
             y = y[cur_i]
             centroids[i, 0] = tensor.mean(x)
             centroids[i, 1] = tensor.mean(y)
@@ -3883,7 +3870,10 @@ Calculate the cluster center of relevant cluster data
         return points
 
 
-    def qkmean_run():
+    def qkmeans_run():
+        """
+        Main function for run qkmeans algorithm
+        """
         n = 100  # number of data points
         k = 3  # Number of centers
         std = 2  # std of datapoints
@@ -3894,61 +3884,59 @@ Calculate the cluster center of relevant cluster data
 
         centroids = initialize_centers(points, k)  # Intialize centroids
 
-        epoch = 9
+        epoch = 5
         points = QTensor(points)
         centroids = QTensor(centroids)
         plt.figure()
-        draw_plot(points.data, o_centers,label=False)
+        plt.title("origin")
+        draw_plot(points.data, o_centers, label=False)
 
+        # run k-means algorithm
         for i in range(epoch):
-                centers = find_nearest_neighbour(points, centroids)  # find nearest centers
-                centroids = find_centroids(points, centers)  # find centroids
+            print(f"iteration {i}")
+            centers = find_nearest_neighbour(points,
+                                            centroids)  # find nearest centers
+            centroids = find_centroids(points, centers)  # find centroids
 
         plt.figure()
+        plt.title(f"result after iteration {epoch}")
         draw_plot(points.data, centers.data)
 
-    # Run program entry
+    # Program entry point
     if __name__ == "__main__":
-        qkmean_run()
-
+        qkmeans_run()
 
 1.3.6 Data distribution before clustering
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. figure:: ./images/ep_1.png
+.. image:: ./images/ep_1.png
    :width: 600 px
    :align: center
-
-|
 
 1.3.7 Data distribution after clustering
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. figure:: ./images/ep_9.png
+.. image:: ./images/ep_9.png
    :width: 600 px
    :align: center
 
 |
 
-Quantum Machine Learning Research
-*********************************************
 
-Quantum models as Fourier series
-================================================================================
+Quantum machine learning research
+*********************************
 
-Quantum computers can be used for supervised learning by treating parametrised quantum circuits as models that map data
-inputs to predictions. While a lot of work has been done to investigate practical implications of this approach, many important
-theoretical properties of these models remain unknown. Here we investigate how the strategy with which data is encoded into
-the model influences the expressive power of parametrised quantum circuits as function approximators.
+Fitting Fourier series with quantum models
+==========================================
 
+By mapping data inputs to predictions with parameterized quantum circuits, quantum computers can be used for supervised learning. Although much work has studied the practical value of this approach, many important theoretical properties of these models remain unknown. Here we study how the strategy for encoding data into the model affects the expressive power of parameterized quantum circuits as function approximators.
 
-The paper  `The effect of data encoding on the expressive power of variational quantum machine learning models <https://arxiv.org/pdf/2008.08605.pdf>`_ links common quantum machine learning models designed for near-term quantum computers to Fourier series
+Following `The effect of data encoding on the expressive power of variational quantum machine learning models <https://arxiv.org/pdf/2008.08605.pdf>`_, this example connects common quantum machine learning models designed for quantum computers with Fourier series.
 
+1.1 Fitting Fourier series with serial Pauli rotation encoding
+--------------------------------------------------------------
 
-1.1Fitting Fourier series with serial Pauli-rotation encoding
-----------------------------------------------------------------
-
-First we show how quantum models that use Pauli rotations as data-encoding gates can only fit Fourier series up to a certain degree.  For simplicity we will only look at single-qubit circuits:
+We first show how a quantum model that uses Pauli rotations as data encoding gates can fit Fourier series only to a limited degree. For simplicity, we look at single-qubit circuits only:
 
 .. image:: ./images/single_qubit_model.png
    :width: 600 px
@@ -3956,7 +3944,7 @@ First we show how quantum models that use Pauli rotations as data-encoding gates
 
 |
 
-Make input data, define parallel quantum models, and do not perform model training results.
+Create input data, define a parallel quantum model, and obtain results without model training.
 
 .. code-block::
 
@@ -3970,7 +3958,7 @@ Make input data, define parallel quantum models, and do not perform model traini
     import matplotlib
     try:
         matplotlib.use("TkAgg")
-    except:  # pylint:disable=bare-except
+    except:
         print("Can not use matplot TkAgg")
         pass
 
@@ -4002,35 +3990,34 @@ Make input data, define parallel quantum models, and do not perform model traini
 
     def S(scaling, x, qubits):
         cir = pq.QCircuit()
-        cir.insert(pq.RX(qubits[0], scaling * x))
+        cir << pq.RX(qubits[0], scaling * x)
         return cir
 
     def W(theta, qubits):
         cir = pq.QCircuit()
-        cir.insert(pq.RZ(qubits[0], theta[0]))
-        cir.insert(pq.RY(qubits[0], theta[1]))
-        cir.insert(pq.RZ(qubits[0], theta[2]))
+        cir << pq.RZ(qubits[0], theta[0])
+        cir << pq.RY(qubits[0], theta[1])
+        cir << pq.RZ(qubits[0], theta[2])
         return cir
 
     def serial_quantum_model(weights, x, num_qubits, scaling):
         cir = pq.QCircuit()
-        machine = pq.CPUQVM()  # outside
-        machine.init_qvm()  # outside
-        qubits = machine.qAlloc_many(num_qubits)
+        machine = pq.CPUQVM()
+        qubits = range(num_qubits)
 
         for theta in weights[:-1]:
-            cir.insert(W(theta, qubits))
-            cir.insert(S(scaling, x, qubits))
+            cir << W(theta, qubits)
+            cir << S(scaling, x, qubits)
 
         # (L+1)'th unitary
-        cir.insert(W(weights[-1], qubits))
+        cir << W(weights[-1], qubits)
         prog = pq.QProg()
-        prog.insert(cir)
+        prog << cir
 
         exp_vals = []
         for position in range(num_qubits):
             pauli_str = {"Z" + str(position): 1.0}
-            exp2 = expval(machine, prog, pauli_str, qubits)
+            exp2 = expval(machine, prog, pauli_str)
             exp_vals.append(exp2)
 
         return exp_vals
@@ -4049,7 +4036,7 @@ Make input data, define parallel quantum models, and do not perform model traini
     plt.show()
 
 
-The result of running the quantum circuit without training is:
+Results of running the quantum circuit without training:
 
 .. image:: ./images/single_qubit_model_result_no_train.png
    :width: 600 px
@@ -4058,7 +4045,7 @@ The result of running the quantum circuit without training is:
 |
 
 
-Make the input data, define the serial quantum model, and build the training model in combination with the QuantumLayer of the VQNet framework.
+Create input data, define a serial quantum model, and build a training model with the QuantumLayer layer of the VQNet framework.
 
 .. code-block::
 
@@ -4077,7 +4064,7 @@ Make the input data, define the serial quantum model, and build the training mod
     import matplotlib
     try:
         matplotlib.use("TkAgg")
-    except:  # pylint:disable=bare-except
+    except:
         print("Can not use matplot TkAgg")
         pass
 
@@ -4108,14 +4095,14 @@ Make the input data, define the serial quantum model, and build the training mod
 
     def S(x, qubits):
         cir = pq.QCircuit()
-        cir.insert(pq.RX(qubits[0], x))
+        cir << pq.RX(qubits[0], x)
         return cir
 
     def W(theta, qubits):
         cir = pq.QCircuit()
-        cir.insert(pq.RZ(qubits[0], theta[0]))
-        cir.insert(pq.RY(qubits[0], theta[1]))
-        cir.insert(pq.RZ(qubits[0], theta[2]))
+        cir << pq.RZ(qubits[0], theta[0])
+        cir << pq.RY(qubits[0], theta[1])
+        cir << pq.RZ(qubits[0], theta[2])
         return cir
 
 
@@ -4125,7 +4112,9 @@ Make the input data, define the serial quantum model, and build the training mod
     x = np.linspace(-6, 6, 70)
 
 
-    def q_circuits_loop(x, weights, qubits, clist, machine):
+    def q_circuits_loop(x, weights):
+        machine = pq.CPUQVM()
+        qubits = range(1)
 
         result = []
         for xx in x:
@@ -4133,17 +4122,17 @@ Make the input data, define the serial quantum model, and build the training mod
             weights = weights.reshape([2, 3])
 
             for theta in weights[:-1]:
-                cir.insert(W(theta, qubits))
-                cir.insert(S(xx, qubits))
+                cir << W(theta, qubits)
+                cir << S(xx, qubits)
 
-            cir.insert(W(weights[-1], qubits))
+            cir << W(weights[-1], qubits)
             prog = pq.QProg()
-            prog.insert(cir)
+            prog << cir
 
             exp_vals = []
             for position in range(1):
                 pauli_str = {"Z" + str(position): 1.0}
-                exp2 = expval(machine, prog, pauli_str, qubits)
+                exp2 = expval(machine, prog, pauli_str)
                 exp_vals.append(exp2)
                 result.append(exp2)
         return result
@@ -4151,7 +4140,7 @@ Make the input data, define the serial quantum model, and build the training mod
     class Model(Module):
         def __init__(self):
             super(Model, self).__init__()
-            self.q_fourier_series = QuantumLayer(q_circuits_loop, 6, "CPU", 1)
+            self.q_fourier_series = QuantumLayer(q_circuits_loop, 6)
 
         def forward(self, x):
             return self.q_fourier_series(x)
@@ -4209,7 +4198,7 @@ The quantum model is:
 
 |
 
-The network training results are:
+Network training results:
 
 .. image:: ./images/single_qubit_model_result.png
    :width: 600 px
@@ -4217,7 +4206,7 @@ The network training results are:
 
 |
 
-The network training loss is:
+Network training loss:
 
 .. code-block::
 
@@ -4229,10 +4218,10 @@ The network training loss is:
     epoch:4, #### loss:3.988249877352246e-05
 
 
-1.2Fitting Fourier series with parallel Pauli-rotation encoding
--------------------------------------------------------------------
+1.2 Fitting Fourier series with parallel Pauli rotation encoding
+----------------------------------------------------------------
 
-As shown in the paper, we expect similar results to the serial model: a Fourier series of order r can only be fitted if the encoded gate has at least r repetitions in the quantum model. Quantum circuit:
+As the paper shows, we expect results similar to the serial model: an r-th order Fourier series can be fitted only when the encoding gates in the quantum model are repeated at least r times. The qubit circuit:
 
 .. image:: ./images/parallel_model.png
    :width: 600 px
@@ -4240,7 +4229,7 @@ As shown in the paper, we expect similar results to the serial model: a Fourier 
 
 |
 
-Make input data, define parallel quantum models, and do not perform model training results.
+Create input data, define a parallel quantum model, and obtain results without model training.
 
 .. code-block::
 
@@ -4254,7 +4243,7 @@ Make input data, define parallel quantum models, and do not perform model traini
     import matplotlib
     try:
         matplotlib.use("TkAgg")
-    except:  # pylint:disable=bare-except
+    except:
         print("Can not use matplot TkAgg")
         pass
 
@@ -4281,57 +4270,56 @@ Make input data, define parallel quantum models, and do not perform model traini
     def S1(x, qubits):
         cir = pq.QCircuit()
         for q in qubits:
-            cir.insert(pq.RX(q, x))
+            cir << pq.RX(q, x)
         return cir
 
     def W1(theta, qubits):
         cir = pq.QCircuit()
         for i in range(len(qubits)):
-            cir.insert(pq.RZ(qubits[i], theta[0][i][0]))
-            cir.insert(pq.RY(qubits[i], theta[0][i][1]))
-            cir.insert(pq.RZ(qubits[i], theta[0][i][2]))
+            cir << pq.RZ(qubits[i], theta[0][i][0])
+            cir << pq.RY(qubits[i], theta[0][i][1])
+            cir << pq.RZ(qubits[i], theta[0][i][2])
 
         for i in range(len(qubits) - 1):
-            cir.insert(pq.CNOT(qubits[i], qubits[i + 1]))
-        cir.insert(pq.CNOT(qubits[len(qubits) - 1], qubits[0]))
+            cir << pq.CNOT(qubits[i], qubits[i + 1])
+        cir << pq.CNOT(qubits[len(qubits) - 1], qubits[0])
 
         for i in range(len(qubits)):
-            cir.insert(pq.RZ(qubits[i], theta[1][i][0]))
-            cir.insert(pq.RY(qubits[i], theta[1][i][1]))
-            cir.insert(pq.RZ(qubits[i], theta[1][i][2]))
+            cir << pq.RZ(qubits[i], theta[1][i][0])
+            cir << pq.RY(qubits[i], theta[1][i][1])
+            cir << pq.RZ(qubits[i], theta[1][i][2])
 
-        cir.insert(pq.CNOT(qubits[0], qubits[len(qubits) - 1]))
+        cir << pq.CNOT(qubits[0], qubits[len(qubits) - 1])
         for i in range(len(qubits) - 1):
-            cir.insert(pq.CNOT(qubits[i + 1], qubits[i]))
+            cir << pq.CNOT(qubits[i + 1], qubits[i])
 
         for i in range(len(qubits)):
-            cir.insert(pq.RZ(qubits[i], theta[2][i][0]))
-            cir.insert(pq.RY(qubits[i], theta[2][i][1]))
-            cir.insert(pq.RZ(qubits[i], theta[2][i][2]))
+            cir << pq.RZ(qubits[i], theta[2][i][0])
+            cir << pq.RY(qubits[i], theta[2][i][1])
+            cir << pq.RZ(qubits[i], theta[2][i][2])
 
         for i in range(len(qubits) - 1):
-            cir.insert(pq.CNOT(qubits[i], qubits[i + 1]))
-        cir.insert(pq.CNOT(qubits[len(qubits) - 1], qubits[0]))
+            cir << pq.CNOT(qubits[i], qubits[i + 1])
+        cir << pq.CNOT(qubits[len(qubits) - 1], qubits[0])
 
         return cir
 
     def parallel_quantum_model(weights, x, num_qubits):
         cir = pq.QCircuit()
-        machine = pq.CPUQVM()  # outside
-        machine.init_qvm()  # outside
-        qubits = machine.qAlloc_many(num_qubits)
+        machine = pq.CPUQVM()
+        qubits = range(num_qubits)
 
-        cir.insert(W1(weights[0], qubits))
-        cir.insert(S1(x, qubits))
+        cir << W1(weights[0], qubits)
+        cir << S1(x, qubits)
 
-        cir.insert(W1(weights[1], qubits))
+        cir << W1(weights[1], qubits)
         prog = pq.QProg()
-        prog.insert(cir)
+        prog << cir
 
         exp_vals = []
         for position in range(1):
             pauli_str = {"Z" + str(position): 1.0}
-            exp2 = expval(machine, prog, pauli_str, qubits)
+            exp2 = expval(machine, prog, pauli_str)
             exp_vals.append(exp2)
 
         return exp_vals
@@ -4340,7 +4328,7 @@ Make input data, define parallel quantum models, and do not perform model traini
 
     trainable_block_layers = 3
     weights = 2 * np.pi * np.random.random(size=(2, trainable_block_layers, r, 3))
-    # print(weights)
+
     x = np.linspace(-6, 6, 70)
     random_quantum_model_y = [parallel_quantum_model(weights, xx, r) for xx in x]
 
@@ -4351,7 +4339,7 @@ Make input data, define parallel quantum models, and do not perform model traini
     plt.legend(loc="upper right")
     plt.show()
 
-The result of running the quantum circuit without training is:
+Results of running the quantum circuit without training:
 
 .. image:: ./images/parallel_model_result_no_train.png
    :width: 600 px
@@ -4360,7 +4348,7 @@ The result of running the quantum circuit without training is:
 |
 
 
-Make the input data, define the parallel quantum model, and build the training model in combination with the QuantumLayer layer of the VQNet framework.
+Create input data, define a parallel quantum model, and build a training model with the QuantumLayer layer of the VQNet framework.
 
 .. code-block::
 
@@ -4380,7 +4368,7 @@ Make the input data, define the parallel quantum model, and build the training m
     import matplotlib
     try:
         matplotlib.use("TkAgg")
-    except:  # pylint:disable=bare-except
+    except:
         print("Can not use matplot TkAgg")
         pass
 
@@ -4411,58 +4399,60 @@ Make the input data, define the parallel quantum model, and build the training m
     def S1(x, qubits):
         cir = pq.QCircuit()
         for q in qubits:
-            cir.insert(pq.RX(q, x))
+            cir << pq.RX(q, x)
         return cir
 
     def W1(theta, qubits):
         cir = pq.QCircuit()
         for i in range(len(qubits)):
-            cir.insert(pq.RZ(qubits[i], theta[0][i][0]))
-            cir.insert(pq.RY(qubits[i], theta[0][i][1]))
-            cir.insert(pq.RZ(qubits[i], theta[0][i][2]))
+            cir << pq.RZ(qubits[i], theta[0][i][0])
+            cir << pq.RY(qubits[i], theta[0][i][1])
+            cir << pq.RZ(qubits[i], theta[0][i][2])
 
         for i in range(len(qubits) - 1):
-            cir.insert(pq.CNOT(qubits[i], qubits[i + 1]))
-        cir.insert(pq.CNOT(qubits[len(qubits) - 1], qubits[0]))
+            cir << pq.CNOT(qubits[i], qubits[i + 1])
+        cir << pq.CNOT(qubits[len(qubits) - 1], qubits[0])
 
         for i in range(len(qubits)):
-            cir.insert(pq.RZ(qubits[i], theta[1][i][0]))
-            cir.insert(pq.RY(qubits[i], theta[1][i][1]))
-            cir.insert(pq.RZ(qubits[i], theta[1][i][2]))
+            cir << pq.RZ(qubits[i], theta[1][i][0])
+            cir << pq.RY(qubits[i], theta[1][i][1])
+            cir << pq.RZ(qubits[i], theta[1][i][2])
 
-        cir.insert(pq.CNOT(qubits[0], qubits[len(qubits) - 1]))
+        cir << pq.CNOT(qubits[0], qubits[len(qubits) - 1])
         for i in range(len(qubits) - 1):
-            cir.insert(pq.CNOT(qubits[i + 1], qubits[i]))
+            cir << pq.CNOT(qubits[i + 1], qubits[i])
 
         for i in range(len(qubits)):
-            cir.insert(pq.RZ(qubits[i], theta[2][i][0]))
-            cir.insert(pq.RY(qubits[i], theta[2][i][1]))
-            cir.insert(pq.RZ(qubits[i], theta[2][i][2]))
+            cir << pq.RZ(qubits[i], theta[2][i][0])
+            cir << pq.RY(qubits[i], theta[2][i][1])
+            cir << pq.RZ(qubits[i], theta[2][i][2])
 
         for i in range(len(qubits) - 1):
-            cir.insert(pq.CNOT(qubits[i], qubits[i + 1]))
-        cir.insert(pq.CNOT(qubits[len(qubits) - 1], qubits[0]))
+            cir << pq.CNOT(qubits[i], qubits[i + 1])
+        cir << pq.CNOT(qubits[len(qubits) - 1], qubits[0])
 
         return cir
 
-    def q_circuits_loop(x, weights, qubits, clist, machine):
+    def q_circuits_loop(x, weights):
+        machine = pq.CPUQVM()
+        qubits = range(3)
 
         result = []
         for xx in x:
             cir = pq.QCircuit()
             weights = weights.reshape([2, 3, 3, 3])
 
-            cir.insert(W1(weights[0], qubits))
-            cir.insert(S1(xx, qubits))
+            cir << W1(weights[0], qubits)
+            cir << S1(xx, qubits)
 
-            cir.insert(W1(weights[1], qubits))
+            cir << W1(weights[1], qubits)
             prog = pq.QProg()
-            prog.insert(cir)
+            prog << cir
 
             exp_vals = []
             for position in range(1):
                 pauli_str = {"Z" + str(position): 1.0}
-                exp2 = expval(machine, prog, pauli_str, qubits)
+                exp2 = expval(machine, prog, pauli_str)
                 exp_vals.append(exp2)
                 result.append(exp2)
         return result
@@ -4472,7 +4462,7 @@ Make the input data, define the parallel quantum model, and build the training m
         def __init__(self):
             super(Model, self).__init__()
 
-            self.q_fourier_series = QuantumLayer(q_circuits_loop, 2 * 3 * 3 * 3, "CPU", 3)
+            self.q_fourier_series = QuantumLayer(q_circuits_loop, 2 * 3 * 3 * 3)
 
         def forward(self, x):
             return self.q_fourier_series(x)
@@ -4523,10 +4513,8 @@ Make the input data, define the parallel quantum model, and build the training m
                 plt.show()
 
 
-
     if __name__ == "__main__":
         run()
-
 
 The quantum model is:
 
@@ -4536,7 +4524,7 @@ The quantum model is:
 
 |
 
-The network training results are:
+Network training results:
 
 .. image:: ./images/parallel_model_result.png
    :width: 600 px
@@ -4544,7 +4532,7 @@ The network training results are:
 
 |
 
-The network training loss is:
+Network training loss:
 
 .. code-block::
 
@@ -4555,42 +4543,46 @@ The network training loss is:
     epoch:3, #### loss:1.0968826371082763e-08
     epoch:4, #### loss:2.1258629738507562e-10
 
-Expressive power of quantum circuits
-===============================================================================
 
-In the paper `Expressibility and entangling capability of parameterized quantum circuits for hybrid quantum-classical algorithms <https://arxiv.org/abs/1905.10876>`_,
-The authors propose a method for expressiveness quantification based on the fidelity probability distribution between neural network output states.
-For any quantum neural network :math:`U(\vec{\theta})` , sample the neural network parameters twice (set to :math:`\vec{\phi}` and :math:`\vec{\psi }` ),
-Then the fidelity between the output states of two quantum circuits :math:`F=|\langle0|U(\vec{\phi})^\dagger U(\vec{\psi})|0\rangle|^ 2` obeys a probability distribution:
+
+Expressibility of quantum circuits
+===================================
+
+
+In `Expressibility and entangling capability of parameterized quantum circuits for hybrid quantum-classical algorithms <https://arxiv.org/abs/1905.10876>`_,
+the authors propose a method to quantify expressibility based on the probability distribution of fidelities between output states of a quantum neural network.
+For any quantum neural network :math:`U(\vec{\theta})`, sample the network parameters twice (call them :math:`\vec{\phi}` and :math:`\vec{\psi}`),
+and the fidelity :math:`F=|\langle0|U(\vec{\phi})^\dagger U(\vec{\psi})|0\rangle|^2` between the output states of the two quantum circuits follows some probability distribution:
 
 .. math::
 
     F\sim{P}(f)
 
-The literature points out that when the quantum neural network :math:`U` can be uniformly distributed on all unitary matrices (at this time, it is called :math:`U` obeys Haar distribution), the probability distribution of fidelity :math:`P_\text{Haar }(f)` satisfies:
+The paper notes that when the quantum neural network :math:`U` is uniformly distributed over all unitary matrices (in which case :math:`U` follows the Haar distribution), the fidelity probability distribution :math:`P_\text{Haar}(f)` satisfies
 
 .. math::
 
     P_\text{Haar}(f)=(2^{n}-1)(1-f)^{2^n-2}
 
-K-L divergence (also known as relative entropy) in statistical mathematics measures the difference between two probability distributions. The K-L divergence between two discrete probability distributions :math:`P,Q` is defined as:
+The K-L divergence in statistics (also called relative entropy) measures the difference between two probability distributions. For two discrete probability distributions :math:`P,Q`, the K-L divergence is defined as
 
 .. math::
 
     D_{KL}(P||Q)=\sum_jP(j)\ln\frac{P(j)}{Q(j)}
 
-If the fidelity distribution of the quantum neural network output is recorded as :math:`P_\text{QNN}(f)`, then the expressive ability of the quantum neural network is defined as :math:`P_\text{QNN}(f) ` and :math:`P_\text{Haar}(f)` K-L divergence between:
+If the fidelity distribution of the quantum neural network output is written :math:`P_\text{QNN}(f)`, the expressibility of the quantum neural network is defined as the K-L divergence between :math:`P_\text{QNN}(f)` and :math:`P_\text{Haar}(f)`:
 
 .. math::
 
     \text{Expr}_\text{QNN}=D_{KL}(P_\text{QNN}(f)||P_\text{Haar}(f))
 
-Therefore, when :math:`P_\text{QNN}(f)` is closer to :math:`P_\text{Haar}(f)`, :math:`\text{Expr}` will be smaller (more tends to 0),
-The expressive ability of the quantum neural network is also stronger; conversely, the larger the :math:`\text{Expr}` is, the weaker the expressive ability of the quantum neural network is.
-We can directly compute single-bit quantum neural networks expressiveness according to this definition :math:`R_Y(\theta)` , :math:`R_Y(\theta_1)R_Z(\theta_2)` and
-:math:`R_Y(\theta_1)R_Z(\theta_2)R_Y(\theta_3)`:
 
-The following uses VQNet to demonstrate the quantum circuit expression capabilities of `HardwareEfficientAnsatz <https://arxiv.org/abs/1704.05018>`_ at different depths (1, 2, 3).
+Thus, the closer :math:`P_\text{QNN}(f)` is to :math:`P_\text{Haar}(f)`, the smaller :math:`\text{Expr}` is (the closer to 0),
+and the stronger the expressibility of the quantum neural network. Conversely, the larger :math:`\text{Expr}` is, the weaker the expressibility.
+
+With this definition, we can directly compute the expressibility of the single-qubit quantum neural networks :math:`R_Y(\theta)`, :math:`R_Y(\theta_1)R_Z(\theta_2)`, and :math:`R_Y(\theta_1)R_Z(\theta_2)R_Y(\theta_3)`:
+
+Below, VQNet demonstrates the expressibility of `HardwareEfficientAnsatz <https://arxiv.org/abs/1704.05018>`_ at depths 1, 2, and 3.
 
 
 .. code-block::
@@ -4601,18 +4593,21 @@ The following uses VQNet to demonstrate the quantum circuit expression capabilit
     from scipy import integrate
     from scipy.linalg import sqrtm
     from scipy.stats import entropy
+
     import pyqpanda3.core as pq
-    import numpy as np
-    from pyvqnet.qnn.ansatz import HardwareEfficientAnsatz
+    from pyvqnet.qnn.pq3.ansatz import HardwareEfficientAnsatz
     from pyvqnet.tensor import tensor
     from pyvqnet.qnn.quantum_expressibility.quantum_express import fidelity_of_cir, fidelity_harr_sample
     num_qubit = 1  # the number of qubit
     num_sample = 2000  # the number of sample
     outputs_y = list()  # save QNN outputs
+
+
     # plot histgram
     def plot_hist(data, num_bin, title_str):
         def to_percent(y, position):
             return str(np.around(y * 100, decimals=2)) + '%'
+
         plt.hist(data,
                 weights=[1. / len(data)] * len(data),
                 bins=np.linspace(0, 1, num=num_bin),
@@ -4625,19 +4620,25 @@ The following uses VQNet to demonstrate the quantum circuit expression capabilit
         formatter = FuncFormatter(to_percent)
         plt.gca().yaxis.set_major_formatter(formatter)
         plt.show()
+
+
+
     def cir(num_qubits, depth):
+
         machine = pq.CPUQVM()
-        machine.init_qvm()
-        qlist = machine.qAlloc_many(num_qubits)
-        az = HardwareEfficientAnsatz(num_qubits, ["rx", "RY", "rz"],
-                                    qlist,
+        qlist = range(num_qubits)
+        az = HardwareEfficientAnsatz(qlist, ["rx", "RY", "rz"],
                                     entangle_gate="cnot",
                                     entangle_rules="linear",
                                     depth=depth)
         w = tensor.QTensor(
             np.random.uniform(size=[az.get_para_num()], low=0, high=2 * np.pi))
+
         cir1 = az.create_ansatz(w)
         return cir1, machine, qlist
+
+Fidelities from Haar sampling follow the distribution:
+
 .. image:: ./images/haar-fidelity.png
    :width: 600 px
    :align: center
@@ -4646,27 +4647,31 @@ The following uses VQNet to demonstrate the quantum circuit expression capabilit
 
 .. code-block::
 
-    # Set circuit width and maximum depth
+
+    # Set the circuit width and maximum depth
     num_qubit = 4
     max_depth = 3
-    # Calculate the fidelity distribution corresponding to Haar sampling
+    # Compute the fidelity distribution for Haar sampling
 
     flist, p_haar, theory_haar = fidelity_harr_sample(num_qubit, num_sample)
     title_str = "haar, %d qubit(s)" % num_qubit
     plot_hist(flist, 50, title_str)
+
+
+
     Expr_cel = list()
-    # Calculate the expressive power of neural networks with different depths
+    # Compute expressibility at different network depths
     for DEPTH in range(1, max_depth + 1):
-        print("Sampling circuit at depth %d..." % DEPTH)
+
         f_list, p_cel = fidelity_of_cir(HardwareEfficientAnsatz, num_qubit, DEPTH,
                                         num_sample)
         title_str = f"HardwareEfficientAnsatz, {num_qubit} qubit(s) {DEPTH} layer(s)"
         plot_hist(f_list, 50, title_str)
         expr = entropy(p_cel, theory_haar)
         Expr_cel.append(expr)
-    # Compare the expressive power of neural networks of different depths
+    # Compare expressibility across network depths
     print(
-        f"The expressive power of neural networks with depths 1, 2, and 3 are { np.around(Expr_cel, decimals=4)}, the smaller the better.", )
+        f"The expressibility of neural networks with depths 1, 2, 3 is { np.around(Expr_cel, decimals=4)}; lower is better.", )
     plt.plot(range(1, max_depth + 1), Expr_cel, marker='>')
     plt.xlabel("depth")
     plt.yscale('log')
@@ -4675,11 +4680,15 @@ The following uses VQNet to demonstrate the quantum circuit expression capabilit
     plt.title("Expressibility vs Circuit Depth")
     plt.show()
 
+Fidelity distribution of circuits sampled at depth 1
+
 .. image:: ./images/f1.png
    :width: 600 px
    :align: center
 
 |
+
+Fidelity distribution of circuits sampled at depth 2
 
 .. image:: ./images/f2.png
    :width: 600 px
@@ -4687,11 +4696,15 @@ The following uses VQNet to demonstrate the quantum circuit expression capabilit
 
 |
 
+Fidelity distribution of circuits sampled at depth 3
+
 .. image:: ./images/f3.png
    :width: 600 px
    :align: center
 
 |
+
+As circuit depth increases, the fidelity K-L divergence decreases and expressibility increases.
 
 .. image:: ./images/express.png
    :width: 600 px
@@ -4699,434 +4712,55 @@ The following uses VQNet to demonstrate the quantum circuit expression capabilit
 
 |
 
-
-
-Quantum Perceptron
-=======================================
-
-Artificial neural networks are the heart of machine learning algorithms and artificial intelligence protocols. Historically, the simplest implementation of an artificial neuron traces back to the classical Rosenblatt's `perceptron`, but its long term practical applications may be hindered by the fast scaling up of computational complexity, especially relevant for the training of multilayered perceptron networks.
-Here we refer to the paper `An Artificial Neuron Implemented on an Actual Quantum Processor <https://arxiv.org/abs/1811.02266>`__ introduce a quantum information-based algorithm implementing the quantum computer version of a perceptron, which shows exponential advantage in encoding resources over alternative realizations.
-
-For this quantum perceptron, the data processed is a string of 0 1 binary bits. The goal is to identify patterns that are shaped like a w cross as shown in the figure below.
-
-.. image:: ./images/QP-data.png
-   :width: 600 px
-   :align: center
-
-|
-
-It is encoded using a binary bit string, where black is 0 and white is 1, so that w is encoded as (1, 1, 1, 1, 1, 1, 0, 1, 1, 0, 0, 0, 1, 1, 0, 1). A total of 16-bit strings can be encoded into the sign of the amplitude of the 4-bit quantum state. The sign is 0 for negative numbers, and 1 for positive numbers. Through the above encoding method, our algorithm input is converted into a 16-bit binary string. Such non-repetitive binary strings can respectively correspond to specific input :math:`U_i` .
-
-The circuit structure of the quantum perceptron proposed in this paper is as follows:
-
-.. image:: ./images/QP-cir.png
-   :width: 600 px
-   :align: center
-
-|
-
-The coding circuit :math:`U_i` is constructed on bits 0~3, including multiple controlled :math:`CZ` , :math:`CNOT` gates, and :math:`H` gates; the weight conversion circuit :math:`U_w` is constructed immediately after :math:`U_i` , which is also composed of controlled gates and :math:`H` gates. :math:`U_i` can be used to perform unitary matrix transformations to encode data into quantum states:
-
-.. math::
-    U_i|0\rangle^{\otimes N}=\left|\psi_i\right\rangle
-
-Use the unitary matrix transformation :math:`U_w` to compute the inner product between the input and the weights:
-
-.. math::
-    U_w\left|\psi_i\right\rangle=\sum_{j=0}^{m-1} c_j|j\rangle \equiv\left|\phi_{i, w}\right\rangle
-
-The normalized activation probability values for :math:`U_i` and :math:`U_w` can be obtained by using a multi-controlled NOT gate with target bits on auxiliary bits, and using some subsequent :math:`H` gates, :math:`X` gates, and :math:`CX` gates as activation functions:
-
-.. math::
-    \left|\phi_{i, w}\right\rangle|0\rangle_a \rightarrow \sum_{j=0}^{m-2} c_j|j\rangle|0\rangle_a+c_{m-1}|m-1\rangle|1\rangle_a
-
-When the binary string of the input i is exactly the same as w, the normalized probability value should be the largest.
-
-VQNet provides the ``QuantumNeuron`` module to implement this algorithm. First initialize a quantum perceptron ``QuantumNeuron``.
-
-.. code-block::
-
-    perceptron = QuantumNeuron()
-
-Use the ``gen_4bitstring_data`` interface to generate various data in the paper and its category labels.
-
-.. code-block::
-
-    training_label, test_label = perceptron.gen_4bitstring_data()
-
-Using the ``train`` interface to traverse all the data, you can get the last trained quantum perceptron circuit :math:`U_w`.
-
-.. code-block::
-
-    trained_para = perceptron.train(training_label, test_label)
-
-.. image:: ./images/QP-pic.png
-   :width: 600 px
-   :align: center
-
-|
-
-On the test data, the accuracy results on the test data can be obtained
-
-.. image:: ./images/QP-acc.png
-   :width: 600 px
-   :align: center
-
-|
-
-
-
-Stochastic parameter shift algorithm
-===============================================================================
-
-In the quantum variational circuit, it is a common method to use the parameter shift method `parameter-shift` to calculate the gradient of the quantum parameter.
-The parameter shift method is not universally applicable to all quantum parametric logic gates.
-In cases where it does not hold (or is not known to hold), we either have to factorize the gates into compatible gates, or use an alternative estimator of the gradient, such as a finite difference approximation.
-However, both alternatives may have drawbacks due to increased circuit complexity or potential errors in gradient values.
-Banchi and Crooks 1 discovered a `Stochastic Parameter-Shift Rule <https://arxiv.org/abs/2005.10299>`_ that can be applied to any unitary matrix quantum logic gate.
-
-The following shows an example of applying VQNet to calculate the gradient using the random parameter offset method for a quantum variational circuit. An example line definition is as follows:
-
-.. code-block::
-
-    import pyqpanda3.core as pq
-    import numpy as np
-    from pyvqnet.qnn.pq3.measure import expval
-    from scipy.linalg import expm
-    import matplotlib
-    try:
-        matplotlib.use('TkAgg')
-    except:
-        pass
-    import matplotlib.pyplot as plt
-    machine = pq.init_quantum_machine(pq.QMachineType.CPU)
-    q = machine.qAlloc_many(2)
-    c = machine.cAlloc_many(2)
-    # some basic Pauli matrices
-    I = np.eye(2)
-    X = np.array([[0, 1], [1, 0]])
-    Y = np.array([[0, -1j], [1j, 0]])
-    Z = np.array([[1, 0], [0, -1]])
-    def Generator(theta1, theta2, theta3):
-        G = theta1.item() * np.kron(X, I) - \
-            theta2 * np.kron(Z, X) + \
-            theta3 * np.kron(I, X)
-        return G
-    def pq_demo_circuit(gate_pars):
-        G = Generator(*gate_pars)
-        G = expm(-1j * G)
-        x = G.flatten().tolist()
-        cir = pq.matrix_decompose(q, x)
-        m_prog = pq.QProg()
-        m_prog.insert(cir)
-        pauli_dict = {'Z0': 1}
-        exp2 = expval(machine, m_prog, pauli_dict, q)
-        return exp2
-
-The stochastic parameter shift method first randomly samples a variable
- s from the uniform distribution of [0,1], 
- and then performs the following unitary matrix transformation on the lines:
-
-      a) :math:`e^{i(1-s)(\hat{H} + \theta\hat{V})}`
-      b) :math:`e^{+i\tfrac{\pi}{4}\hat{V}}`
-      c) :math:`e^{is(\hat{H} + \theta\hat{V})}`
-
-where :math:`\hat{V}` is a tensor product of Pauli operators, and :math:`\hat{H}` is a linear combination of any Pauli operator tensor product.
-We define the expected value of the observabley obtained at this time as :math:`\langle r_+ \rangle`.
-
-.. code-block::
-
-    def pq_SPSRgates(gate_pars, s, sign):
-        G = Generator(*gate_pars)
-        # step a)
-        G1 = expm(1j * (1 - s) * G)
-        x = G1.flatten().tolist()
-        cir = pq.matrix_decompose(q, x)
-        m_prog = pq.QProg()
-        m_prog.insert(cir)
-        # step b)
-        G2 = expm(1j * sign * np.pi / 4 * X)
-        x = G2.flatten().tolist()
-        cir = pq.matrix_decompose(q[0], x)
-        m_prog.insert(cir)
-        # step c)
-        G3 = expm(1j * s * G)
-        x = G3.flatten().tolist()
-        cir = pq.matrix_decompose(q, x)
-        m_prog.insert(cir)
-        pauli_dict = {'Z0': 1}
-        exp2 = expval(machine, m_prog, pauli_dict, q)
-        return exp2
-
-Change :math:`\tfrac{\pi}{4}` in the previous step to :math:`-\tfrac{\pi}{4}`,
-Repeat operations a, b, c to obtain observable
-
-The gradient formula calculated by the stochastic parameter shift algorithm is as follows:
-
- .. math::
-     \mathbb{E}_{s\in\mathcal{U}[0,1]}[\langle r_+ \rangle - \langle r_-\rangle]
-
-In the following figure, the gradient of the parameter :math:`\theta_1` is showed, using the stochastic parameter shift method.
-It can be seen that the observable is expected to 
-conform to the functional form of :math:`\cos(2\theta_1)`; 
-and the gradient is calculated using the random parameter shift method,
-
-Meets :math:`-2\sin(2\theta_1)` , which is exactly the differential of :math:`\cos(2\theta_1)`.
-
-.. code-block::
-
-    theta2, theta3 = -0.15, 1.6
-    angles = np.linspace(0, 2 * np.pi, 50)
-    pos_vals = np.array([[
-        pq_SPSRgates([theta1, theta2, theta3], s=s, sign=+1)
-        for s in np.random.uniform(size=10)
-    ] for theta1 in angles])
-    neg_vals = np.array([[
-        pq_SPSRgates([theta1, theta2, theta3], s=s, sign=-1)
-        for s in np.random.uniform(size=10)
-    ] for theta1 in angles])
-    # Plot the results
-    evals = [pq_demo_circuit([theta1, theta2, theta3]) for theta1 in angles]
-    spsr_vals = (pos_vals - neg_vals).mean(axis=1)
-    plt.plot(angles, evals, 'b', label="Expectation Value")
-    plt.plot(angles, spsr_vals, 'r', label="Stochastic parameter-shift rule")
-    plt.xlabel("theta1")
-    plt.legend()
-    plt.title("VQNet")
-    plt.show()
-
-.. image:: ./images/stochastic_parameter-shift.png
-   :width: 600 px
-   :align: center
-
-|
-
-Doubly Stochastic Gradient Descent
-===============================================================================
-
-In variational quantum algorithms, parameterized quantum circuits are optimized by 
-classical gradient descent to minimize the expected function value.
-Although the expected value can be calculated analytically in classical simulator,
-on quantum hardware the program is limited to sampling from the expected value;
-as the number of samples and the number of shots increase, 
-the expected value obtained in this way will converge to the theoretical expected value,
-but may always be accurate value.
-Sweke et al. found a double stochastic gradient descent method in `the paper <https://arxiv.org/abs/1910.01155>`_.
-In this paper, they show that quantum gradient descent, which uses a finite number of measurement 
-samples (or shots) to estimate gradients, is a form of stochastic gradient descent.
-Furthermore, if the optimization involves a linear combination of 
-expected values (such as VQE), sampling from the terms in that 
-linear combination can further reduce the required time complexity.
-
-VQNet implements an example of this algorithm: solving the ground state energy of the target Hamiltonian using VQE. Note that here we set the number of shots for quantum circuit observations to only 1.
-
-.. math::
-
-    H = \begin{bmatrix}
-          8 & 4 & 0 & -6\\
-          4 & 0 & 4 & 0\\
-          0 & 4 & 8 & 0\\
-          -6 & 0 & 0 & 0
-        \end{bmatrix}.
-
-.. code-block::
-
-    import numpy as np
-    import pyqpanda3.core as pq
-    from pyvqnet.qnn.template import StronglyEntanglingTemplate
-    from pyvqnet.qnn.measure import Hermitian_expval
-    from pyvqnet.qnn import QuantumLayerV2
-    from pyvqnet.optim import SGD
-    import pyvqnet._core as _core
-    from pyvqnet.tensor import QTensor
-    from matplotlib import pyplot as plt
-    num_layers = 2
-    num_wires = 2
-    eta = 0.01
-    steps = 200
-    n = 1
-    param_shape = [2, 2, 3]
-    shots = 1
-    H = np.array([[8, 4, 0, -6], [4, 0, 4, 0], [0, 4, 8, 0], [-6, 0, 0, 0]])
-    init_params = np.random.uniform(low=0,
-                                    high=2 * np.pi,
-                                    size=param_shape).astype(np.float32)
-    # some basic Pauli matrices
-    I = np.eye(2)
-    X = np.array([[0, 1], [1, 0]])
-    Y = np.array([[0, -1j], [1j, 0]])
-    Z = np.array([[1, 0], [0, -1]])
-
-    def pq_circuit(params):
-        params = params.reshape(param_shape)
-        num_qubits = 2
-        machine = pq.CPUQVM()
-        machine.init_qvm()
-        qubits = machine.qAlloc_many(num_qubits)
-        circuit = StronglyEntanglingTemplate(params, num_qubits=num_qubits)
-        qcir = circuit.create_circuit(qubits)
-        prog = pq.QProg()
-        prog.insert(qcir)
-        machine.directly_run(prog)
-        result = machine.get_qstate()
-        return result
-
-The Hamiltonian in this example is a Hermitian matrix,
- which we can always represent as a sum of Pauli matrices.
-
-.. math::
-
-    H = \sum_{i,j=0,1,2,3} a_{i,j} (\sigma_i\otimes \sigma_j)
-
-and 
-
-.. math::
-
-    a_{i,j} = \frac{1}{4}\text{tr}[(\sigma_i\otimes \sigma_j )H], ~~ \sigma = \{I, X, Y, Z\}.
-
-Substituting into the above formula, we can see that
-
-.. math::
-
-    H = 4  + 2I\otimes X + 4I \otimes Z - X\otimes X + 5 Y\otimes Y + 2Z\otimes X.
-
-To perform "doubly stochastic" gradient descent, we simply apply the stochastic gradient descent method, but additionally uniformly sample a subset of the Hamiltonian expectation at each optimization step.
-The vqe_func_analytic() function uses parameter shift to calculate theoretical gradients, 
-and vqe_func_shots() uses random sampled values and randomly sampled Hamiltonian 
-expectation subsets for "doubly stochastic" gradient calculations.
-
-.. code-block::
-
-    terms = np.array([
-        2 * np.kron(I, X),
-        4 * np.kron(I, Z),
-        -np.kron(X, X),
-        5 * np.kron(Y, Y),
-        2 * np.kron(Z, X),
-    ])
-    def vqe_func_analytic(input, init_params):
-        qstate = pq_circuit(init_params)
-        expval = Hermitian_expval(H, qstate, [0, 1], 2)
-        return  expval
-    def vqe_func_shots(input, init_params):
-        qstate = pq_circuit(init_params)
-        idx = np.random.choice(np.arange(5), size=n, replace=False)
-        A = np.sum(terms[idx], axis=0)
-        expval = Hermitian_expval(A, qstate, [0, 1], 2, shots)
-        return 4 + (5 / 1) * expval
-
-
-Use VQNet for parameter optimization, and compare the curve of the loss function.
-Since the double stochastic gradient descent method only calculates the partial Pauli 
-operator sum of H each time,
-Therefore, the average value can be used to represent the expected result of the final 
-observation. Here, the moving average moving_average() is used for calculation.
-
-.. code-block::
-
-
-    ##############################################################################
-    # Optimizing the circuit using gradient descent via the parameter-shift rule:
-    qlayer_ana = QuantumLayerV2(vqe_func_analytic, 2*2*3 )
-    qlayer_shots = QuantumLayerV2(vqe_func_shots, 2*2*3 )
-    cost_sgd = []
-    cost_dsgd = []
-    temp = _core.Tensor(init_params)
-    _core.vqnet.copyTensor(temp, qlayer_ana.m_para.data)
-    opti_ana = SGD(qlayer_ana.parameters())
-
-    _core.vqnet.copyTensor(temp, qlayer_shots.m_para.data)
-    opti_shots = SGD(qlayer_shots.parameters())
-    
-    for i in range(steps):
-        opti_ana.zero_grad()
-        loss = qlayer_ana(QTensor([[1.0]]))
-        loss.backward()
-        cost_sgd.append(loss.item())
-        opti_ana._step()
-    for i in range(steps+50):
-        opti_shots.zero_grad()
-        loss = qlayer_shots(QTensor([[1.0]]))
-        loss.backward()
-        cost_dsgd.append(loss.item())
-        opti_shots._step()
-    def moving_average(data, n=3):
-        ret = np.cumsum(data, dtype=np.float64)
-        ret[n:] = ret[n:] - ret[:-n]
-        return ret[n - 1:] / n
-    ta = moving_average(np.array(cost_dsgd), n=50)
-    ta = ta[:-26]
-    average = np.vstack([np.arange(25, 200),ta ])
-    final_param = qlayer_shots.parameters()[0].to_numpy()
-    print("Doubly stochastic gradient descent min energy = ", vqe_func_analytic(QTensor([1]),final_param))
-    final_param  = qlayer_ana.parameters()[0].to_numpy()
-    print("stochastic gradient descent min energy = ", vqe_func_analytic(QTensor([1]),final_param))
-    plt.plot(cost_sgd, label="Vanilla gradient descent")
-    plt.plot(cost_dsgd, ".", label="Doubly QSGD")
-    plt.plot(average[0], average[1], "--", label="Doubly QSGD (moving average)")
-    plt.ylabel("Cost function value")
-    plt.xlabel("Optimization steps")
-    plt.xlim(-2, 200)
-    plt.legend()
-    plt.show()
-    #Doubly stochastic gradient descent min energy =  -4.337801834749975
-    #stochastic gradient descent min energy =  -4.531484333030544
-.. image:: ./images/dsgd.png
-   :width: 600 px
-   :align: center
-
-
 Barren plateaus
-===============================================================================
+===================================
 
 
-In the training of classical neural networks, gradient-based optimization methods not only encounter the problem of local minima,
-It also encounters geometric structures such as saddle points where the gradient is close to zero.
-Correspondingly, the **barren plateau effect** (plataus) also exists in the quantum neural network.
-This peculiar phenomenon was first discovered by McClean et al. in 2018 `Barren plateaus in quantum neural network training landscapes <https://arxiv.org/abs/1803.11173>`_.
-Simply put, the optimization landscape becomes very flat when you choose a random circuit structure that satisfies a certain level of complexity,
-This makes it difficult for gradient descent based optimization methods to find the global minimum
-. For most variational quantum algorithms (VQE, etc.), this phenomenon means that when the number of qubits increases,
-Circuits with random structures may not work well.
-This will turn the optimization surface corresponding to the well-designed loss function into a huge platform,
-Make the training of quantum neural networks more difficult.
-The initial value randomly found by the model is difficult to escape from this platform, and the convergence speed of gradient descent will be very slow.
+When training classical neural networks, gradient-based optimization runs into local minima
+and also geometric structures such as saddle points where gradients are close to zero.
+Quantum neural networks have a corresponding "barren plateau effect".
+This striking phenomenon was first found by McClean et al. in 2018 in `Barren plateaus in quantum neural network training landscapes <https://arxiv.org/abs/1803.11173>`_.
+Put simply, when the random circuit structure you choose reaches a certain level of complexity, the optimization landscape becomes very flat,
+making it hard for gradient descent to find the global minimum.
+For most variational quantum algorithms (VQE and others), this means that as the number of qubits grows,
+circuits with random structure may not work well.
+The landscape corresponding to a carefully designed loss function becomes a huge plateau,
+making training harder. Random initial values struggle to escape this plateau, and gradient descent converges very slowly.
 
 
-This case mainly uses VQNet to display the barren plateau phenomenon, and uses the gradient analysis function to analyze the parameter gradient in the user-defined quantum neural network.
+This case uses VQNet to demonstrate the barren plateau phenomenon and uses gradient analysis functions to analyze parameter gradients in user-defined quantum neural networks.
 
-The following code builds the following random circuit according to the similar method mentioned in the original paper:
+The following code builds a random circuit in a way similar to the original paper:
 
-First act on all qubits with a rotation about the Y-axis of the Bloch sphere :math:`\pi/4`.
+First, rotate all qubits by :math:`\pi/4` about the Y axis of the Bloch sphere.
 
-The rest of the structures add up to form a module (Block), each module is divided into two layers:
+The remaining structure forms one block, and each block has two layers:
 
-- The first layer builds a random revolving door, where :math:`R \in \{R_x, R_y, R_z\}`.
-- The second layer consists of CZ gates acting on every two adjacent qubits.
+- The first layer contains random rotation gates, where :math:`R \in \{R_x, R_y, R_z\}`.
+- The second layer consists of CZ gates acting on each pair of adjacent qubits.
 
 The circuit code is shown in the rand_circuit_pq function.
 
-After we have determined the structure of the circuit, we also need to define a loss function (loss function) to determine the optimization surface.
-As mentioned in the original paper, we use the loss function commonly used in the VQE algorithm:
+Once the circuit structure is fixed, we still need a loss function to define the optimization landscape.
+As in the original paper, we use the loss function common in VQE algorithms:
 
 .. math::
 
     \mathcal{L}(\boldsymbol{\theta})= \langle0| U^{\dagger}(\boldsymbol{\theta})H U(\boldsymbol{\theta}) |0\rangle
 
-The unitary matrix :math:`U(\boldsymbol{\theta})` is the quantum neural network with random structure we built in the previous part.
-Hamiltonian :math:`H = |00\cdots 0\rangle\langle00\cdots 0|`.
-In this case, the above VQE algorithm is constructed on different qubit numbers, and 200 sets of random network structures and different random initial parameters are generated.
-The gradient of the parameters in the line with parameters is calculated according to the paramter-shift algorithm.
-Then count the average and variance of the 200 gradients of the variational parameters obtained.
+The unitary :math:`U(\boldsymbol{\theta})` is the randomly structured quantum neural network built in the previous section.
+The Hamiltonian is :math:`H = |00\cdots 0\rangle\langle00\cdots 0|`.
+This case builds the VQE algorithm above at different qubit counts and generates 200 random network structures with different random initial parameters.
+Gradients of the parameters in the parameterized circuit are computed with the parameter-shift algorithm.
+We then compute the mean and variance of the 200 gradients for a variational parameter.
 
-The following example analyzes the last of the variable quantum parameters, and readers can also modify it to other reasonable values.
-Through the operation, it is not difficult for readers to find that as the number of qubits increases, the variance of the gradient of the quantum parameters becomes smaller and smaller, and the mean value is closer to 0.
+The example analyzes the last variational parameter; readers can change it to another reasonable value.
+Running it shows that as the number of qubits increases, the variance of the parameter gradients shrinks and the mean approaches 0.
 
 .. code-block::
 
-
         """
-        barren plateau
+        Barren plateau
         """
         import pyqpanda3.core as pq
         import numpy as np
@@ -5141,8 +4775,7 @@ Through the operation, it is not difficult for readers to find that as the numbe
         def rand_circuit_pq(params, num_qubits):
             cir = pq.QCircuit()
             machine = pq.CPUQVM()
-            machine.init_qvm()
-            qlist = machine.qAlloc_many(num_qubits)
+            qlist = range(num_qubits)
 
             for i in range(num_qubits):
                 cir << pq.RY(
@@ -5161,9 +4794,9 @@ Through the operation, it is not difficult for readers to find that as the numbe
                 cir << pq.CZ(qlist[i], qlist[i + 1])
 
             prog = pq.QProg()
-            prog.insert(cir)
-            machine.directly_run(prog)
-            result = machine.get_qstate()
+            prog << cir
+            machine.run(prog, 0)
+            result = machine.result().get_state_vector()
 
             H = np.zeros((2**num_qubits, 2**num_qubits))
             H[0, 0] = 1
@@ -5201,7 +4834,7 @@ Through the operation, it is not difficult for readers to find that as the numbe
 
 
         plt.figure()
-        # Plot the straight line fit to the semilog
+
         plt.plot(qubits, means, "v-")
 
         plt.xlabel(r"N Qubits")
@@ -5209,8 +4842,7 @@ Through the operation, it is not difficult for readers to find that as the numbe
 
         plt.show()
 
-
-The figure below shows how the mean value of the parameter gradient varies with the number of qubits. As the number of qubits increases, the parameter gradient approaches 0.
+The figure below shows the mean parameter gradient versus qubit count. As the qubit count increases, the parameter gradient approaches 0.
 
 .. image:: ./images/Barren_Plateau_mean.png
    :width: 600 px
@@ -5218,8 +4850,8 @@ The figure below shows how the mean value of the parameter gradient varies with 
 
 |
 
-The figure below shows how the variance of the parameter gradient varies with the number of qubits, and the parameter gradient hardly changes as the number of qubits increases.
-It can be foreseen that the quantum circuit built by any parametric logic gate will be difficult to update in the case of arbitrary parameter initialization when the qubits are improved.
+The figure below shows the variance of parameter gradients versus qubit count. As the qubit count increases, the parameter gradient hardly changes.
+It is foreseeable that for circuits built from arbitrary parameterized gates, as qubit count grows, parameter training under any initialization easily gets stuck.
 
 .. image:: ./images/Barren_Plateau_variance.png
    :width: 600 px
@@ -5227,25 +4859,272 @@ It can be foreseen that the quantum circuit built by any parametric logic gate w
 
 |
 
+Quantum perceptron
+===================================
 
-Gradient based pruning
-===============================================================================
+Artificial neural networks are a classic approach to machine learning algorithms and artificial intelligence. Historically, the simplest implementation of an artificial neuron dates back to Rosenblatt's classical "perceptron", but its long-term practical use may be hindered by rapidly scaling computational complexity, especially for training multilayer perceptron networks. Following `An Artificial Neuron Implemented on an Actual Quantum Processor <https://arxiv.org/abs/1811.02266>`__, we implement a quantum computer version of the perceptron with an algorithm based on quantum information, which shows an exponential advantage over classical models in encoding resources.
 
-The following example implements the algorithm in the paper `Towards Efficient On-Chip Training of Quantum Neural Networks <https://openreview.net/forum?id=vKefw-zKOft>`_.
-By carefully studying the process of parameters in the quantum variational circuit, the researchers observed that small gradients often have large relative changes or even wrong directions under quantum noise.
-Also, not all gradient computations are necessary for the training process, especially for small magnitude gradients.
-Inspired by this, the researchers propose a probabilistic gradient pruning method to predict and only compute gradients with high reliability.
-The approach reduces noise effects and also saves the number of circuits needed to run on a real quantum machine.
+This quantum perceptron processes 0/1 binary bit strings. Its goal is to recognize the cross-shaped pattern :math:`w` shown below.
 
-In the gradient based pruning algorithm, for the optimization process of parameters, two stages of accumulation window and pruning window are divided, and all training periods are divided into a repeated accumulation window and then a pruning window. There are three important hyperparameters in the probabilistic gradient pruning method:
+.. image:: ./images/QP-data.png
+   :width: 600 px
+   :align: center
 
-     * Cumulative window width :math:`\omega_a` , 
-     * trim ratio :math:`r` ,
-     * Trim window width :math:`\omega_p` .
+|
 
-In the accumulation window, THe researchers collect the gradient information in each training step. At each step of pruning the window,
-based on the information gathered from the accumulation window and the pruning ratio, the algorithm
-Probabilistically skips some gradient computations.
+It is encoded as a binary bit string, with black as 0 and white as 1, so :math:`w` encodes to (1,1,1,1,1,1,0,1,1,0,0,0,1,1,0,1). The 16-bit string fits into the signs of the amplitudes of a 4-bit quantum state: a negative sign encodes 0 and a positive sign encodes 1. With this encoding, the algorithm input is converted into a 16-bit binary string. Each distinct binary string corresponds to a specific input circuit :math:`U_i`.
+
+The quantum perceptron circuit proposed in the paper is structured as follows:
+
+.. image:: ./images/QP-cir.png
+   :width: 600 px
+   :align: center
+
+|
+
+On qubits 0 to 3, build the encoding circuit :math:`U_i`, which contains multi-controlled :math:`CZ` gates, :math:`CNOT` gates, and :math:`H` gates. Immediately after :math:`U_i`, build the weight transformation circuit :math:`U_w`, also made of controlled gates and :math:`H` gates. :math:`U_i` applies a unitary transformation that encodes the data into a quantum state:
+
+.. math::
+    U_i|0\rangle^{\otimes N}=\left|\psi_i\right\rangle
+
+The unitary transformation :math:`U_w` computes the inner product between the input and the weights:
+
+.. math::
+    U_w\left|\psi_i\right\rangle=\sum_{j=0}^{m-1} c_j|j\rangle \equiv\left|\phi_{i, w}\right\rangle
+
+A multi-controlled :math:`NOT` gate with a target bit on the ancilla, followed by some :math:`H`, :math:`X`, and :math:`CX` gates as an activation function, yields the normalized activation probability of :math:`U_i` and :math:`U_w`:
+
+.. math::
+    \left|\phi_{i, w}\right\rangle|0\rangle_a \rightarrow \sum_{j=0}^{m-2} c_j|j\rangle|0\rangle_a+c_{m-1}|m-1\rangle|1\rangle_a
+
+When the binary string of input :math:`i` exactly matches :math:`w`, this normalized probability is maximized.
+
+VQNet provides the ``QuantumNeuron`` module for this algorithm. First initialize a quantum perceptron ``QuantumNeuron``.
+
+.. code-block::
+
+    perceptron = QuantumNeuron()
+
+Use the ``gen_4bitstring_data`` interface to generate the various data and class labels from the paper.
+
+.. code-block::
+
+    training_label, test_label = perceptron.gen_4bitstring_data()
+
+Use the ``train`` interface to iterate over all data and obtain the final trained quantum perceptron circuit Uw.
+
+.. code-block::
+
+    trained_para = perceptron.train(training_label, test_label)
+
+.. image:: ./images/QP-pic.png
+   :width: 600 px
+   :align: center
+
+|
+
+Accuracy results on the test data
+
+.. image:: ./images/QP-acc.png
+   :width: 600 px
+   :align: center
+
+|
+
+
+Doubly stochastic gradient descent
+===================================
+
+In variational quantum algorithms, parameterized quantum circuits are optimized by classical gradient descent to minimize an expectation value.
+Expectation values can be computed analytically in classical simulation, but on quantum hardware a program can only sample them; as the number of samples and shots grows, the sampled expectation converges to the theoretical value but may never reach it exactly.
+Sweke et al. found a doubly stochastic gradient descent method in `this paper <https://arxiv.org/abs/1910.01155>`_.
+They prove that quantum gradient descent using a finite number of measurement samples (or shots) to estimate gradients is a form of stochastic gradient descent.
+Moreover, when the optimization involves a linear combination of expectation values (as in VQE), sampling terms from that linear combination can further reduce the required time complexity.
+
+VQNet implements an example of this algorithm: using VQE to find the ground state energy of a target Hamiltonian. Note that here the number of shots is set to 1.
+
+.. math::
+
+    H = \begin{bmatrix}
+          8 & 4 & 0 & -6\\
+          4 & 0 & 4 & 0\\
+          0 & 4 & 8 & 0\\
+          -6 & 0 & 0 & 0
+        \end{bmatrix}.
+
+.. code-block::
+
+    import numpy as np
+    import pyqpanda3.core as pq
+    from pyvqnet.qnn.pq3.template import StronglyEntanglingTemplate
+    from pyvqnet.qnn.measure import Hermitian_expval
+    from pyvqnet.qnn import QuantumLayer
+    from pyvqnet.optim import SGD
+    from pyvqnet.tensor import QTensor,to_tensor
+    from matplotlib import pyplot as plt
+
+    num_layers = 2
+    num_wires = 2
+    eta = 0.01
+    steps = 200
+    n = 1
+    param_shape = [2, 2, 3]
+    shots = 1
+
+    H = np.array([[8, 4, 0, -6], [4, 0, 4, 0], [0, 4, 8, 0], [-6, 0, 0, 0]])
+
+    # some basic Pauli matrices
+    I = np.eye(2)
+    X = np.array([[0, 1], [1, 0]])
+    Y = np.array([[0, -1j], [1j, 0]])
+    Z = np.array([[1, 0], [0, -1]])
+
+    init_params = np.random.uniform(low=0,
+                                    high=2 * np.pi,
+                                    size=param_shape).astype(np.float32)
+
+    def pq_circuit(params):
+        params = params.reshape(param_shape)
+        num_qubits = 2
+
+        machine = pq.CPUQVM()
+        qubits = range(num_qubits)
+        circuit = StronglyEntanglingTemplate(params, num_qubits=num_qubits)
+        qcir = circuit.create_circuit(qubits)
+        prog = pq.QProg()
+        prog << qcir
+        machine.run(prog, 0)
+        result = machine.result().get_state_vector()
+        return result
+
+
+The Hamiltonian in this example is a Hermitian matrix, which we can always write as a sum of Pauli matrices.
+
+.. math::
+
+    H = \sum_{i,j=0,1,2,3} a_{i,j} (\sigma_i\otimes \sigma_j),
+
+where
+
+.. math::
+
+    a_{i,j} = \frac{1}{4}\text{tr}[(\sigma_i\otimes \sigma_j )H], ~~ \sigma = \{I, X, Y, Z\}.
+
+Substituting into the formula above gives
+
+.. math::
+
+    H = 4  + 2I\otimes X + 4I \otimes Z - X\otimes X + 5 Y\otimes Y + 2Z\otimes X.
+
+To perform doubly stochastic gradient descent, we simply apply stochastic gradient descent but also uniformly sample a subset of the Hamiltonian expectation terms at each optimization step.
+vqe_func_analytic() computes the theoretical gradient with the parameter-shift method, while vqe_func_shots() is the doubly stochastic gradient computation using sampled values and a randomly sampled subset of Hamiltonian expectation terms.
+
+.. code-block::
+
+    terms = np.array([
+        2 * np.kron(I, X),
+        4 * np.kron(I, Z),
+        -np.kron(X, X),
+        5 * np.kron(Y, Y),
+        2 * np.kron(Z, X),
+    ])
+
+
+    def vqe_func_analytic(input, init_params):
+        qstate = pq_circuit(init_params)
+        expval = Hermitian_expval(H, qstate, [0, 1], 2)
+        return  expval
+
+    def vqe_func_shots(input, init_params):
+        qstate = pq_circuit(init_params)
+        idx = np.random.choice(np.arange(5), size=n, replace=False)
+        A = np.sum(terms[idx], axis=0)
+        expval = Hermitian_expval(A, qstate, [0, 1], 2, shots)
+        return 4 + (5 / 1) * expval
+
+
+Parameter optimization with VQNet compares the loss curves. Because doubly stochastic gradient descent computes only part of the Pauli terms of H at each step,
+the moving average represents the expected value of the final observable; here we use moving_average().
+
+.. code-block::
+
+    ##############################################################################
+    # Optimizing the circuit using gradient descent via the parameter-shift rule:
+    qlayer_ana = QuantumLayer(vqe_func_analytic, 2*2*3 )
+    qlayer_shots = QuantumLayer(vqe_func_shots, 2*2*3 )
+    cost_sgd = []
+    cost_dsgd = []
+
+    qlayer_ana.m_para.init_from_tensor(to_tensor(init_params))
+    opti_ana = SGD(qlayer_ana.parameters())
+
+    qlayer_shots.m_para.init_from_tensor(to_tensor(init_params))
+    opti_shots = SGD(qlayer_shots.parameters())
+
+    for i in range(steps):
+        opti_ana.zero_grad()
+        loss = qlayer_ana(QTensor([[1.0]]))
+
+        loss.backward()
+        cost_sgd.append(loss.item())
+        opti_ana._step()
+
+    for i in range(steps+50):
+        opti_shots.zero_grad()
+        loss = qlayer_shots(QTensor([[1.0]]))
+
+        loss.backward()
+        cost_dsgd.append(loss.item())
+        opti_shots._step()
+
+    def moving_average(data, n=3):
+        ret = np.cumsum(data, dtype=np.float64)
+        ret[n:] = ret[n:] - ret[:-n]
+        return ret[n - 1:] / n
+    ta = moving_average(np.array(cost_dsgd), n=50)
+    ta = ta[:-26]
+    average = np.vstack([np.arange(25, 200),ta ])
+    final_param = qlayer_shots.parameters()[0].to_numpy()
+    print("Doubly stochastic gradient descent min energy = ", vqe_func_analytic(QTensor([1]),final_param))
+    final_param  = qlayer_ana.parameters()[0].to_numpy()
+    print("stochastic gradient descent min energy = ", vqe_func_analytic(QTensor([1]),final_param))
+
+    plt.plot(cost_sgd, label="Vanilla gradient descent")
+    plt.plot(cost_dsgd, ".", label="Doubly QSGD")
+    plt.plot(average[0], average[1], "--", label="Doubly QSGD (moving average)")
+
+    plt.ylabel("Cost function value")
+    plt.xlabel("Optimization steps")
+    plt.xlim(-2, 200)
+    plt.legend()
+    plt.show()
+
+    #Doubly stochastic gradient descent min energy =  -4.337801834749975
+    #stochastic gradient descent min energy =  -4.531484333030544
+
+.. image:: ./images/dsgd.png
+   :width: 600 px
+   :align: center
+
+|
+
+Gradient-based pruning
+===================================
+
+The example below implements the algorithm from `Towards Efficient On-Chip Training of Quantum Neural Networks <https://openreview.net/forum?id=vKefw-zKOft>`_.
+By carefully studying the evolution of parameters in variational quantum circuits, the authors observed that small gradients often have large relative changes or even wrong directions under quantum noise.
+Moreover, not all gradient computations are necessary for training, especially for small gradients.
+Inspired by this, they propose a probabilistic gradient pruning method that predicts gradients and computes only highly reliable ones.
+The method reduces noise effects and saves the number of circuits needed on real quantum machines.
+
+In the gradient based pruning algorithm, the parameter optimization process is divided into an accumulation window and a pruning window. All training epochs are split into a repeated accumulation window followed by a pruning window. The probabilistic gradient pruning method has three important hyperparameters:
+
+    * accumulation window width :math:`\omega_a` ,
+    * pruning ratio :math:`r` ,
+    * pruning window width :math:`\omega_p` .
+
+In the accumulation window, the algorithm collects gradient information at each training step. At each step of the pruning window, based on the information collected in the accumulation window and the pruning ratio,
+the algorithm probabilistically skips some gradient computations.
 
 .. image:: ./images/gbp_arch.png
    :width: 600 px
@@ -5253,9 +5132,9 @@ Probabilistically skips some gradient computations.
 
 |
 
-The pruning ratio :math:`r` , the cumulative window width :math:`\omega_a` and the pruning window width :math:`\omega_p` respectively determine the reliability of the gradient trend evaluation.
-Thus, the percentage time saved by our probabilistic gradient pruning method is :math:`r\tfrac{\omega_p}{\omega_a +\omega_p}\times 100\%`.
-The following is the application of the QVC classification example using the gradient pruning algorithm.
+The pruning ratio :math:`r`, the accumulation window width :math:`\omega_a`, and the pruning window width :math:`\omega_p` determine the reliability of the gradient trend estimate.
+The time saved by our probabilistic gradient pruning method is therefore :math:`r\tfrac{\omega_p}{\omega_a +\omega_p}\times 100\%`.
+Below is an example of gradient pruning on a QVC classification task.
 
 .. code-block::
 
@@ -5280,87 +5159,98 @@ The following is the application of the QVC classification example using the gra
     qvc_test_data = [0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 1, 0, 1, 0, 0, 1, 1, 0]
 
 
-    def qvc_circuits(x, weights, qlist, clist, machine):
+    def qvc_circuits(x, weights):
         """
         Quantum circuits run function
         """
+        machine = pq.CPUQVM()
+        qlist = range(4)
+        clist = range(4)
         def get_cnot(nqubits):
             cir = pq.QCircuit()
             for i in range(len(nqubits) - 1):
-                cir.insert(pq.CNOT(nqubits[i], nqubits[i + 1]))
-            cir.insert(pq.CNOT(nqubits[len(nqubits) - 1], nqubits[0]))
+                cir << pq.CNOT(nqubits[i], nqubits[i + 1])
+            cir << pq.CNOT(nqubits[len(nqubits) - 1], nqubits[0])
             return cir
 
         def build_circuit(weights, xx, nqubits):
             def Rot(weights_j, qubits):
                 circuit = pq.QCircuit()
-                circuit.insert(pq.RZ(qubits, weights_j[0]))
-                circuit.insert(pq.RY(qubits, weights_j[1]))
-                circuit.insert(pq.RZ(qubits, weights_j[2]))
+                circuit << pq.RZ(qubits, weights_j[0])
+                circuit << pq.RY(qubits, weights_j[1])
+                circuit << pq.RZ(qubits, weights_j[2])
                 return circuit
 
             def basisstate():
                 circuit = pq.QCircuit()
                 for i in range(len(nqubits)):
                     if xx[i] == 1:
-                        circuit.insert(pq.X(nqubits[i]))
+                        circuit << pq.X(nqubits[i])
                 return circuit
 
             circuit = pq.QCircuit()
-            circuit.insert(basisstate())
+            circuit << basisstate()
 
             for i in range(weights.shape[0]):
 
                 weights_i = weights[i, :, :]
                 for j in range(len(nqubits)):
                     weights_j = weights_i[j]
-                    circuit.insert(Rot(weights_j, nqubits[j]))
+                    circuit << Rot(weights_j, nqubits[j])
                 cnots = get_cnot(nqubits)
-                circuit.insert(cnots)
+                circuit << cnots
 
-            circuit.insert(pq.Z(nqubits[0]))
+            circuit << pq.Z(nqubits[0])
 
             prog = pq.QProg()
 
-            prog.insert(circuit)
+            prog << circuit
             return prog
 
         weights = weights.reshape([2, 4, 3])
         prog = build_circuit(weights, x, qlist)
-        prob = machine.prob_run_dict(prog, qlist[0], -1)
-        prob = list(prob.values())
+        machine.run(prog, 0)
+        state = np.array(machine.result().get_state_vector())
+        prob0 = np.sum(np.abs(state[0::2])**2)
+        prob1 = np.sum(np.abs(state[1::2])**2)
+        prob = [float(prob0), float(prob1)]
 
         return prob
 
 
-    def qvc_circuits2(x, weights, qlist, clist, machine):
+    def qvc_circuits2(x, weights):
         """
         Quantum circuits run function
         """
+        machine = pq.CPUQVM()
+        qlist = range(4)
         prog = pq.QProg()
         circuit = pq.QCircuit()
-        circuit.insert(pq.RZ(qlist[0], x[0]))
-        circuit.insert(pq.RZ(qlist[1], x[1]))
-        circuit.insert(pq.CNOT(qlist[0], qlist[1]))
-        circuit.insert(pq.CNOT(qlist[1], qlist[2]))
-        circuit.insert(pq.CNOT(qlist[2], qlist[3]))
-        circuit.insert(pq.RY(qlist[0], weights[0]))
-        circuit.insert(pq.RY(qlist[1], weights[1]))
-        circuit.insert(pq.RY(qlist[2], weights[2]))
+        circuit << pq.RZ(qlist[0], x[0])
+        circuit << pq.RZ(qlist[1], x[1])
+        circuit << pq.CNOT(qlist[0], qlist[1])
+        circuit << pq.CNOT(qlist[1], qlist[2])
+        circuit << pq.CNOT(qlist[2], qlist[3])
+        circuit << pq.RY(qlist[0], weights[0])
+        circuit << pq.RY(qlist[1], weights[1])
+        circuit << pq.RY(qlist[2], weights[2])
 
-        circuit.insert(pq.CNOT(qlist[0], qlist[1]))
-        circuit.insert(pq.CNOT(qlist[1], qlist[2]))
-        circuit.insert(pq.CNOT(qlist[2], qlist[3]))
-        prog.insert(circuit)
-        prob = machine.prob_run_dict(prog, qlist[0], -1)
-        prob = list(prob.values())
+        circuit << pq.CNOT(qlist[0], qlist[1])
+        circuit << pq.CNOT(qlist[1], qlist[2])
+        circuit << pq.CNOT(qlist[2], qlist[3])
+        prog << circuit
+        machine.run(prog, 0)
+        state = np.array(machine.result().get_state_vector())
+        prob0 = np.sum(np.abs(state[0::2])**2)
+        prob1 = np.sum(np.abs(state[1::2])**2)
+        prob = [float(prob0), float(prob1)]
 
         return prob
 
     class Model(Module):
         def __init__(self):
             super(Model, self).__init__()
-            self.qvc = QuantumLayer(qvc_circuits, 24, "cpu", 4)
+            self.qvc = QuantumLayer(qvc_circuits, 24)
 
         def forward(self, x):
             y = self.qvc(x)
@@ -5384,20 +5274,16 @@ The following is the application of the QVC classification example using the gra
         label = np.eye(2)[label].reshape(-1, 2)
         return data, label
 
-
-
-
     def get_accuracy(result, label):
         result, label = np.array(result.data), np.array(label.data)
         score = np.sum(np.argmax(result, axis=1) == np.argmax(label, 1))
         return score
 
-We use the ``Gradient_Prune_Instance`` class, and enter `24` as the number of parameters `param_num`.
-The cropping ratio `prune_ratio` is 0.5,
-the cumulative window size `accumulation_window_size` is 4,
+
+We use the ``Gradient_Prune_Instance`` class with input 24, the number of parameters in the current model. The pruning ratio `prune_ratio` is 0.5,
+the accumulation window size `accumulation_window_size` is 4,
 and the pruning window `pruning_window_size` is 2.
-When backpropagating part of the code each run, before the optimizer ``step``,
-Run the ``step`` function of ``Gradient_Prune_Instance``.
+Whenever the backward pass runs, call the ``step`` function of ``Gradient_Prune_Instance`` before the optimizer ``step``.
 
 .. code-block::
 
@@ -5435,7 +5321,7 @@ Run the ``step`` function of ``Gradient_Prune_Instance``.
                 loss_b = loss(label, result)
 
                 loss_b.backward()
-                
+
                 GBP_HELPER.step(model.parameters())
                 optimizer._step()
                 sum_loss += loss_b.item()
@@ -5485,30 +5371,30 @@ Run the ``step`` function of ``Gradient_Prune_Instance``.
 
 
 
-Model training using quantum computing layer in VQNet
-*******************************************************************
+Model training with QuantumLayer in VQNet
+*****************************************
 
-The following are some examples of using VQNet inrerface for quantum machine learning ``QuantumLayer`` , ``NoiseQuantumLayer`` .
+Below is an example of quantum machine learning with VQNet interfaces such as ``QuantumLayer``.
 
-Model training using quantumlayer in VQNet
-===============================================================================
+Model training with QuantumLayer in VQNet
+=========================================
+
+This example builds the circuit with pyqpanda3
 
 .. code-block::
 
-    import sys,os
     from pyvqnet.nn.module import Module
     from pyvqnet.optim import sgd
     import numpy as np
-
+    import os
     from pyvqnet.data import data_generator as dataloader
-    from pyvqnet.nn.linear import Linear
     from pyvqnet.nn.loss import CategoricalCrossEntropy
 
     from pyvqnet.tensor.tensor import QTensor
     import random
     import pyqpanda3.core as pq
     from pyvqnet.qnn.pq3.quantumlayer import QuantumLayer
-    import pyvqnet
+    from pyvqnet.qnn.pq3 import probs_measure
     random.seed(1234)
 
     qvc_train_data = [0,1,0,0,1,
@@ -5528,63 +5414,65 @@ Model training using quantumlayer in VQNet
     0, 0, 1, 0, 1,
     0, 0, 1, 1, 0]
 
-    def qvc_circuits(input,weights,qlist,clist,machine):
+    def qvc_circuits(input,weights):
 
         def get_cnot(nqubits):
             cir = pq.QCircuit()
             for i in range(len(nqubits)-1):
-                cir.insert(pq.CNOT(nqubits[i],nqubits[i+1]))
-            cir.insert(pq.CNOT(nqubits[len(nqubits)-1],nqubits[0]))
+                cir << pq.CNOT(nqubits[i],nqubits[i+1])
+            cir << pq.CNOT(nqubits[len(nqubits)-1],nqubits[0])
             return cir
 
         def build_circuit(weights, xx, nqubits):
 
             def Rot(weights_j, qubits):
                 circuit = pq.QCircuit()
-                circuit.insert(pq.RZ(qubits, weights_j[0]))
-                circuit.insert(pq.RY(qubits, weights_j[1]))
-                circuit.insert(pq.RZ(qubits, weights_j[2]))
+                circuit << pq.RZ(qubits, weights_j[0])
+                circuit << pq.RY(qubits, weights_j[1])
+                circuit << pq.RZ(qubits, weights_j[2])
                 return circuit
             def basisstate():
                 circuit = pq.QCircuit()
                 for i in range(len(nqubits)):
                     if xx[i]==1:
-                        circuit.insert(pq.X(nqubits[i]))
+                        circuit << pq.X(nqubits[i])
                 return circuit
 
             circuit = pq.QCircuit()
-            circuit.insert(basisstate())
+            circuit << basisstate()
 
             for i in range(weights.shape[0]):
 
                 weights_i = weights[i,:,:]
                 for j in range(len(nqubits)):
                     weights_j = weights_i[j]
-                    circuit.insert(Rot(weights_j,nqubits[j]))
+                    circuit << Rot(weights_j,nqubits[j])
                 cnots = get_cnot(nqubits)
-                circuit.insert(cnots)
+                circuit << cnots
 
-            circuit.insert(pq.Z(nqubits[0]))
+            circuit << pq.Z(nqubits[0])
 
             prog = pq.QProg()
 
-            prog.insert(circuit)
+            prog << circuit
             return prog
 
+        qlist = range(4)
+        machine = pq.CPUQVM()
         weights = weights.reshape([2,4,3])
         prog = build_circuit(weights,input,qlist)
-        prob = machine.prob_run_dict(prog, qlist[0], -1)
-        prob = list(prob.values())
+        prob = probs_measure(machine,prog,[0])
 
         return prob
 
     class Model(Module):
         def __init__(self):
             super(Model, self).__init__()
-            self.qvc = QuantumLayer(qvc_circuits,24,"cpu",4)
+            self.qvc = QuantumLayer(qvc_circuits,24)
 
         def forward(self, x):
             return self.qvc(x)
+
 
     def get_data(dataset_str):
         if dataset_str == "train":
@@ -5616,9 +5504,7 @@ Model training using quantumlayer in VQNet
         model.train()
 
         datas,labels = get_data("train")
-        print(datas)
-        print(labels)
-        print(datas.shape)
+
         for i in range(epoch):
             count=0
             sum_loss = 0
@@ -5659,10 +5545,11 @@ Model training using quantumlayer in VQNet
 
         Run()
 
-Loss and accuracy results of the run:
+
+Loss and accuracy results:
 
 .. code-block::
-	
+
 	start training..............
 	epoch:0, #### loss:[0.20585182] #####accuracy:0.6
 	epoch:1, #### loss:[0.17479989] #####accuracy:1.0
@@ -5685,322 +5572,3 @@ Loss and accuracy results of the run:
 	start testing..............
 	[0.3132616580]
 	test:--------------->loss:QTensor(0.3132616580, requires_grad=True) #####accuracy:1.0
-
-
-Model training using NoiseQuantumLayer in VQNet
-==============================================================================
-
-Using ``NoiseQuantumLayer`` to build and train noisy quantum circuits using pyQPanda2's noise virtual machine.
-
-An example of a complete noisy quantum machine learning model is as follows:
-
-.. code-block::
-
-    import os
-    import numpy as np
-
-    from pyvqnet.nn.module import Module
-    from pyvqnet.nn.linear import Linear
-    from pyvqnet.nn.conv import Conv2D
-
-    from pyvqnet.nn import activation as F
-    from pyvqnet.nn.pooling import MaxPool2D
-    from pyvqnet.nn.loss import CategoricalCrossEntropy
-    from pyvqnet.optim.adam import Adam
-    from pyvqnet.data.data import data_generator
-    from pyvqnet.tensor import tensor
-
-    import pyqpanda3.core as pq
-    import pyvqnet
-    from pyvqnet.qnn.quantumlayer import NoiseQuantumLayer
-    import matplotlib
-    try:
-        matplotlib.use('TkAgg')
-    except:
-        pass
-    import time
-    try:
-        matplotlib.use('TkAgg')
-    except:
-        pass
-
-    try:
-        import urllib.request
-    except ImportError:
-        raise ImportError('You should use Python 3.x')
-    import os.path
-    import gzip
-
-    url_base = 'https://ossci-datasets.s3.amazonaws.com/mnist/'
-    key_file = {
-        'train_img':'train-images-idx3-ubyte.gz',
-        'train_label':'train-labels-idx1-ubyte.gz',
-        'test_img':'t10k-images-idx3-ubyte.gz',
-        'test_label':'t10k-labels-idx1-ubyte.gz'
-    }
-
-
-
-    def _download(dataset_dir,file_name):
-        file_path = dataset_dir + "/" + file_name
-
-        if os.path.exists(file_path):
-            with gzip.GzipFile(file_path) as f:
-                file_path_ungz = file_path[:-3].replace('\\', '/')
-                if not os.path.exists(file_path_ungz):
-                    open(file_path_ungz,"wb").write(f.read())
-            return
-
-        print("Downloading " + file_name + " ... ")
-        urllib.request.urlretrieve(url_base + file_name, file_path)
-        if os.path.exists(file_path):
-                with gzip.GzipFile(file_path) as f:
-                    file_path_ungz = file_path[:-3].replace('\\', '/')
-                    file_path_ungz = file_path_ungz.replace('-idx', '.idx')
-                    if not os.path.exists(file_path_ungz):
-                        open(file_path_ungz,"wb").write(f.read())
-        print("Done")
-
-    def download_mnist(dataset_dir):
-        for v in key_file.values():
-            _download(dataset_dir,v)
-
-    #use qpanda to create quantum circuits
-    def circuit(weights,param,qubits,cbits,machine):
-
-        circuit = pq.QCircuit()
-        circuit.insert(pq.H(qubits[0]))
-        circuit.insert(pq.RY(qubits[0], weights[0]))
-        prog = pq.QProg()
-        prog.insert(circuit)
-        prog << measure_all(qubits, cbits)
-        result = machine.run_with_configuration(prog, cbits, 100)
-        counts = np.array(list(result.values()))
-        states = np.array(list(result.keys())).astype(float)
-        # Compute probabilities for each state
-        probabilities = counts / 100
-        # Get state expectation
-        expectation = np.sum(states * probabilities)
-        return expectation
-
-
-
-    class Net(Module):
-        def __init__(self):
-            super(Net, self).__init__()
-            self.conv1 = Conv2D(input_channels=1, output_channels=6, kernel_size=(5, 5), stride=(1, 1), padding="valid")
-            self.maxpool1 = MaxPool2D([2, 2], [2, 2], padding="valid")
-            self.conv2 = Conv2D(input_channels=6, output_channels=16, kernel_size=(5, 5), stride=(1, 1), padding="valid")
-            self.maxpool2 = MaxPool2D([2, 2], [2, 2], padding="valid")
-            self.fc1 = Linear(input_channels=256, output_channels=64)
-            self.fc2 = Linear(input_channels=64, output_channels=1)
-
-            self.hybrid = NoiseQuantumLayer(circuit,1,"noise",1)
-            self.fc3 = Linear(input_channels=1, output_channels=2)
-
-
-        def forward(self, x):
-            x = F.ReLu()(self.conv1(x))
-            x = self.maxpool1(x)
-            x = F.ReLu()(self.conv2(x))
-            x = self.maxpool2(x)
-            x = tensor.flatten(x, 1)
-            x = F.ReLu()(self.fc1(x))
-            x = self.fc2(x)
-            x = self.hybrid(x)
-            x = self.fc3(x)
-
-            return x
-
-The model is a hybrid quantum circuit and classical network model, in which the quantum circuit 
-part uses ``NoiseQuantumLayer`` to simulate the quantum circuit plus noise model. This model 
-is used to classify 0 and 1 handwritten digits in MNIST database.
-
-.. code-block::
-
-    def load_mnist(dataset="training_data", digits=np.arange(2), path="./"):         
-        import os, struct
-        from array import array as pyarray
-        download_mnist(path)
-        if dataset == "training_data":
-            fname_image = os.path.join(path, 'train-images.idx3-ubyte').replace('\\', '/')
-            fname_label = os.path.join(path, 'train-labels.idx1-ubyte').replace('\\', '/')
-        elif dataset == "testing_data":
-            fname_image = os.path.join(path, 't10k-images.idx3-ubyte').replace('\\', '/')
-            fname_label = os.path.join(path, 't10k-labels.idx1-ubyte').replace('\\', '/')
-        else:
-            raise ValueError("dataset must be 'training_data' or 'testing_data'")
-
-        flbl = open(fname_label, 'rb')
-        _, size = struct.unpack(">II", flbl.read(8))
-        lbl = pyarray("b", flbl.read())
-        flbl.close()
-
-        fimg = open(fname_image, 'rb')
-        _, size, rows, cols = struct.unpack(">IIII", fimg.read(16))
-        img = pyarray("B", fimg.read())
-        fimg.close()
-
-        ind = [k for k in range(size) if lbl[k] in digits]
-        N = len(ind)
-        images = np.zeros((N, rows, cols))
-        labels = np.zeros((N, 1), dtype=int)
-        for i in range(len(ind)):
-            images[i] = np.array(img[ind[i] * rows * cols: (ind[i] + 1) * rows * cols]).reshape((rows, cols))
-            labels[i] = lbl[ind[i]]
-
-        return images, labels
-
-    def data_select(train_num, test_num):
-        x_train, y_train = load_mnist("training_data")  
-        x_test, y_test = load_mnist("testing_data")
-        idx_train = np.append(np.where(y_train == 0)[0][:train_num],
-                        np.where(y_train == 1)[0][:train_num])
-
-        x_train = x_train[idx_train]
-        y_train = y_train[idx_train]
-        
-        x_train = x_train / 255
-        y_train = np.eye(2)[y_train].reshape(-1, 2)
-
-        # Test Leaving only labels 0 and 1
-        idx_test = np.append(np.where(y_test == 0)[0][:test_num],
-                        np.where(y_test == 1)[0][:test_num])
-
-        x_test = x_test[idx_test]
-        y_test = y_test[idx_test]
-        x_test = x_test / 255
-        y_test = np.eye(2)[y_test].reshape(-1, 2)
-        
-        return x_train, y_train, x_test, y_test
-
-    if __name__=="__main__":
-        x_train, y_train, x_test, y_test = data_select(100, 50)
-        
-        model = Net()
-        optimizer = Adam(model.parameters(), lr=0.005)
-        loss_func = CategoricalCrossEntropy()
-
-        epochs = 10
-        loss_list = []
-        eval_loss_list = []
-        train_acc_list = []
-        eval_acc_list = []
-        model.train()
-        if not os.path.exists("./result"):
-            os.makedirs("./result")
-        else:
-            pass
-        eval_time = []
-        F1 = open("./result/hqcnn_train_rlt.txt","w")
-        F2 = open("./result/hqcnn_eval_rlt.txt","w")
-        for epoch in range(1, epochs):
-            total_loss = []
-            iter  = 0
-            correct = 0
-            n_train = 0
-            for x, y in data_generator(x_train, y_train, batch_size=1, shuffle=True):
-                iter +=1
-                start_time = time.time()
-                x = x.reshape(-1, 1, 28, 28)
-                optimizer.zero_grad()
-                # Forward pass
-                output = model(x)
-                # Calculating loss
-                loss = loss_func(y, output) 
-                loss_np = np.array(loss.data)
-                np_output = np.array(output.data, copy=False)
-                mask = (np_output.argmax(1) == y.argmax(1))
-                correct += np.sum(np.array(mask))
-                n_train += 1
-                
-                # Backward pass
-                loss.backward()
-                # Optimize the weights
-                optimizer._step()
-                total_loss.append(loss_np)
-            print("##########################")
-            print(f"Train Accuracy: {correct / n_train}")
-            loss_list.append(np.sum(total_loss) / len(total_loss))
-            train_acc_list.append(correct/n_train)
-            print("epoch: ", epoch)
-            print(100. * (epoch + 1) / epochs)
-            print("{:.0f} loss is : {:.10f}".format(epoch, loss_list[-1]))
-            F1.writelines(f"{epoch},{loss_list[-1]},{correct/n_train}\n")
-
-            model.eval()
-            correct = 0
-            total_eval_loss = []
-            n_eval = 0
-            
-            for x, y in data_generator(x_test, y_test, batch_size=1, shuffle=True):
-                start_time1 = time.time()
-                x = x.reshape(-1, 1, 28, 28)
-                output = model(x)
-                loss = loss_func(y, output)
-
-                np_output = np.array(output.data, copy=False)
-                mask = (np_output.argmax(1) == y.argmax(1))
-                correct += np.sum(np.array(mask))
-                n_eval += 1
-                
-                loss_np = np.array(loss.data)
-                total_eval_loss.append(loss_np)
-                eval_acc_list.append(correct/n_eval)
-            print(f"Eval Accuracy: {correct / n_eval}")
-            F2.writelines(f"{epoch},{np.sum(total_eval_loss) / len(total_eval_loss)},{correct/n_eval}\n")
-        F1.close()
-        F2.close()
-		
-Comparing the classification results of machine learning models of noisy quantum circuits and ideal quantum circuits, 
-the loss change log and acc change log are as follows:
-
-.. code-block::
-
-    Train Accuracy: 0.715
-    epoch:  1
-    1 loss is : 0.6519572449
-    Eval Accuracy: 0.99
-    ##########################
-    Train Accuracy: 1.0
-    epoch:  2
-    2 loss is : 0.4458528900
-    Eval Accuracy: 1.0
-    ##########################
-    Train Accuracy: 1.0     
-    epoch:  3
-    3 loss is : 0.3142367172
-    Eval Accuracy: 1.0
-    ##########################
-    Train Accuracy: 1.0     
-    epoch:  4
-    4 loss is : 0.2259583092
-    Eval Accuracy: 1.0
-    ##########################
-    Train Accuracy: 1.0     
-    epoch:  5
-    5 loss is : 0.1661866951
-    Eval Accuracy: 1.0
-    ##########################
-    Train Accuracy: 1.0     
-    epoch:  6
-    6 loss is : 0.1306252861
-    Eval Accuracy: 1.0
-    ##########################
-    Train Accuracy: 1.0
-    epoch:  7
-    7 loss is : 0.0996847820
-    Eval Accuracy: 1.0
-    ##########################
-    Train Accuracy: 1.0
-    epoch:  8
-    8 loss is : 0.0801456261
-    Eval Accuracy: 1.0
-    ##########################
-    Train Accuracy: 1.0
-    epoch:  9
-    9 loss is : 0.0649107647
-    Eval Accuracy: 1.0
-
-|
- 

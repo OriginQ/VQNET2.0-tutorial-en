@@ -1,61 +1,62 @@
 .. _llm:
 
-Quantum Large Model Fine-Tuning demo
-****************************************
+Quantum Large Model Fine-Tuning Example
+***************************************
 
-In recent years, with the widespread adoption of large models and the gradual increase in their scale, training large-scale quantum machine learning models has led to a significant rise in training costs. To reduce the training resources required for fine-tuning large models, several fine-tuning methods have been proposed. These methods no longer fine-tune all parameters of the large model but instead train a small number of parameters through the proposed techniques, allowing the large model to achieve performance on downstream tasks that is no worse than full-parameter fine-tuning. However, fine-tuning methods based on quantum circuits have not yet gained widespread adoption.
+In recent years, large models have become widespread and their scale has grown steadily, which makes training large-scale quantum machine learning models significantly more expensive. To reduce the training resources required for fine-tuning large models, several fine-tuning methods have been proposed that train only a small number of parameters instead of all parameters, so that the model still achieves results on downstream tasks comparable to full-parameter fine-tuning.
+Fine-tuning based on quantum circuits, however, is not yet widely adopted.
+
+``VQNet`` combines with ``Llama factory`` and ``peft`` to fine-tune large models based on quantum circuits.
+
+Installing Dependencies for Quantum Large Model Fine-Tuning
+-----------------------------------------------------------
+
+This section explains how to install the dependencies required to use quantum circuits for large model fine-tuning.
 
 
-``VQNet`` , in combination with ``Llama Factory`` and ``peft`` , enables large model fine-tuning tasks based on quantum circuits.
+To use quantum large model fine-tuning, you mainly need two packages, ``quantum-llm`` and ``pyvqnet``. The ``pyvqnet`` version must be ``2.15.0`` or later.
 
-Quantum Large Model Fine-Tuning Dependency Installation
------------------------------------------------------------------
 
-Introduction to the Module: Installing Dependencies for Quantum Circuit-Based Large Model Fine-Tuning
-
-To use quantum macromodel fine-tuning, you need the ``quantum-llm`` and ``pyvqnet`` packages, ``pyvqnet`` requires a version of ``2.15.0`` or above.
-
-The first step is to install the ``quantum-llm`` library.
+First, install the ``quantum-llm`` library
 
 .. code-block::
 
     git clone https://gitee.com/craftsman_lei/quantum-llm.git
 
 
-Afterwards, install the other dependencies and files according to the ``README.md`` file in ``quantum-llm``.
+Then install the other dependent libraries and files as described in the ``README.md`` document in ``quantum-llm``
 
 .. code-block::
 
-    # Download additional dependent libraries
+    # Download other dependencies
     pip install -r requirements.txt
 
-    # install peft_vqc
+    # Install peft_vqc
     cd peft_vqc && pip install -e .
 
-After installing the ``quantum-llm`` library and dependencies, install ``pyvqnet``.
+After installing the ``quantum-llm`` library and its dependencies, install ``pyvqnet``
 
 .. code-block::
 
-    # install pyvqnet
+    # Install VQNet
     pip install pyvqnet # pyvqnet>=2.15.0
 
+Quantum Large Model Fine-Tuning Training Steps
+----------------------------------------------
 
-Steps for fine-tuning training of quantum grand models
-----------------------------------------------------------
+After installing the required packages, refer to scripts such as ``train.sh`` in ``/quantum-llm/examples/qlora_single_gpu/``. Use the script to specify parameters such as the base model for training, the fine-tuning module to use, and the output path of the fine-tuning module.
 
-After installing the requirements package, you can refer to scripts such as ``train.sh`` under the directory ``/quantum-llm/examples/qlora_single_gpu/``, and specify the parameters of the training base model, the selection of the fine-tuning module, and the path of the output of the fine-tuning module according to the scripts.
-
-The ``Qwen2.5-0.5B`` model is available for download at https://huggingface.co/Qwen/Qwen2.5-0.5B?clone=true, as are the other models: ``Qwen2.5-0.5B`` If the download is not possible, you can download individual files from the URL and use them.
+The Qwen2.5-0.5B model can be downloaded from https://huggingface.co/Qwen/Qwen2.5-0.5B?clone=true. The same applies to other models. If the download fails, you can download the individual files from the site and then use them:
 
 .. code-block::
 
     # Download Qwen2.5-0.5B
     git clone https://huggingface.co/Qwen/Qwen2.5-0.5B
 
-The ``train.sh`` script sample is as follows, determining the baseline model, dataset, output path and other parameter information, where ``model_name_or_path`` is put into the specified model, or if it is not accessible, it is put into the absolute path of the baseline model after downloading the baseline model by itself.
+A sample ``train.sh`` script is shown below. Set parameters such as the base model, dataset, and output path. Set ``model_name_or_path`` to the specified model; if it cannot be accessed, download the base model yourself and set the absolute path of the base model.
 
 .. note::
-    Scripts such as ``train.sh``, ``eval.sh``, ``cli.sh``, etc. are executed in the ``/quantum-llm/examples/qlora_single_gpu/`` directory.
+    The ``train.sh``, ``eval.sh``, ``cli.sh``, and other script files are all run from the ``/quantum-llm/examples/qlora_single_gpu/`` directory
 
 .. code-block::
 
@@ -63,7 +64,7 @@ The ``train.sh`` script sample is as follows, determining the baseline model, da
 
     CUDA_VISIBLE_DEVICES=1 python ../../src/train_bash.py \
         --stage sft \
-        --model_name_or_path /download path/Qwen2.5-0.5B/ \
+        --model_name_or_path /download/path/Qwen2.5-0.5B/ \
         --dataset alpaca_gpt4_en \
         --tokenized_path ../../data/tokenized/alpaca_gpt4_en/ \
         --dataset_dir ../../data \
@@ -93,18 +94,18 @@ The ``train.sh`` script sample is as follows, determining the baseline model, da
         --fp16 \
         --do-train \
 
-    # In command line
+    # Run from the command line
     sh train.sh
 
-In the quantum macromodel fine-tuning module, compared with the classical macromodel fine-tuning module, three additional fine-tuning methods are added, which are:
+Compared with classical large model fine-tuning modules, the quantum large model fine-tuning module adds three extra fine-tuning methods:
 
-``vqc`` : vqc fine-tuning module based on VQNet implementation
+``vqc`` : A vqc fine-tuning module implemented with VQNet
 
-``quanTA`` : module for quantum tensor decomposition
+``quanTA`` : A quantum tensor decomposition module
 
-``tq`` : vqc module based on torch quantum implementation
+``tq`` : A vqc module implemented with torch quantum
 
-The above ``train.sh`` sample is a sample script for fine-tuning the ``vqc`` module, if you use the other two fine-tuning modules, change ``finetuning_type`` to ``quanTA`` , ``tq`` and plot the results of the three module experiments, the results are as follows.
+The ``train.sh`` example above is a script sample for fine-tuning with the ``vqc`` module. To use the other two fine-tuning modules, simply change ``finetuning_type`` to ``quanTA`` or ``tq``. The experimental results of the three modules were recorded and plotted as follows:
 
 .. image:: ./images/peft1.png
    :width: 600 px
@@ -112,105 +113,105 @@ The above ``train.sh`` sample is a sample script for fine-tuning the ``vqc`` mod
 
 |
 
-The above figure shows the training results based on the ``Qwen2.5-0.5B`` benchmark model on the dataset ``alpaca_gpt4_en``, in which it can be observed that the VQNet-based ``vqc`` module achieves the best loss convergence, thus proving the validity of the task of fine-tuning the large model based on the quantum lines.
+The figure above shows the training results of the ``Qwen2.5-0.5B`` base model on the ``alpaca_gpt4_en`` dataset. As can be observed, the VQNet-based ``vqc`` module achieves the best loss convergence, which demonstrates the effectiveness of using quantum circuits for large model fine-tuning.
 
 
-The ``train.sh`` training script saves the fine-tuned module parameters to a specified directory with the ``--output_dir`` parameter.
-This is then evaluated by the ``eval.sh`` script in the same directory ``/quantum-llm/examples/qlora_single_gpu/``, which reads as follows.
+With the ``train.sh`` training script, the fine-tuned module parameters can be saved to the specified directory through the ``--output_dir`` parameter.
+Then evaluate them with the ``eval.sh`` script in the same directory, ``/quantum-llm/examples/qlora_single_gpu/``. The script content is as follows:
 
 .. code-block::
 
     #!/bin/bash
 
     CUDA_VISIBLE_DEVICES=1 python ../../src/evaluate.py \
-        --model_name_or_path /download path/Qwen2.5-0.5B/ \
+        --model_name_or_path /download/path/Qwen2.5-0.5B/ \
         --template qwen \
         --finetuning_type vqc \
         --task cmmlu \
         --task_dir ../../evaluation/ \
         --adapter_name_or_path ../../saves/Qwen2.5-0.5B/vqc/alpaca_gpt4_en \
 
-    # In command line
+    # Run from the command line
     sh eval.sh
 
-Specify the baseline model path by ``--model_name_or_path``, and load the trained module for evaluation on the relevant task according to ``--adapter_name_or_path``, with the ``-task`` parameter describing the ``cmmlu``, ``ceval``, ``mmlu`` parameters.
+Set the base model path with ``--model_name_or_path``, and load the trained module with ``--adapter_name_or_path`` to evaluate on the relevant tasks. The ``--task`` parameter accepts ``cmmlu``, ``ceval``, and ``mmlu``.
 
-The quiz is then executed by calling the ``cli_demo.py`` file, again based on the ``cli.sh`` script in the current directory, which reads.
+Then call the ``cli_demo.py`` file for question answering, also executed through the ``cli.sh`` script in the current directory. The script content is as follows:
 
 .. code-block::
 
     #!/bin/bash
 
     CUDA_VISIBLE_DEVICES=1 python ../../src/cli_demo.py  \
-        --model_name_or_path /download path/Qwen2.5-0.5B/ \
+        --model_name_or_path /download/path/Qwen2.5-0.5B/ \
         --template qwen \
         --finetuning_type vqc \
         --adapter_name_or_path ../../saves/Qwen2.5-0.5B/vqc/alpaca_gpt4_en \
         --max_new_tokens 1024
 
 
-    # In command line
+    # Run from the command line
     sh cli.sh
 
-More specific information about the relevant parameters
-------------------------------------------------------------
+Details of More Related Parameters
+----------------------------------
 
-.. list-table:: PEFT Parameter Description
+.. list-table:: Fine-Tuning Module Parameter Descriptions
    :widths: 30 70
    :header-rows: 1
 
-   * - Parameter Name
-     - Detailed Introduction
+   * - Parameter
+     - Description
    * - stage
-     - Determine the large model training mode, pt for pre-training, sft for fine-tuning stage, and sft for experimentation.
+     - Determines the large model training mode. pt is pretraining, sft is the fine-tuning stage. The experiments use sft.
    * - model_name_or_path
-     - Select the path of the baseline model.
+     - Path to the base model.
    * - dataset
-     - Select dataset, such as identity, alpaca_gpt4_zh, etc.
+     - Selects the dataset, such as identity or alpaca_gpt4_zh.
    * - tokenized_path
-     - Select the dataset tokenized path.
+     - Path to the tokenized dataset.
    * - dataset_dir
-     - Select the dataset path.
+     - Path to the dataset.
    * - template
-     - Model template type, e.g. llama3, etc.
+     - Model template type, such as llama3.
    * - finetuning_type
-     - Specify the finetuning method, such as lora, tq, vqc, quanTA.
+     - Specifies the fine-tuning method, such as lora, tq, vqc, or quanTA.
    * - lora_target
-     - The function module is q_proj, v_proj.
+     - Target modules are q_proj and v_proj
    * - output_dir
-     - The path where the fine-tuning module is stored.
+     - Path where the fine-tuning module is saved
    * - overwrite_cache
-     - Whether to overwrite the cached training and evaluation sets.
+     - Whether to overwrite the cached training and evaluation sets
    * - overwrite_output_dir
-     - Whether to overwrite existing files in the output directory.
+     - Whether to overwrite existing files in the output directory
    * - cutoff_len
-     - Specifies the length of the cutoff when processing data.
+     - Truncation length used when processing data
    * - preprocessing_num_workers
-     - Specifies the number of work processes to be used for preprocessing the data.
+     - Number of worker processes used for data preprocessing
    * - per_device_train_batch_size
-     - Batch size per gpu, training parameter
+     - Batch size per GPU; training parameter
    * - per_device_eval_batch_size
-     - Batch size per gpu, training parameter
+     - Batch size during evaluation; training parameter
    * - gradient_accumulation_steps
-     - Number of steps for gradient accumulation, training parameter
+     - Number of gradient accumulation steps; training parameter
    * - lr_scheduler_type
-     - Learning rate scheduler, training parameter
+     - Learning rate scheduler; training parameter
    * - logging_steps
-     - Printing interval
+     - Logging interval
    * - warmup_steps
-     - Warmup steps
+     - Number of warmup steps
    * - save_steps
      - Model save interval
    * - eval_steps
      - Evaluation save interval
    * - evaluation_strategy
-     - Evaluation strategy, set here to step-by-step evaluation.
+     - Evaluation strategy; set here to evaluation by steps
    * - load_best_model_at_end
-     - Load the best performing model at the end of training.
+     - Load the best-performing model at the end of training
    * - learning_rate
-     - Learning rate
+     - Learning rate; training parameter
    * - num_train_epochs
-     - Number of training rounds to be executed
+     - Number of training epochs to run; training parameter
    * - max_samples
      - Maximum number of training samples
    * - val_size
@@ -218,16 +219,16 @@ More specific information about the relevant parameters
    * - plot_loss
      - Whether to save the training loss curve
    * - fp16
-     - Whether to train with fp16 mixed precision, or float32 in the vqc module.
+     - Whether to use fp16 mixed precision training; the vqc module uses float32
    * - do-train
-     - Whether to specify a training task
+     - Whether the task is a training task
    * - adapter_name_or_path
-     - Select the path of the file to be generated after training.
+     - Path to the files generated after training
    * - task
-     - Select the task, currently supports ceval, cmmlu, mmlu.
+     - Selects the task; currently ceval, cmmlu, and mmlu are supported
    * - task_dir
-     - Specify the path of the task.
+     - Path to the task
    * - q_d
-     - Specify the number of tensor decomposition of quanTA module, default is 4.
+     - Number of tensor decompositions for the quanTA module. Default: 4
    * - per_dim_features
-     - Specify the number of tensor decomposition features of quanTA module, default is [16,8,4,2].
+     - Number of tensor decomposition features for the quanTA module. Default: [16,8,4,2]

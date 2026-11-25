@@ -1,23 +1,23 @@
-Other Utility Functions
-##################################
+Utility functions
+######################
 
-Seeds for Random Distributions
+
+
+Random seed generation
 *******************************************
-
 
 set_random_seed
 ==============================
 
 .. py:function:: pyvqnet.utils.set_random_seed(seed)
-    
-    Set the global random seed.
 
-    :param seed: random seed.
+    Sets the global random seed.
+
+    :param seed: Random seed.
 
     .. note::
-
-            When a fixed random number seed is specified, the random distribution will generate a fixed pseudo-random distribution based on the random seed.
-            Affects functions include: `tensor.randu` , `tensor.randn` , parameter initialization for parametric classical neural networks and quantum computing layers.
+            When a fixed random seed is specified, random distributions generate a fixed pseudo-random distribution based on the seed.
+            This affects `tensor.randu` , `tensor.randn` , and parameter initialization for parametric classical neural networks and quantum computing layers.
 
     Example::
 
@@ -36,6 +36,7 @@ set_random_seed
         rn = tensor.randu([2, 3])
         print(rn)
 
+        print("########################################################")
         from pyvqnet.nn.parameter import Parameter
         from pyvqnet.utils.initializer import he_normal, he_uniform, xavier_normal, xavier_uniform, uniform, quantum_uniform, normal
         print(Parameter(shape=[2, 3], initializer=he_normal))
@@ -95,8 +96,8 @@ get_random_seed
 ==============================
 
 .. py:function:: pyvqnet.utils.get_random_seed()
-    
-    Get current random seed.
+
+    Gets the current random seed.
 
     Example::
 
